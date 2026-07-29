@@ -1,0 +1,4 @@
+// Every element's optional look. Import one component's theme directly
+// (`book-of-elementals/accordion/theme.scss`) to avoid paying for the rest.
+// Structure and motion live in `index.scss`; this file only adds the look.
+@use "../elementals/accordion/theme";

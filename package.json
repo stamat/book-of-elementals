@@ -8,6 +8,8 @@
   "exports": {
     ".": "./src/index.js",
     "./core": "./src/core.js",
+    "./theme.scss": "./src/styles/theme.scss",
+    "./theme.css": "./dist/book-of-elementals-theme.css",
     "./accordion": "./src/elementals/accordion/index.js",
     "./accordion/style.scss": "./src/elementals/accordion/index.scss",
     "./accordion/style.css": "./dist/elementals/accordion.css",
@@ -23,6 +25,7 @@
     "src/iife.js",
     "src/elementals",
     "src/styles/index.scss",
+    "src/styles/theme.scss",
     "dist",
     "!src/**/*.test.js"
   ],
