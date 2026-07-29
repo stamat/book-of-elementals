@@ -2,57 +2,93 @@
 // stylesheet and not in its bundle: that one styles structure only, and a light-DOM
 // element cannot scope a look away from a page that did not ask for one. Import this
 // when you want the look, skip it when you do not.
-// Colours are mixed out of `currentcolor` rather than hard-coded, so the button sits
+// colors are mixed out of `currentcolor` rather than hard-coded, so the button sits
 // in whatever palette the page already has - including a theme switch - with nothing
 // to configure.
 
 disclosure-elemental {
-  --disclosure-elemental-border-color: color-mix(in srgb, currentcolor 15%, transparent);
-  --disclosure-elemental-radius: 0.5rem;
+  --disclosure-elemental-caret-size: 1em;
 
-  // A button the browser styles as a browser button would fight every page it
-  // lands on, so the theme unstyles it back down to the page's own type and colour
-  // and draws the box itself, in `currentcolor` like the rest of the book.
+  // Still a `<button>` - the control toggles content in the same page, which is a
+  // button and not a link - but a button the browser styles as a browser button
+  // would fight every page it lands on, so the theme unstyles it back down to the
+  // page's own type and color and leaves it looking like the text around it: no
+  // box, no inset, just the label and its caret. Only `:focus-visible` is left
+  // alone, because that ring is the one part of the native look worth keeping.
   > button {
-    display: inline-flex;
-    gap: 0.5rem;
-    align-items: center;
-    padding: 0.5rem 0.75rem;
+    position: relative; // the caret is positioned against this, see below
+    padding: 0;
+    padding-inline-start: calc(var(--disclosure-elemental-caret-size) + 0.25rem);
     font: inherit;
+
+    // The one thing set heavier than the surrounding text rather than lighter or
+    // brighter: weight marks the label as a control without borrowing the color
+    // that would read as a link. Medium rather than bold, because the label sits in
+    // running text and only has to be a shade firmer than it, not a heading.
+    // Fonts without a 500 round to the nearest they have, which is the normal they
+    // would have used anyway.
+    font-weight: 500;
     color: inherit;
+    text-align: start; // a wrapped label reads from the caret, not centred under it
     cursor: pointer;
     background: none;
-    border: 1px solid var(--disclosure-elemental-border-color);
-    border-radius: var(--disclosure-elemental-radius);
+    border: 0;
 
     &:hover {
-      background: color-mix(in srgb, currentcolor 5%, transparent);
+      text-decoration: underline;
     }
 
     // An Octicon chevron, drawn as a mask rather than a background image so it takes
     // the button's `color` instead of baking one into the SVG, and so it follows a
     // theme switch for free.
-    &::after {
+    // Out of flow rather than a flex item: the caret leads the label, and a label
+    // long enough to wrap should wrap as text - lines stacking past the caret, not
+    // beside it. Being out of flow also keeps the hover underline off it, since
+    // text decoration is not propagated to out-of-flow descendants.
+    &::before {
       content: "";
-      flex: none; // a long label must not squeeze the caret
-      width: 1rem;
-      height: 1rem;
+      position: absolute;
+      inset-inline-start: 0;
+      inset-block-start: 0.6em; // fallback for browsers without `lh`
+      inset-block-start: 0.5lh; // centre on the first line, whatever the line height
+      width: var(--disclosure-elemental-caret-size);
+      height: var(--disclosure-elemental-caret-size);
+      translate: 0 -50%;
       background: currentcolor;
       mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/%3E%3C/svg%3E") center / contain no-repeat;
 
+      // Closed, the caret points at its own label; open, it points down at the
+      // content it revealed - the way a native `<summary>` marker turns, and the
+      // way GOV.UK turns theirs. "At the label" is a writing-mode question, so the
+      // quarter turn goes the other way in RTL rather than the same way twice.
+      rotate: -90deg;
+
       // Borrow the element's own timing so the chevron turns with the slide.
       transition: rotate var(--disclosure-elemental-duration) var(--disclosure-elemental-easing);
+
+      // A masked icon is a painted background, and forced-colors mode overrides
+      // author backgrounds - which would erase the one thing marking this text as
+      // a control. System color keywords are honoured there, so the caret is
+      // repainted in the forced text color rather than lost.
+      @media (forced-colors: active) {
+        background: CanvasText;
+      }
+    }
+
+    &:dir(rtl)::before {
+      rotate: 90deg;
     }
 
     // Keyed off the ARIA rather than a class, because the ARIA is the state - there
-    // is no second thing to keep in step with it. A half turn rather than a quarter,
-    // so it reads the same either way round in RTL.
-    &[aria-expanded="true"]::after {
-      rotate: 180deg;
+    // is no second thing to keep in step with it. Last of the three, because it
+    // outranks neither of the others on specificity and has to win in both
+    // directions: open points down whatever the writing mode.
+    &[aria-expanded="true"]::before {
+      rotate: 0deg;
     }
 
     @media (prefers-reduced-motion: reduce) {
-      &::after {
+      &::before {
         transition: none;
       }
     }

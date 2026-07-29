@@ -249,6 +249,7 @@ Two things make this awkward, and the element handles both:
     padding: 0.75rem 1rem;
   }
   ```
+
 - **Closing hides the content instantly.** `<details>` sets its contents to
   `display: none` the moment `open` goes away, which cuts a close animation off at
   frame one. So the element takes over the click, slides the body up while the
@@ -263,7 +264,9 @@ Two things make this awkward, and the element handles both:
 
 ```css
 /* not "is open" but "is staying open" */
-accordion-elemental > details[open]:not(.accordion-elemental-closing) > summary::after {
+accordion-elemental
+  > details[open]:not(.accordion-elemental-closing)
+  > summary::after {
   rotate: 180deg;
 }
 ```
@@ -273,9 +276,9 @@ the panels toggle natively and instantly. Which is correct, just unanimated.
 
 | Hook                                   | On                | Meaning                                                        |
 | -------------------------------------- | ----------------- | -------------------------------------------------------------- |
-| `.accordion-elemental-content-wrapper` | the outer box     | The box the height animation measures and clips. Do not pad it  |
-| `.accordion-elemental-content`         | the box inside it | The panel body. Yours to style — the inset goes here            |
-| `.accordion-elemental-closing`         | a `<details>`     | Open, but sliding shut                                          |
+| `.accordion-elemental-content-wrapper` | the outer box     | The box the height animation measures and clips. Do not pad it |
+| `.accordion-elemental-content`         | the box inside it | The panel body. Yours to style — the inset goes here           |
+| `.accordion-elemental-closing`         | a `<details>`     | Open, but sliding shut                                         |
 
 ## The look
 
@@ -300,14 +303,14 @@ is a second, optional stylesheet:
 ```
 
 It draws in `currentcolor` — borders and the hover fill are mixed out of the
-text colour, the caret is masked rather than painted — so the panels land in the
+text color, the caret is masked rather than painted — so the panels land in the
 page's palette and follow a theme switch with nothing configured. Two custom
 properties for the two things a page usually has its own value for:
 
-| Property                            | Default                                          |
-| ----------------------------------- | ------------------------------------------------ |
+| Property                             | Default                                             |
+| ------------------------------------ | --------------------------------------------------- |
 | `--accordion-elemental-border-color` | `color-mix(in srgb, currentcolor 15%, transparent)` |
-| `--accordion-elemental-radius`      | `0.5rem`                                         |
+| `--accordion-elemental-radius`       | `0.5rem`                                            |
 
 ```css
 accordion-elemental {
@@ -382,8 +385,8 @@ Composes with `grouped`, and the demo at the top of this page is wearing both.
   <details>
     <summary>Why a mask and not a background image?</summary>
     <p>A mask paints with <code>currentcolor</code>, so the caret takes the
-    header's colour and follows a theme switch. A background image bakes its
-    colour into the SVG and needs a second copy for the dark theme.</p>
+    header's color and follows a theme switch. A background image bakes its
+    color into the SVG and needs a second copy for the dark theme.</p>
   </details>
   <details>
     <summary>Why half a turn and not a quarter?</summary>

@@ -88,38 +88,50 @@ accordion-elemental.caret > details[open]:not(.accordion-elemental-closing) > su
 }
 
 disclosure-elemental {
-  --disclosure-elemental-border-color: color-mix(in srgb, currentcolor 15%, transparent);
-  --disclosure-elemental-radius: 0.5rem;
+  --disclosure-elemental-caret-size: 1em;
 }
 disclosure-elemental > button {
-  display: inline-flex;
-  gap: 0.5rem;
-  align-items: center;
-  padding: 0.5rem 0.75rem;
+  position: relative;
+  padding: 0;
+  padding-inline-start: calc(var(--disclosure-elemental-caret-size) + 0.25rem);
   font: inherit;
+  font-weight: 500;
   color: inherit;
+  text-align: start;
   cursor: pointer;
   background: none;
-  border: 1px solid var(--disclosure-elemental-border-color);
-  border-radius: var(--disclosure-elemental-radius);
+  border: 0;
 }
 disclosure-elemental > button:hover {
-  background: color-mix(in srgb, currentcolor 5%, transparent);
+  text-decoration: underline;
 }
-disclosure-elemental > button::after {
+disclosure-elemental > button::before {
   content: "";
-  flex: none;
-  width: 1rem;
-  height: 1rem;
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-start: 0.6em;
+  inset-block-start: 0.5lh;
+  width: var(--disclosure-elemental-caret-size);
+  height: var(--disclosure-elemental-caret-size);
+  translate: 0 -50%;
   background: currentcolor;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/%3E%3C/svg%3E") center/contain no-repeat;
+  rotate: -90deg;
   transition: rotate var(--disclosure-elemental-duration) var(--disclosure-elemental-easing);
 }
-disclosure-elemental > button[aria-expanded=true]::after {
-  rotate: 180deg;
+@media (forced-colors: active) {
+  disclosure-elemental > button::before {
+    background: CanvasText;
+  }
+}
+disclosure-elemental > button:dir(rtl)::before {
+  rotate: 90deg;
+}
+disclosure-elemental > button[aria-expanded=true]::before {
+  rotate: 0deg;
 }
 @media (prefers-reduced-motion: reduce) {
-  disclosure-elemental > button::after {
+  disclosure-elemental > button::before {
     transition: none;
   }
 }

@@ -122,7 +122,7 @@ may already be targeting**, since neither shows up in a function signature.
   />
   ```
 
-  Its colours are mixed out of `currentcolor`, so panels sit in whatever palette the page
+  Its colors are mixed out of `currentcolor`, so panels sit in whatever palette the page
   already has, theme switch included, with nothing to configure. Two custom properties cover the
   rest: `--accordion-elemental-border-color` and `--accordion-elemental-radius`. Two opt-in
   classes on the group ride along — `grouped` collapses the stack into one card with shared

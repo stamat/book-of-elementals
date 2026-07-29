@@ -2,7 +2,7 @@
 // stylesheet and not in its bundle: that one styles structure and motion only,
 // and a light-DOM element cannot scope a look away from a page that did not ask
 // for one. Import this when you want the look, skip it when you do not.
-// Colours are mixed out of `currentcolor` rather than hard-coded, so the panels
+// colors are mixed out of `currentcolor` rather than hard-coded, so the panels
 // sit in whatever palette the page already has - including a theme switch - with
 // nothing to configure. Two custom properties for the two things a page is most
 // likely to want its own value for.

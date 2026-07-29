@@ -163,7 +163,9 @@ natively, on markup `<details>` could not have held.
 ```html
 <!-- while closed -->
 <button aria-expanded="false" aria-controls="minard-data">…</button>
-<div id="minard-data" class="disclosure-elemental-region" hidden="until-found">…</div>
+<div id="minard-data" class="disclosure-elemental-region" hidden="until-found">
+  …
+</div>
 ```
 
 In a browser without `until-found` the attribute reads as a plain `hidden` and
@@ -213,6 +215,7 @@ Two things about it are worth knowing:
   Margin is fine — it is outside the height — and it is transitioned too, so the
   stylesheet zeroing it while closed reads as the gap closing rather than as a
   jump.
+
 - **`hidden` lands at the end of the close, not the start.** It stops the
   region's contents being rendered, which would cut the animation off at frame
   one. `aria-expanded` and `open` both go to false immediately, so anything keyed
@@ -229,10 +232,10 @@ nothing, and there is no button either — the region is simply there.
 
 All of it is the button's, which is the point of using one:
 
-| Key                                 | Action                             |
-| ----------------------------------- | ---------------------------------- |
-| <kbd>Tab</kbd>                      | Move to the button                 |
-| <kbd>Enter</kbd> / <kbd>Space</kbd> | Toggle the region                  |
+| Key                                 | Action             |
+| ----------------------------------- | ------------------ |
+| <kbd>Tab</kbd>                      | Move to the button |
+| <kbd>Enter</kbd> / <kbd>Space</kbd> | Toggle the region  |
 
 A closed region is out of the tab order and out of the accessibility tree
 because `hidden` takes it out of both. There is no `aria-hidden` anywhere, and
@@ -293,13 +296,13 @@ readable from it.
 
 ## What it writes
 
-| Attribute        | On         | Value                                                |
-| ---------------- | ---------- | ---------------------------------------------------- |
-| `aria-expanded`  | the button | `true` / `false`                                     |
-| `aria-controls`  | the button | The region's `id`, generated if the markup has none  |
-| `type`           | the button | `button`, only if the markup did not set a type      |
-| `hidden`         | the region | `until-found` while closed, absent while open — set at the end of the close slide |
-| `class`          | the region | `disclosure-elemental-region` added, nothing removed |
+| Attribute       | On         | Value                                                                             |
+| --------------- | ---------- | --------------------------------------------------------------------------------- |
+| `aria-expanded` | the button | `true` / `false`                                                                  |
+| `aria-controls` | the button | The region's `id`, generated if the markup has none                               |
+| `type`          | the button | `button`, only if the markup did not set a type                                   |
+| `hidden`        | the region | `until-found` while closed, absent while open — set at the end of the close slide |
+| `class`         | the region | `disclosure-elemental-region` added, nothing removed                              |
 
 `type="button"` because a `<button>` in a form submits it unless told otherwise,
 and a disclosure that posts the page away on its first click is not a disclosure.
@@ -346,20 +349,58 @@ optional stylesheet:
 />
 ```
 
-It unstyles the browser's button back down to the page's own type and colour,
-draws the box in `currentcolor`, and adds an
+It unstyles the browser's button back down to the page's own type and color and
+leaves it reading as text rather than as a box: no border, no inset, a medium-weight
+label — firmer than the running text it sits in, without going to bold — an
+underline on hover, and a leading
 [Octicon chevron](https://primer.style/foundations/icons/chevron-down-16/) masked
-rather than painted, so it follows a theme switch. Two custom properties, the
-same two the accordion has:
+rather than painted, so it follows a theme switch. It is still a `<button>` — the
+control toggles content in the same page, which is a button and not a link — so
+it keeps the role, the `Enter` and `Space` handling, and the focus ring, which is
+the one part of the native look the theme leaves alone. One custom property:
 
-| Property                              | Default                                             |
-| ------------------------------------- | --------------------------------------------------- |
-| `--disclosure-elemental-border-color` | `color-mix(in srgb, currentcolor 15%, transparent)` |
-| `--disclosure-elemental-radius`       | `0.5rem`                                            |
+| Property                            | Default |
+| ----------------------------------- | ------- |
+| `--disclosure-elemental-caret-size` | `1em`   |
 
-The chevron is keyed off `[aria-expanded="true"]` rather than a class of the
-element's own, because the ARIA _is_ the state — there is no second thing to keep
-in step with it, and your own CSS can key off it just as well.
+Closed, the chevron points at its own label; open, it points down at the content
+it revealed — the same turn a native `<summary>` marker makes, and the one
+[GOV.UK's details component](https://design-system.service.gov.uk/components/details/)
+makes. Pointing _at the label_ is a writing-mode question rather than a direction,
+so the quarter turn goes the other way under `:dir(rtl)`. The chevron is keyed off
+`[aria-expanded="true"]` rather than a class of the element's own, because the ARIA
+_is_ the state — there is no second thing to keep in step with it, and your own CSS
+can key off it just as well.
+
+The caret is a `::before` on the button, out of flow so a wrapping label stacks
+past it rather than beside it, and painted as a `mask` over `currentcolor` rather
+than as a `background-image` — which is what lets it follow a theme switch, and
+what your own icon has to be too:
+
+```css
+disclosure-elemental > button::before {
+  mask-image: url("my-caret.svg"); /* not background-image - see above */
+}
+
+/* Or drop it and use your own affordance, remembering the button then has none
+   until you give it one. */
+disclosure-elemental > button {
+  padding-inline-start: 0;
+
+  &::before {
+    content: none;
+  }
+}
+```
+
+The theme stops short of a full link look on purpose: no link color, and no
+underline until hover. GOV.UK's own research on their details component found
+that ["some users avoid clicking the link to show more details, as they think it
+will take them away from the page"](https://design-system.service.gov.uk/components/details/),
+and [Adrian Roselli's user testing](https://adrianroselli.com/2020/05/disclosure-widgets.html)
+found a link-styled trigger confusing across every profile he tested. Color is
+the cue that reads as navigation, so the caret carries the affordance and the
+label stays the color of the text around it.
 
 ### A show/hide label
 
