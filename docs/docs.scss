@@ -24,11 +24,14 @@ accordion-elemental {
     }
   }
 
-  > details > summary + * {
-    padding: 0 1rem;
+  // The element wraps each panel body in `.accordion-elemental-content` and keeps
+  // that wrapper's box inert so the height animation can reach zero. So the demo
+  // skin pads the content inside it, not the wrapper itself.
+  > details > .accordion-elemental-content > * {
+    padding-inline: 1rem;
   }
 
-  > details > :last-child {
+  > details > .accordion-elemental-content > :last-child {
     padding-bottom: 0.75rem;
   }
 }

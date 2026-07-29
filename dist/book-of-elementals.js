@@ -1,25 +1,124 @@
 /* book-of-elementals v0.1.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 (() => {
-  // src/core.js
-  var ElementBase = typeof HTMLElement !== "undefined" ? HTMLElement : class {
-  };
-  function readOptions(el, schema) {
+  // node_modules/book-of-spells/src/helpers.mjs
+  function stringToNumber(str) {
+    if (/^\s*-?\d+\s*$/.test(str)) return parseInt(str);
+    if (/^\s*-?\d+\.\d+\s*$/.test(str)) return parseFloat(str);
+  }
+  function isFunction(o) {
+    return typeof o === "function";
+  }
+  function transformCamelCaseToDash(str) {
+    return str.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
+  }
+
+  // node_modules/book-of-spells/src/dom.mjs
+  function cssTimeToMilliseconds(duration) {
+    const regExp = new RegExp("([0-9.]+)([a-z]+)", "i");
+    const matches = regExp.exec(duration);
+    if (!matches) return 0;
+    const unit = matches[2];
+    switch (unit) {
+      case "ms":
+        return parseFloat(matches[1]);
+      case "s":
+        return parseFloat(matches[1]) * 1e3;
+      default:
+        return 0;
+    }
+  }
+  function getTransitionDurations(element) {
+    if (!element) return {};
+    const styles = getComputedStyle(element);
+    const transitionProperties = styles.getPropertyValue("transition-property").split(",");
+    const transitionDurations = styles.getPropertyValue("transition-duration").split(",");
+    const map = {};
+    for (let i = 0; i < transitionProperties.length; i++) {
+      const property = transitionProperties[i].trim();
+      map[property] = cssTimeToMilliseconds(transitionDurations[i % transitionDurations.length].trim());
+    }
+    return map;
+  }
+  function readOptions(element, schema) {
     const options = {};
+    if (!element || !schema) return options;
     for (const key in schema) {
-      const kebab = key.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase());
-      const raw = el.dataset[key] != null ? el.dataset[key] : el.getAttribute(kebab);
+      const raw = element.dataset[key] != null ? element.dataset[key] : element.getAttribute(transformCamelCaseToDash(key));
       if (raw == null) continue;
       if (schema[key] === "boolean") {
         options[key] = raw !== "false" && raw !== "0";
       } else if (schema[key] === "number") {
-        const num = parseFloat(raw);
-        if (!Number.isNaN(num)) options[key] = num;
+        const num = stringToNumber(raw);
+        if (num !== void 0) options[key] = num;
       } else {
         options[key] = raw;
       }
     }
     return options;
   }
+  function getTransitionDuration(element, property = "all") {
+    const durations = getTransitionDurations(element);
+    if (durations.hasOwnProperty(property)) return durations[property];
+    if (durations.hasOwnProperty("all")) return durations.all;
+    return 0;
+  }
+
+  // node_modules/book-of-spells/src/browser.mjs
+  function mediaMatcher(query, callback) {
+    if (isFunction(callback)) {
+      const mql = matchMedia(query);
+      mql.addEventListener("change", (e) => {
+        callback(e.matches);
+      });
+      callback(mql.matches);
+      return mql.matches;
+    }
+    return matchMedia(query).matches;
+  }
+  function prefersReducedMotion(callback) {
+    if (typeof matchMedia !== "function") return false;
+    return mediaMatcher("(prefers-reduced-motion: reduce)", callback);
+  }
+
+  // node_modules/book-of-spells/src/animations.mjs
+  var TRANSITION_TIMER_GRACE = 10;
+  function clearTransitionTimer(element, property = "all") {
+    if (!element) return;
+    const dataPropName = `${property}TransitionTimer`;
+    if (!element.dataset[dataPropName]) return;
+    clearTimeout(parseInt(element.dataset[dataPropName]));
+    delete element.dataset[dataPropName];
+  }
+  function setTransitionTimer(element, property = "all", timeout, callback) {
+    if (!element) return;
+    const dataPropName = `${property}TransitionTimer`;
+    const timer = setTimeout(() => {
+      clearTransitionTimer(element, property);
+      if (isFunction(callback)) callback(element);
+    }, timeout);
+    element.dataset[dataPropName] = timer.toString();
+    return timer;
+  }
+  function slide(element, from, open, callback) {
+    if (!element) return;
+    clearTransitionTimer(element, "height");
+    const duration = prefersReducedMotion() ? 0 : getTransitionDuration(element, "height");
+    const done = (element2) => {
+      element2.style.removeProperty("height");
+      element2.style.removeProperty("overflow");
+      if (isFunction(callback)) callback(element2);
+    };
+    if (!duration) return done(element);
+    element.style.overflow = "hidden";
+    element.style.height = `${from}px`;
+    const full = element.scrollHeight;
+    element.style.height = `${open ? full : 0}px`;
+    setTransitionTimer(element, "height", duration + TRANSITION_TIMER_GRACE, done);
+  }
+
+  // src/core.js
+  var ElementBase = typeof HTMLElement !== "undefined" ? HTMLElement : class {
+  };
   function define(tag, ctor) {
     if (typeof customElements === "undefined" || customElements.get(tag)) return;
     customElements.define(tag, ctor);
@@ -42,6 +141,9 @@
     }
   }
   var OPTIONS = { exclusive: "boolean" };
+  var CONTENT_CLASS = "accordion-elemental-content";
+  var CLOSING = Symbol("closing");
+  var DETACHED_NAME = Symbol("detachedName");
   var groupCount = 0;
   var AccordionElemental = class extends ElementBase {
     /** Direct-child panels only, so a nested accordion is not swallowed. */
@@ -57,10 +159,13 @@
       this.initialized = true;
       this.options = Object.assign({ exclusive: false }, readOptions(this, OPTIONS));
       this.onKeyDown = this.onKeyDown.bind(this);
+      this.onClick = this.onClick.bind(this);
       this.onToggle = this.onToggle.bind(this);
       this.onHashChange = this.onHashChange.bind(this);
+      this.wrapPanels();
       if (this.options.exclusive) this.applyExclusive();
       this.addEventListener("keydown", this.onKeyDown);
+      this.addEventListener("click", this.onClick);
       this.addEventListener("toggle", this.onToggle, true);
       window.addEventListener("hashchange", this.onHashChange);
       this.openFromHash();
@@ -68,9 +173,39 @@
     disconnectedCallback() {
       if (!this.initialized) return;
       this.removeEventListener("keydown", this.onKeyDown);
+      this.removeEventListener("click", this.onClick);
       this.removeEventListener("toggle", this.onToggle, true);
       window.removeEventListener("hashchange", this.onHashChange);
       this.initialized = false;
+    }
+    /**
+     * Wrap each panel body in a div, because a height transition needs one box to
+     * measure and clip and `<details>` hands you a bare run of siblings. Idempotent,
+     * so moving the group in the DOM does not nest a second wrapper.
+     *
+     * ponytail: `::details-content` is the wrapper the platform already has, but
+     * animating it from 0 to `auto` also needs `interpolate-size`, which is not
+     * everywhere yet. Drop the div for the pseudo-element once it is.
+     */
+    wrapPanels() {
+      for (const panel of this.panels) {
+        const summary = panel.querySelector(":scope > summary");
+        if (!summary) continue;
+        if (panel.querySelector(":scope > ." + CONTENT_CLASS)) continue;
+        const content = document.createElement("div");
+        content.className = CONTENT_CLASS;
+        let node = summary.nextSibling;
+        while (node) {
+          const next = node.nextSibling;
+          content.appendChild(node);
+          node = next;
+        }
+        panel.appendChild(content);
+      }
+    }
+    /** @returns {HTMLElement|null} A panel's body wrapper. */
+    contentOf(panel) {
+      return panel.querySelector(":scope > ." + CONTENT_CLASS);
     }
     /**
      * Give every panel the same `name`, which is what makes native `<details>`
@@ -85,9 +220,71 @@
         seenOpen = true;
       }
       if (!this.groupName) {
-        this.groupName = this.getAttribute("name") || "accordion-elemental-" + ++groupCount;
+        this.groupName = this.getAttribute("name") || panels[0] && panels[0].getAttribute("name") || "accordion-elemental-" + ++groupCount;
       }
       for (const panel of panels) panel.name = this.groupName;
+    }
+    /**
+     * Open a panel and slide its body down. The panel opens first, since the body
+     * is `display: none` until it does and an unrendered box has no height.
+     */
+    openPanel(panel) {
+      const content = this.contentOf(panel);
+      if (!content) {
+        panel.open = true;
+        return;
+      }
+      if (this.options.exclusive) {
+        for (const other of this.panels) {
+          if (other !== panel && other.open && !other[CLOSING]) this.closePanel(other);
+        }
+      }
+      const from = panel.open ? content.offsetHeight : 0;
+      panel[CLOSING] = false;
+      this.restoreName(panel);
+      panel.open = true;
+      slide(content, from, true);
+    }
+    /**
+     * Slide a panel's body up, and only then actually close it - `<details>` sets
+     * its contents to `display: none` on close, which would cut the animation off
+     * at frame one.
+     */
+    closePanel(panel) {
+      const content = this.contentOf(panel);
+      if (!content) {
+        panel.open = false;
+        return;
+      }
+      panel[CLOSING] = true;
+      if (panel.hasAttribute("name")) {
+        panel[DETACHED_NAME] = panel.getAttribute("name");
+        panel.removeAttribute("name");
+      }
+      slide(content, content.offsetHeight, false, () => {
+        panel[CLOSING] = false;
+        panel.open = false;
+        this.restoreName(panel);
+      });
+    }
+    restoreName(panel) {
+      if (panel[DETACHED_NAME] == null) return;
+      panel.setAttribute("name", panel[DETACHED_NAME]);
+      panel[DETACHED_NAME] = null;
+    }
+    /**
+     * Take over the toggle so the close can outlive the click. Enter and Space on a
+     * `<summary>` dispatch a click too, so this covers the keyboard as well.
+     */
+    onClick(e) {
+      const summary = e.target.closest && e.target.closest("summary");
+      if (!summary) return;
+      const panel = summary.parentElement;
+      if (!panel || !this.panels.includes(panel)) return;
+      if (!this.contentOf(panel)) return;
+      e.preventDefault();
+      if (panel.open && !panel[CLOSING]) this.closePanel(panel);
+      else this.openPanel(panel);
     }
     onKeyDown(e) {
       const summary = e.target.closest && e.target.closest("summary");
@@ -113,10 +310,8 @@
     }
     /**
      * Open the panel containing the element the URL fragment points at, so a link
-     * to a single question lands on it opened.
-     *
-     * ponytail: Chrome already auto-expands `<details>` on fragment navigation;
-     * this covers the browsers that do not. Drop it once that is everywhere.
+     * to a single question lands on it opened. Instant rather than animated: a deep
+     * link should arrive at the content, not at a panel still on its way open.
      */
     openFromHash() {
       const id = decodeURIComponent(window.location.hash.slice(1));

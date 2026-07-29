@@ -2,7 +2,7 @@ Below is every documentation page of the `book-of-elementals` npm package,
 concatenated in full: one block per element, each with its source URL, usage,
 attributes, events and styling hooks.
 
-The elements are custom elements with zero runtime dependencies that render in
+The elements are custom elements that render in
 light DOM (no shadow roots) and follow the
 [W3C ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/patterns/).
 Importing a bundle registers its element — there is no global, nothing to

@@ -1,7 +1,7 @@
 {
   "name": "book-of-elementals",
   "version": "0.1.0",
-  "description": "📓 Stamat's Book of Elementals — custom elements, accessible, dependency-free, light DOM.",
+  "description": "📓 Stamat's Book of Elementals — custom elements, accessible, light DOM.",
   "type": "module",
   "main": "src/index.js",
   "style": "src/styles/index.scss",
@@ -53,6 +53,9 @@
     "prepack": "poops -b",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "lint": "eslint . && stylelint \"{src,docs}/**/*.scss\""
+  },
+  "dependencies": {
+    "book-of-spells": "^1.4.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

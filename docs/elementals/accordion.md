@@ -85,8 +85,9 @@ initialisation call to forget.
 
 Add `exclusive` and only one panel stays open at a time. The element assigns a
 shared `name` to every panel, which is what makes native `<details>` mutually
-exclusive — the closing is the browser's, not a script's, so it animates and
-behaves identically to a user-driven close.
+exclusive, and that name is what keeps the group exclusive for anything the
+element does not see — a panel opened from script, say. On a click the element
+closes the open sibling itself instead, so it slides shut rather than vanishing.
 
 ```html
 <accordion-elemental exclusive>
@@ -109,6 +110,18 @@ groups, or to keep it stable across renders:
 
 ```html
 <accordion-elemental exclusive name="faq"></accordion-elemental>
+```
+
+Assigning the `name` is the one part of exclusivity that needs the script, so
+with scripting off the panels open independently. Write the shared `name` on the
+panels yourself and the browser enforces it with no script at all — the element
+picks that name up rather than minting its own:
+
+```html
+<accordion-elemental exclusive>
+  <details name="faq" open>…</details>
+  <details name="faq">…</details>
+</accordion-elemental>
 ```
 
 ## Keyboard
@@ -167,10 +180,11 @@ document
 
 Attributes are read bare, as `data-*`, or in kebab-case.
 
-## Styling
+## Animation
 
-No shadow DOM, so style the elements directly. The open/close animation is
-pure CSS on `::details-content`:
+Panels slide open and closed. Retime it with two custom properties — the element
+reads the duration back out of the computed styles to time itself, so the
+stylesheet stays the single source of truth:
 
 ```css
 accordion-elemental {
@@ -179,11 +193,28 @@ accordion-elemental {
 }
 ```
 
-Browsers without `::details-content` ignore the rule and fall back to native
-instant toggling — working, just unanimated. `prefers-reduced-motion: reduce`
-switches the transition off.
+`prefers-reduced-motion: reduce` switches it off, in CSS and in the element.
 
-The library styles structure and motion only; the look is yours:
+Two things make this awkward, and the element handles both:
+
+- **`<details>` gives you no box to animate.** The panel body is a bare run of
+  siblings after the `<summary>`, and a height transition needs one box to measure
+  and clip. On upgrade the element wraps that run in
+  `<div class="accordion-elemental-content">`. Style around it, or through it —
+  descendant selectors are unaffected, direct-child ones are not.
+- **Closing hides the content instantly.** `<details>` sets its contents to
+  `display: none` the moment `open` goes away, which cuts a close animation off at
+  frame one. So the element takes over the click, slides the body up while the
+  panel is still open, and only then closes it. `accordion-toggle` fires when the
+  panel actually closes, at the end of the slide.
+
+With JavaScript off there is no wrapper, the transition rule matches nothing, and
+the panels toggle natively and instantly. Which is correct, just unanimated.
+
+## Styling
+
+No shadow DOM, so style the elements directly. The library styles structure and
+motion only; the look is yours:
 
 ```css
 accordion-elemental > details + details {

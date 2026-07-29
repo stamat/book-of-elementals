@@ -1,5 +1,5 @@
 Book of Elementals is an npm package (`book-of-elementals`) of custom elements
-that are accessible by default, have zero runtime dependencies, and render in
+that are accessible by default and render in
 **light DOM** — there are no shadow roots, so every part is stylable with
 ordinary CSS and server-rendered markup works untouched.
 

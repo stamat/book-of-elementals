@@ -6,33 +6,31 @@
 accordion-elemental {
   display: block;
 
-  > details {
-    // Lets `block-size` animate to and from the `auto` keyword. Scoped here
-    // rather than on :root so the library does not change how the whole page
-    // interpolates sizes.
-    interpolate-size: allow-keywords;
-  }
-
   > details > summary {
     cursor: pointer;
   }
 
-  // Open/close animation. Browsers without ::details-content drop this rule and
-  // fall back to native instant toggling, which is correct, just unanimated.
-  > details::details-content {
-    block-size: 0;
-    overflow: hidden;
-    transition:
-      block-size var(--accordion-elemental-duration) var(--accordion-elemental-easing),
-      content-visibility var(--accordion-elemental-duration) var(--accordion-elemental-easing) allow-discrete;
-  }
-
-  > details[open]::details-content {
-    block-size: auto;
+  // The element wraps each panel body in this div on upgrade, because a height
+  // transition needs one box to measure and clip and `<details>` hands you a bare
+  // run of siblings. The element reads this duration back out to time the slide,
+  // so restyling it here restyles the animation - including to `none`.
+  // Without JavaScript there is no div, this rule matches nothing, and the panels
+  // toggle natively and instantly. Which is correct, just unanimated.
+  > details > .accordion-elemental-content {
+    // The wrapper is the library's box, not the page's, and it is kept inert on
+    // purpose. Padding or a border here would be a floor the height cannot get
+    // under - `box-sizing: border-box` renders `height: 0` as the padding - so
+    // the panel would animate shut down to that and then cut. Style the content
+    // inside the wrapper instead.
+    display: flow-root; // no margins collapsing out, so the measured height is the real one
+    margin: 0;
+    padding: 0;
+    border: 0;
+    transition: height var(--accordion-elemental-duration) var(--accordion-elemental-easing);
   }
 
   @media (prefers-reduced-motion: reduce) {
-    > details::details-content {
+    > details > .accordion-elemental-content {
       transition: none;
     }
   }

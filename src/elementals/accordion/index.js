@@ -1,4 +1,6 @@
-import { ElementBase, readOptions, define } from '../../core.js';
+import { slide } from 'book-of-spells/src/animations.mjs';
+import { readOptions } from 'book-of-spells/src/dom.mjs';
+import { ElementBase, define } from '../../core.js';
 
 /**
  * Compute the header to move focus to for a roving-arrow key press.
@@ -25,6 +27,14 @@ export function nextIndex(current, key, length) {
 
 const OPTIONS = { exclusive: 'boolean' };
 
+/** Class of the wrapper the element puts around each panel body. */
+const CONTENT_CLASS = 'accordion-elemental-content';
+
+// Per-element state, kept off the attribute surface so it cannot be styled,
+// serialised or collided with by the page.
+const CLOSING = Symbol('closing');
+const DETACHED_NAME = Symbol('detachedName');
+
 // Monotonic counter for generating unique `name` values for exclusive groups.
 let groupCount = 0;
 
@@ -40,6 +50,7 @@ let groupCount = 0;
  * - arrow/Home/End navigation between headers (APG accordion, optional but recommended)
  * - opening the panel that contains the current URL fragment
  * - an `accordion-toggle` event on the group, since `toggle` does not bubble
+ * - a height animation on open and close
  *
  * Light DOM, no shadow root, so every part stays stylable by the page author.
  *
@@ -67,12 +78,15 @@ export class AccordionElemental extends ElementBase {
     this.options = Object.assign({ exclusive: false }, readOptions(this, OPTIONS));
 
     this.onKeyDown = this.onKeyDown.bind(this);
+    this.onClick = this.onClick.bind(this);
     this.onToggle = this.onToggle.bind(this);
     this.onHashChange = this.onHashChange.bind(this);
 
+    this.wrapPanels();
     if (this.options.exclusive) this.applyExclusive();
 
     this.addEventListener('keydown', this.onKeyDown);
+    this.addEventListener('click', this.onClick);
     // `toggle` does not bubble, but non-bubbling events still run the capture
     // phase through ancestors - so capture is how the group hears its panels.
     this.addEventListener('toggle', this.onToggle, true);
@@ -84,9 +98,43 @@ export class AccordionElemental extends ElementBase {
   disconnectedCallback() {
     if (!this.initialized) return;
     this.removeEventListener('keydown', this.onKeyDown);
+    this.removeEventListener('click', this.onClick);
     this.removeEventListener('toggle', this.onToggle, true);
     window.removeEventListener('hashchange', this.onHashChange);
     this.initialized = false;
+  }
+
+  /**
+   * Wrap each panel body in a div, because a height transition needs one box to
+   * measure and clip and `<details>` hands you a bare run of siblings. Idempotent,
+   * so moving the group in the DOM does not nest a second wrapper.
+   *
+   * ponytail: `::details-content` is the wrapper the platform already has, but
+   * animating it from 0 to `auto` also needs `interpolate-size`, which is not
+   * everywhere yet. Drop the div for the pseudo-element once it is.
+   */
+  wrapPanels() {
+    for (const panel of this.panels) {
+      const summary = panel.querySelector(':scope > summary');
+      if (!summary) continue;
+      if (panel.querySelector(':scope > .' + CONTENT_CLASS)) continue;
+
+      const content = document.createElement('div');
+      content.className = CONTENT_CLASS;
+      // Everything after the summary is the panel body.
+      let node = summary.nextSibling;
+      while (node) {
+        const next = node.nextSibling;
+        content.appendChild(node);
+        node = next;
+      }
+      panel.appendChild(content);
+    }
+  }
+
+  /** @returns {HTMLElement|null} A panel's body wrapper. */
+  contentOf(panel) {
+    return panel.querySelector(':scope > .' + CONTENT_CLASS);
   }
 
   /**
@@ -106,12 +154,97 @@ export class AccordionElemental extends ElementBase {
       seenOpen = true;
     }
 
-    // Remember the generated name so moving the group in the DOM re-uses it
-    // instead of minting a new one on every reconnect.
+    // Remember the name so moving the group in the DOM re-uses it instead of
+    // minting a new one on every reconnect. A name already on the panels is kept:
+    // that is how an author gets exclusivity with scripting off, since without a
+    // shared `name` in the markup there is nothing for the browser to enforce.
     if (!this.groupName) {
-      this.groupName = this.getAttribute('name') || 'accordion-elemental-' + (++groupCount);
+      this.groupName = this.getAttribute('name')
+        || (panels[0] && panels[0].getAttribute('name'))
+        || 'accordion-elemental-' + (++groupCount);
     }
     for (const panel of panels) panel.name = this.groupName;
+  }
+
+  /**
+   * Open a panel and slide its body down. The panel opens first, since the body
+   * is `display: none` until it does and an unrendered box has no height.
+   */
+  openPanel(panel) {
+    const content = this.contentOf(panel);
+    if (!content) {
+      panel.open = true;
+      return;
+    }
+
+    // Close the siblings here rather than leaving it to the shared `name`, which
+    // would shut them instantly the moment this one opens.
+    if (this.options.exclusive) {
+      for (const other of this.panels) {
+        if (other !== panel && other.open && !other[CLOSING]) this.closePanel(other);
+      }
+    }
+
+    // Measure before opening. Once `open` is set the body is already at full
+    // height, and a slide that starts where it ends is not a slide. A panel
+    // caught mid-close is rendered already, so its height is the honest start.
+    const from = panel.open ? content.offsetHeight : 0;
+
+    panel[CLOSING] = false;
+    this.restoreName(panel);
+    panel.open = true;
+    slide(content, from, true);
+  }
+
+  /**
+   * Slide a panel's body up, and only then actually close it - `<details>` sets
+   * its contents to `display: none` on close, which would cut the animation off
+   * at frame one.
+   */
+  closePanel(panel) {
+    const content = this.contentOf(panel);
+    if (!content) {
+      panel.open = false;
+      return;
+    }
+
+    panel[CLOSING] = true;
+    // Detach the exclusivity name for the length of the animation: with it in
+    // place the browser slams this panel shut the moment a sibling opens, and
+    // the panel is still `open` for the whole slide.
+    if (panel.hasAttribute('name')) {
+      panel[DETACHED_NAME] = panel.getAttribute('name');
+      panel.removeAttribute('name');
+    }
+
+    slide(content, content.offsetHeight, false, () => {
+      panel[CLOSING] = false;
+      panel.open = false;
+      this.restoreName(panel);
+    });
+  }
+
+  restoreName(panel) {
+    if (panel[DETACHED_NAME] == null) return;
+    panel.setAttribute('name', panel[DETACHED_NAME]);
+    panel[DETACHED_NAME] = null;
+  }
+
+  /**
+   * Take over the toggle so the close can outlive the click. Enter and Space on a
+   * `<summary>` dispatch a click too, so this covers the keyboard as well.
+   */
+  onClick(e) {
+    const summary = e.target.closest && e.target.closest('summary');
+    if (!summary) return;
+    const panel = summary.parentElement;
+    // Not one of ours means a nested accordion's; let it handle itself.
+    if (!panel || !this.panels.includes(panel)) return;
+    if (!this.contentOf(panel)) return;
+
+    e.preventDefault();
+    if (panel.open && !panel[CLOSING]) this.closePanel(panel);
+    else this.openPanel(panel);
   }
 
   onKeyDown(e) {
@@ -143,10 +276,8 @@ export class AccordionElemental extends ElementBase {
 
   /**
    * Open the panel containing the element the URL fragment points at, so a link
-   * to a single question lands on it opened.
-   *
-   * ponytail: Chrome already auto-expands `<details>` on fragment navigation;
-   * this covers the browsers that do not. Drop it once that is everywhere.
+   * to a single question lands on it opened. Instant rather than animated: a deep
+   * link should arrive at the content, not at a panel still on its way open.
    */
   openFromHash() {
     const id = decodeURIComponent(window.location.hash.slice(1));

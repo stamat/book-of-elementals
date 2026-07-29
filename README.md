@@ -1,6 +1,6 @@
 # 📓 Book of Elementals [![npm version](https://img.shields.io/npm/v/book-of-elementals)](https://www.npmjs.com/package/book-of-elementals) [![license mit](https://img.shields.io/badge/license-MIT-green)](https://github.com/stamat/book-of-elementals/blob/main/LICENSE)
 
-Accessible, dependency-free custom elements. Light DOM, no build step required.
+Accessible custom elements. Light DOM, no build step required.
 
 Sibling to [book-of-spells](https://github.com/stamat/book-of-spells) — that one
 holds the JavaScript helpers, this one holds the elements.
@@ -10,7 +10,9 @@ holds the JavaScript helpers, this one holds the elements.
 - **Native first** — an element exists only where the platform leaves a real gap
 - **Light DOM, always** — no shadow roots, your CSS reaches every part
 - **Accessible or it does not ship** — [W3C APG](https://www.w3.org/WAI/ARIA/apg/patterns/) patterns, keyboard and reduced-motion included
-- **No runtime dependencies**
+- **One dependency, and it is the sibling** — the helpers live in
+  [book-of-spells](https://github.com/stamat/book-of-spells) and are bundled into `dist/`,
+  so a script tag still costs you exactly one file
 
 ## Elements
 
@@ -87,6 +89,7 @@ What the element adds on top of native:
 - <kbd>Up</kbd>/<kbd>Down</kbd>/<kbd>Home</kbd>/<kbd>End</kbd> navigation between headers ([APG accordion](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/))
 - deep links — a URL fragment pointing inside a panel opens it
 - an `accordion-toggle` event on the group, since `toggle` does not bubble
+- a height animation on open and close, in every browser
 
 | Attribute   | Type    | Default | Description                                                |
 | ----------- | ------- | ------- | ---------------------------------------------------------- |
@@ -100,9 +103,12 @@ screen reader users can navigate to them by heading:
 <summary><h3>Question</h3></summary>
 ```
 
-Styling is yours — there is no shadow DOM. The open/close animation is pure CSS
-on `::details-content` and degrades to native instant toggling where that is
-unsupported:
+Styling is yours — there is no shadow DOM. On upgrade the element wraps each
+panel body in `<div class="accordion-elemental-content">`, transitions its
+height, and holds the close open until the transition ends — `<details>` sets
+its contents to `display: none` the moment it closes, which would otherwise cut
+the animation off at frame one. Retime it in CSS; the element reads the duration
+back out of the stylesheet:
 
 ```css
 accordion-elemental {
@@ -110,6 +116,14 @@ accordion-elemental {
   --accordion-elemental-easing: ease;
 }
 ```
+
+`prefers-reduced-motion: reduce` switches it off, and without JavaScript there is
+no wrapper and no animation — native instant toggling, which is still correct.
+
+## Changelog
+
+Every release is written up in [CHANGELOG.md](CHANGELOG.md), newest first. Changes to the DOM an
+element produces, or to CSS you may already be targeting, are called out there explicitly.
 
 ## Development
 
@@ -120,6 +134,8 @@ npm test       # unit tests (jest), colocated as src/**/*.test.js
 npm run lint   # eslint + stylelint
 npm run build  # dist/ (package) and _site/ (docs) — both gitignored
 ```
+
+Land your change under `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md) as you go.
 
 `src/` is the package, `docs/` is the site's markdown and its skin. Building writes
 `dist/` (rebuilt on `prepack`, so it never has to be committed) and `_site/`, which

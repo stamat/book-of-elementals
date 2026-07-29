@@ -7,22 +7,18 @@
 accordion-elemental {
   display: block;
 }
-accordion-elemental > details {
-  interpolate-size: allow-keywords;
-}
 accordion-elemental > details > summary {
   cursor: pointer;
 }
-accordion-elemental > details::details-content {
-  block-size: 0;
-  overflow: hidden;
-  transition: block-size var(--accordion-elemental-duration) var(--accordion-elemental-easing), content-visibility var(--accordion-elemental-duration) var(--accordion-elemental-easing) allow-discrete;
-}
-accordion-elemental > details[open]::details-content {
-  block-size: auto;
+accordion-elemental > details > .accordion-elemental-content {
+  display: flow-root;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  transition: height var(--accordion-elemental-duration) var(--accordion-elemental-easing);
 }
 @media (prefers-reduced-motion: reduce) {
-  accordion-elemental > details::details-content {
+  accordion-elemental > details > .accordion-elemental-content {
     transition: none;
   }
 }

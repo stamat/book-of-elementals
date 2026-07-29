@@ -1,14 +1,14 @@
 ---
 layout: poops-docs-theme/docs
 title: Book of Elementals
-description: Accessible, dependency-free custom elements. Light DOM, no build step required.
+description: Accessible custom elements. Light DOM, no build step required.
 order: 0
 ---
 
 # 📓 Book of Elementals
 
-A growing book of custom elements that are accessible by default, have no
-runtime dependencies, and use **light DOM** — so every part stays yours to style.
+A growing book of custom elements that are accessible by default and use
+**light DOM** — so every part stays yours to style.
 
 Sibling to [book-of-spells](https://github.com/stamat/book-of-spells), which
 holds the plain JavaScript helpers. This one holds the elements.
@@ -70,7 +70,9 @@ existing design tokens apply, and server-rendered markup works untouched.
 where one applies. Keyboard operation, focus management and reduced-motion
 handling are not options.
 
-**No dependencies.** Nothing at runtime. Ever.
+**One dependency, and it is the sibling.** The plain JavaScript helpers live in
+[book-of-spells](https://github.com/stamat/book-of-spells) and are bundled into
+`dist/`, so a script tag still costs you exactly one file. Nothing else, ever.
 
 ## The book so far
 
