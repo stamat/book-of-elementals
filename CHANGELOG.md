@@ -14,6 +14,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-29
+
 ### Added
 
 - `<accordion-elemental>` animates its panels open and closed, in every browser. Two custom
@@ -113,4 +115,5 @@ panels via a shared `name`, arrow/Home/End header navigation per the
 links, and a bubbling `accordion-toggle` event on the group.
 
 [Unreleased]: https://github.com/stamat/book-of-elementals/commits/main
+[0.2.0]: https://www.npmjs.com/package/book-of-elementals/v/0.2.0
 [0.1.0]: https://www.npmjs.com/package/book-of-elementals/v/0.1.0
