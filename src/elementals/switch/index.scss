@@ -1,0 +1,17 @@
+switch-elemental {
+  // A coordinator, not a box. The switch is usually a flex or grid item sitting next
+  // to its label, and an extra box in between is a box the parent lays out instead of
+  // the button. `contents` means dropping the element around an existing button
+  // changes no layout at all. Give it `display: block` in your own CSS if you want
+  // something to style.
+  display: contents;
+
+  // Until the element is defined the button flips nothing, so it is not offered - a
+  // switch that silently does not switch is worse than no switch at all. With
+  // scripting off that is the whole of the degradation, and it is why a setting that
+  // must survive it belongs in a form as `<input type="checkbox" role="switch">`,
+  // which needs no script in the first place.
+  &:not(:defined) > button {
+    display: none;
+  }
+}

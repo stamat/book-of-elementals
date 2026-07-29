@@ -1,0 +1,154 @@
+// Optional look for `<switch-elemental>`. Not part of the element's own stylesheet
+// and not in its bundle: that one styles structure only, and a light-DOM element
+// cannot scope a look away from a page that did not ask for one. Import this when you
+// want the look, skip it when you do not.
+// colors are mixed out of `currentcolor` rather than hard-coded, so the switch sits in
+// whatever palette the page already has - including a theme switch, which is the thing
+// a switch most often is - with nothing to configure.
+
+switch-elemental {
+  // The geometry is four numbers and the rest is derived, so resizing the switch is
+  // one property rather than five that have to agree with each other.
+  --switch-elemental-width: 3.625rem;
+  --switch-elemental-height: 2rem;
+  --switch-elemental-border-width: 2px;
+  --switch-elemental-gap: 2px; // between the knob and the inside of the track
+
+  // The knob fills the track's height minus the border and the gap on both sides, and
+  // travels the width it does not fill. Derived rather than set, so the two can never
+  // drift apart into a knob that overshoots its own track.
+  --switch-elemental-inset: calc(var(--switch-elemental-border-width) + var(--switch-elemental-gap));
+  --switch-elemental-knob-size: calc(var(--switch-elemental-height) - var(--switch-elemental-inset) * 2);
+  --switch-elemental-travel: calc(var(--switch-elemental-width) - var(--switch-elemental-knob-size) - var(--switch-elemental-inset) * 2);
+
+  // Off, the track is empty and the knob is the only ink; on, they swap - the track
+  // fills with the text color and the knob drops out of it. Two states told apart by
+  // fill as well as by position, because position alone is the one cue a reader who
+  // has never seen the switch in its other state cannot read.
+  // `Canvas` is the page's own background, so the knob drops out to whatever the page
+  // sits on. Override it where the switch sits on a card rather than on the page.
+  --switch-elemental-track: transparent;
+  --switch-elemental-track-checked: currentcolor;
+  --switch-elemental-knob: currentcolor;
+  --switch-elemental-knob-checked: Canvas;
+  --switch-elemental-duration: 250ms;
+  --switch-elemental-easing: ease-in-out;
+
+  > button {
+    position: relative; // the knob and the icons are positioned against this
+    box-sizing: border-box; // so the border is part of the height the knob is sized off
+    display: block;
+    inline-size: var(--switch-elemental-width);
+    block-size: var(--switch-elemental-height);
+    padding: 0;
+    color: inherit;
+    cursor: pointer;
+    background: var(--switch-elemental-track);
+    border: var(--switch-elemental-border-width) solid currentcolor;
+    border-radius: var(--switch-elemental-height); // a pill at any height
+    transition: background var(--switch-elemental-duration) var(--switch-elemental-easing);
+
+    // The knob. A pseudo-element rather than a span, because it is not content - it
+    // is the state, and the state is already on the button as `aria-checked`.
+    &::before {
+      content: "";
+      position: absolute;
+      inset-block-start: var(--switch-elemental-gap);
+      inset-inline-start: var(--switch-elemental-gap);
+      inline-size: var(--switch-elemental-knob-size);
+      block-size: var(--switch-elemental-knob-size);
+      background: var(--switch-elemental-knob);
+      border-radius: 50%;
+      transition:
+        translate var(--switch-elemental-duration) var(--switch-elemental-easing),
+        background var(--switch-elemental-duration) var(--switch-elemental-easing);
+    }
+
+    // Optional, and the reason the button may have children at all: an icon per state,
+    // each sitting in the half the knob is not in. The knob covers one end, so the icon
+    // that shows is always the one at the other - which is why the "on" icon is at the
+    // start, where the knob has just left.
+    > .switch-elemental-on,
+    > .switch-elemental-off {
+      position: absolute;
+      inset-block: var(--switch-elemental-gap);
+      inline-size: var(--switch-elemental-knob-size); // the knob's box, mirrored
+      display: grid;
+      place-items: center;
+      transition: opacity var(--switch-elemental-duration) var(--switch-elemental-easing);
+    }
+
+    // Each icon takes the knob color of the state it belongs to, because each one sits
+    // on that state's track: the off icon over the empty track, the on icon over the
+    // filled one. Give them `currentcolor` and the on icon would be the track.
+    > .switch-elemental-off {
+      inset-inline-end: var(--switch-elemental-gap);
+      color: var(--switch-elemental-knob);
+      opacity: 1;
+    }
+
+    > .switch-elemental-on {
+      inset-inline-start: var(--switch-elemental-gap);
+      color: var(--switch-elemental-knob-checked);
+      opacity: 0;
+    }
+
+    // Keyed off the ARIA rather than a class, because the ARIA is the state - there is
+    // no second thing to keep in step with it, and your own CSS can key off it too.
+    &[aria-checked="true"] {
+      background: var(--switch-elemental-track-checked);
+
+      &::before {
+        translate: var(--switch-elemental-travel);
+        background: var(--switch-elemental-knob-checked);
+      }
+
+      > .switch-elemental-off {
+        opacity: 0;
+      }
+
+      > .switch-elemental-on {
+        opacity: 1;
+      }
+    }
+
+    // `translate` has no logical form, so the one direction in here that is not already
+    // a logical property has to be flipped by hand. Everything else - the insets, the
+    // icon ends - is logical and turns around on its own.
+    &:dir(rtl)[aria-checked="true"]::before {
+      translate: calc(var(--switch-elemental-travel) * -1);
+    }
+
+    // Forced-colors mode overrides author backgrounds, which here are the whole
+    // control: the track fill and the knob are the only things telling the two states
+    // apart. System color keywords are honoured there, so both are repainted in them
+    // rather than lost. `Highlight` for the on track, because that is the mode's own
+    // colour for a control that is set.
+    @media (forced-colors: active) {
+      &::before {
+        background: CanvasText;
+      }
+
+      &[aria-checked="true"] {
+        background: Highlight;
+
+        &::before {
+          background: Canvas;
+        }
+
+        > .switch-elemental-on {
+          color: Canvas;
+        }
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      &,
+      &::before,
+      > .switch-elemental-on,
+      > .switch-elemental-off {
+        transition: none;
+      }
+    }
+  }
+}

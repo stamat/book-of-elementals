@@ -1,0 +1,8 @@
+/* book-of-elementals v0.2.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
+switch-elemental {
+  display: contents;
+}
+switch-elemental:not(:defined) > button {
+  display: none;
+}
+/*# sourceMappingURL=switch.css.map */

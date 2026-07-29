@@ -20,6 +20,11 @@
     "./disclosure/style.css": "./dist/elementals/disclosure.css",
     "./disclosure/theme.scss": "./src/elementals/disclosure/theme.scss",
     "./disclosure/theme.css": "./dist/elementals/disclosure-theme.css",
+    "./switch": "./src/elementals/switch/index.js",
+    "./switch/style.scss": "./src/elementals/switch/index.scss",
+    "./switch/style.css": "./dist/elementals/switch.css",
+    "./switch/theme.scss": "./src/elementals/switch/theme.scss",
+    "./switch/theme.css": "./dist/elementals/switch-theme.css",
     "./styles/*": "./src/styles/*",
     "./dist/*": "./dist/*",
     "./package.json": "./package.json"
@@ -48,6 +53,8 @@
     "apg",
     "accordion",
     "disclosure",
+    "switch",
+    "toggle",
     "details",
     "javascript",
     "esm"

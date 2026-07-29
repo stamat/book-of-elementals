@@ -5,6 +5,7 @@
 @use "../src/styles/index";
 @use "../src/elementals/accordion/theme" as *;
 @use "../src/elementals/disclosure/theme" as *;
+@use "../src/elementals/switch/theme" as *;
 
 // The demos wear the shipped optional theme rather than a skin of their own, so
 // what the pages show is what the import gives you. Its two custom properties are
@@ -13,6 +14,22 @@
 accordion-elemental {
   --accordion-elemental-border-color: var(--border);
   --accordion-elemental-radius: var(--radius);
+}
+
+// The docs surface is not `Canvas` - the pages sit on their own background - so the
+// knob the switch drops out to is re-pointed at it, the same way the accordion's two
+// properties are above. Everything else in the theme is `currentcolor` and needs nothing.
+switch-elemental {
+  --switch-elemental-knob-checked: var(--bg);
+}
+
+// Demo-only, and not part of any element: a label sitting beside a switch, which is
+// where the APG puts it. The element styles nothing around itself, because what is
+// next to it is none of its business.
+.demo-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
 }
 
 // Demo-only, and not part of any element: the figure the disclosure examples hang

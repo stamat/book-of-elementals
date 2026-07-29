@@ -40,6 +40,12 @@ Elements published so far:
   `open`, a `for` attribute for a detached region, `hidden="until-found"` so
   find-in-page still reaches a closed region, and a bubbling `disclosure-toggle`
   event.
+- `<switch-elemental>` — APG switch: a real `<button>` given `role="switch"` and
+  `aria-checked`, for a setting that takes effect the moment it is flipped (a
+  theme toggle, a mute). Reflected `checked` and a bubbling `switch-toggle`
+  event. For a switch inside a form use `<input type="checkbox" role="switch">`
+  instead — it needs no JavaScript at all, and this element has no
+  form-associated mode.
 
 Sibling project: [book-of-spells](https://github.com/stamat/book-of-spells),
 which holds the plain JavaScript helpers. This book holds the elements.

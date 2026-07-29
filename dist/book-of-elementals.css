@@ -50,4 +50,10 @@ disclosure-elemental:not(:defined) > button {
     transition: none;
   }
 }
+switch-elemental {
+  display: contents;
+}
+switch-elemental:not(:defined) > button {
+  display: none;
+}
 /*# sourceMappingURL=book-of-elementals.css.map */

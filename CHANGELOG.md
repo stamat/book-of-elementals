@@ -16,6 +16,54 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Added
 
+- `<switch-elemental>` — the [APG Switch pattern](https://www.w3.org/WAI/ARIA/apg/patterns/switch/):
+  an on/off setting that takes effect the moment it is flipped, on a real `<button>`.
+
+  ```html
+  <span id="dark-label">Dark mode</span>
+  <switch-elemental>
+    <button aria-labelledby="dark-label"></button>
+  </switch-elemental>
+  ```
+
+  A switch and a checkbox are the same boolean wearing different promises: a checkbox is a
+  value you are about to submit and has a third indeterminate state; a switch is a setting
+  that lands immediately and has two. So this is a `<button>`, which is where `Space`,
+  `Enter`, focus and the disabled state come from. **A switch inside a form is not this
+  element** — `<input type="checkbox" role="switch">` submits, resets, restores on
+  back-navigation and derives `aria-checked` from `checked` with no JavaScript at all, and
+  this element deliberately has no form-associated mode.
+
+  **DOM it produces:** `role="switch"` and `aria-checked` on the button, plus `type="button"`
+  if the markup did not set a type. Nothing is wrapped and nothing is moved. `checked` on the
+  host is the single source of truth and is reflected, so `[checked]` is a styling hook and
+  `aria-checked` is written from it rather than being the thing you set. State changes fire a
+  bubbling `switch-toggle` carrying `{ checked }`.
+
+  The element is `display: contents`, so dropping it around an existing button changes no
+  layout — a switch is usually a flex or grid item beside its label. With scripting off the
+  button is hidden (`switch-elemental:not(:defined) > button { display: none }`), because a
+  switch that silently does not switch is worse than no switch; a setting that must survive
+  that belongs in a form as the native checkbox above.
+
+  **CSS:** the optional theme draws a pill whose knob slides and whose track fills — off, the
+  track is empty and the knob is the only ink; on, they swap, so the two states differ by fill
+  as well as by position. Everything is mixed out of `currentcolor` bar the knob's checked
+  fill, which defaults to the `Canvas` system color. Knob size and travel are derived from
+  `--switch-elemental-width` and `--switch-elemental-height`, so resizing is one property;
+  `--switch-elemental-border-width`, `--switch-elemental-gap`, `--switch-elemental-track`,
+  `--switch-elemental-track-checked`, `--switch-elemental-knob`,
+  `--switch-elemental-knob-checked`, `--switch-elemental-duration` and
+  `--switch-elemental-easing` cover the rest. An icon per state is optional, in
+  `.switch-elemental-on` and `.switch-elemental-off` spans inside the button. Motion is off
+  under `prefers-reduced-motion`, and track and knob repaint in system colors under
+  `forced-colors`.
+
+  ```scss
+  @use "book-of-elementals/switch/style.scss";
+  @use "book-of-elementals/switch/theme.scss";
+  ```
+
 - `<disclosure-elemental>` — the
   [APG Disclosure pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/): a real
   `<button>` wired to a region it shows and hides. `<details>` is a disclosure already and

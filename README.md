@@ -20,6 +20,7 @@ holds the JavaScript helpers, this one holds the elements.
 | ------------------------ | -------------------------------------------------------------------------------------------------- |
 | `<accordion-elemental>`  | [APG Accordion](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/), over native `<details>`      |
 | `<disclosure-elemental>` | [APG Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), where `<details>` cannot go |
+| `<switch-elemental>`     | [APG Switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/), for a setting that takes effect at once |
 
 ## Docs
 
@@ -36,11 +37,13 @@ Import one element and only that element is registered:
 ```javascript
 import "book-of-elementals/accordion";
 import "book-of-elementals/disclosure";
+import "book-of-elementals/switch";
 ```
 
 ```scss
 @use "book-of-elementals/accordion/style.scss";
 @use "book-of-elementals/disclosure/style.scss";
+@use "book-of-elementals/switch/style.scss";
 ```
 
 Or the whole book:
@@ -184,6 +187,42 @@ padding is a floor the height cannot get under.
 The element is `display: contents`, so dropping it around existing markup changes
 no layout. With scripting off the region is simply visible and the button is not
 offered, which for a long description is the right way round.
+
+## `<switch-elemental>`
+
+An on/off setting that takes effect the moment you flip it — a theme toggle, a
+mute, autoplay — on a real `<button>`, which is where `Space`, `Enter`, the focus
+ring and the disabled state come from.
+
+```html
+<span id="dark-label">Dark mode</span>
+<switch-elemental>
+  <button aria-labelledby="dark-label"></button>
+</switch-elemental>
+```
+
+The element writes `role="switch"` and `aria-checked` onto the button, and that is
+all the ARIA there is. The name is the thing being switched — never the state,
+which `aria-checked` already announces.
+
+| Attribute | Type    | Default | Description                                                     |
+| --------- | ------- | ------- | ---------------------------------------------------------------- |
+| `checked` | boolean | `false` | Whether the switch is on. Reflected — it tracks the live state. |
+
+State changes fire a bubbling `switch-toggle` carrying `{ checked }`.
+
+If the setting lives in a **form**, stop here: `<input type="checkbox" role="switch">`
+submits, resets, restores on back-navigation and derives `aria-checked` from
+`checked` on its own, with no JavaScript at all. This element is for the other
+case, and deliberately does not grow a form-associated mode — which is also why
+the button is hidden until the element upgrades, since a switch that silently does
+not switch is worse than no switch.
+
+The optional theme draws a pill whose knob slides and whose track fills, mixed out
+of `currentcolor` so it sits in the palette it is switching. Geometry is derived
+from `--switch-elemental-width` and `--switch-elemental-height`, so resizing it is
+one property. An icon per state is optional, in `.switch-elemental-on` and
+`.switch-elemental-off` spans inside the button.
 
 ## Changelog
 
