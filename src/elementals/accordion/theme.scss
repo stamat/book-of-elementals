@@ -27,14 +27,21 @@ accordion-elemental {
     padding: 0.75rem 1rem;
     font-weight: 600;
 
-    // Top corners only, so the hover fill follows the panel's corners while it is
-    // closed and squares off against the body once it is open.
-    border-start-start-radius: inherit;
-    border-start-end-radius: inherit;
+    border-radius: var(--accordion-elemental-radius);
 
     &:hover {
       background: color-mix(in srgb, currentcolor 5%, transparent);
     }
+  }
+
+  // The summary is only rounded where it is actually the panel's edge. Closed it
+  // is the whole box and takes all four corners; open, the body sits underneath
+  // and the bottom two have to square off against it. `open` stays on the panel
+  // for the whole close animation, which is exactly when the corners should stay
+  // squared - so plain `[open]` is right here and the closing marker is not.
+  > details[open] > summary {
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
   }
 
   // The element wraps each panel body in `.accordion-elemental-content` and keeps
@@ -51,7 +58,10 @@ accordion-elemental {
   // Opt-in: one card instead of a stack. The rounding moves to the outer corners
   // of the run rather than a clipping wrapper, so the focus ring still fits.
   &.grouped {
-    > details {
+    // The summary loses its own rounding too, or a hovered panel mid-run shows
+    // rounded corners inside a square-sided card.
+    > details,
+    > details > summary {
       border-radius: 0;
     }
 

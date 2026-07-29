@@ -31,6 +31,34 @@ may already be targeting**, since neither shows up in a function signature.
   scripting off there is no animation at all — the panels toggle natively and instantly, which
   is still correct.
 
+- A panel being closed carries `class="accordion-elemental-closing"` for the length of the
+  slide. Because the element keeps `open` on a panel while it animates shut, `[open]` alone
+  cannot tell a stylesheet which way a panel is heading — a marker that should start turning
+  back on the first frame of the close needs `details[open]:not(.accordion-elemental-closing)`.
+  This class is the only part of the closing state deliberately made stylable; the rest stays
+  off the attribute surface.
+
+- An optional theme stylesheet, shipped separately and off unless you ask for it — the element's
+  own stylesheet still carries structure and motion only:
+
+  ```scss
+  @use "book-of-elementals/accordion/theme.scss";
+  ```
+
+  ```html
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/book-of-elementals/dist/elementals/accordion-theme.min.css"
+  />
+  ```
+
+  Its colours are mixed out of `currentcolor`, so panels sit in whatever palette the page
+  already has, theme switch included, with nothing to configure. Two custom properties cover the
+  rest: `--accordion-elemental-border-color` and `--accordion-elemental-radius`. Two opt-in
+  classes on the group ride along — `grouped` collapses the stack into one card with shared
+  borders, `caret` swaps the native disclosure marker for an Octicon chevron drawn as a mask, so
+  it takes the summary's `color` and turns on the element's own duration and easing.
+
 - An `exclusive` group now adopts a `name` already present on its panels instead of minting its
   own. Writing the shared `name` in the markup yourself is how exclusivity survives with
   scripting off, since assigning it is the one part the element needs JavaScript for:
