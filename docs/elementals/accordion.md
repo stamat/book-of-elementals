@@ -390,12 +390,14 @@ Composes with `grouped`, and the demo at the top of this page is wearing both.
   </details>
   <details>
     <summary>Why half a turn and not a quarter?</summary>
-    <p>This caret sits on the trailing edge, where a quarter turn would point it
-    out into the margin. <code>rotate: 180deg</code> reads the same either way
-    round in RTL. A caret that <em>leads</em> its label has the room for the
-    quarter turn, which is why
+    <p>This caret is parked at the far trailing edge of the row with the header
+    all the way at the other end, so there is nothing beside it to point at: it
+    points down at the panel it opens and turns over.
+    <code>rotate: 180deg</code> also reads the same either way round in RTL. A
+    caret that <em>leads</em> its label is next to the thing it can point at,
+    which is the quarter turn
     <a href="disclosure.html"><code>&lt;disclosure-elemental&gt;</code></a>
-    takes it.</p>
+    takes.</p>
   </details>
 </accordion-elemental>
 <br>
