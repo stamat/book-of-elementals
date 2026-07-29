@@ -44,12 +44,12 @@ accordion-elemental {
       margin-top: -1px; // share the border between neighbours
     }
 
-    > details:first-of-type {
+    > details:first-of-type, > details:first-of-type > summary {
       border-start-start-radius: var(--radius);
       border-start-end-radius: var(--radius);
     }
 
-    > details:last-of-type {
+    > details:last-of-type, > details:last-of-type > summary {
       border-end-start-radius: var(--radius);
       border-end-end-radius: var(--radius);
     }
@@ -59,6 +59,49 @@ accordion-elemental {
     > details:focus-within {
       position: relative;
       z-index: 1;
+    }
+  }
+
+  // Opt-in: an Octicon chevron on the trailing edge instead of the native
+  // disclosure marker, flipped over when the panel opens. Drawn as a mask rather
+  // than a background image so the caret takes the summary's `color` instead of
+  // baking one into the SVG, and so it follows a theme switch for free.
+  &.caret {
+    > details > summary {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      list-style: none; // drops the marker everywhere...
+
+      &::-webkit-details-marker {
+        display: none; // ...except Safari, which wants it said this way
+      }
+
+      &::after {
+        content: "";
+        flex: none; // a long header must not squeeze the caret
+        width: 1rem;
+        height: 1rem;
+        margin-inline-start: auto; // trailing edge, and still trailing in RTL
+        background: currentcolor;
+        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/%3E%3C/svg%3E") center / contain no-repeat;
+
+        // Borrow the element's own timing so the caret turns with the slide.
+        transition: rotate var(--accordion-elemental-duration) var(--accordion-elemental-easing);
+      }
+    }
+
+    // A half turn rather than a quarter, so it reads the same either way round in
+    // RTL. The element keeps `open` on the panel for the whole close animation,
+    // so this fires with the slide rather than after it.
+    > details[open] > summary::after {
+      rotate: 180deg;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      > details > summary::after {
+        transition: none;
+      }
     }
   }
 

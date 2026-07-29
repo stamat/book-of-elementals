@@ -38,7 +38,7 @@ element only adds what the browser leaves out.
 </accordion-elemental>
 <br>
 
-_A live `<accordion-elemental exclusive>`. Focus a header and press the arrow keys._
+_A live `<accordion-elemental exclusive class="grouped">`. Focus a header and press the arrow keys._
 
 ## Usage
 
@@ -250,5 +250,82 @@ accordion-elemental.grouped > details:last-of-type {
 
 The class is the docs skin's, not the library's — nothing in the element looks
 for it. The demo at the top of this page is wearing it.
+
+### A caret instead of the marker
+
+The native disclosure marker sits on the leading edge and looks like whatever the
+browser feels like. Swap it for an
+[Octicon chevron](https://primer.style/foundations/icons/chevron-down-16/) on the
+trailing edge, turned over when the panel opens:
+
+<accordion-elemental class="grouped caret">
+  <details open>
+    <summary>Where does the caret come from?</summary>
+    <p>A <code>::after</code> on the summary, masked with an inline SVG. No
+    markup change — the panels are the same <code>&lt;details&gt;</code> as
+    everywhere else on this page.</p>
+  </details>
+  <details>
+    <summary>Why a mask and not a background image?</summary>
+    <p>A mask paints with <code>currentcolor</code>, so the caret takes the
+    header's colour and follows a theme switch. A background image bakes its
+    colour into the SVG and needs a second copy for the dark theme.</p>
+  </details>
+  <details>
+    <summary>What times the turn?</summary>
+    <p>The element's own <code>--accordion-elemental-duration</code> and
+    <code>--accordion-elemental-easing</code>, so the caret turns with the slide
+    instead of alongside it.</p>
+  </details>
+</accordion-elemental>
+<br>
+
+```css
+/* The marker goes: list-style covers every browser but Safari, which wants it
+   said in its own words. */
+accordion-elemental.caret > details > summary {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  list-style: none;
+}
+
+accordion-elemental.caret > details > summary::-webkit-details-marker {
+  display: none;
+}
+
+accordion-elemental.caret > details > summary::after {
+  content: "";
+  flex: none; /* a long header must not squeeze the caret */
+  width: 1rem;
+  height: 1rem;
+  margin-inline-start: auto; /* trailing edge, and still trailing in RTL */
+  background: currentcolor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  transition: rotate var(--accordion-elemental-duration) var(--accordion-elemental-easing);
+}
+
+accordion-elemental.caret > details[open] > summary::after {
+  rotate: 180deg;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  accordion-elemental.caret > details > summary::after {
+    transition: none;
+  }
+}
+```
+
+Three things are worth keeping if you draw your own:
+
+- **Half a turn, not a quarter.** `rotate: 180deg` reads the same in RTL. A
+  quarter turn on a chevron pointing down points it into the margin.
+- **The caret animates because the panel stays `open`.** The element holds `open`
+  on the panel for the whole close, so `[open] > summary::after` turns with the
+  slide rather than snapping at the end of it. Timing it off the same two custom
+  properties keeps the two in step when you retime the animation.
+- **Reduced motion is yours to handle.** The element switches its own slide off;
+  a caret it never drew is not its to switch off for you.
 
 <script src="{{ relativePathPrefix }}dist/elementals/accordion.js"></script>
