@@ -390,11 +390,23 @@ Composes with `grouped`, and the demo at the top of this page is wearing both.
   </details>
   <details>
     <summary>Why half a turn and not a quarter?</summary>
-    <p><code>rotate: 180deg</code> reads the same in RTL. A quarter turn on a
-    chevron pointing down points it into the margin.</p>
+    <p>This caret sits on the trailing edge, where a quarter turn would point it
+    out into the margin. <code>rotate: 180deg</code> reads the same either way
+    round in RTL. A caret that <em>leads</em> its label has the room for the
+    quarter turn, which is why
+    <a href="disclosure.html"><code>&lt;disclosure-elemental&gt;</code></a>
+    takes it.</p>
   </details>
 </accordion-elemental>
 <br>
+
+Your own icon has to be a mask too, for the same reason:
+
+```css
+accordion-elemental.caret > details > summary::after {
+  mask-image: url("my-caret.svg"); /* not background-image - see above */
+}
+```
 
 The caret turns with the slide rather than after it, in both directions. The
 rotation is timed off the same `--accordion-elemental-duration` and
