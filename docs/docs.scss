@@ -1,0 +1,34 @@
+// Docs site bundle: the poops-docs-theme docs layout (shell, sidebar, prose)
+// plus the elements themselves, so the live demos on the pages are styled.
+// The docs layout links exactly one stylesheet, css/docs.min.css.
+@use "poops-docs-theme/scss/docs";
+@use "../src/styles/index";
+
+// Demo skin for the accordion pages. Not shipped in the library bundle - the
+// library styles structure and animation only, the look is the author's.
+accordion-elemental {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+
+  > details + details {
+    border-top: 1px solid var(--border);
+  }
+
+  > details > summary {
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+
+    &:hover {
+      background: var(--bg-alt);
+    }
+  }
+
+  > details > summary + * {
+    padding: 0 1rem;
+  }
+
+  > details > :last-child {
+    padding-bottom: 0.75rem;
+  }
+}

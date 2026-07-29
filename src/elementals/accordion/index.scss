@@ -1,0 +1,39 @@
+:root {
+  --accordion-elemental-duration: 250ms;
+  --accordion-elemental-easing: ease;
+}
+
+accordion-elemental {
+  display: block;
+
+  > details {
+    // Lets `block-size` animate to and from the `auto` keyword. Scoped here
+    // rather than on :root so the library does not change how the whole page
+    // interpolates sizes.
+    interpolate-size: allow-keywords;
+  }
+
+  > details > summary {
+    cursor: pointer;
+  }
+
+  // Open/close animation. Browsers without ::details-content drop this rule and
+  // fall back to native instant toggling, which is correct, just unanimated.
+  > details::details-content {
+    block-size: 0;
+    overflow: hidden;
+    transition:
+      block-size var(--accordion-elemental-duration) var(--accordion-elemental-easing),
+      content-visibility var(--accordion-elemental-duration) var(--accordion-elemental-easing) allow-discrete;
+  }
+
+  > details[open]::details-content {
+    block-size: auto;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    > details::details-content {
+      transition: none;
+    }
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "extends": "stylelint-config-standard-scss",
+  "ignoreFiles": ["dist/**", "_site/**", "node_modules/**"]
+}

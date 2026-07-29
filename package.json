@@ -1,0 +1,66 @@
+{
+  "name": "book-of-elementals",
+  "version": "0.1.0",
+  "description": "📓 Stamat's Book of Elementals — custom elements, accessible, dependency-free, light DOM.",
+  "type": "module",
+  "main": "src/index.js",
+  "style": "src/styles/index.scss",
+  "exports": {
+    ".": "./src/index.js",
+    "./core": "./src/core.js",
+    "./accordion": "./src/elementals/accordion/index.js",
+    "./accordion/style.scss": "./src/elementals/accordion/index.scss",
+    "./accordion/style.css": "./dist/elementals/accordion.css",
+    "./styles/*": "./src/styles/*",
+    "./dist/*": "./dist/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src/core.js",
+    "src/index.js",
+    "src/iife.js",
+    "src/elementals",
+    "src/styles/index.scss",
+    "dist",
+    "!src/**/*.test.js"
+  ],
+  "homepage": "https://stamat.github.io/book-of-elementals/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stamat/book-of-elementals.git"
+  },
+  "keywords": [
+    "custom-elements",
+    "web-components",
+    "accessibility",
+    "a11y",
+    "aria",
+    "apg",
+    "accordion",
+    "details",
+    "javascript",
+    "esm"
+  ],
+  "author": "Nikola Stamatovic <@stamat>",
+  "contributors": [],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/stamat/book-of-elementals/issues"
+  },
+  "scripts": {
+    "dev": "poops",
+    "build": "poops -b",
+    "prepack": "poops -b",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "lint": "eslint . && stylelint \"{src,docs}/**/*.scss\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.7.0",
+    "jest": "^30.4.2",
+    "poops": "^1.9.5",
+    "poops-docs-theme": "^1.1.2",
+    "stylelint": "^17.14.1",
+    "stylelint-config-standard-scss": "^17.0.0"
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "scripts": [{
+    "in": "src/iife.js",
+    "out": "dist/book-of-elementals.js",
+    "options": {
+      "sourcemap": true,
+      "minify": true,
+      "justMinified": false,
+      "format": "iife",
+      "target": "es2019"
+    }
+  },
+  {
+    "in": "src/elementals/*/index.js",
+    "out": "dist/elementals/",
+    "options": {
+      "sourcemap": true,
+      "minify": true,
+      "justMinified": false,
+      "format": "iife",
+      "target": "es2019"
+    }
+  },
+  {
+    "in": "node_modules/poops-docs-theme/src/docs.ts",
+    "out": "_site/js/docs.js",
+    "options": {
+      "minify": true,
+      "justMinified": true,
+      "format": "iife",
+      "target": "es2019"
+    }
+  }],
+  "styles": [{
+    "in": "src/styles/index.scss",
+    "out": "dist/book-of-elementals.css",
+    "options": {
+      "sourcemap": true,
+      "minify": true,
+      "justMinified": false
+    }
+  },
+  {
+    "in": "src/elementals/*/index.scss",
+    "out": "dist/elementals/",
+    "options": {
+      "sourcemap": true,
+      "minify": true,
+      "justMinified": false
+    }
+  },
+  {
+    "in": "docs/docs.scss",
+    "out": "_site/css/docs.css",
+    "options": {
+      "minify": true,
+      "justMinified": true
+    }
+  }],
+  "markup": {
+    "in": "docs",
+    "out": "_site",
+    "options": {
+      "nav": "nav.json",
+      "searchIndex": "search-index.json",
+      "llms": {
+        "output": "llms.txt",
+        "intro": "docs/_llms/llms-intro.md",
+        "full": true,
+        "fullIntro": "docs/_llms/llms-intro-full.md"
+      },
+      "robots": "robots.txt"
+    },
+    "site": {
+      "title": "Book of Elementals",
+      "brand": "book-of-elementals",
+      "brandMark": "📓",
+      "description": "Accessible, dependency-free custom elements. Light DOM, no build step required.",
+      "lang": "en",
+      "url": "https://stamat.github.io/book-of-elementals",
+      "repo": "https://github.com/stamat/book-of-elementals",
+      "branch": "main",
+      "links": [
+        { "title": "npm", "url": "https://www.npmjs.com/package/book-of-elementals" }
+      ],
+      "theme": "light"
+    }
+  },
+  "copy": {
+    "in": "dist",
+    "out": "_site"
+  },
+  "banner": "/* {{ name }} v{{ version }} | {{ homepage }} | {{ license }} License */",
+  "serve": {
+    "port": 4040,
+    "base": "/_site"
+  },
+  "livereload": true,
+  "watch": [
+    "src",
+    "docs"
+  ],
+  "includePaths": [
+    "node_modules"
+  ]
+}
