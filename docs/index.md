@@ -67,6 +67,9 @@ separate, optional one, off unless you ask for it:
 />
 ```
 
+Swap in `book-of-elementals/theme.scss`, or `book-of-elementals-theme.min.css`,
+for every element's look at once.
+
 ## Principles
 
 **Native first.** An element only exists where the platform leaves a real gap.

@@ -14,6 +14,28 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Added
+
+- Every element's optional look in one stylesheet — the theme counterpart to the whole-book
+  bundle that already exists for structure and motion:
+
+  ```scss
+  @use "book-of-elementals/theme.scss";
+  ```
+
+  ```html
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/book-of-elementals/dist/book-of-elementals-theme.min.css"
+  />
+  ```
+
+  Nothing changes for the per-element imports, and no CSS is new: this is the same rules the
+  per-element themes carry, aggregated. With one element in the book it is byte-for-byte the
+  accordion's theme, so take whichever matches how you take the rest of the package — the
+  aggregate grows as elements land, the per-element one stays the way to pay for only what you
+  use.
+
 ## [0.2.0] - 2026-07-29
 
 ### Added
