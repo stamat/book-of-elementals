@@ -13,7 +13,7 @@ native `<details>`/`<summary>` rather than reimplementing the
 top of `<div>`s — the browser already ships the disclosure semantics, so the
 element only adds what the browser leaves out.
 
-<accordion-elemental exclusive class="grouped">
+<accordion-elemental exclusive class="grouped caret">
   <details open>
     <summary>Why build on <code>&lt;details&gt;</code>?</summary>
     <p>Because it is already an accordion. It announces expanded state to screen
@@ -38,7 +38,10 @@ element only adds what the browser leaves out.
 </accordion-elemental>
 <br>
 
-_A live `<accordion-elemental exclusive class="grouped">`. Focus a header and press the arrow keys._
+_A live `<accordion-elemental exclusive class="grouped caret">` — one card, a
+caret on the trailing edge, one panel open at a time. Both classes come from the
+optional theme in [The look](#the-look). Focus a header and press the arrow
+keys._
 
 ## Usage
 
@@ -61,6 +64,10 @@ Write the panels as ordinary `<details>` elements and wrap them:
 import "book-of-elementals/accordion";
 ```
 
+```scss
+@use "book-of-elementals/accordion/style.scss";
+```
+
 Or drop in the single-element bundle — no build step, no script to write:
 
 ```html
@@ -73,7 +80,8 @@ Or drop in the single-element bundle — no build step, no script to write:
 
 Either way the element registers itself on include and upgrades on connect.
 Nothing is put on `window`, there is nothing to instantiate, and there is no
-initialisation call to forget.
+initialisation call to forget. That stylesheet carries structure and motion; the
+look is a separate, optional one — see [The look](#the-look).
 
 > [!NOTE]
 > Put a heading inside the `<summary>` — `<summary><h3>Question</h3></summary>` —
@@ -104,6 +112,24 @@ closes the open sibling itself instead, so it slides shut rather than vanishing.
 
 If several panels are authored `open` in an exclusive group, the first one wins
 and the rest are closed on upgrade.
+
+Leave `exclusive` off and the panels are independent — open as many as you like,
+and each one keeps whatever state the reader left it in:
+
+<accordion-elemental class="grouped caret">
+  <details open>
+    <summary>Open me</summary>
+    <p>Nothing else closes. Without <code>exclusive</code> the element assigns no
+    shared <code>name</code>, so each panel is an ordinary
+    <code>&lt;details&gt;</code> answering only to its own summary.</p>
+  </details>
+  <details>
+    <summary>And me</summary>
+    <p>Two open at once. Useful when the panels are reference material a reader
+    wants side by side rather than a set of alternatives.</p>
+  </details>
+</accordion-elemental>
+<br>
 
 Set your own `name` on the group to share exclusivity across two separate
 groups, or to keep it stable across renders:
@@ -207,58 +233,124 @@ Two things make this awkward, and the element handles both:
   frame one. So the element takes over the click, slides the body up while the
   panel is still open, and only then closes it. `accordion-toggle` fires when the
   panel actually closes, at the end of the slide.
+- **A closing panel still reads as open.** For the length of the slide the panel
+  has `open` on it while heading the other way, so `[open]` on its own would hold
+  any open/closed styling until the animation had finished. The element marks that
+  window with `class="accordion-elemental-closing"` on the panel; pair it as
+  `details[open]:not(.accordion-elemental-closing)` and the styling turns on the
+  first frame of the close instead of the last.
+
+```css
+/* not "is open" but "is staying open" */
+accordion-elemental > details[open]:not(.accordion-elemental-closing) > summary::after {
+  rotate: 180deg;
+}
+```
 
 With JavaScript off there is no wrapper, the transition rule matches nothing, and
 the panels toggle natively and instantly. Which is correct, just unanimated.
 
-## Styling
+| Hook                             | On             | Meaning                                    |
+| -------------------------------- | -------------- | ------------------------------------------ |
+| `.accordion-elemental-content`   | the body wrapper | The box the height animation measures and clips |
+| `.accordion-elemental-closing`   | a `<details>`  | Open, but sliding shut                     |
 
-No shadow DOM, so style the elements directly. The library styles structure and
-motion only; the look is yours:
+## The look
+
+The element's own stylesheet styles structure and motion only — a light-DOM
+element cannot scope a look away from a page that did not ask for one. The look
+is a second, optional stylesheet:
+
+```scss
+@use "book-of-elementals/accordion/style.scss"; // structure and motion
+@use "book-of-elementals/accordion/theme.scss"; // the look, entirely optional
+```
+
+```html
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/book-of-elementals/dist/elementals/accordion.min.css"
+/>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/book-of-elementals/dist/elementals/accordion-theme.min.css"
+/>
+```
+
+It draws in `currentcolor` — borders and the hover fill are mixed out of the
+text colour, the caret is masked rather than painted — so the panels land in the
+page's palette and follow a theme switch with nothing configured. Two custom
+properties for the two things a page usually has its own value for:
+
+| Property                            | Default                                          |
+| ----------------------------------- | ------------------------------------------------ |
+| `--accordion-elemental-border-color` | `color-mix(in srgb, currentcolor 15%, transparent)` |
+| `--accordion-elemental-radius`      | `0.5rem`                                         |
 
 ```css
-accordion-elemental > details + details {
-  border-top: 1px solid #e3e6ea;
-}
-
-accordion-elemental > details > summary {
-  padding: 0.75rem 1rem;
-  cursor: pointer;
+accordion-elemental {
+  --accordion-elemental-border-color: var(--border);
+  --accordion-elemental-radius: var(--radius);
 }
 ```
 
-To make a stack of panels read as one card, round the outer corners of the run
-rather than clipping the group. `overflow: hidden` on a rounded wrapper is the
-usual way to do it and it cuts the focus ring off the summary inside, which is
-the one thing on the element a keyboard user needs to see:
+That is the whole of the docs site's accordion CSS — the demos on this page wear
+the shipped theme rather than a skin of their own, so what you see here is what
+the import gives you.
 
-```css
-accordion-elemental.grouped > details {
-  border-radius: 0;
-}
+Everything past that is ordinary CSS on ordinary selectors. Skip the theme and
+write your own; the element looks for none of it.
 
-accordion-elemental.grouped > details:first-of-type {
-  border-start-start-radius: 0.5rem;
-  border-start-end-radius: 0.5rem;
-}
+### Plain
 
-accordion-elemental.grouped > details:last-of-type {
-  border-end-start-radius: 0.5rem;
-  border-end-end-radius: 0.5rem;
-}
-```
+No class: each panel its own bordered box, native disclosure marker.
 
-The class is the docs skin's, not the library's — nothing in the element looks
-for it. The demo at the top of this page is wearing it.
+<accordion-elemental>
+  <details open>
+    <summary>Panels stand apart</summary>
+    <p>A stack of separate boxes. Nothing shared between neighbours, so a panel
+    can be moved, removed or rendered on its own without the run around it
+    needing to know.</p>
+  </details>
+  <details>
+    <summary>The marker is the browser's</summary>
+    <p>Leading edge, and whatever shape the browser draws. Free, familiar, and
+    not yours to design.</p>
+  </details>
+</accordion-elemental>
+<br>
 
-### A caret instead of the marker
+### Grouped
 
-The native disclosure marker sits on the leading edge and looks like whatever the
-browser feels like. Swap it for an
+`class="grouped"` — one card instead of a stack. The rounding moves to the outer
+corners of the run rather than a clipping wrapper: `overflow: hidden` on a
+rounded wrapper is the usual way to do it, and it cuts the focus ring off the
+summary inside, which is the one thing on the element a keyboard user needs to
+see.
+
+<accordion-elemental class="grouped">
+  <details open>
+    <summary>Panels share their borders</summary>
+    <p>Neighbours overlap by a pixel so the seam between two panels is one line
+    rather than two.</p>
+  </details>
+  <details>
+    <summary>The focused panel lifts</summary>
+    <p>Overlapping borders mean the next panel paints over the focused one's
+    outline, so the focused panel is raised instead of anything being clipped.
+    Tab through this group and the ring stays whole.</p>
+  </details>
+</accordion-elemental>
+<br>
+
+### Caret
+
+`class="caret"` — an
 [Octicon chevron](https://primer.style/foundations/icons/chevron-down-16/) on the
-trailing edge, turned over when the panel opens:
+trailing edge instead of the native marker, turned over when the panel opens.
+Composes with `grouped`, and the demo at the top of this page is wearing both.
 
-<accordion-elemental class="grouped caret">
+<accordion-elemental class="caret">
   <details open>
     <summary>Where does the caret come from?</summary>
     <p>A <code>::after</code> on the summary, masked with an inline SVG. No
@@ -272,60 +364,18 @@ trailing edge, turned over when the panel opens:
     colour into the SVG and needs a second copy for the dark theme.</p>
   </details>
   <details>
-    <summary>What times the turn?</summary>
-    <p>The element's own <code>--accordion-elemental-duration</code> and
-    <code>--accordion-elemental-easing</code>, so the caret turns with the slide
-    instead of alongside it.</p>
+    <summary>Why half a turn and not a quarter?</summary>
+    <p><code>rotate: 180deg</code> reads the same in RTL. A quarter turn on a
+    chevron pointing down points it into the margin.</p>
   </details>
 </accordion-elemental>
 <br>
 
-```css
-/* The marker goes: list-style covers every browser but Safari, which wants it
-   said in its own words. */
-accordion-elemental.caret > details > summary {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  list-style: none;
-}
-
-accordion-elemental.caret > details > summary::-webkit-details-marker {
-  display: none;
-}
-
-accordion-elemental.caret > details > summary::after {
-  content: "";
-  flex: none; /* a long header must not squeeze the caret */
-  width: 1rem;
-  height: 1rem;
-  margin-inline-start: auto; /* trailing edge, and still trailing in RTL */
-  background: currentcolor;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/%3E%3C/svg%3E")
-    center / contain no-repeat;
-  transition: rotate var(--accordion-elemental-duration) var(--accordion-elemental-easing);
-}
-
-accordion-elemental.caret > details[open] > summary::after {
-  rotate: 180deg;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  accordion-elemental.caret > details > summary::after {
-    transition: none;
-  }
-}
-```
-
-Three things are worth keeping if you draw your own:
-
-- **Half a turn, not a quarter.** `rotate: 180deg` reads the same in RTL. A
-  quarter turn on a chevron pointing down points it into the margin.
-- **The caret animates because the panel stays `open`.** The element holds `open`
-  on the panel for the whole close, so `[open] > summary::after` turns with the
-  slide rather than snapping at the end of it. Timing it off the same two custom
-  properties keeps the two in step when you retime the animation.
-- **Reduced motion is yours to handle.** The element switches its own slide off;
-  a caret it never drew is not its to switch off for you.
+The caret turns with the slide rather than after it, in both directions. The
+rotation is timed off the same `--accordion-elemental-duration` and
+`--accordion-elemental-easing`, so retiming the animation retimes the caret, and
+it is keyed on `details[open]:not(.accordion-elemental-closing)` so the close
+starts turning it back on the same frame the panel starts sliding shut — the
+panel keeps `open` until the slide ends, and `[open]` alone would wait for it.
 
 <script src="{{ relativePathPrefix }}dist/elementals/accordion.js"></script>

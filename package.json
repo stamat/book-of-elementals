@@ -11,6 +11,8 @@
     "./accordion": "./src/elementals/accordion/index.js",
     "./accordion/style.scss": "./src/elementals/accordion/index.scss",
     "./accordion/style.css": "./dist/elementals/accordion.css",
+    "./accordion/theme.scss": "./src/elementals/accordion/theme.scss",
+    "./accordion/theme.css": "./dist/elementals/accordion-theme.css",
     "./styles/*": "./src/styles/*",
     "./dist/*": "./dist/*",
     "./package.json": "./package.json"

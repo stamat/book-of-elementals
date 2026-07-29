@@ -30,9 +30,15 @@ const OPTIONS = { exclusive: 'boolean' };
 /** Class of the wrapper the element puts around each panel body. */
 const CONTENT_CLASS = 'accordion-elemental-content';
 
-// Per-element state, kept off the attribute surface so it cannot be styled,
-// serialised or collided with by the page.
-const CLOSING = Symbol('closing');
+// A closing panel keeps `open` for the length of the slide, so `[open]` alone
+// cannot tell a stylesheet which way the panel is heading. This class can, and it
+// is the one piece of the closing state deliberately made stylable - a marker on
+// the summary, say, needs to start turning back on the first frame of the close
+// rather than the last.
+const CLOSING_CLASS = 'accordion-elemental-closing';
+
+// Kept off the attribute surface so it cannot be styled, serialised or collided
+// with by the page.
 const DETACHED_NAME = Symbol('detachedName');
 
 // Monotonic counter for generating unique `name` values for exclusive groups.
@@ -181,7 +187,9 @@ export class AccordionElemental extends ElementBase {
     // would shut them instantly the moment this one opens.
     if (this.options.exclusive) {
       for (const other of this.panels) {
-        if (other !== panel && other.open && !other[CLOSING]) this.closePanel(other);
+        if (other !== panel && other.open && !other.classList.contains(CLOSING_CLASS)) {
+          this.closePanel(other);
+        }
       }
     }
 
@@ -190,7 +198,7 @@ export class AccordionElemental extends ElementBase {
     // caught mid-close is rendered already, so its height is the honest start.
     const from = panel.open ? content.offsetHeight : 0;
 
-    panel[CLOSING] = false;
+    panel.classList.remove(CLOSING_CLASS);
     this.restoreName(panel);
     panel.open = true;
     slide(content, from, true);
@@ -208,7 +216,7 @@ export class AccordionElemental extends ElementBase {
       return;
     }
 
-    panel[CLOSING] = true;
+    panel.classList.add(CLOSING_CLASS);
     // Detach the exclusivity name for the length of the animation: with it in
     // place the browser slams this panel shut the moment a sibling opens, and
     // the panel is still `open` for the whole slide.
@@ -218,7 +226,7 @@ export class AccordionElemental extends ElementBase {
     }
 
     slide(content, content.offsetHeight, false, () => {
-      panel[CLOSING] = false;
+      panel.classList.remove(CLOSING_CLASS);
       panel.open = false;
       this.restoreName(panel);
     });
@@ -243,7 +251,7 @@ export class AccordionElemental extends ElementBase {
     if (!this.contentOf(panel)) return;
 
     e.preventDefault();
-    if (panel.open && !panel[CLOSING]) this.closePanel(panel);
+    if (panel.open && !panel.classList.contains(CLOSING_CLASS)) this.closePanel(panel);
     else this.openPanel(panel);
   }
 

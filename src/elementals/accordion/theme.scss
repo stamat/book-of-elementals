@@ -1,0 +1,129 @@
+// Optional look for `<accordion-elemental>`. Not part of the element's own
+// stylesheet and not in its bundle: that one styles structure and motion only,
+// and a light-DOM element cannot scope a look away from a page that did not ask
+// for one. Import this when you want the look, skip it when you do not.
+// Colours are mixed out of `currentcolor` rather than hard-coded, so the panels
+// sit in whatever palette the page already has - including a theme switch - with
+// nothing to configure. Two custom properties for the two things a page is most
+// likely to want its own value for.
+
+accordion-elemental {
+  --accordion-elemental-border-color: color-mix(in srgb, currentcolor 15%, transparent);
+  --accordion-elemental-radius: 0.5rem;
+
+  // Each panel is its own bordered box. A rounded `overflow: hidden` wrapper
+  // around the group would clip the summary's focus ring, which is not a look
+  // worth a keyboard user losing their place over.
+  > details {
+    border: 1px solid var(--accordion-elemental-border-color);
+    border-radius: var(--accordion-elemental-radius);
+  }
+
+  > details + details {
+    margin-top: 0.5rem;
+  }
+
+  > details > summary {
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+
+    // Top corners only, so the hover fill follows the panel's corners while it is
+    // closed and squares off against the body once it is open.
+    border-start-start-radius: inherit;
+    border-start-end-radius: inherit;
+
+    &:hover {
+      background: color-mix(in srgb, currentcolor 5%, transparent);
+    }
+  }
+
+  // The element wraps each panel body in `.accordion-elemental-content` and keeps
+  // that wrapper's box inert so the height animation can reach zero. So the
+  // padding goes on the content inside it, not on the wrapper itself.
+  > details > .accordion-elemental-content > * {
+    padding-inline: 1rem;
+  }
+
+  > details > .accordion-elemental-content > :last-child {
+    padding-bottom: 0.75rem;
+  }
+
+  // Opt-in: one card instead of a stack. The rounding moves to the outer corners
+  // of the run rather than a clipping wrapper, so the focus ring still fits.
+  &.grouped {
+    > details {
+      border-radius: 0;
+    }
+
+    > details + details {
+      margin-top: -1px; // share the border between neighbours
+    }
+
+    > details:first-of-type,
+    > details:first-of-type > summary {
+      border-start-start-radius: var(--accordion-elemental-radius);
+      border-start-end-radius: var(--accordion-elemental-radius);
+    }
+
+    // The summary only takes the bottom corners while the panel is closed - open,
+    // the body is underneath and the summary has to square off against it.
+    > details:last-of-type,
+    > details:last-of-type:not([open]) > summary {
+      border-end-start-radius: var(--accordion-elemental-radius);
+      border-end-end-radius: var(--accordion-elemental-radius);
+    }
+
+    // Overlapping borders mean the next panel paints over the focused one's
+    // outline. Lift the focused panel instead of clipping anything.
+    > details:focus-within {
+      position: relative;
+      z-index: 1;
+    }
+  }
+
+  // Opt-in: an Octicon chevron on the trailing edge instead of the native
+  // disclosure marker, flipped over when the panel opens. Drawn as a mask rather
+  // than a background image so the caret takes the summary's `color` instead of
+  // baking one into the SVG, and so it follows a theme switch for free.
+  &.caret {
+    > details > summary {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      list-style: none; // drops the marker everywhere...
+
+      &::-webkit-details-marker {
+        display: none; // ...except Safari, which wants it said this way
+      }
+
+      &::after {
+        content: "";
+        flex: none; // a long header must not squeeze the caret
+        width: 1rem;
+        height: 1rem;
+        margin-inline-start: auto; // trailing edge, and still trailing in RTL
+        background: currentcolor;
+        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/%3E%3C/svg%3E") center / contain no-repeat;
+
+        // Borrow the element's own timing so the caret turns with the slide.
+        transition: rotate var(--accordion-elemental-duration) var(--accordion-elemental-easing);
+      }
+    }
+
+    // A half turn rather than a quarter, so it reads the same either way round in
+    // RTL. The element keeps `open` on the panel for the whole close animation, so
+    // `[open]` on its own would hold the caret turned until the slide had finished
+    // and only then start turning it back. `.accordion-elemental-closing` is the
+    // element's own marker for that window, and excluding it starts the caret back
+    // on the same frame the panel starts closing.
+    > details[open]:not(.accordion-elemental-closing) > summary::after {
+      rotate: 180deg;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      > details > summary::after {
+        transition: none;
+      }
+    }
+  }
+}

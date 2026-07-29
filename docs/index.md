@@ -53,6 +53,20 @@ There is no global and no boot call. Including a bundle registers its element,
 and the element upgrades itself wherever it appears in the page — including
 markup added later. Swap in `book-of-elementals.min.js` for the whole book.
 
+Those stylesheets carry structure and motion only. Each element's look is a
+separate, optional one, off unless you ask for it:
+
+```scss
+@use "book-of-elementals/accordion/theme.scss";
+```
+
+```html
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/book-of-elementals/dist/elementals/accordion-theme.min.css"
+/>
+```
+
 ## Principles
 
 **Native first.** An element only exists where the platform leaves a real gap.

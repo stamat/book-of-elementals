@@ -142,7 +142,7 @@
   }
   var OPTIONS = { exclusive: "boolean" };
   var CONTENT_CLASS = "accordion-elemental-content";
-  var CLOSING = Symbol("closing");
+  var CLOSING_CLASS = "accordion-elemental-closing";
   var DETACHED_NAME = Symbol("detachedName");
   var groupCount = 0;
   var AccordionElemental = class extends ElementBase {
@@ -236,11 +236,13 @@
       }
       if (this.options.exclusive) {
         for (const other of this.panels) {
-          if (other !== panel && other.open && !other[CLOSING]) this.closePanel(other);
+          if (other !== panel && other.open && !other.classList.contains(CLOSING_CLASS)) {
+            this.closePanel(other);
+          }
         }
       }
       const from = panel.open ? content.offsetHeight : 0;
-      panel[CLOSING] = false;
+      panel.classList.remove(CLOSING_CLASS);
       this.restoreName(panel);
       panel.open = true;
       slide(content, from, true);
@@ -256,13 +258,13 @@
         panel.open = false;
         return;
       }
-      panel[CLOSING] = true;
+      panel.classList.add(CLOSING_CLASS);
       if (panel.hasAttribute("name")) {
         panel[DETACHED_NAME] = panel.getAttribute("name");
         panel.removeAttribute("name");
       }
       slide(content, content.offsetHeight, false, () => {
-        panel[CLOSING] = false;
+        panel.classList.remove(CLOSING_CLASS);
         panel.open = false;
         this.restoreName(panel);
       });
@@ -283,7 +285,7 @@
       if (!panel || !this.panels.includes(panel)) return;
       if (!this.contentOf(panel)) return;
       e.preventDefault();
-      if (panel.open && !panel[CLOSING]) this.closePanel(panel);
+      if (panel.open && !panel.classList.contains(CLOSING_CLASS)) this.closePanel(panel);
       else this.openPanel(panel);
     }
     onKeyDown(e) {

@@ -50,6 +50,15 @@
     }
   },
   {
+    "in": "src/elementals/accordion/theme.scss",
+    "out": "dist/elementals/accordion-theme.css",
+    "options": {
+      "sourcemap": true,
+      "minify": true,
+      "justMinified": false
+    }
+  },
+  {
     "in": "docs/docs.scss",
     "out": "_site/css/docs.css",
     "options": {
