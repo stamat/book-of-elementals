@@ -13,7 +13,7 @@ native `<details>`/`<summary>` rather than reimplementing the
 top of `<div>`s — the browser already ships the disclosure semantics, so the
 element only adds what the browser leaves out.
 
-<accordion-elemental exclusive>
+<accordion-elemental exclusive class="grouped">
   <details open>
     <summary>Why build on <code>&lt;details&gt;</code>?</summary>
     <p>Because it is already an accordion. It announces expanded state to screen
@@ -226,5 +226,29 @@ accordion-elemental > details > summary {
   cursor: pointer;
 }
 ```
+
+To make a stack of panels read as one card, round the outer corners of the run
+rather than clipping the group. `overflow: hidden` on a rounded wrapper is the
+usual way to do it and it cuts the focus ring off the summary inside, which is
+the one thing on the element a keyboard user needs to see:
+
+```css
+accordion-elemental.grouped > details {
+  border-radius: 0;
+}
+
+accordion-elemental.grouped > details:first-of-type {
+  border-start-start-radius: 0.5rem;
+  border-start-end-radius: 0.5rem;
+}
+
+accordion-elemental.grouped > details:last-of-type {
+  border-end-start-radius: 0.5rem;
+  border-end-end-radius: 0.5rem;
+}
+```
+
+The class is the docs skin's, not the library's — nothing in the element looks
+for it. The demo at the top of this page is wearing it.
 
 <script src="{{ relativePathPrefix }}dist/elementals/accordion.js"></script>

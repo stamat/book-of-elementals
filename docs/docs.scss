@@ -7,20 +7,58 @@
 // Demo skin for the accordion pages. Not shipped in the library bundle - the
 // library styles structure and animation only, the look is the author's.
 accordion-elemental {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
+  // Each panel is its own bordered box. A rounded `overflow: hidden` wrapper
+  // around the group would clip the summary's focus ring, which is not a look
+  // worth a keyboard user losing their place over.
+  > details {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
 
   > details + details {
-    border-top: 1px solid var(--border);
+    margin-top: 0.5rem;
   }
 
   > details > summary {
     padding: 0.75rem 1rem;
     font-weight: 600;
 
+    // Top corners only, so the hover fill follows the panel's corners while it is
+    // closed and squares off against the body once it is open.
+    border-start-start-radius: inherit;
+    border-start-end-radius: inherit;
+
     &:hover {
       background: var(--bg-alt);
+    }
+  }
+
+  // Opt-in: one card instead of a stack. The rounding moves to the outer corners
+  // of the run rather than a clipping wrapper, so the focus ring still fits.
+  &.grouped {
+    > details {
+      border-radius: 0;
+    }
+
+    > details + details {
+      margin-top: -1px; // share the border between neighbours
+    }
+
+    > details:first-of-type {
+      border-start-start-radius: var(--radius);
+      border-start-end-radius: var(--radius);
+    }
+
+    > details:last-of-type {
+      border-end-start-radius: var(--radius);
+      border-end-end-radius: var(--radius);
+    }
+
+    // Overlapping borders mean the next panel paints over the focused one's
+    // outline. Lift the focused panel instead of clipping anything.
+    > details:focus-within {
+      position: relative;
+      z-index: 1;
     }
   }
 
