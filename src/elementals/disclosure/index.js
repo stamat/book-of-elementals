@@ -1,3 +1,4 @@
+import { slide } from 'book-of-spells/src/animations.mjs';
 import { ElementBase, define } from '../../core.js';
 
 /**
@@ -17,6 +18,25 @@ export function disclosureState(open) {
     expanded: open ? 'true' : 'false',
     hidden: open ? null : 'until-found'
   };
+}
+
+/**
+ * The height, in pixels, a slide of the region starts from.
+ *
+ * Zero only when opening a region that is currently hidden, because that is the one case
+ * with no height to read: `hidden="until-found"` sizes the box as if it were empty.
+ * Everything else is a region already on screen - one being closed, or one caught
+ * mid-slide and sent back the other way - and its rendered height is the honest start.
+ * Which is also why the measurement has to happen *before* unhiding: after, the region
+ * is at full height and a slide that starts where it ends is not a slide.
+ *
+ * @param {boolean} open The state being moved to.
+ * @param {boolean} hidden Whether the region is hidden right now.
+ * @param {number} height Its rendered height right now.
+ * @returns {number}
+ */
+export function slideFrom(open, hidden, height) {
+  return open && hidden ? 0 : height;
 }
 
 /** Marks the controlled region, which may live anywhere in the document. */
@@ -40,8 +60,9 @@ let regionCount = 0;
  * moves them out of the parent that gives them meaning.
  *
  * What it does, and nothing more: keeps `aria-expanded` on the button and `hidden` on
- * the region in step, points one at the other with `aria-controls`, and re-opens on
- * `beforematch` so find-in-page still finds what is inside.
+ * the region in step, points one at the other with `aria-controls`, re-opens on
+ * `beforematch` so find-in-page still finds what is inside, and slides the region's
+ * height on the way in and out.
  *
  * Light DOM, no shadow root, and nothing is moved or wrapped - the region stays
  * exactly where the markup put it, which is the whole point.
@@ -120,16 +141,47 @@ export class DisclosureElemental extends ElementBase {
     this.initialized = false;
   }
 
-  /** Push the current state onto the button and the region. */
-  apply() {
+  /**
+   * Push the current state onto the button and the region, sliding the region's height
+   * on the way if asked to.
+   *
+   * `animate` is off by default, because most of what lands here is not a state change
+   * to animate: the state a page loads with is where the region starts, and one the
+   * browser has already put on screen for find-in-page is already there.
+   *
+   * @param {boolean} [animate=false]
+   */
+  apply(animate = false) {
     const button = this.button;
     const region = this.region;
     if (!button || !region) return;
 
     const state = disclosureState(this.open);
     button.setAttribute('aria-expanded', state.expanded);
-    if (state.hidden === null) region.removeAttribute('hidden');
-    else region.setAttribute('hidden', state.hidden);
+
+    if (!animate) {
+      if (state.hidden === null) region.removeAttribute('hidden');
+      else region.setAttribute('hidden', state.hidden);
+      return;
+    }
+
+    const from = slideFrom(this.open, region.hasAttribute('hidden'), region.offsetHeight);
+
+    if (this.open) {
+      // Unhide before sliding: an unrendered box has no height to animate.
+      region.removeAttribute('hidden');
+      slide(region, from, true);
+      return;
+    }
+
+    // Hide only once the slide is done. `hidden` stops the region's contents being
+    // rendered, which would cut the animation off at frame one.
+    slide(region, from, false, () => {
+      // A slide can outlive what started it - another toggle, or the element leaving
+      // the document. Hiding a region that is open again, or one whose button is gone
+      // and so has nothing left to open it, would strand it.
+      if (this.initialized && !this.open) region.setAttribute('hidden', state.hidden);
+    });
   }
 
   /**
@@ -138,7 +190,7 @@ export class DisclosureElemental extends ElementBase {
    */
   attributeChangedCallback(name, previous, current) {
     if (!this.initialized || previous === current) return;
-    this.apply();
+    this.apply(!this.instant);
     this.dispatchEvent(new CustomEvent('disclosure-toggle', {
       bubbles: true,
       detail: { region: this.region, open: this.open }
@@ -153,7 +205,12 @@ export class DisclosureElemental extends ElementBase {
   }
 
   onBeforeMatch() {
+    // The browser is revealing the region and scrolling to the match itself. Sliding it
+    // open from zero at the same time would animate the match out from under that
+    // scroll, so take the state and skip the animation.
+    this.instant = true;
     this.open = true;
+    this.instant = false;
   }
 }
 

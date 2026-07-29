@@ -73,8 +73,8 @@ Or drop in the single-element bundle — no build step, no script to write:
 
 The element registers itself on include and upgrades on connect. Nothing is put
 on `window`, there is nothing to instantiate, and there is no initialisation call
-to forget. That stylesheet carries structure; the look is a separate, optional
-one — see [The look](#the-look).
+to forget. That stylesheet carries structure and motion; the look is a separate,
+optional one — see [The look](#the-look).
 
 It writes `aria-expanded` and `aria-controls` onto the button and `hidden` onto
 the region, and that is the whole of the ARIA. Nothing is wrapped, nothing is
@@ -175,6 +175,56 @@ the region is simply hidden — the same content, just not found.
 > element's stylesheet zeroes the region's own margin, padding and border while
 > it is hidden, which is what the `disclosure-elemental-region` class is for.
 
+## Animation
+
+The region slides open and closed. Retime it with two custom properties — the
+element reads the duration back out of the computed styles to time itself, so the
+stylesheet stays the single source of truth:
+
+```css
+.disclosure-elemental-region {
+  --disclosure-elemental-duration: 250ms;
+  --disclosure-elemental-easing: ease;
+}
+```
+
+They default on `:root`, and the region is the place to override them — not
+`disclosure-elemental`, which a region pointed at by `for` is not inside.
+
+`prefers-reduced-motion: reduce` switches it off, in CSS and in the element. So
+does a duration of `0s`, which is worth reaching for when the region is a table
+row or anything else a height transition cannot move.
+
+Two things about it are worth knowing:
+
+- **The region is the animated box, so do not pad or border it.** Block padding
+  is a floor the height cannot get under — `box-sizing: border-box` renders
+  `height: 0` as the padding — so the region would slide shut down to it and then
+  cut. The accordion solves this by animating a wrapper of its own and giving you
+  a second box inside it to pad; this element wraps nothing, on purpose, so the
+  inset goes on a box inside the region:
+
+  ```html
+  <figcaption id="shapes-caption">
+    <div class="caption-body">…</div>
+  </figcaption>
+  ```
+
+  Margin is fine — it is outside the height — and it is transitioned too, so the
+  stylesheet zeroing it while closed reads as the gap closing rather than as a
+  jump.
+- **`hidden` lands at the end of the close, not the start.** It stops the
+  region's contents being rendered, which would cut the animation off at frame
+  one. `aria-expanded` and `open` both go to false immediately, so anything keyed
+  off either turns on the first frame of the close — the theme's chevron among
+  them. There is no closing marker to pair a selector with, the way the accordion
+  needs one; `[aria-expanded="false"]` already means "closing or closed".
+
+`disclosure-toggle` fires with the state change, not with the slide.
+
+With JavaScript off the class is never added, the transition rule matches
+nothing, and there is no button either — the region is simply there.
+
 ## Keyboard
 
 All of it is the button's, which is the point of using one:
@@ -248,7 +298,7 @@ readable from it.
 | `aria-expanded`  | the button | `true` / `false`                                     |
 | `aria-controls`  | the button | The region's `id`, generated if the markup has none  |
 | `type`           | the button | `button`, only if the markup did not set a type      |
-| `hidden`         | the region | `until-found` while closed, absent while open        |
+| `hidden`         | the region | `until-found` while closed, absent while open — set at the end of the close slide |
 | `class`          | the region | `disclosure-elemental-region` added, nothing removed |
 
 `type="button"` because a `<button>` in a form submits it unless told otherwise,

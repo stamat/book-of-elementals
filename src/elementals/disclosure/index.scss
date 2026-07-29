@@ -1,3 +1,8 @@
+:root {
+  --disclosure-elemental-duration: 250ms;
+  --disclosure-elemental-easing: ease;
+}
+
 disclosure-elemental {
   // A coordinator, not a box. The element exists for the cases native `<details>`
   // cannot reach - a figcaption, a table row, a grid item - and every one of those
@@ -15,6 +20,22 @@ disclosure-elemental {
   }
 }
 
+// The element reads this duration back out of the computed styles to time the slide,
+// so restyling it here restyles the animation - including to `none`, which the element
+// then plays instantly. The class is added on upgrade, so with scripting off this rule
+// matches nothing, there is no button either, and the region is simply there.
+// The region is the animated box, so it is the one box here that must not be padded or
+// bordered: block padding is a floor the height cannot get under - `box-sizing:
+// border-box` renders `height: 0` as the padding - so the region would slide shut down
+// to it and then cut. Put the inset on a box inside the region instead. Margin is fine,
+// and is transitioned so the rule below zeroing it while closed reads as the gap
+// closing rather than as a jump.
+.disclosure-elemental-region {
+  transition:
+    height var(--disclosure-elemental-duration) var(--disclosure-elemental-easing),
+    margin var(--disclosure-elemental-duration) var(--disclosure-elemental-easing);
+}
+
 // The element hides the region with `hidden="until-found"`, which skips the
 // region's *contents* rather than its box - a padded or bordered region would
 // otherwise leave an empty strip behind while closed. Browsers without
@@ -24,4 +45,10 @@ disclosure-elemental {
   margin: 0;
   padding: 0;
   border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disclosure-elemental-region {
+    transition: none;
+  }
 }

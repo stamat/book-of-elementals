@@ -47,6 +47,17 @@ may already be targeting**, since neither shows up in a function signature.
   behaviour `<details>` has natively, on markup `<details>` could not have held. Browsers
   without `until-found` read the attribute as plain hidden.
 
+  The region slides open and closed, on `--disclosure-elemental-duration` and
+  `--disclosure-elemental-easing` read back out of the computed styles, so the stylesheet
+  times the animation — including to nothing, which `prefers-reduced-motion: reduce` and a
+  `0s` duration both do. `hidden` therefore lands at the _end_ of a close rather than the
+  start, since it stops the region rendering and would cut the slide off at frame one;
+  `aria-expanded`, `open` and `disclosure-toggle` all still change immediately, so a
+  selector keyed off any of them turns on the first frame. **The region is the animated
+  box, so it must not be padded or bordered** — block padding is a floor `height: 0`
+  cannot get under. Put the inset on a box inside the region. Margin is fine, and is
+  transitioned so that zeroing it while closed is not a jump.
+
   The element is `display: contents`, so dropping it around existing markup changes no
   layout — which is the whole point for the grids and tables it exists to serve. With
   scripting off the region is simply visible and the button is not offered

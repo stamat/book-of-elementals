@@ -176,6 +176,11 @@ searches it and a link to a fragment inside it still lands there — either one
 reveals the region and the element opens to match. State changes fire a bubbling
 `disclosure-toggle`.
 
+The region slides open and closed, timed off
+`--disclosure-elemental-duration` and `--disclosure-elemental-easing` in the
+stylesheet. It is the animated box, so put its inset on a box inside it: block
+padding is a floor the height cannot get under.
+
 The element is `display: contents`, so dropping it around existing markup changes
 no layout. With scripting off the region is simply visible and the button is not
 offered, which for a long description is the right way round.

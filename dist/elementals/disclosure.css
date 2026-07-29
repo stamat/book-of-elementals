@@ -1,4 +1,9 @@
 /* book-of-elementals v0.2.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
+:root {
+  --disclosure-elemental-duration: 250ms;
+  --disclosure-elemental-easing: ease;
+}
+
 disclosure-elemental {
   display: contents;
 }
@@ -6,9 +11,19 @@ disclosure-elemental:not(:defined) > button {
   display: none;
 }
 
+.disclosure-elemental-region {
+  transition: height var(--disclosure-elemental-duration) var(--disclosure-elemental-easing), margin var(--disclosure-elemental-duration) var(--disclosure-elemental-easing);
+}
+
 .disclosure-elemental-region[hidden] {
   margin: 0;
   padding: 0;
   border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disclosure-elemental-region {
+    transition: none;
+  }
 }
 /*# sourceMappingURL=disclosure.css.map */

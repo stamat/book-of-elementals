@@ -1,5 +1,97 @@
 /* book-of-elementals v0.2.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 (() => {
+  // node_modules/book-of-spells/src/helpers.mjs
+  function isFunction(o) {
+    return typeof o === "function";
+  }
+
+  // node_modules/book-of-spells/src/dom.mjs
+  function cssTimeToMilliseconds(duration) {
+    const regExp = new RegExp("([0-9.]+)([a-z]+)", "i");
+    const matches = regExp.exec(duration);
+    if (!matches) return 0;
+    const unit = matches[2];
+    switch (unit) {
+      case "ms":
+        return parseFloat(matches[1]);
+      case "s":
+        return parseFloat(matches[1]) * 1e3;
+      default:
+        return 0;
+    }
+  }
+  function getTransitionDurations(element) {
+    if (!element) return {};
+    const styles = getComputedStyle(element);
+    const transitionProperties = styles.getPropertyValue("transition-property").split(",");
+    const transitionDurations = styles.getPropertyValue("transition-duration").split(",");
+    const map = {};
+    for (let i = 0; i < transitionProperties.length; i++) {
+      const property = transitionProperties[i].trim();
+      map[property] = cssTimeToMilliseconds(transitionDurations[i % transitionDurations.length].trim());
+    }
+    return map;
+  }
+  function getTransitionDuration(element, property = "all") {
+    const durations = getTransitionDurations(element);
+    if (durations.hasOwnProperty(property)) return durations[property];
+    if (durations.hasOwnProperty("all")) return durations.all;
+    return 0;
+  }
+
+  // node_modules/book-of-spells/src/browser.mjs
+  function mediaMatcher(query, callback) {
+    if (isFunction(callback)) {
+      const mql = matchMedia(query);
+      mql.addEventListener("change", (e) => {
+        callback(e.matches);
+      });
+      callback(mql.matches);
+      return mql.matches;
+    }
+    return matchMedia(query).matches;
+  }
+  function prefersReducedMotion(callback) {
+    if (typeof matchMedia !== "function") return false;
+    return mediaMatcher("(prefers-reduced-motion: reduce)", callback);
+  }
+
+  // node_modules/book-of-spells/src/animations.mjs
+  var TRANSITION_TIMER_GRACE = 10;
+  function clearTransitionTimer(element, property = "all") {
+    if (!element) return;
+    const dataPropName = `${property}TransitionTimer`;
+    if (!element.dataset[dataPropName]) return;
+    clearTimeout(parseInt(element.dataset[dataPropName]));
+    delete element.dataset[dataPropName];
+  }
+  function setTransitionTimer(element, property = "all", timeout, callback) {
+    if (!element) return;
+    const dataPropName = `${property}TransitionTimer`;
+    const timer = setTimeout(() => {
+      clearTransitionTimer(element, property);
+      if (isFunction(callback)) callback(element);
+    }, timeout);
+    element.dataset[dataPropName] = timer.toString();
+    return timer;
+  }
+  function slide(element, from, open, callback) {
+    if (!element) return;
+    clearTransitionTimer(element, "height");
+    const duration = prefersReducedMotion() ? 0 : getTransitionDuration(element, "height");
+    const done = (element2) => {
+      element2.style.removeProperty("height");
+      element2.style.removeProperty("overflow");
+      if (isFunction(callback)) callback(element2);
+    };
+    if (!duration) return done(element);
+    element.style.overflow = "hidden";
+    element.style.height = `${from}px`;
+    const full = element.scrollHeight;
+    element.style.height = `${open ? full : 0}px`;
+    setTransitionTimer(element, "height", duration + TRANSITION_TIMER_GRACE, done);
+  }
+
   // src/core.js
   var ElementBase = typeof HTMLElement !== "undefined" ? HTMLElement : class {
   };
@@ -14,6 +106,9 @@
       expanded: open ? "true" : "false",
       hidden: open ? null : "until-found"
     };
+  }
+  function slideFrom(open, hidden, height) {
+    return open && hidden ? 0 : height;
   }
   var REGION_CLASS = "disclosure-elemental-region";
   var regionCount = 0;
@@ -67,15 +162,36 @@
       }
       this.initialized = false;
     }
-    /** Push the current state onto the button and the region. */
-    apply() {
+    /**
+     * Push the current state onto the button and the region, sliding the region's height
+     * on the way if asked to.
+     *
+     * `animate` is off by default, because most of what lands here is not a state change
+     * to animate: the state a page loads with is where the region starts, and one the
+     * browser has already put on screen for find-in-page is already there.
+     *
+     * @param {boolean} [animate=false]
+     */
+    apply(animate = false) {
       const button = this.button;
       const region = this.region;
       if (!button || !region) return;
       const state = disclosureState(this.open);
       button.setAttribute("aria-expanded", state.expanded);
-      if (state.hidden === null) region.removeAttribute("hidden");
-      else region.setAttribute("hidden", state.hidden);
+      if (!animate) {
+        if (state.hidden === null) region.removeAttribute("hidden");
+        else region.setAttribute("hidden", state.hidden);
+        return;
+      }
+      const from = slideFrom(this.open, region.hasAttribute("hidden"), region.offsetHeight);
+      if (this.open) {
+        region.removeAttribute("hidden");
+        slide(region, from, true);
+        return;
+      }
+      slide(region, from, false, () => {
+        if (this.initialized && !this.open) region.setAttribute("hidden", state.hidden);
+      });
     }
     /**
      * `open` is the single source of truth, so everything that changes it - a click,
@@ -83,7 +199,7 @@
      */
     attributeChangedCallback(name, previous, current) {
       if (!this.initialized || previous === current) return;
-      this.apply();
+      this.apply(!this.instant);
       this.dispatchEvent(new CustomEvent("disclosure-toggle", {
         bubbles: true,
         detail: { region: this.region, open: this.open }
@@ -95,7 +211,9 @@
       this.open = !this.open;
     }
     onBeforeMatch() {
+      this.instant = true;
       this.open = true;
+      this.instant = false;
     }
   };
   define("disclosure-elemental", DisclosureElemental);
