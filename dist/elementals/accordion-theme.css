@@ -23,7 +23,7 @@ accordion-elemental > details[open] > summary {
   border-end-end-radius: 0;
 }
 accordion-elemental > details > .accordion-elemental-content-wrapper > .accordion-elemental-content {
-  padding: 0.25rem 1rem 1rem 1rem;
+  padding: 0.25rem 1rem 1rem;
 }
 accordion-elemental > details > .accordion-elemental-content-wrapper > .accordion-elemental-content > :first-child {
   margin-block-start: 0;

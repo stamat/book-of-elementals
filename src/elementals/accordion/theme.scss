@@ -49,7 +49,7 @@ accordion-elemental {
   // in one rule, covering whatever the body turns out to hold rather than only
   // the children a theme thought to name.
   > details > .accordion-elemental-content-wrapper > .accordion-elemental-content {
-    padding: 0.25rem 1rem 1rem 1rem;
+    padding: 0.25rem 1rem 1rem;
 
     // The page's own rhythm on the outermost blocks would stack on top of that
     // padding - a paragraph's margin under the last line, the summary's padding
