@@ -26,7 +26,6 @@ accordion-elemental {
   > details > summary {
     padding: 0.75rem 1rem;
     font-weight: 600;
-
     border-radius: var(--accordion-elemental-radius);
 
     &:hover {
@@ -44,15 +43,25 @@ accordion-elemental {
     border-end-end-radius: 0;
   }
 
-  // The element wraps each panel body in `.accordion-elemental-content` and keeps
-  // that wrapper's box inert so the height animation can reach zero. So the
-  // padding goes on the content inside it, not on the wrapper itself.
-  > details > .accordion-elemental-content > * {
-    padding-inline: 1rem;
-  }
+  // The element wraps each panel body in two boxes. The outer one is what the
+  // height animates and cannot be padded - block padding there is a floor the
+  // height cannot get under - so the panel's whole inset sits on the inner one,
+  // in one rule, covering whatever the body turns out to hold rather than only
+  // the children a theme thought to name.
+  > details > .accordion-elemental-content-wrapper > .accordion-elemental-content {
+    padding: 0.25rem 1rem 1rem 1rem;
 
-  > details > .accordion-elemental-content > :last-child {
-    padding-bottom: 0.75rem;
+    // The page's own rhythm on the outermost blocks would stack on top of that
+    // padding - a paragraph's margin under the last line, the summary's padding
+    // and a heading's margin doubled up over the first. Dropped at the edges
+    // only: whatever spacing the page gives the blocks in between is its own.
+    > :first-child {
+      margin-block-start: 0;
+    }
+
+    > :last-child {
+      margin-block-end: 0;
+    }
   }
 
   // Opt-in: one card instead of a stack. The rounding moves to the outer corners

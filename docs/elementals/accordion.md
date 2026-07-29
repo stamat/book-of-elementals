@@ -225,9 +225,30 @@ Two things make this awkward, and the element handles both:
 
 - **`<details>` gives you no box to animate.** The panel body is a bare run of
   siblings after the `<summary>`, and a height transition needs one box to measure
-  and clip. On upgrade the element wraps that run in
-  `<div class="accordion-elemental-content">`. Style around it, or through it —
-  descendant selectors are unaffected, direct-child ones are not.
+  and clip. On upgrade the element wraps that run in two:
+
+  ```html
+  <div class="accordion-elemental-content-wrapper">
+    <div class="accordion-elemental-content">…</div>
+  </div>
+  ```
+
+  Style around them, or through them — descendant selectors are unaffected,
+  direct-child ones are not. Two boxes rather than one because **the animated box
+  cannot be padded**: block padding is a floor the height cannot get under, since
+  `box-sizing: border-box` renders `height: 0` as the padding, so the panel would
+  slide shut down to it and then cut. The outer box is the library's and stays
+  inert. Pad the inner one, and drop the outermost margins inside it so the page's
+  rhythm does not stack on top of that padding:
+
+  ```css
+  accordion-elemental
+    > details
+    > .accordion-elemental-content-wrapper
+    > .accordion-elemental-content {
+    padding: 0.75rem 1rem;
+  }
+  ```
 - **Closing hides the content instantly.** `<details>` sets its contents to
   `display: none` the moment `open` goes away, which cuts a close animation off at
   frame one. So the element takes over the click, slides the body up while the
@@ -250,10 +271,11 @@ accordion-elemental > details[open]:not(.accordion-elemental-closing) > summary:
 With JavaScript off there is no wrapper, the transition rule matches nothing, and
 the panels toggle natively and instantly. Which is correct, just unanimated.
 
-| Hook                             | On             | Meaning                                    |
-| -------------------------------- | -------------- | ------------------------------------------ |
-| `.accordion-elemental-content`   | the body wrapper | The box the height animation measures and clips |
-| `.accordion-elemental-closing`   | a `<details>`  | Open, but sliding shut                     |
+| Hook                                   | On                | Meaning                                                        |
+| -------------------------------------- | ----------------- | -------------------------------------------------------------- |
+| `.accordion-elemental-content-wrapper` | the outer box     | The box the height animation measures and clips. Do not pad it  |
+| `.accordion-elemental-content`         | the box inside it | The panel body. Yours to style — the inset goes here            |
+| `.accordion-elemental-closing`         | a `<details>`     | Open, but sliding shut                                          |
 
 ## The look
 

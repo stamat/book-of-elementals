@@ -27,7 +27,10 @@ export function nextIndex(current, key, length) {
 
 const OPTIONS = { exclusive: 'boolean' };
 
-/** Class of the wrapper the element puts around each panel body. */
+/** Class of the box the element animates. The library's, kept inert. */
+const WRAPPER_CLASS = 'accordion-elemental-content-wrapper';
+
+/** Class of the box inside it that holds the panel body. The page's to style. */
 const CONTENT_CLASS = 'accordion-elemental-content';
 
 // A closing panel keeps `open` for the length of the slide, so `[open]` alone
@@ -111,22 +114,33 @@ export class AccordionElemental extends ElementBase {
   }
 
   /**
-   * Wrap each panel body in a div, because a height transition needs one box to
+   * Wrap each panel body in two divs, because a height transition needs one box to
    * measure and clip and `<details>` hands you a bare run of siblings. Idempotent,
    * so moving the group in the DOM does not nest a second wrapper.
    *
+   * Two rather than one because the box being animated cannot be padded: block
+   * padding is a floor the height cannot get under, since `box-sizing: border-box`
+   * renders `height: 0` as the padding, and the panel would slide shut down to it
+   * and then cut. The outer box is the library's and stays inert; the inner one is
+   * where a stylesheet puts the panel's inset, on one box rather than spread over
+   * whichever children it thought to name.
+   *
    * ponytail: `::details-content` is the wrapper the platform already has, but
    * animating it from 0 to `auto` also needs `interpolate-size`, which is not
-   * everywhere yet. Drop the div for the pseudo-element once it is.
+   * everywhere yet. Drop the outer div for the pseudo-element once it is.
    */
   wrapPanels() {
     for (const panel of this.panels) {
       const summary = panel.querySelector(':scope > summary');
       if (!summary) continue;
-      if (panel.querySelector(':scope > .' + CONTENT_CLASS)) continue;
+      if (panel.querySelector(':scope > .' + WRAPPER_CLASS)) continue;
 
+      const wrapper = document.createElement('div');
+      wrapper.className = WRAPPER_CLASS;
       const content = document.createElement('div');
       content.className = CONTENT_CLASS;
+      wrapper.appendChild(content);
+
       // Everything after the summary is the panel body.
       let node = summary.nextSibling;
       while (node) {
@@ -134,13 +148,13 @@ export class AccordionElemental extends ElementBase {
         content.appendChild(node);
         node = next;
       }
-      panel.appendChild(content);
+      panel.appendChild(wrapper);
     }
   }
 
-  /** @returns {HTMLElement|null} A panel's body wrapper. */
-  contentOf(panel) {
-    return panel.querySelector(':scope > .' + CONTENT_CLASS);
+  /** @returns {HTMLElement|null} The box a panel's height is animated on. */
+  wrapperOf(panel) {
+    return panel.querySelector(':scope > .' + WRAPPER_CLASS);
   }
 
   /**
@@ -177,8 +191,8 @@ export class AccordionElemental extends ElementBase {
    * is `display: none` until it does and an unrendered box has no height.
    */
   openPanel(panel) {
-    const content = this.contentOf(panel);
-    if (!content) {
+    const wrapper = this.wrapperOf(panel);
+    if (!wrapper) {
       panel.open = true;
       return;
     }
@@ -196,12 +210,12 @@ export class AccordionElemental extends ElementBase {
     // Measure before opening. Once `open` is set the body is already at full
     // height, and a slide that starts where it ends is not a slide. A panel
     // caught mid-close is rendered already, so its height is the honest start.
-    const from = panel.open ? content.offsetHeight : 0;
+    const from = panel.open ? wrapper.offsetHeight : 0;
 
     panel.classList.remove(CLOSING_CLASS);
     this.restoreName(panel);
     panel.open = true;
-    slide(content, from, true);
+    slide(wrapper, from, true);
   }
 
   /**
@@ -210,8 +224,8 @@ export class AccordionElemental extends ElementBase {
    * at frame one.
    */
   closePanel(panel) {
-    const content = this.contentOf(panel);
-    if (!content) {
+    const wrapper = this.wrapperOf(panel);
+    if (!wrapper) {
       panel.open = false;
       return;
     }
@@ -225,7 +239,7 @@ export class AccordionElemental extends ElementBase {
       panel.removeAttribute('name');
     }
 
-    slide(content, content.offsetHeight, false, () => {
+    slide(wrapper, wrapper.offsetHeight, false, () => {
       panel.classList.remove(CLOSING_CLASS);
       panel.open = false;
       this.restoreName(panel);
@@ -248,7 +262,7 @@ export class AccordionElemental extends ElementBase {
     const panel = summary.parentElement;
     // Not one of ours means a nested accordion's; let it handle itself.
     if (!panel || !this.panels.includes(panel)) return;
-    if (!this.contentOf(panel)) return;
+    if (!this.wrapperOf(panel)) return;
 
     e.preventDefault();
     if (panel.open && !panel.classList.contains(CLOSING_CLASS)) this.closePanel(panel);

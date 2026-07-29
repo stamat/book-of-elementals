@@ -16,12 +16,12 @@ accordion-elemental {
   // so restyling it here restyles the animation - including to `none`.
   // Without JavaScript there is no div, this rule matches nothing, and the panels
   // toggle natively and instantly. Which is correct, just unanimated.
-  > details > .accordion-elemental-content {
+  > details > .accordion-elemental-content-wrapper {
     // The wrapper is the library's box, not the page's, and it is kept inert on
     // purpose. Padding or a border here would be a floor the height cannot get
     // under - `box-sizing: border-box` renders `height: 0` as the padding - so
-    // the panel would animate shut down to that and then cut. Style the content
-    // inside the wrapper instead.
+    // the panel would animate shut down to that and then cut. That is what the
+    // box inside it is for: style `.accordion-elemental-content` instead.
     display: flow-root; // no margins collapsing out, so the measured height is the real one
     margin: 0;
     padding: 0;
@@ -30,7 +30,7 @@ accordion-elemental {
   }
 
   @media (prefers-reduced-motion: reduce) {
-    > details > .accordion-elemental-content {
+    > details > .accordion-elemental-content-wrapper {
       transition: none;
     }
   }

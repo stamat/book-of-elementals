@@ -90,7 +90,7 @@ may already be targeting**, since neither shows up in a function signature.
 - **Behaviour:** closing a panel is now the element's, not the browser's. `<details>` sets its
   contents to `display: none` the moment `open` goes away, which cuts a close animation off at
   frame one — so the element takes over the click, slides the body up while the panel is still
-  open, and only then closes it. `accordion-toggle` therefore fires for a close at the *end* of
+  open, and only then closes it. `accordion-toggle` therefore fires for a close at the _end_ of
   the slide, when the panel actually closes. Opening still fires it immediately.
 
 - The open/close animation no longer uses `::details-content` and `interpolate-size`. That pair

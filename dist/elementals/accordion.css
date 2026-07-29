@@ -10,7 +10,7 @@ accordion-elemental {
 accordion-elemental > details > summary {
   cursor: pointer;
 }
-accordion-elemental > details > .accordion-elemental-content {
+accordion-elemental > details > .accordion-elemental-content-wrapper {
   display: flow-root;
   margin: 0;
   padding: 0;
@@ -18,7 +18,7 @@ accordion-elemental > details > .accordion-elemental-content {
   transition: height var(--accordion-elemental-duration) var(--accordion-elemental-easing);
 }
 @media (prefers-reduced-motion: reduce) {
-  accordion-elemental > details > .accordion-elemental-content {
+  accordion-elemental > details > .accordion-elemental-content-wrapper {
     transition: none;
   }
 }

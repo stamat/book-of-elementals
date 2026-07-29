@@ -141,6 +141,7 @@
     }
   }
   var OPTIONS = { exclusive: "boolean" };
+  var WRAPPER_CLASS = "accordion-elemental-content-wrapper";
   var CONTENT_CLASS = "accordion-elemental-content";
   var CLOSING_CLASS = "accordion-elemental-closing";
   var DETACHED_NAME = Symbol("detachedName");
@@ -179,33 +180,43 @@
       this.initialized = false;
     }
     /**
-     * Wrap each panel body in a div, because a height transition needs one box to
+     * Wrap each panel body in two divs, because a height transition needs one box to
      * measure and clip and `<details>` hands you a bare run of siblings. Idempotent,
      * so moving the group in the DOM does not nest a second wrapper.
      *
+     * Two rather than one because the box being animated cannot be padded: block
+     * padding is a floor the height cannot get under, since `box-sizing: border-box`
+     * renders `height: 0` as the padding, and the panel would slide shut down to it
+     * and then cut. The outer box is the library's and stays inert; the inner one is
+     * where a stylesheet puts the panel's inset, on one box rather than spread over
+     * whichever children it thought to name.
+     *
      * ponytail: `::details-content` is the wrapper the platform already has, but
      * animating it from 0 to `auto` also needs `interpolate-size`, which is not
-     * everywhere yet. Drop the div for the pseudo-element once it is.
+     * everywhere yet. Drop the outer div for the pseudo-element once it is.
      */
     wrapPanels() {
       for (const panel of this.panels) {
         const summary = panel.querySelector(":scope > summary");
         if (!summary) continue;
-        if (panel.querySelector(":scope > ." + CONTENT_CLASS)) continue;
+        if (panel.querySelector(":scope > ." + WRAPPER_CLASS)) continue;
+        const wrapper = document.createElement("div");
+        wrapper.className = WRAPPER_CLASS;
         const content = document.createElement("div");
         content.className = CONTENT_CLASS;
+        wrapper.appendChild(content);
         let node = summary.nextSibling;
         while (node) {
           const next = node.nextSibling;
           content.appendChild(node);
           node = next;
         }
-        panel.appendChild(content);
+        panel.appendChild(wrapper);
       }
     }
-    /** @returns {HTMLElement|null} A panel's body wrapper. */
-    contentOf(panel) {
-      return panel.querySelector(":scope > ." + CONTENT_CLASS);
+    /** @returns {HTMLElement|null} The box a panel's height is animated on. */
+    wrapperOf(panel) {
+      return panel.querySelector(":scope > ." + WRAPPER_CLASS);
     }
     /**
      * Give every panel the same `name`, which is what makes native `<details>`
@@ -229,8 +240,8 @@
      * is `display: none` until it does and an unrendered box has no height.
      */
     openPanel(panel) {
-      const content = this.contentOf(panel);
-      if (!content) {
+      const wrapper = this.wrapperOf(panel);
+      if (!wrapper) {
         panel.open = true;
         return;
       }
@@ -241,11 +252,11 @@
           }
         }
       }
-      const from = panel.open ? content.offsetHeight : 0;
+      const from = panel.open ? wrapper.offsetHeight : 0;
       panel.classList.remove(CLOSING_CLASS);
       this.restoreName(panel);
       panel.open = true;
-      slide(content, from, true);
+      slide(wrapper, from, true);
     }
     /**
      * Slide a panel's body up, and only then actually close it - `<details>` sets
@@ -253,8 +264,8 @@
      * at frame one.
      */
     closePanel(panel) {
-      const content = this.contentOf(panel);
-      if (!content) {
+      const wrapper = this.wrapperOf(panel);
+      if (!wrapper) {
         panel.open = false;
         return;
       }
@@ -263,7 +274,7 @@
         panel[DETACHED_NAME] = panel.getAttribute("name");
         panel.removeAttribute("name");
       }
-      slide(content, content.offsetHeight, false, () => {
+      slide(wrapper, wrapper.offsetHeight, false, () => {
         panel.classList.remove(CLOSING_CLASS);
         panel.open = false;
         this.restoreName(panel);
@@ -283,7 +294,7 @@
       if (!summary) return;
       const panel = summary.parentElement;
       if (!panel || !this.panels.includes(panel)) return;
-      if (!this.contentOf(panel)) return;
+      if (!this.wrapperOf(panel)) return;
       e.preventDefault();
       if (panel.open && !panel.classList.contains(CLOSING_CLASS)) this.closePanel(panel);
       else this.openPanel(panel);

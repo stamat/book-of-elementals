@@ -118,8 +118,10 @@ screen reader users can navigate to them by heading:
 ```
 
 Styling is yours — there is no shadow DOM. On upgrade the element wraps each
-panel body in `<div class="accordion-elemental-content">`, transitions its
-height, and holds the close open until the transition ends — `<details>` sets
+panel body in `<div class="accordion-elemental-content-wrapper">` with a
+`<div class="accordion-elemental-content">` inside it — the wrapper is the box
+whose height transitions, so padding goes on the content — and holds the close
+open until the transition ends — `<details>` sets
 its contents to `display: none` the moment it closes, which would otherwise cut
 the animation off at frame one. Retime it in CSS; the element reads the duration
 back out of the stylesheet:

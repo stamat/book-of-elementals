@@ -90,9 +90,9 @@ handling are not options.
 
 ## The book so far
 
-| Element                            | Pattern                                                                             |
-| ---------------------------------- | ----------------------------------------------------------------------------------- |
-| [`<accordion-elemental>`](elements/accordion.html) | [APG Accordion](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/), over native `<details>` |
+| Element                                              | Pattern                                                                                       |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [`<accordion-elemental>`](elementals/accordion.html) | [APG Accordion](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/), over native `<details>` |
 
 More pages are being written. Elements published separately today —
 [compare-images-slider](https://github.com/stamat/compare-images-slider),
