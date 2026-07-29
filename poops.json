@@ -50,8 +50,8 @@
     }
   },
   {
-    "in": "src/elementals/accordion/theme.scss",
-    "out": "dist/elementals/accordion-theme.css",
+    "in": "src/elementals/*/theme.scss",
+    "out": "dist/elementals/{{dir}}-theme.css",
     "options": {
       "sourcemap": true,
       "minify": true,

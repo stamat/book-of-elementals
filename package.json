@@ -63,7 +63,7 @@
     "@eslint/js": "^10.0.1",
     "eslint": "^10.7.0",
     "jest": "^30.4.2",
-    "poops": "^1.9.5",
+    "poops": "^1.9.6",
     "poops-docs-theme": "^1.1.2",
     "stylelint": "^17.14.1",
     "stylelint-config-standard-scss": "^17.0.0"
