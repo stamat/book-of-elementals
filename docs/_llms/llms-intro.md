@@ -34,6 +34,12 @@ Elements published so far:
 - `<accordion-elemental>` — APG accordion over native `<details>`; `exclusive`
   and `name` attributes, arrow-key header navigation, fragment deep links, and a
   bubbling `accordion-toggle` event.
+- `<disclosure-elemental>` — APG disclosure: a real `<button>` wired to a region
+  with `aria-expanded`/`aria-controls`, for the places `<details>` cannot go (a
+  `<figcaption>`, a table row, a grid item, a region across the page). Reflected
+  `open`, a `for` attribute for a detached region, `hidden="until-found"` so
+  find-in-page still reaches a closed region, and a bubbling `disclosure-toggle`
+  event.
 
 Sibling project: [book-of-spells](https://github.com/stamat/book-of-spells),
 which holds the plain JavaScript helpers. This book holds the elements.

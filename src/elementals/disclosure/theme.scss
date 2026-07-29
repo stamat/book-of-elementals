@@ -1,0 +1,65 @@
+// Optional look for `<disclosure-elemental>`. Not part of the element's own
+// stylesheet and not in its bundle: that one styles structure only, and a light-DOM
+// element cannot scope a look away from a page that did not ask for one. Import this
+// when you want the look, skip it when you do not.
+// Colours are mixed out of `currentcolor` rather than hard-coded, so the button sits
+// in whatever palette the page already has - including a theme switch - with nothing
+// to configure.
+
+disclosure-elemental {
+  --disclosure-elemental-border-color: color-mix(in srgb, currentcolor 15%, transparent);
+  --disclosure-elemental-radius: 0.5rem;
+
+  // A button the browser styles as a browser button would fight every page it
+  // lands on, so the theme unstyles it back down to the page's own type and colour
+  // and draws the box itself, in `currentcolor` like the rest of the book.
+  > button {
+    display: inline-flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    background: none;
+    border: 1px solid var(--disclosure-elemental-border-color);
+    border-radius: var(--disclosure-elemental-radius);
+
+    &:hover {
+      background: color-mix(in srgb, currentcolor 5%, transparent);
+    }
+
+    // An Octicon chevron, drawn as a mask rather than a background image so it takes
+    // the button's `color` instead of baking one into the SVG, and so it follows a
+    // theme switch for free.
+    &::after {
+      content: "";
+      flex: none; // a long label must not squeeze the caret
+      width: 1rem;
+      height: 1rem;
+      background: currentcolor;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/%3E%3C/svg%3E") center / contain no-repeat;
+      transition: rotate 150ms ease;
+    }
+
+    // Keyed off the ARIA rather than a class, because the ARIA is the state - there
+    // is no second thing to keep in step with it. A half turn rather than a quarter,
+    // so it reads the same either way round in RTL.
+    &[aria-expanded="true"]::after {
+      rotate: 180deg;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      &::after {
+        transition: none;
+      }
+    }
+  }
+}
+
+// A top-level rule rather than a descendant one: the region is often nowhere near
+// the button, which is the reason the element exists. `[hidden]` in the element's
+// own stylesheet zeroes this back out while the region is closed.
+.disclosure-elemental-region {
+  margin-block-start: 0.5rem;
+}

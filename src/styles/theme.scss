@@ -1,4 +1,7 @@
 // Every element's optional look. Import one component's theme directly
 // (`book-of-elementals/accordion/theme.scss`) to avoid paying for the rest.
 // Structure and motion live in `index.scss`; this file only adds the look.
-@use "../elementals/accordion/theme";
+// `as *` only because every one of these is called `theme` and would otherwise
+// collide on namespace. They export nothing - the CSS is the whole of them.
+@use "../elementals/accordion/theme" as *;
+@use "../elementals/disclosure/theme" as *;

@@ -3,7 +3,8 @@
 // The docs layout links exactly one stylesheet, css/docs.min.css.
 @use "poops-docs-theme/scss/docs";
 @use "../src/styles/index";
-@use "../src/elementals/accordion/theme";
+@use "../src/elementals/accordion/theme" as *;
+@use "../src/elementals/disclosure/theme" as *;
 
 // The demos wear the shipped optional theme rather than a skin of their own, so
 // what the pages show is what the import gives you. Its two custom properties are
@@ -12,4 +13,32 @@
 accordion-elemental {
   --accordion-elemental-border-color: var(--border);
   --accordion-elemental-radius: var(--radius);
+}
+
+disclosure-elemental {
+  --disclosure-elemental-border-color: var(--border);
+  --disclosure-elemental-radius: var(--radius);
+}
+
+// Demo-only, and not part of any element: the figure the disclosure examples hang
+// off. The element itself styles nothing around the image, because the image is
+// none of its business.
+.demo-figure {
+  margin: 0;
+
+  img {
+    display: block;
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+}
+
+// The show/hide label swap the disclosure page documents, running on the page that
+// documents it. Not shipped with the element - it is the reader's own two spans.
+.demo-swap {
+  [aria-expanded="false"] .hide,
+  [aria-expanded="true"] .show {
+    display: none;
+  }
 }

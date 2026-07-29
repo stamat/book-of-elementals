@@ -15,6 +15,11 @@
     "./accordion/style.css": "./dist/elementals/accordion.css",
     "./accordion/theme.scss": "./src/elementals/accordion/theme.scss",
     "./accordion/theme.css": "./dist/elementals/accordion-theme.css",
+    "./disclosure": "./src/elementals/disclosure/index.js",
+    "./disclosure/style.scss": "./src/elementals/disclosure/index.scss",
+    "./disclosure/style.css": "./dist/elementals/disclosure.css",
+    "./disclosure/theme.scss": "./src/elementals/disclosure/theme.scss",
+    "./disclosure/theme.css": "./dist/elementals/disclosure-theme.css",
     "./styles/*": "./src/styles/*",
     "./dist/*": "./dist/*",
     "./package.json": "./package.json"
@@ -42,6 +47,7 @@
     "aria",
     "apg",
     "accordion",
+    "disclosure",
     "details",
     "javascript",
     "esm"

@@ -14,6 +14,54 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Added
+
+- `<disclosure-elemental>` — the
+  [APG Disclosure pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/): a real
+  `<button>` wired to a region it shows and hides. `<details>` is a disclosure already and
+  wins wherever it fits, which is wherever the region can live _inside_ the trigger's
+  element; this one is for where it cannot — a `<figcaption>`, which HTML requires to be a
+  child of its `<figure>`, a table row, a grid item its parent lays out directly, a panel on
+  the other side of the page.
+
+  ```html
+  <figure>
+    <img src="chart.png" alt="A tapering band showing an army shrinking…" />
+    <disclosure-elemental for="chart-desc">
+      <button>Describe this image</button>
+    </disclosure-elemental>
+    <figcaption id="chart-desc">…</figcaption>
+  </figure>
+  ```
+
+  Nothing is wrapped and nothing is moved: the element writes `aria-expanded` and
+  `aria-controls` onto the button, `hidden` onto the region, and `type="button"` onto a
+  button that has no type — a `<button>` in a form submits it otherwise. `open` is
+  reflected, so the state reads the same from markup, from script and from CSS, and every
+  change fires a bubbling `disclosure-toggle` carrying `{ region, open }`. `for` is read
+  bare or as `data-for`; without it the region is the button's next element sibling.
+
+  A closed region is hidden with `hidden="until-found"` rather than a bare `hidden`, so
+  find-in-page still searches it and a link to a fragment inside it still lands there. Both
+  reveal the region and fire `beforematch`, which the element answers by opening — the same
+  behaviour `<details>` has natively, on markup `<details>` could not have held. Browsers
+  without `until-found` read the attribute as plain hidden.
+
+  The element is `display: contents`, so dropping it around existing markup changes no
+  layout — which is the whole point for the grids and tables it exists to serve. With
+  scripting off the region is simply visible and the button is not offered
+  (`disclosure-elemental:not(:defined) > button { display: none }`), which for a long
+  description is the right way round.
+
+  Its optional theme ships alongside, on the same two custom properties the accordion has —
+  `--disclosure-elemental-border-color` and `--disclosure-elemental-radius` — and is
+  included in the whole-book `theme.scss`:
+
+  ```scss
+  @use "book-of-elementals/disclosure/style.scss";
+  @use "book-of-elementals/disclosure/theme.scss";
+  ```
+
 ### Changed
 
 - The optional accordion theme now styles a heading inside a `<summary>` as inherited type —

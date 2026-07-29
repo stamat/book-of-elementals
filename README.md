@@ -16,9 +16,10 @@ holds the JavaScript helpers, this one holds the elements.
 
 ## Elements
 
-| Element             | Pattern                                                                                        |
-| ------------------- | ---------------------------------------------------------------------------------------------- |
-| `<accordion-elemental>` | [APG Accordion](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/), over native `<details>`   |
+| Element                  | Pattern                                                                                            |
+| ------------------------ | -------------------------------------------------------------------------------------------------- |
+| `<accordion-elemental>`  | [APG Accordion](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/), over native `<details>`      |
+| `<disclosure-elemental>` | [APG Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), where `<details>` cannot go |
 
 ## Docs
 
@@ -34,10 +35,12 @@ Import one element and only that element is registered:
 
 ```javascript
 import "book-of-elementals/accordion";
+import "book-of-elementals/disclosure";
 ```
 
 ```scss
 @use "book-of-elementals/accordion/style.scss";
+@use "book-of-elementals/disclosure/style.scss";
 ```
 
 Or the whole book:
@@ -138,6 +141,44 @@ accordion-elemental {
 
 `prefers-reduced-motion: reduce` switches it off, and without JavaScript there is
 no wrapper and no animation — native instant toggling, which is still correct.
+
+## `<disclosure-elemental>`
+
+A real `<button>` wired to a region it shows and hides. `<details>` is a
+disclosure already and wins wherever it fits — it fits when the region can live
+_inside_ the trigger's element. This one is for when it cannot: a
+`<figcaption>`, which HTML requires to be a child of its `<figure>`; a table row;
+a grid item its parent lays out directly; a panel on the other side of the page
+from the button that opens it.
+
+```html
+<figure>
+  <img src="chart.png" alt="A tapering band showing an army shrinking…" />
+  <disclosure-elemental for="chart-desc">
+    <button>Describe this image</button>
+  </disclosure-elemental>
+  <figcaption id="chart-desc">…</figcaption>
+</figure>
+```
+
+Nothing is wrapped and nothing is moved — the region stays exactly where the
+markup put it, which is the whole point. The element writes `aria-expanded` and
+`aria-controls` onto the button and `hidden` onto the region, and that is all the
+ARIA there is.
+
+| Attribute | Type    | Default | Description                                                          |
+| --------- | ------- | ------- | -------------------------------------------------------------------- |
+| `open`    | boolean | `false` | Whether the region is showing. Reflected — it tracks the live state. |
+| `for`     | string  | —       | `id` of the region. Defaults to the button's next element sibling.   |
+
+A closed region is hidden with `hidden="until-found"`, so find-in-page still
+searches it and a link to a fragment inside it still lands there — either one
+reveals the region and the element opens to match. State changes fire a bubbling
+`disclosure-toggle`.
+
+The element is `display: contents`, so dropping it around existing markup changes
+no layout. With scripting off the region is simply visible and the button is not
+offered, which for a long description is the right way round.
 
 ## Changelog
 

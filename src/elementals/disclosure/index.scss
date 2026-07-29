@@ -1,0 +1,27 @@
+disclosure-elemental {
+  // A coordinator, not a box. The element exists for the cases native `<details>`
+  // cannot reach - a figcaption, a table row, a grid item - and every one of those
+  // is a case where an extra box in the tree is exactly the problem. `contents`
+  // means dropping the element around existing markup changes no layout at all.
+  // Give it `display: block` in your own CSS if you want something to style.
+  display: contents;
+
+  // Until the element is defined the button toggles nothing, so it is not offered.
+  // With scripting off that is the whole of the degradation: no button, and the
+  // region simply there, unhidden - which is the right way round for a long
+  // description, and why the region is not authored `hidden`.
+  &:not(:defined) > button {
+    display: none;
+  }
+}
+
+// The element hides the region with `hidden="until-found"`, which skips the
+// region's *contents* rather than its box - a padded or bordered region would
+// otherwise leave an empty strip behind while closed. Browsers without
+// `until-found` read the attribute as plain hidden and never reach this rule's
+// subject at all, so it costs them nothing.
+.disclosure-elemental-region[hidden] {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
