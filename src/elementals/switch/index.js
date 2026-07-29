@@ -21,16 +21,37 @@ import { ElementBase, define } from '../../core.js';
  *
  * Light DOM, no shadow root, and nothing is moved or wrapped.
  *
- * ponytail: for a switch that lives *in a form*, `<input type="checkbox" role="switch">`
- * is the whole answer - it submits, resets, restores on back-navigation and derives
- * `aria-checked` from `checked` on its own, with no JavaScript whatsoever. This element
- * is for the other case, and deliberately does not grow a form-associated mode.
+ * Give it a `name` and it submits with its form, exactly as a checkbox does - the value
+ * when on, nothing at all when off - and resets and restores with it too. That is
+ * `ElementInternals` rather than a hidden `<input>` mirroring the state: a second node
+ * holding the same boolean is a second node that can disagree with the first, and it
+ * would still leave `reset` and back-navigation to be hand-written. The platform owns
+ * all three here, and there is nothing to keep in step.
+ *
+ * ponytail: `<input type="checkbox" role="switch">` is still the better answer for a
+ * plain form control - it is the same switch with no JavaScript at all, so it survives
+ * scripting being off. Reach for this one when you want the shipped look, or the
+ * `switch-toggle` event, on something that also has to submit.
  *
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/switch/
  */
 export class SwitchElemental extends ElementBase {
+  // Opts the element into form ownership: `name`, submission, reset and state restore.
+  static get formAssociated() {
+    return true;
+  }
+
   static get observedAttributes() {
-    return ['checked'];
+    return ['checked', 'value'];
+  }
+
+  constructor() {
+    super();
+    // Guarded because `attachInternals` is the one part of this element that is not
+    // everywhere - Safari only got it in 16.4 - and because `ElementBase` is a plain
+    // class under Node. Without it the switch is simply a switch that does not submit,
+    // which is what it was before it had a name to submit under.
+    if (typeof this.attachInternals === 'function') this.internals = this.attachInternals();
   }
 
   /** The `<button>` that flips. Direct child, so a button in a label beside it - or
@@ -61,6 +82,13 @@ export class SwitchElemental extends ElementBase {
     if (!button.hasAttribute('type')) button.type = 'button';
     button.setAttribute('role', 'switch');
 
+    // What a form reset goes back to. A native checkbox keeps this as the `checked`
+    // content attribute and the live state as the IDL property; here `checked` is the
+    // live state - reflected, so markup, script and CSS all read the same thing - so the
+    // state the markup arrived in has to be remembered separately or it is gone the
+    // first time anyone flips the switch.
+    this.defaultChecked = this.checked;
+
     this.onClick = this.onClick.bind(this);
     this.addEventListener('click', this.onClick);
 
@@ -76,10 +104,38 @@ export class SwitchElemental extends ElementBase {
     this.initialized = false;
   }
 
-  /** Push the current state onto the button. The one thing this element writes. */
+  /** What the form submits when the switch is on. `on`, as a checkbox's is. */
+  get value() {
+    const value = this.getAttribute('value');
+    return value === null ? 'on' : value;
+  }
+
+  set value(value) {
+    this.setAttribute('value', value);
+  }
+
+  /** Push the current state onto the button, and onto the form if there is one. */
   apply() {
     const button = this.button;
     if (button) button.setAttribute('aria-checked', this.checked ? 'true' : 'false');
+    // `null` rather than an empty string, because an unchecked checkbox does not submit
+    // an empty value - it does not appear in the form data at all, and that absence is
+    // what every server-side "was this box ticked" check is already written against.
+    if (this.internals) this.internals.setFormValue(this.checked ? this.value : null);
+  }
+
+  /** The form is putting its controls back to the state the markup arrived in. */
+  formResetCallback() {
+    this.checked = this.defaultChecked;
+  }
+
+  /**
+   * The browser is restoring this control after a back-navigation or a session restore,
+   * with whatever `setFormValue` last put in. Off submitted nothing, so nothing coming
+   * back is off.
+   */
+  formStateRestoreCallback(state) {
+    this.checked = state !== null;
   }
 
   /**
@@ -89,6 +145,10 @@ export class SwitchElemental extends ElementBase {
   attributeChangedCallback(name, previous, current) {
     if (!this.initialized || previous === current) return;
     this.apply();
+    // A new `value` is what the switch would submit, not a change in whether it is on.
+    // It still has to reach the form, which `apply` has just done, but there is no
+    // toggle to announce.
+    if (name === 'value') return;
     this.dispatchEvent(new CustomEvent('switch-toggle', {
       bubbles: true,
       detail: { checked: this.checked }

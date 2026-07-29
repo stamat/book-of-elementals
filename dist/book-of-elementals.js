@@ -460,8 +460,16 @@
 
   // src/elementals/switch/index.js
   var SwitchElemental = class extends ElementBase {
+    // Opts the element into form ownership: `name`, submission, reset and state restore.
+    static get formAssociated() {
+      return true;
+    }
     static get observedAttributes() {
-      return ["checked"];
+      return ["checked", "value"];
+    }
+    constructor() {
+      super();
+      if (typeof this.attachInternals === "function") this.internals = this.attachInternals();
     }
     /** The `<button>` that flips. Direct child, so a button in a label beside it - or
      * in a second switch nested somewhere below - is not mistaken for the control. */
@@ -482,6 +490,7 @@
       this.initialized = true;
       if (!button.hasAttribute("type")) button.type = "button";
       button.setAttribute("role", "switch");
+      this.defaultChecked = this.checked;
       this.onClick = this.onClick.bind(this);
       this.addEventListener("click", this.onClick);
       this.apply();
@@ -491,10 +500,31 @@
       this.removeEventListener("click", this.onClick);
       this.initialized = false;
     }
-    /** Push the current state onto the button. The one thing this element writes. */
+    /** What the form submits when the switch is on. `on`, as a checkbox's is. */
+    get value() {
+      const value = this.getAttribute("value");
+      return value === null ? "on" : value;
+    }
+    set value(value) {
+      this.setAttribute("value", value);
+    }
+    /** Push the current state onto the button, and onto the form if there is one. */
     apply() {
       const button = this.button;
       if (button) button.setAttribute("aria-checked", this.checked ? "true" : "false");
+      if (this.internals) this.internals.setFormValue(this.checked ? this.value : null);
+    }
+    /** The form is putting its controls back to the state the markup arrived in. */
+    formResetCallback() {
+      this.checked = this.defaultChecked;
+    }
+    /**
+     * The browser is restoring this control after a back-navigation or a session restore,
+     * with whatever `setFormValue` last put in. Off submitted nothing, so nothing coming
+     * back is off.
+     */
+    formStateRestoreCallback(state) {
+      this.checked = state !== null;
     }
     /**
      * `checked` is the single source of truth, so everything that changes it - a click,
@@ -503,6 +533,7 @@
     attributeChangedCallback(name, previous, current) {
       if (!this.initialized || previous === current) return;
       this.apply();
+      if (name === "value") return;
       this.dispatchEvent(new CustomEvent("switch-toggle", {
         bubbles: true,
         detail: { checked: this.checked }

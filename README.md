@@ -211,18 +211,30 @@ which `aria-checked` already announces.
 
 State changes fire a bubbling `switch-toggle` carrying `{ checked }`.
 
-If the setting lives in a **form**, stop here: `<input type="checkbox" role="switch">`
-submits, resets, restores on back-navigation and derives `aria-checked` from
-`checked` on its own, with no JavaScript at all. This element is for the other
-case, and deliberately does not grow a form-associated mode — which is also why
-the button is hidden until the element upgrades, since a switch that silently does
-not switch is worse than no switch.
+| Attribute | Type   | Default | Description                                     |
+| --------- | ------ | ------- | ----------------------------------------------- |
+| `name`    | string | —       | Submits under this name. No name, no form data. |
+| `value`   | string | `on`    | What it submits while on.                       |
+
+Give it a `name` and it submits with its form exactly as a checkbox does — the
+value when on, nothing at all when off — and resets and restores with it too. That
+is `ElementInternals`, not a hidden `<input>` mirroring the state, so the platform
+owns all three and there is no second node to disagree with the first.
+
+`<input type="checkbox" role="switch">` is still the better answer for a plain form
+control: it is the same switch with no JavaScript at all, so it survives scripting
+being off, and it gets `<label>` for free. Reach for this element when you want the
+look or the event on something that also has to submit. The button is hidden until
+the element upgrades, because a switch that silently does not switch is worse than
+no switch.
 
 The optional theme draws a pill whose knob slides and whose track fills, mixed out
-of `currentcolor` so it sits in the palette it is switching. Geometry is derived
-from `--switch-elemental-width` and `--switch-elemental-height`, so resizing it is
-one property. An icon per state is optional, in `.switch-elemental-on` and
-`.switch-elemental-off` spans inside the button.
+of `currentcolor` so it sits in the palette it is switching. Geometry derives from
+`--switch-elemental-width` and `--switch-elemental-height`, so any size is two
+properties — `.switch-elemental-small` ships as the one preset. An icon per state
+is optional, in `.switch-elemental-on` and `.switch-elemental-off` spans inside the
+button. The docs page shows the hairline, accent, wash and outline variants, each
+one nothing but a few of the theme's custom properties.
 
 ## Changelog
 

@@ -23,13 +23,20 @@ switch-elemental {
 
   // Off, the track is empty and the knob is the only ink; on, they swap - the track
   // fills with the text color and the knob drops out of it. Two states told apart by
-  // fill as well as by position, because position alone is the one cue a reader who
-  // has never seen the switch in its other state cannot read.
-  // `Canvas` is the page's own background, so the knob drops out to whatever the page
-  // sits on. Override it where the switch sits on a card rather than on the page.
+  // fill as well as by position, because position alone is the one cue a reader who has
+  // never seen the switch in its other state cannot read.
+  --switch-elemental-border-color: currentcolor;
   --switch-elemental-track: transparent;
   --switch-elemental-track-checked: currentcolor;
   --switch-elemental-knob: currentcolor;
+
+  // `Canvas` is the page's own background, which is what a knob dropped out of a filled
+  // track should be. It is the one value here that has to know something about its
+  // surroundings, so it is also the one to re-point when they are not what it assumes:
+  // on a card rather than on the page, and on a page that themes in custom properties
+  // without also declaring `color-scheme`, where a dark page keeps a white `Canvas` and
+  // the knob thins out against a light track. One line either way, and the docs carry
+  // the looks that avoid the question entirely.
   --switch-elemental-knob-checked: Canvas;
   --switch-elemental-duration: 250ms;
   --switch-elemental-easing: ease-in-out;
@@ -44,7 +51,7 @@ switch-elemental {
     color: inherit;
     cursor: pointer;
     background: var(--switch-elemental-track);
-    border: var(--switch-elemental-border-width) solid currentcolor;
+    border: var(--switch-elemental-border-width) solid var(--switch-elemental-border-color);
     border-radius: var(--switch-elemental-height); // a pill at any height
     transition: background var(--switch-elemental-duration) var(--switch-elemental-easing);
 
@@ -78,9 +85,10 @@ switch-elemental {
       transition: opacity var(--switch-elemental-duration) var(--switch-elemental-easing);
     }
 
-    // Each icon takes the knob color of the state it belongs to, because each one sits
-    // on that state's track: the off icon over the empty track, the on icon over the
-    // filled one. Give them `currentcolor` and the on icon would be the track.
+    // Each icon takes the knob color of the state it belongs to, because each one sits on
+    // that state's track: the off icon over the empty track, the on icon over the filled
+    // one. Give them `currentcolor` and the on icon would be painted in the colour the
+    // track has just been filled with.
     > .switch-elemental-off {
       inset-inline-end: var(--switch-elemental-gap);
       color: var(--switch-elemental-knob);
@@ -119,11 +127,13 @@ switch-elemental {
       translate: calc(var(--switch-elemental-travel) * -1);
     }
 
-    // Forced-colors mode overrides author backgrounds, which here are the whole
-    // control: the track fill and the knob are the only things telling the two states
-    // apart. System color keywords are honoured there, so both are repainted in them
-    // rather than lost. `Highlight` for the on track, because that is the mode's own
-    // colour for a control that is set.
+    // Forced-colors mode overrides author backgrounds, which here are the whole control:
+    // the track fill and the knob are the only things telling the two states apart.
+    // System color keywords are honoured there, so both are repainted in
+    // them rather than lost - `Highlight` for the on track, because that is the mode's
+    // own colour for a control that is set, and `HighlightText` for what sits on it,
+    // because the mode guarantees that pair contrasts and guarantees nothing about any
+    // other.
     @media (forced-colors: active) {
       &::before {
         background: CanvasText;
@@ -133,11 +143,11 @@ switch-elemental {
         background: Highlight;
 
         &::before {
-          background: Canvas;
+          background: HighlightText;
         }
 
         > .switch-elemental-on {
-          color: Canvas;
+          color: HighlightText;
         }
       }
     }
@@ -150,5 +160,16 @@ switch-elemental {
         transition: none;
       }
     }
+  }
+
+  // The one size preset worth shipping, because "the same switch but smaller" is a size
+  // rather than a look and there is nothing to design about it. Two numbers, because the
+  // rest is derived - which is also the whole recipe for any other size, so there is no
+  // scale here, no `medium` that means the default, and nothing stopping you setting the
+  // two properties directly instead. Icons are the author's own SVGs at the author's own
+  // size, so size them down too if you use them at this one.
+  &.switch-elemental-small {
+    --switch-elemental-width: 2.75rem;
+    --switch-elemental-height: 1.5rem;
   }
 }

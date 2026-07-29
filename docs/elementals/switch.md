@@ -30,16 +30,20 @@ takes effect:
 - A **switch** is a setting that takes effect the moment you flip it. A theme toggle, a
   mute, autoplay, notifications. There is no submit, no cancel, and no third state.
 
-So if the setting lives in a form, stop here — the platform already has it, and it needs
-no JavaScript at all:
+If the setting lives in a form and you do not need the look, the platform already has it
+and it needs no JavaScript at all:
 
 ```html
 <label> <input type="checkbox" role="switch" name="autoplay" /> Autoplay </label>
 ```
 
 That submits, resets, restores on back-navigation and derives `aria-checked` from
-`checked` on its own. This element is for the other case, and deliberately does not grow
-a form-associated mode. The look below styles either one — see [The look](#the-look).
+`checked` on its own — and being a real form control, it also gets `<label>`. It is the
+better answer whenever it is enough, because it keeps working with scripting off.
+
+This element still [submits with a form](#in-a-form) when you give it a `name`, so you do
+not have to choose between the look and the form data. The look styles either one — see
+[The look](#the-look).
 
 ## Usage
 
@@ -197,11 +201,51 @@ Set `checked` before the bundle loads and it is still right: the element reads t
 attribute on upgrade, and the flash was never possible because the boot script above
 had already stamped `[data-theme]`.
 
+## In a form
+
+Give it a `name` and it submits with its form, exactly as a checkbox does — the value
+when it is on, and nothing at all when it is off:
+
+```html
+<form>
+  <switch-elemental name="autoplay"><button aria-label="Autoplay"></button></switch-elemental>
+  <switch-elemental name="tier" value="pro" checked>
+    <button aria-label="Pro"></button>
+  </switch-elemental>
+</form>
+```
+
+```javascript
+new FormData(form); // tier=pro   — autoplay is off, so it is simply absent
+```
+
+That absence is the point: it is what a checkbox does, and what every server-side "was
+this ticked" check is already written against. `value` defaults to `on`, as a checkbox's
+does.
+
+Form **reset** puts it back to the state its markup arrived in, and **back-navigation**
+restores whatever the reader left it at. Neither is wired up here — the element is
+form-associated through
+[`ElementInternals`](https://developer.mozilla.org/en-US/docs/Web/API/ElementInternals),
+so the platform owns submission, reset and restore, the same three it owns for a real
+checkbox.
+
+There is deliberately no hidden `<input>` mirroring the state. A second node holding the
+same boolean is a second node that can disagree with the first, and it would still leave
+reset and restore to be hand-written.
+
+> [!NOTE]
+> `attachInternals` is the one part of this element that is not everywhere — Safari only
+> got it in 16.4. Without it the switch is a switch that does not submit, which is what
+> it was before it had a name to submit under. Nothing else about it changes.
+
 ## Attributes
 
 | Attribute | Type    | Default | Description                                              |
 | --------- | ------- | ------- | -------------------------------------------------------- |
 | `checked` | boolean | `false` | Whether the switch is on. Reflected — it tracks the live state. |
+| `name`    | string  | —       | Submits under this name. No name, no form data.          |
+| `value`   | string  | `on`    | What it submits while on.                                |
 
 ## What it writes
 
@@ -225,9 +269,10 @@ switch-elemental:not(:defined) > button {
 }
 ```
 
-A switch that silently does not switch is worse than no switch at all. If the setting
-has to survive scripting being off, it belongs in a form as
-`<input type="checkbox" role="switch">`, which needs no script in the first place.
+A switch that silently does not switch is worse than no switch at all. If the setting has
+to survive scripting being off, use `<input type="checkbox" role="switch">`, which needs
+no script in the first place — that is true even of the form case above, since an element
+that never upgrades never sets a form value either.
 
 ## The look
 
@@ -263,6 +308,7 @@ including the theme it is switching.
 | `--switch-elemental-width`          | `3.625rem`     | Track width                              |
 | `--switch-elemental-height`         | `2rem`         | Track height; also the pill's radius     |
 | `--switch-elemental-border-width`   | `2px`          | Track border                             |
+| `--switch-elemental-border-color`   | `currentcolor` | Track border                             |
 | `--switch-elemental-gap`            | `2px`          | Between the knob and the inside of the track |
 | `--switch-elemental-track`          | `transparent`  | Track fill, off                          |
 | `--switch-elemental-track-checked`  | `currentcolor` | Track fill, on                           |
@@ -271,28 +317,140 @@ including the theme it is switching.
 | `--switch-elemental-duration`       | `250ms`        | Slide and cross-fade                     |
 | `--switch-elemental-easing`         | `ease-in-out`  | Slide and cross-fade                     |
 
-The knob's size and travel are derived from the first four, so resizing the switch is
-one property rather than five that have to agree with each other:
+`prefers-reduced-motion: reduce` switches the motion off. Under `forced-colors` the
+track and knob are repainted in system colors — they are the whole control, and author
+backgrounds do not survive that mode.
+
+### Size
+
+The knob's size and travel are derived from the width, the height, the border and the
+gap, so resizing is two properties rather than five that have to agree with each other.
+One preset ships, because "the same switch but smaller" is a size rather than a look and
+there is nothing to design about it:
+
+<div class="demo-sizes">
+  <switch-elemental checked><button aria-label="Default size"></button></switch-elemental>
+  <switch-elemental class="switch-elemental-small" checked><button aria-label="Small"></button></switch-elemental>
+</div>
+
+```html
+<switch-elemental class="switch-elemental-small">…</switch-elemental>
+```
 
 ```css
-switch-elemental {
-  --switch-elemental-height: 1.5rem;
+/* which is only this, so any other size is the same two lines */
+switch-elemental.switch-elemental-small {
   --switch-elemental-width: 2.75rem;
+  --switch-elemental-height: 1.5rem;
 }
 ```
 
-`Canvas` is the page's own background, which is what the knob should drop out to.
-Override it where the switch sits on a card rather than on the page:
+Icons are your own SVGs at your own size, so size them down too if you use them at the
+small one.
+
+### Other looks
+
+The shipped look is one arrangement of those properties, not the only one. These are the
+ones worth knowing, because each answers a different question — and the last two answer
+one the default cannot.
+
+<table class="demo-looks">
+  <thead>
+    <tr><th>Look</th><th>Off</th><th>On</th><th>What it is for</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Default</th>
+      <td><switch-elemental><button aria-label="Default, off"></button></switch-elemental></td>
+      <td><switch-elemental checked><button aria-label="Default, on"></button></switch-elemental></td>
+      <td>Monochrome, highest contrast between the two states.</td>
+    </tr>
+    <tr>
+      <th scope="row">Hairline</th>
+      <td><switch-elemental class="look-hairline"><button aria-label="Hairline, off"></button></switch-elemental></td>
+      <td><switch-elemental class="look-hairline" checked><button aria-label="Hairline, on"></button></switch-elemental></td>
+      <td>The same at <code>1px</code>, for lighter chrome.</td>
+    </tr>
+    <tr>
+      <th scope="row">Accent</th>
+      <td><switch-elemental class="look-accent"><button aria-label="Accent, off"></button></switch-elemental></td>
+      <td><switch-elemental class="look-accent" checked><button aria-label="Accent, on"></button></switch-elemental></td>
+      <td>Colour-codes the on state. One literal colour in an otherwise <code>currentcolor</code> theme.</td>
+    </tr>
+    <tr>
+      <th scope="row">Wash</th>
+      <td><switch-elemental class="look-wash"><button aria-label="Wash, off"></button></switch-elemental></td>
+      <td><switch-elemental class="look-wash" checked><button aria-label="Wash, on"></button></switch-elemental></td>
+      <td>Knob stays ink, track only tints. Never needs to know the background — see below.</td>
+    </tr>
+    <tr>
+      <th scope="row">Outline</th>
+      <td><switch-elemental class="look-outline"><button aria-label="Outline, off"></button></switch-elemental></td>
+      <td><switch-elemental class="look-outline" checked><button aria-label="Outline, on"></button></switch-elemental></td>
+      <td>Quietest. Position is the only cue, which is the one cue some readers cannot use.</td>
+    </tr>
+  </tbody>
+</table>
 
 ```css
+.hairline {
+  --switch-elemental-border-width: 1px;
+}
+
+.accent {
+  --switch-elemental-border-width: 1px;
+  --switch-elemental-border-color: color-mix(in srgb, currentcolor 30%, transparent);
+  --switch-elemental-track-checked: var(--brand);
+  --switch-elemental-knob-checked: var(--brand-contrast);
+}
+
+.wash {
+  --switch-elemental-border-color: color-mix(in srgb, currentcolor 35%, transparent);
+  --switch-elemental-track-checked: color-mix(in srgb, currentcolor 22%, transparent);
+  --switch-elemental-knob-checked: currentcolor;
+}
+
+.outline {
+  --switch-elemental-track-checked: transparent;
+  --switch-elemental-knob-checked: currentcolor;
+}
+```
+
+> [!NOTE]
+> Those classes go **on the `<switch-elemental>`**, not on a wrapper around it. The theme
+> sets its defaults on the element itself, and a custom property set on an element always
+> beats one inherited from an ancestor, however specific that ancestor's selector is — so
+> `.settings-panel { --switch-elemental-track-checked: … }` silently does nothing.
+> Anything that reaches the element works: a class on it, `.card switch-elemental`, or
+> `switch-elemental` itself.
+
+### About that `Canvas`
+
+`--switch-elemental-knob-checked` defaults to `Canvas`, the page's own background, which
+is what a knob dropped out of a filled track should be. It is the one value in the theme
+that has to know something about its surroundings, so it is the one to re-point when
+they are not what it assumes:
+
+```css
+/* on a card rather than on the page */
 .card switch-elemental {
   --switch-elemental-knob-checked: var(--card-background);
 }
 ```
 
-`prefers-reduced-motion: reduce` switches the motion off. Under `forced-colors` the
-track and knob are repainted in system colors — they are the whole control, and author
-backgrounds do not survive that mode.
+Worth knowing about the second case: a page that themes in custom properties **without
+also declaring `color-scheme`** keeps a white `Canvas` in dark mode, so the knob thins
+out against the track. Either declare it —
+
+```css
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+```
+
+— or point the property at the background you already have, or use the **wash** look
+above, which never fills the track solid and so never has to drop the knob out of
+anything.
 
 ### Icons
 

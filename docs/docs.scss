@@ -16,11 +16,52 @@ accordion-elemental {
   --accordion-elemental-radius: var(--radius);
 }
 
-// The docs surface is not `Canvas` - the pages sit on their own background - so the
-// knob the switch drops out to is re-pointed at it, the same way the accordion's two
-// properties are above. Everything else in the theme is `currentcolor` and needs nothing.
+// The docs palette is not quite `Canvas` - the pages set their own background either
+// side of the theme switch - so the knob the switch drops out to is re-pointed at it,
+// which is the override the page itself documents. Everything else in the theme is
+// `currentcolor` and needs nothing.
 switch-elemental {
   --switch-elemental-knob-checked: var(--bg);
+}
+
+// Demo-only, and not part of any element: the alternative looks the page lists, each one
+// nothing but the custom properties the docs print beside it. They live here rather than
+// in the theme because they are examples of using it, not part of it.
+.demo-sizes {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+// The classes go on the elements and not on the rows they sit in, because the theme sets
+// its defaults on `switch-elemental` itself - and a property set on the element beats one
+// inherited from an ancestor no matter how specific that ancestor's selector is.
+.demo-looks {
+  td:has(switch-elemental) {
+    width: 5.5rem;
+  }
+
+  .look-hairline {
+    --switch-elemental-border-width: 1px;
+  }
+
+  .look-accent {
+    --switch-elemental-border-width: 1px;
+    --switch-elemental-border-color: color-mix(in srgb, currentcolor 30%, transparent);
+    --switch-elemental-track-checked: var(--accent);
+    --switch-elemental-knob-checked: var(--accent-fg);
+  }
+
+  .look-wash {
+    --switch-elemental-border-color: color-mix(in srgb, currentcolor 35%, transparent);
+    --switch-elemental-track-checked: color-mix(in srgb, currentcolor 22%, transparent);
+    --switch-elemental-knob-checked: currentcolor;
+  }
+
+  .look-outline {
+    --switch-elemental-track-checked: transparent;
+    --switch-elemental-knob-checked: currentcolor;
+  }
 }
 
 // Demo-only, and not part of any element: a label sitting beside a switch, which is

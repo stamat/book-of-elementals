@@ -7,6 +7,7 @@ switch-elemental {
   --switch-elemental-inset: calc(var(--switch-elemental-border-width) + var(--switch-elemental-gap));
   --switch-elemental-knob-size: calc(var(--switch-elemental-height) - var(--switch-elemental-inset) * 2);
   --switch-elemental-travel: calc(var(--switch-elemental-width) - var(--switch-elemental-knob-size) - var(--switch-elemental-inset) * 2);
+  --switch-elemental-border-color: currentcolor;
   --switch-elemental-track: transparent;
   --switch-elemental-track-checked: currentcolor;
   --switch-elemental-knob: currentcolor;
@@ -24,7 +25,7 @@ switch-elemental > button {
   color: inherit;
   cursor: pointer;
   background: var(--switch-elemental-track);
-  border: var(--switch-elemental-border-width) solid currentcolor;
+  border: var(--switch-elemental-border-width) solid var(--switch-elemental-border-color);
   border-radius: var(--switch-elemental-height);
   transition: background var(--switch-elemental-duration) var(--switch-elemental-easing);
 }
@@ -82,10 +83,10 @@ switch-elemental > button:dir(rtl)[aria-checked=true]::before {
     background: Highlight;
   }
   switch-elemental > button[aria-checked=true]::before {
-    background: Canvas;
+    background: HighlightText;
   }
   switch-elemental > button[aria-checked=true] > .switch-elemental-on {
-    color: Canvas;
+    color: HighlightText;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -94,5 +95,9 @@ switch-elemental > button:dir(rtl)[aria-checked=true]::before {
   switch-elemental > button > .switch-elemental-off {
     transition: none;
   }
+}
+switch-elemental.switch-elemental-small {
+  --switch-elemental-width: 2.75rem;
+  --switch-elemental-height: 1.5rem;
 }
 /*# sourceMappingURL=switch-theme.css.map */

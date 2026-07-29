@@ -43,9 +43,10 @@ Elements published so far:
 - `<switch-elemental>` — APG switch: a real `<button>` given `role="switch"` and
   `aria-checked`, for a setting that takes effect the moment it is flipped (a
   theme toggle, a mute). Reflected `checked` and a bubbling `switch-toggle`
-  event. For a switch inside a form use `<input type="checkbox" role="switch">`
-  instead — it needs no JavaScript at all, and this element has no
-  form-associated mode.
+  event. Form-associated through `ElementInternals`, so `name`/`value` submit,
+  reset and restore exactly as a checkbox's do — no hidden `<input>`. For a plain
+  form control `<input type="checkbox" role="switch">` is still better: no
+  JavaScript at all, so it survives scripting being off.
 
 Sibling project: [book-of-spells](https://github.com/stamat/book-of-spells),
 which holds the plain JavaScript helpers. This book holds the elements.

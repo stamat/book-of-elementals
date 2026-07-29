@@ -29,16 +29,23 @@ may already be targeting**, since neither shows up in a function signature.
   A switch and a checkbox are the same boolean wearing different promises: a checkbox is a
   value you are about to submit and has a third indeterminate state; a switch is a setting
   that lands immediately and has two. So this is a `<button>`, which is where `Space`,
-  `Enter`, focus and the disabled state come from. **A switch inside a form is not this
-  element** — `<input type="checkbox" role="switch">` submits, resets, restores on
-  back-navigation and derives `aria-checked` from `checked` with no JavaScript at all, and
-  this element deliberately has no form-associated mode.
+  `Enter`, focus and the disabled state come from.
 
   **DOM it produces:** `role="switch"` and `aria-checked` on the button, plus `type="button"`
   if the markup did not set a type. Nothing is wrapped and nothing is moved. `checked` on the
   host is the single source of truth and is reflected, so `[checked]` is a styling hook and
   `aria-checked` is written from it rather than being the thing you set. State changes fire a
   bubbling `switch-toggle` carrying `{ checked }`.
+
+  **Forms:** give it a `name` and it submits with its form exactly as a checkbox does — the
+  `value` (default `on`) while checked, and nothing at all while unchecked — and resets and
+  restores on back-navigation too. That is `ElementInternals` rather than a hidden `<input>`
+  mirroring the state: a second node holding the same boolean is a second node that can
+  disagree with the first, and it would leave reset and restore to be hand-written. Needs
+  `attachInternals`, which Safari only got in 16.4; without it the switch simply does not
+  submit and nothing else changes. `<input type="checkbox" role="switch">` remains the better
+  answer for a plain form control, since it needs no JavaScript at all and so survives
+  scripting being off.
 
   The element is `display: contents`, so dropping it around an existing button changes no
   layout — a switch is usually a flex or grid item beside its label. With scripting off the
@@ -49,15 +56,21 @@ may already be targeting**, since neither shows up in a function signature.
   **CSS:** the optional theme draws a pill whose knob slides and whose track fills — off, the
   track is empty and the knob is the only ink; on, they swap, so the two states differ by fill
   as well as by position. Everything is mixed out of `currentcolor` bar the knob's checked
-  fill, which defaults to the `Canvas` system color. Knob size and travel are derived from
-  `--switch-elemental-width` and `--switch-elemental-height`, so resizing is one property;
-  `--switch-elemental-border-width`, `--switch-elemental-gap`, `--switch-elemental-track`,
-  `--switch-elemental-track-checked`, `--switch-elemental-knob`,
-  `--switch-elemental-knob-checked`, `--switch-elemental-duration` and
-  `--switch-elemental-easing` cover the rest. An icon per state is optional, in
-  `.switch-elemental-on` and `.switch-elemental-off` spans inside the button. Motion is off
-  under `prefers-reduced-motion`, and track and knob repaint in system colors under
-  `forced-colors`.
+  fill, which defaults to the `Canvas` system color — the one value that has to know its
+  surroundings, so re-point it on a card, or on a page that themes in custom properties
+  without also declaring `color-scheme`. Knob size and travel are derived from
+  `--switch-elemental-width` and `--switch-elemental-height`, so any size is two properties
+  and `.switch-elemental-small` ships as the one preset;
+  `--switch-elemental-border-width`, `--switch-elemental-border-color`,
+  `--switch-elemental-gap`, `--switch-elemental-track`, `--switch-elemental-track-checked`,
+  `--switch-elemental-knob`, `--switch-elemental-knob-checked`,
+  `--switch-elemental-duration` and `--switch-elemental-easing` cover the rest. An icon per
+  state is optional, in `.switch-elemental-on` and `.switch-elemental-off` spans inside the
+  button. Motion is off under `prefers-reduced-motion`, and track and knob repaint in system
+  colors under `forced-colors`. Note that the theme sets its properties on
+  `switch-elemental` itself, so an override has to reach the element — one set on an ancestor
+  is inherited and loses. The docs page carries hairline, accent, wash and outline variants
+  built from nothing but these properties.
 
   ```scss
   @use "book-of-elementals/switch/style.scss";
