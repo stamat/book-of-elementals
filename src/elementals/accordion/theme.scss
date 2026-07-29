@@ -31,6 +31,20 @@ accordion-elemental {
     &:hover {
       background: color-mix(in srgb, currentcolor 5%, transparent);
     }
+
+    // A heading inside the summary is there so a screen reader user can navigate
+    // to the question by heading - it is not a request for a second, larger
+    // header inside the header. Left alone, the page's own `h2`/`h3` type and
+    // margins would restyle the row the summary already styles, and its block
+    // display would push the caret onto a line of its own. Inherited type keeps
+    // the semantics free.
+    > :is(h1, h2, h3, h4, h5, h6) {
+      display: inline;
+      margin: 0;
+      font-size: inherit;
+      font-weight: inherit;
+      line-height: inherit;
+    }
   }
 
   // The summary is only rounded where it is actually the panel's edge. Closed it

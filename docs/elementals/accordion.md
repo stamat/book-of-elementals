@@ -400,4 +400,76 @@ it is keyed on `details[open]:not(.accordion-elemental-closing)` so the close
 starts turning it back on the same frame the panel starts sliding shut — the
 panel keeps `open` until the slide ends, and `[open]` alone would wait for it.
 
+## A complete FAQ
+
+The pieces on this page, assembled into the thing they are usually for. Nothing
+here is configuration — it is ordinary markup, and the only line of CSS involved
+is the theme import.
+
+<accordion-elemental class="grouped caret">
+  <details>
+    <summary id="faq-shipping"><h3>How long does shipping take?</h3></summary>
+    <p>Two to five working days inside the EU, five to ten elsewhere. You get a
+    tracking link the moment the parcel is scanned.</p>
+    <p><a href="#faq-shipping">Link to this answer</a> — the fragment opens the
+    panel, on load and on <code>hashchange</code>.</p>
+  </details>
+  <details>
+    <summary id="faq-returns"><h3>Can I return an order?</h3></summary>
+    <p>Within 30 days, unopened, for a full refund. A link in a closed panel is
+    out of the tab order and out of the accessibility tree because
+    <code>&lt;details&gt;</code> hides its own contents — which is why this
+    pattern needs no <code>aria-hidden</code> anywhere.</p>
+  </details>
+  <details>
+    <summary id="faq-keyboard"><h3>Do I need a mouse for this?</h3></summary>
+    <p>No. <kbd>Tab</kbd> reaches the questions and the content of an open
+    answer, <kbd>Enter</kbd> and <kbd>Space</kbd> toggle, and the arrow keys
+    move between questions.</p>
+  </details>
+  <details>
+    <summary id="faq-js"><h3>What if JavaScript fails to load?</h3></summary>
+    <p>You are left with four working, accessible disclosure widgets. The arrow
+    keys, the deep links and the slide are gone; the questions and the answers
+    are not.</p>
+  </details>
+</accordion-elemental>
+<br>
+
+```html
+<accordion-elemental class="grouped caret">
+  <details>
+    <summary id="faq-shipping"><h3>How long does shipping take?</h3></summary>
+    <p>Two to five working days inside the EU…</p>
+  </details>
+  <details>
+    <summary id="faq-returns"><h3>Can I return an order?</h3></summary>
+    <p>Within 30 days, unopened, for a full refund.</p>
+  </details>
+</accordion-elemental>
+```
+
+Four decisions in that markup, and the reasons they went the way they did:
+
+- **A heading in each `<summary>`.** An FAQ is a run of page sections, and
+  heading navigation is how a screen reader user skims one. `<h3>` because the
+  section it sits under is an `<h2>` — the level follows the page's outline, not
+  the component. The theme keeps the heading's type inherited so it styles as
+  nothing, which is what a heading inside an already-styled header row should do.
+- **An `id` on each `<summary>`, not on the panel.** It gives every answer its
+  own URL, and the element opens the panel a fragment points at. Support links
+  and search results can then land a reader on one answer rather than on a wall
+  of closed questions.
+- **No `exclusive`.** A reader comparing the shipping answer with the returns
+  answer wants both open; an exclusive group shuts the one they were reading. Use
+  exclusive when the panels are alternatives, not when they are reference
+  material.
+- **`grouped` rather than a clipping wrapper.** The one card look is drawn with
+  overlapping borders, so the focus ring on a summary is never cut off — the one
+  thing on the element a keyboard user has to be able to see.
+
+Everything else is the browser's: expanded state announced, Enter and Space
+handled, find-in-page opening a closed panel to show a match. There is not one
+`aria-` attribute in the markup, and that is the point.
+
 <script src="{{ relativePathPrefix }}dist/elementals/accordion.js"></script>

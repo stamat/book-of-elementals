@@ -18,6 +18,13 @@ accordion-elemental > details > summary {
 accordion-elemental > details > summary:hover {
   background: color-mix(in srgb, currentcolor 5%, transparent);
 }
+accordion-elemental > details > summary > :is(h1, h2, h3, h4, h5, h6) {
+  display: inline;
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
 accordion-elemental > details[open] > summary {
   border-end-start-radius: 0;
   border-end-end-radius: 0;

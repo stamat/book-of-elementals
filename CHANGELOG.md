@@ -14,6 +14,15 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Changed
+
+- The optional accordion theme now styles a heading inside a `<summary>` as inherited type —
+  `display: inline`, no margins, the summary's own font size, weight and line height. Putting a
+  heading in the summary is what gives screen reader users a heading to navigate an FAQ by, and
+  until now the page's `h2`/`h3` styles restyled the header row and pushed the caret onto its own
+  line. If you were overriding that yourself, in the theme or on top of it, the override is now
+  redundant rather than wrong. The element's own stylesheet is unchanged, and so is the DOM.
+
 ## [0.2.0] - 2026-07-29
 
 ### Added
