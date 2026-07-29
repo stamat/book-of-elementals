@@ -82,8 +82,7 @@
       "branch": "main",
       "links": [
         { "title": "npm", "url": "https://www.npmjs.com/package/book-of-elementals" }
-      ],
-      "theme": "light"
+      ]
     }
   },
   "copy": {
