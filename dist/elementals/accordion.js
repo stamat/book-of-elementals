@@ -123,15 +123,13 @@
     if (typeof customElements === "undefined" || customElements.get(tag)) return;
     customElements.define(tag, ctor);
   }
-
-  // src/elementals/accordion/index.js
   function nextIndex(current, key, length) {
     if (length === 0) return null;
     switch (key) {
       case "ArrowDown":
         return (current + 1) % length;
       case "ArrowUp":
-        return (current - 1 + length) % length;
+        return current <= 0 ? length - 1 : current - 1;
       case "Home":
         return 0;
       case "End":
@@ -140,6 +138,8 @@
         return null;
     }
   }
+
+  // src/elementals/accordion/index.js
   var OPTIONS = { exclusive: "boolean" };
   var WRAPPER_CLASS = "accordion-elemental-content-wrapper";
   var CONTENT_CLASS = "accordion-elemental-content";

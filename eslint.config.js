@@ -6,7 +6,9 @@ const browserGlobals = {
   CustomEvent: 'readonly',
   HTMLElement: 'readonly',
   customElements: 'readonly',
-  decodeURIComponent: 'readonly'
+  decodeURIComponent: 'readonly',
+  setTimeout: 'readonly',
+  clearTimeout: 'readonly'
 };
 
 export default [

@@ -1,29 +1,10 @@
 import { slide } from 'book-of-spells/src/animations.mjs';
 import { readOptions } from 'book-of-spells/src/dom.mjs';
-import { ElementBase, define } from '../../core.js';
+import { ElementBase, define, nextIndex } from '../../core.js';
 
-/**
- * Compute the header to move focus to for a roving-arrow key press.
- * @param {number} current - Index of the currently focused header.
- * @param {string} key - KeyboardEvent.key value.
- * @param {number} length - Number of headers in the group.
- * @returns {number|null} Target index, or null if the key is unhandled.
- */
-export function nextIndex(current, key, length) {
-  if (length === 0) return null;
-  switch (key) {
-    case 'ArrowDown':
-      return (current + 1) % length;
-    case 'ArrowUp':
-      return (current - 1 + length) % length;
-    case 'Home':
-      return 0;
-    case 'End':
-      return length - 1;
-    default:
-      return null;
-  }
-}
+// The header key map is shared plumbing now that the menu walks its items the same
+// way. Still exported from here: it was part of this module's surface first.
+export { nextIndex };
 
 const OPTIONS = { exclusive: 'boolean' };
 

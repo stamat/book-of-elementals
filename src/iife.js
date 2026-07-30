@@ -5,4 +5,5 @@
 // For one element, include its own bundle instead: dist/elementals/accordion.min.js
 import './elementals/accordion/index.js';
 import './elementals/disclosure/index.js';
+import './elementals/menu/index.js';
 import './elementals/switch/index.js';

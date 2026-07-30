@@ -1,0 +1,67 @@
+// Structure only: where the lists sit, and which of them is on screen. Everything
+// that makes them look like a menu - borders, padding, hover - is in `theme.scss`.
+
+menu-elemental {
+  // The flyout is positioned against the element, so unlike its siblings in the book
+  // this one is a box. `inline-block` because a menu button sits in a row of other
+  // things, next to a logo or in a toolbar.
+  display: inline-block;
+  position: relative;
+
+  // Until the element is defined the button opens nothing, so it is not offered:
+  // with scripting off what is left is a nested list of links, every one of them
+  // reachable, which is the whole degradation and the reason the submenus are not
+  // authored `hidden`.
+  &:not(:defined) > button {
+    display: none;
+  }
+
+  // The element writes the mode, so a stylesheet reads the breakpoint back off the
+  // element instead of repeating the `media` attribute's query and drifting from it.
+  &[data-mode="inline"] {
+    display: block;
+    position: static;
+  }
+
+  ul,
+  menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  // A closed list, and the rule that has to outrank whatever `display` a theme or a
+  // page puts on the lists - `[hidden]`'s own is the UA's, which loses to everything.
+  [hidden] {
+    display: none;
+  }
+}
+
+// Flyout: the root list hangs under the button, a submenu beside its own item.
+menu-elemental[data-mode="flyout"] {
+  > ul,
+  > menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 10;
+  }
+
+  li {
+    position: relative;
+  }
+
+  li > ul,
+  li > menu {
+    position: absolute;
+    top: 0;
+    left: 100%;
+  }
+
+  // Long labels are what a menu is mostly made of, and a menu that wraps them is a
+  // menu nobody can scan.
+  ul,
+  menu {
+    min-width: max-content;
+  }
+}

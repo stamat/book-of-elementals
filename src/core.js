@@ -21,3 +21,34 @@ export function define(tag, ctor) {
   if (typeof customElements === 'undefined' || customElements.get(tag)) return;
   customElements.define(tag, ctor);
 }
+
+/**
+ * Where an arrow, Home or End key moves focus in a wrapping list of widgets.
+ *
+ * Here rather than in one element because it is the same list in every APG pattern
+ * that has one: the accordion's headers and the menu's items disagree about almost
+ * everything else and not at all about this.
+ *
+ * @param {number} current - Index of the currently focused item, `-1` for none.
+ * @param {string} key - KeyboardEvent.key value.
+ * @param {number} length - Number of items in the list.
+ * @returns {number|null} Target index, or null if the key is unhandled.
+ */
+export function nextIndex(current, key, length) {
+  if (length === 0) return null;
+  switch (key) {
+    case 'ArrowDown':
+      return (current + 1) % length;
+    case 'ArrowUp':
+      // `<= 0` rather than a modulo, so both ways of being at the top land on the last
+      // item: the first item wrapping round, and nothing focused at all - which is the
+      // documented `-1`, and where Up on a closed menu button opens onto.
+      return current <= 0 ? length - 1 : current - 1;
+    case 'Home':
+      return 0;
+    case 'End':
+      return length - 1;
+    default:
+      return null;
+  }
+}

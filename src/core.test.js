@@ -1,6 +1,6 @@
-import { nextIndex } from './index.js';
+import { nextIndex } from './core.js';
 
-test('nextIndex implements the APG accordion key map', () => {
+test('nextIndex implements the APG key map every list of widgets uses', () => {
   expect(nextIndex(0, 'ArrowDown', 3)).toBe(1);
   expect(nextIndex(1, 'ArrowUp', 3)).toBe(0);
   expect(nextIndex(0, 'Home', 3)).toBe(0);
@@ -13,7 +13,12 @@ test('nextIndex wraps around both ends', () => {
   expect(nextIndex(0, 'ArrowUp', 3)).toBe(2);
 });
 
-test('nextIndex is a no-op for an empty group', () => {
+test('nextIndex is a no-op for an empty list', () => {
   expect(nextIndex(0, 'ArrowDown', 0)).toBeNull();
   expect(nextIndex(0, 'Home', 0)).toBeNull();
+});
+
+test('nextIndex starts a list with nothing focused at either end', () => {
+  expect(nextIndex(-1, 'ArrowDown', 3)).toBe(0);
+  expect(nextIndex(-1, 'ArrowUp', 3)).toBe(2);
 });

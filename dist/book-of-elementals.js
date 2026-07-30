@@ -127,15 +127,13 @@
     if (typeof customElements === "undefined" || customElements.get(tag)) return;
     customElements.define(tag, ctor);
   }
-
-  // src/elementals/accordion/index.js
   function nextIndex(current, key, length) {
     if (length === 0) return null;
     switch (key) {
       case "ArrowDown":
         return (current + 1) % length;
       case "ArrowUp":
-        return (current - 1 + length) % length;
+        return current <= 0 ? length - 1 : current - 1;
       case "Home":
         return 0;
       case "End":
@@ -144,6 +142,8 @@
         return null;
     }
   }
+
+  // src/elementals/accordion/index.js
   var OPTIONS = { exclusive: "boolean" };
   var WRAPPER_CLASS = "accordion-elemental-content-wrapper";
   var CONTENT_CLASS = "accordion-elemental-content";
@@ -461,6 +461,405 @@
     }
   };
   define("disclosure-elemental", DisclosureElemental);
+
+  // src/elementals/menu/index.js
+  function typeAheadIndex(labels, current, buffer) {
+    if (!buffer) return null;
+    const query = buffer.toLowerCase();
+    const repeated = query.length > 1 && query.split("").every((c) => c === query[0]);
+    const prefix = repeated ? query[0] : query;
+    const from = prefix.length === 1 ? current + 1 : current;
+    for (let i = 0; i < labels.length; i++) {
+      const at = (from + i + labels.length) % labels.length;
+      if (labels[at].trim().toLowerCase().startsWith(prefix)) return at;
+    }
+    return null;
+  }
+  var TYPE_AHEAD_WINDOW = 500;
+  var HOVER_CLOSE_DELAY = 250;
+  var menuCount = 0;
+  function set(element, name, value) {
+    if (!element) return;
+    if (value === null) element.removeAttribute(name);
+    else element.setAttribute(name, value);
+  }
+  var MenuElemental = class extends ElementBase {
+    static get observedAttributes() {
+      return ["open", "media"];
+    }
+    /**
+     * Whether a mouse opens the menu by pointing at it rather than by clicking.
+     *
+     * Opt-in, and only ever an addition: click, Enter and the arrow keys are what the
+     * pattern promises, and a menu nobody can open without a steady hand is not one. Off
+     * for touch, where there is no hovering to do and the first tap would open and pick
+     * in one gesture, and off inline, where the branches are stacked in the page and a
+     * pointer crossing the stack would open every one it passed.
+     */
+    get hover() {
+      return this.hasAttribute("hover") && !this.inline;
+    }
+    set hover(value) {
+      this.toggleAttribute("hover", !!value);
+    }
+    /** The `<button>` that opens the root list. Direct child, so a submenu's trigger -
+     * or a nested menu's button - is not mistaken for it. */
+    get button() {
+      return this.querySelector(":scope > button");
+    }
+    /** The root list. */
+    get menu() {
+      return this.querySelector(":scope > ul, :scope > menu");
+    }
+    /** Every list in this menu, root first. A nested `<menu-elemental>` keeps its own. */
+    get menus() {
+      return Array.from(this.querySelectorAll("ul, menu")).filter((list) => list.closest("menu-elemental") === this);
+    }
+    /** Whether the root list is showing. Reflected, so `[open]` is a styling hook too. */
+    get open() {
+      return this.hasAttribute("open");
+    }
+    set open(value) {
+      this.toggleAttribute("open", !!value);
+    }
+    /**
+     * Whether this is currently the stack-of-disclosures rather than the flyout: a
+     * `media` that is not matching right now. No `media` at all means a menu that is
+     * a menu at every width, which is what a menu button is when nothing says otherwise.
+     */
+    get inline() {
+      return !!this.query && !this.query.matches;
+    }
+    connectedCallback() {
+      if (this.initialized) return;
+      if (!this.button || !this.menu) return;
+      this.initialized = true;
+      this.onClick = this.onClick.bind(this);
+      this.onKeyDown = this.onKeyDown.bind(this);
+      this.onFocusOut = this.onFocusOut.bind(this);
+      this.onDocumentClick = this.onDocumentClick.bind(this);
+      this.onMediaChange = this.onMediaChange.bind(this);
+      this.onPointerOver = this.onPointerOver.bind(this);
+      this.onPointerLeave = this.onPointerLeave.bind(this);
+      this.addEventListener("click", this.onClick);
+      this.addEventListener("keydown", this.onKeyDown);
+      this.addEventListener("pointerover", this.onPointerOver);
+      this.addEventListener("pointerleave", this.onPointerLeave);
+      this.addEventListener("focusout", this.onFocusOut);
+      document.addEventListener("click", this.onDocumentClick);
+      for (const menu of this.menus) {
+        if (menu !== this.menu) menu.setAttribute("hidden", "");
+      }
+      this.watchMedia();
+      this.wire();
+      this.apply();
+    }
+    disconnectedCallback() {
+      if (!this.initialized) return;
+      this.removeEventListener("click", this.onClick);
+      this.removeEventListener("keydown", this.onKeyDown);
+      this.removeEventListener("focusout", this.onFocusOut);
+      this.removeEventListener("pointerover", this.onPointerOver);
+      this.removeEventListener("pointerleave", this.onPointerLeave);
+      document.removeEventListener("click", this.onDocumentClick);
+      clearTimeout(this.hoverTimer);
+      if (this.query) this.query.removeEventListener("change", this.onMediaChange);
+      for (const menu of this.menus) {
+        menu.removeAttribute("hidden");
+        set(menu, "role", null);
+        for (const item of this.itemsOf(menu)) {
+          set(item.parentElement, "role", null);
+          set(item, "role", null);
+          set(item, "tabindex", null);
+        }
+      }
+      this.initialized = false;
+    }
+    // ---- structure ----
+    /** The items of one list: what its `<li>`s hold, and not what its submenus do. */
+    itemsOf(menu) {
+      return menu ? Array.from(menu.querySelectorAll(":scope > li > a, :scope > li > button")) : [];
+    }
+    /** The list an item belongs to. */
+    menuOf(item) {
+      return item.closest("ul, menu");
+    }
+    /** The list an item opens, if it opens one. */
+    submenuOf(item) {
+      return item.parentElement && item.parentElement.querySelector(":scope > ul, :scope > menu");
+    }
+    /**
+     * The item that opens a list. For a submenu that is the item beside it in the same
+     * `<li>`; for the root list the element's own button, which is the same query one
+     * level up.
+     */
+    triggerOf(menu) {
+      return menu.parentElement && menu.parentElement.querySelector(":scope > a, :scope > button");
+    }
+    isOpen(menu) {
+      return !menu.hasAttribute("hidden");
+    }
+    /**
+     * The items the arrows walk from here.
+     *
+     * A flyout is walked one list at a time - the submenu is a separate surface and
+     * Left/Right are how you cross between them. Inline there are no surfaces: the
+     * open submenus are on screen, in the flow, and stopping at the edge of a list the
+     * reader is looking straight through would be arbitrary.
+     */
+    navigable(menu) {
+      return this.inline ? this.visibleItems(this.menu) : this.itemsOf(menu);
+    }
+    /** Every item on screen from `menu` down, in the order they are rendered. */
+    visibleItems(menu) {
+      const out = [];
+      for (const item of this.itemsOf(menu)) {
+        out.push(item);
+        const submenu = this.submenuOf(item);
+        if (submenu && this.isOpen(submenu)) out.push(...this.visibleItems(submenu));
+      }
+      return out;
+    }
+    // ---- wiring ----
+    watchMedia() {
+      if (this.query) this.query.removeEventListener("change", this.onMediaChange);
+      const media = this.getAttribute("media");
+      this.query = media && window.matchMedia ? window.matchMedia(media) : null;
+      if (this.query) this.query.addEventListener("change", this.onMediaChange);
+    }
+    onMediaChange() {
+      this.closeAll();
+      this.wire();
+    }
+    /**
+     * Put the current mode's roles on the markup: a menu with items that are not in the
+     * tab order, or a set of nested disclosures that are nothing but an ordinary list.
+     *
+     * `aria-controls` and `aria-expanded` are the only two that survive the switch,
+     * because they are true of both - a button that shows and hides a thing, and which
+     * thing it is.
+     */
+    wire() {
+      const inline = this.inline;
+      this.dataset.mode = inline ? "inline" : "flyout";
+      for (const menu of this.menus) {
+        if (!menu.id) menu.id = "menu-elemental-" + ++menuCount;
+        set(menu, "role", inline ? null : "menu");
+        const trigger = this.triggerOf(menu);
+        if (trigger) {
+          if (trigger.tagName === "BUTTON" && !trigger.hasAttribute("type")) trigger.type = "button";
+          trigger.setAttribute("aria-controls", menu.id);
+          set(trigger, "aria-haspopup", inline ? null : "menu");
+          trigger.setAttribute("aria-expanded", this.isOpen(menu) ? "true" : "false");
+        }
+        for (const item of this.itemsOf(menu)) {
+          set(item.parentElement, "role", inline ? null : "none");
+          set(item, "role", inline ? null : "menuitem");
+          set(item, "tabindex", inline ? null : "-1");
+        }
+      }
+    }
+    /** Push the root list's state onto it and its button. */
+    apply() {
+      const menu = this.menu;
+      const button = this.button;
+      if (!menu || !button) return;
+      button.setAttribute("aria-expanded", this.open ? "true" : "false");
+      menu.toggleAttribute("hidden", !this.open);
+      if (!this.open) this.closeSubmenus(menu);
+    }
+    // ---- opening and closing ----
+    /**
+     * Show or hide one submenu.
+     *
+     * Floating, the branches overlap, so opening one closes its siblings - that is what
+     * makes a flyout readable. Inline they are stacked in the flow and closing a branch
+     * the reader opened on purpose only loses their place.
+     */
+    setSubmenu(trigger, open) {
+      const submenu = this.submenuOf(trigger);
+      if (!submenu || this.isOpen(submenu) === open) return;
+      if (open && !this.inline) {
+        for (const sibling of this.itemsOf(this.menuOf(trigger))) {
+          if (sibling !== trigger) this.setSubmenu(sibling, false);
+        }
+      }
+      if (!open) this.closeSubmenus(submenu);
+      trigger.setAttribute("aria-expanded", open ? "true" : "false");
+      submenu.toggleAttribute("hidden", !open);
+      this.dispatchEvent(new CustomEvent("menu-toggle", {
+        bubbles: true,
+        detail: { menu: submenu, open }
+      }));
+    }
+    /** Close every open branch below a list, deepest first. */
+    closeSubmenus(menu) {
+      for (const item of this.itemsOf(menu)) this.setSubmenu(item, false);
+    }
+    closeAll() {
+      if (this.menu) this.closeSubmenus(this.menu);
+      this.open = false;
+    }
+    /**
+     * Move focus to one item of a list, counting from the end for a negative index -
+     * `-1` is the last item, which is where Up on the closed button lands.
+     */
+    focusItem(menu, index) {
+      const items = this.itemsOf(menu);
+      const item = items[index < 0 ? items.length + index : index];
+      if (item) item.focus();
+      return item;
+    }
+    /**
+     * `open` is the single source of truth for the root list, so a click, a script and
+     * a media change all land here.
+     */
+    attributeChangedCallback(name, previous, current) {
+      if (!this.initialized || previous === current) return;
+      if (name === "media") {
+        this.watchMedia();
+        this.onMediaChange();
+        return;
+      }
+      this.apply();
+      this.dispatchEvent(new CustomEvent("menu-toggle", {
+        bubbles: true,
+        detail: { menu: this.menu, open: this.open }
+      }));
+    }
+    // ---- input ----
+    /** The item this event happened on, or null for anything outside this menu. */
+    itemFor(e) {
+      const item = e.target.closest && e.target.closest("a, button");
+      return item && item.closest("menu-elemental") === this ? item : null;
+    }
+    onClick(e) {
+      const item = this.itemFor(e);
+      if (!item) return;
+      if (item === this.button) {
+        this.open = !this.open;
+        if (this.open && !this.inline) this.focusItem(this.menu, 0);
+        return;
+      }
+      const submenu = this.submenuOf(item);
+      if (submenu) {
+        const open = !this.isOpen(submenu);
+        this.setSubmenu(item, open);
+        if (open && !this.inline) this.focusItem(submenu, 0);
+        return;
+      }
+      this.closeAll();
+    }
+    /**
+     * Point at it and it opens: the root list from the button, a branch from its own
+     * item, and a branch closed again by pointing at any other item of the same list -
+     * which is the sibling rule `setSubmenu` already keeps for clicks.
+     *
+     * `pointerover` rather than `pointerenter` because it bubbles, so one listener covers
+     * every item; mouse only, because a touch "hover" is the tap that was about to pick
+     * something.
+     */
+    onPointerOver(e) {
+      if (!this.hover || e.pointerType !== "mouse") return;
+      clearTimeout(this.hoverTimer);
+      const item = this.itemFor(e);
+      if (!item) return;
+      if (item === this.button) {
+        this.open = true;
+        return;
+      }
+      if (this.submenuOf(item)) this.setSubmenu(item, true);
+      else this.closeSubmenus(this.menuOf(item));
+    }
+    /**
+     * The pointer has left the whole element, so the menu closes - after a beat, because
+     * the gap between a button and its panel, or between a panel and the one beside it,
+     * is a place the pointer passes through rather than a place it means to be.
+     */
+    onPointerLeave(e) {
+      if (!this.hover || e.pointerType !== "mouse") return;
+      clearTimeout(this.hoverTimer);
+      this.hoverTimer = setTimeout(() => {
+        if (!this.contains(document.activeElement)) this.closeAll();
+      }, HOVER_CLOSE_DELAY);
+    }
+    onKeyDown(e) {
+      const item = this.itemFor(e);
+      if (!item) return;
+      if (item === this.button) {
+        const to2 = e.key === "ArrowDown" ? 0 : e.key === "ArrowUp" ? -1 : null;
+        if (to2 === null || this.inline) return;
+        e.preventDefault();
+        this.open = true;
+        this.focusItem(this.menu, to2);
+        return;
+      }
+      const menu = this.menuOf(item);
+      if (!menu) return;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        this.closeBranch(menu);
+        return;
+      }
+      if (e.key === "Tab") {
+        this.closeAll();
+        return;
+      }
+      if (e.key === " " && item.tagName === "A") {
+        e.preventDefault();
+        item.click();
+        return;
+      }
+      if (!this.inline && (e.key === "ArrowRight" || e.key === "ArrowLeft")) {
+        e.preventDefault();
+        if (e.key === "ArrowRight") {
+          const submenu = this.submenuOf(item);
+          if (submenu) {
+            this.setSubmenu(item, true);
+            this.focusItem(submenu, 0);
+          }
+          return;
+        }
+        if (menu !== this.menu) this.closeBranch(menu);
+        return;
+      }
+      const items = this.navigable(menu);
+      const to = nextIndex(items.indexOf(item), e.key, items.length);
+      if (to !== null) {
+        e.preventDefault();
+        items[to].focus();
+        return;
+      }
+      if (this.inline || e.key.length !== 1 || e.key === " " || e.metaKey || e.ctrlKey || e.altKey) return;
+      const now = Date.now();
+      this.buffer = now - this.bufferedAt < TYPE_AHEAD_WINDOW ? this.buffer + e.key : e.key;
+      this.bufferedAt = now;
+      const at = typeAheadIndex(items.map((one) => one.textContent), items.indexOf(item), this.buffer);
+      if (at === null) return;
+      e.preventDefault();
+      items[at].focus();
+    }
+    /**
+     * Close the list focus is in and hand focus back to whatever opened it - a submenu
+     * goes back to its trigger, the root list back to the button.
+     */
+    closeBranch(menu) {
+      const trigger = this.triggerOf(menu);
+      if (menu === this.menu) this.open = false;
+      else this.setSubmenu(trigger, false);
+      if (trigger) trigger.focus();
+    }
+    onFocusOut(e) {
+      const next = e.relatedTarget;
+      if (next && this.contains(next)) return;
+      if (!this.inline) this.closeAll();
+    }
+    onDocumentClick(e) {
+      if (this.contains(e.target) || this.inline) return;
+      this.closeAll();
+    }
+  };
+  define("menu-elemental", MenuElemental);
 
   // src/elementals/switch/index.js
   function formValue(checked, disabled, value) {

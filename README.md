@@ -20,6 +20,7 @@ holds the JavaScript helpers, this one holds the elements.
 | ------------------------ | -------------------------------------------------------------------------------------------------- |
 | `<accordion-elemental>`  | [APG Accordion](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/), over native `<details>`      |
 | `<disclosure-elemental>` | [APG Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), where `<details>` cannot go |
+| `<menu-elemental>`       | [APG Menu Button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/), nested, and not a menu below a breakpoint |
 | `<switch-elemental>`     | [APG Switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/), for a setting that takes effect at once |
 
 ## Docs
@@ -187,6 +188,54 @@ padding is a floor the height cannot get under.
 The element is `display: contents`, so dropping it around existing markup changes
 no layout. With scripting off the region is simply visible and the button is not
 offered, which for a long description is the right way round.
+
+## `<menu-elemental>`
+
+A `<button>` and the nested lists it opens — plus one thing the APG has no
+opinion about, because it is a layout question: below a breakpoint the whole
+thing stops being a menu.
+
+```html
+<menu-elemental media="(min-width: 60rem)">
+  <button>Account</button>
+  <ul>
+    <li><a href="/profile/">Profile</a></li>
+    <li>
+      <button>Preferences</button>
+      <ul>
+        <li><a href="/preferences/theme/">Theme</a></li>
+      </ul>
+    </li>
+  </ul>
+</menu-elemental>
+```
+
+| Attribute | Type    | Default | Description                                                                       |
+| --------- | ------- | ------- | --------------------------------------------------------------------------------- |
+| `media`   | string  | —       | The query the flyout exists in. Outside it, nested disclosures. Unset means always a menu. |
+| `open`    | boolean | `false` | Whether the root list is showing. Reflected.                                       |
+
+Inside `media` it is the [APG Menu
+Button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/): `role="menu"`,
+items out of the tab order, arrows and <kbd>Home</kbd>/<kbd>End</kbd> to move,
+<kbd>Right</kbd>/<kbd>Left</kbd> in and out of a branch, type-ahead,
+<kbd>Escape</kbd> back to the trigger, one branch open at a time.
+
+Outside it, the roles come off. `role="menu"` is a promise that the arrows work
+and <kbd>Tab</kbd> does not, and on a phone the same markup is a stack of nested
+disclosures in a drawer — links you tab through, branches that stay where you
+left them. Two widgets, one set of markup, the viewport picks. The element writes
+`data-mode` so your CSS reads the breakpoint back off it instead of repeating the
+query.
+
+<kbd>Tab</kbd> is never trapped: nothing behind the menu is `inert`, and a
+keyboard visitor who cannot tab out of a dropdown is stuck on your page.
+
+For site navigation rather than commands, use `<disclosure-elemental>` with the
+native `popover` attribute instead — `role="menuitem"` costs the link semantics,
+and popover covers dismissal and focus return with no script. The
+[docs page](https://stamat.github.io/book-of-elementals/elementals/menu.html)
+lays out the trade.
 
 ## `<switch-elemental>`
 
