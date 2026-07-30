@@ -21,6 +21,10 @@ switch-elemental {
   --switch-elemental-inset: calc(var(--switch-elemental-border-width) + var(--switch-elemental-gap));
   --switch-elemental-knob-size: calc(var(--switch-elemental-height) - var(--switch-elemental-inset) * 2);
   --switch-elemental-knob-radius: 50%;
+
+  // A pill at any height, until it is not: square the knob and this squares the track
+  // with it, which is the only way the two corners stay concentric.
+  --switch-elemental-radius: var(--switch-elemental-height);
   --switch-elemental-travel: calc(var(--switch-elemental-width) - var(--switch-elemental-knob-size) - var(--switch-elemental-inset) * 2);
 
   // Off, the track is empty and the knob is the only ink; on, they swap - the track
@@ -31,6 +35,12 @@ switch-elemental {
   --switch-elemental-track: transparent;
   --switch-elemental-track-checked: currentcolor;
   --switch-elemental-knob: currentcolor;
+
+  // The border's own on-state, defaulting to the off one so the default look is
+  // unchanged. It is the third of the three colors that swap, and it exists because a
+  // track filled with a colour of the page's own wants a rim in that colour too - a
+  // `currentcolor` rim around a purple track is a rim around the wrong switch.
+  --switch-elemental-border-color-checked: var(--switch-elemental-border-color);
 
   // `Canvas` is the page's own background, which is what a knob dropped out of a filled
   // track should be. It is the one value here that has to know something about its
@@ -54,7 +64,7 @@ switch-elemental {
     cursor: pointer;
     background: var(--switch-elemental-track);
     border: var(--switch-elemental-border-width) solid var(--switch-elemental-border-color);
-    border-radius: var(--switch-elemental-height); // a pill at any height
+    border-radius: var(--switch-elemental-radius);
     transition: background var(--switch-elemental-duration) var(--switch-elemental-easing);
 
     // The knob. A pseudo-element rather than a span, because it is not content - it
@@ -111,6 +121,7 @@ switch-elemental {
     // no second thing to keep in step with it, and your own CSS can key off it too.
     &[aria-checked="true"] {
       background: var(--switch-elemental-track-checked);
+      border-color: var(--switch-elemental-border-color-checked);
 
       &::before {
         translate: var(--switch-elemental-travel) -50%;

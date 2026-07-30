@@ -7,13 +7,14 @@ order: 2
 
 # `<disclosure-elemental>`
 
-A button that shows and hides a region, per the
-[APG Disclosure pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/).
+A `<button>` wired to a region it shows and hides, per the
+[APG Disclosure pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/). Light DOM,
+no shadow root, nothing wrapped and nothing moved — the region stays where your markup put
+it, which is the whole point.
 
-Native `<details>`/`<summary>` is already a disclosure, and where it fits it wins —
-[`<accordion-elemental>`](accordion.html) is built on it for exactly that reason.
-It fits when the region can live _inside_ the trigger's element. This element is
-for when it cannot.
+Native `<details>` is a disclosure already, and where it fits it wins —
+[`<accordion-elemental>`](accordion.html) is built on it for that reason. It fits when the
+region can live _inside_ the trigger's element. This is for [when it cannot](#why-not-just-details).
 
 <figure class="demo-figure">
   <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 120'%3E%3Cpolygon points='12,26 300,54 300,64 12,86' fill='%23c86b4a'/%3E%3Cpolygon points='12,90 300,68 300,72 12,96' fill='%23777'/%3E%3Cpolyline points='12,112 84,110 156,106 228,102 300,100' fill='none' stroke='%23999' stroke-width='2'/%3E%3C/svg%3E" alt="A tapering band showing an army shrinking from 442,000 to 100,000 men on the advance and to 10,000 on the retreat, over a line of falling temperatures.">
@@ -38,9 +39,8 @@ for when it cannot.
 </figure>
 <br>
 
-_A long description for an image whose `alt` can only carry the gist — the
-[APG's image-description example](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-image-description/).
-Try find-in-page for "Smolensk" with the table closed._
+_A long description for an image whose `alt` can only carry the gist. Try find-in-page for
+"Smolensk" with the table closed._
 
 ## Usage
 
@@ -58,61 +58,135 @@ import "book-of-elementals/disclosure";
 ```
 
 ```scss
-@use "book-of-elementals/disclosure/style.scss";
+@use "book-of-elementals/disclosure/style.scss"; // structure and motion
+@use "book-of-elementals/disclosure/theme.scss"; // the look, optional
 ```
 
-Or drop in the single-element bundle — no build step, no script to write:
+Or the single-element bundle — no build step, no script to write:
 
 ```html
 <script src="https://unpkg.com/book-of-elementals/dist/elementals/disclosure.min.js"></script>
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/book-of-elementals/dist/elementals/disclosure.min.css"
-/>
+<link rel="stylesheet" href="https://unpkg.com/book-of-elementals/dist/elementals/disclosure.min.css" />
+<link rel="stylesheet" href="https://unpkg.com/book-of-elementals/dist/elementals/disclosure-theme.min.css" />
 ```
 
-The element registers itself on include and upgrades on connect. Nothing is put
-on `window`, there is nothing to instantiate, and there is no initialisation call
-to forget. That stylesheet carries structure and motion; the look is a separate,
-optional one — see [The look](#the-look).
-
-It writes `aria-expanded` and `aria-controls` onto the button and `hidden` onto
-the region, and that is the whole of the ARIA. Nothing is wrapped, nothing is
-moved: the region stays exactly where your markup put it.
+It registers itself on include and upgrades on connect. Nothing on `window`, nothing to
+instantiate, no init call to forget.
 
 > [!NOTE]
-> The trigger must be a real `<button>` and a direct child of the element. A
-> `<div role="button" tabindex="0">` would mean reimplementing Enter, Space and
-> the disabled state that the platform hands you; a button nested deeper would be
-> ambiguous with the buttons inside the region. Neither is a rule the element has
-> to enforce, because in both cases there is simply no trigger and the region
-> stays visible.
+> The trigger must be a real `<button>` and a direct child. A `<div role="button">` would
+> mean reimplementing Enter, Space and the disabled state the platform hands you, and a
+> button nested deeper would be ambiguous with the buttons inside the region. Neither is
+> enforced — in both cases there is simply no trigger, and the region stays visible.
+
+## API
+
+### Attributes
+
+| Attribute | Type    | Default | Description                                                        |
+| --------- | ------- | ------- | ------------------------------------------------------------------- |
+| `open`    | boolean | `false` | Whether the region is showing. Reflected — it tracks the live state. |
+| `for`     | string  | —       | `id` of the region. Defaults to the button's next element sibling.   |
+
+`for` is also read as `data-for`. `open` is not — it is state, not configuration, so it has
+one spelling.
+
+### Properties
+
+| Property | Type                  | Description                                     |
+| -------- | --------------------- | ----------------------------------------------- |
+| `open`   | boolean               | Get/set the state. Writes the attribute.        |
+| `button` | `HTMLButtonElement`   | Read-only. The direct-child button.             |
+| `region` | `Element`             | Read-only. What `for` names, else the button's next sibling. |
+
+```html
+<disclosure-elemental open>…</disclosure-elemental>
+```
+
+```javascript
+const disclosure = document.querySelector("disclosure-elemental");
+disclosure.open = true; // slides, and fires disclosure-toggle
+```
+
+Everything that changes it — a click, a script, find-in-page — goes through the attribute,
+so there is one place to read the state and one place to watch it.
+
+### Events
+
+`disclosure-toggle` fires on the element on every state change, and bubbles. It fires with
+the state change, not with the slide:
+
+```javascript
+document.querySelector("disclosure-elemental")
+  .addEventListener("disclosure-toggle", (e) => {
+    console.log(e.detail.region, e.detail.open);
+  });
+```
+
+| Property        | Value                             |
+| --------------- | --------------------------------- |
+| `detail.region` | The element being shown or hidden |
+| `detail.open`   | Its new state, as a boolean       |
+
+### What it writes
+
+| Attribute       | On         | Value                                                                             |
+| --------------- | ---------- | --------------------------------------------------------------------------------- |
+| `aria-expanded` | the button | `true` / `false`                                                                  |
+| `aria-controls` | the button | The region's `id`, generated if the markup has none                               |
+| `type`          | the button | `button`, only if the markup did not set a type                                   |
+| `hidden`        | the region | `until-found` while closed, absent while open — set at the end of the close slide |
+| `class`         | the region | `disclosure-elemental-region` added, nothing removed                              |
+
+`type="button"` because a `<button>` in a form submits it unless told otherwise, and a
+disclosure that posts the page away on its first click is not a disclosure.
+
+### Keyboard
+
+All of it is the button's, which is the point of using one:
+
+| Key                                 | Action             |
+| ----------------------------------- | ------------------ |
+| <kbd>Tab</kbd>                      | Move to the button |
+| <kbd>Enter</kbd> / <kbd>Space</kbd> | Toggle the region  |
+
+A closed region is out of the tab order and out of the accessibility tree, because
+`hidden` takes it out of both. No `aria-hidden` anywhere, and no focus to manage.
+
+### Styling hooks
+
+```css
+disclosure-elemental[open] { }                       /* the host, reflected state */
+disclosure-elemental > button[aria-expanded="true"] { } /* what the theme keys off */
+.disclosure-elemental-region { }                     /* the region, wherever it lives */
+disclosure-elemental:not(:defined) { }               /* before upgrade */
+```
+
+`[aria-expanded="false"]` already means "closing or closed" — the ARIA and `open` both flip
+at the click, so there is no closing class to pair with, the way the accordion needs one.
 
 ## Why not just `<details>`?
 
-Because a `<details>` owns its content. The region has to be a descendant of the
-element that toggles it, and there are places that is not allowed or not
-survivable:
+Because a `<details>` owns its content: the region has to be a descendant of the element
+that toggles it. Four places that is not allowed or not survivable:
 
-- **A `<figcaption>`.** HTML requires it to be the first or last child of its
-  `<figure>`. Put it inside a `<details>` and it is no longer the figure's
-  caption — it is a `<figcaption>` in the wrong place, and the association the
-  markup existed for is gone.
-- **A table row, cell or `<dd>`.** The content model does not admit a `<details>`
-  in between, and neither does the layout.
-- **A grid or flex item.** Its parent lays it out directly. Wrap it and the
-  parent now lays out the wrapper, which is a different grid.
-- **A region nowhere near its button.** A navigation drawer, a filter panel, a
-  "show more" that opens a region below a whole card grid.
+- **A `<figcaption>`.** HTML requires it to be the first or last child of its `<figure>`.
+  Inside a `<details>` it is no longer the figure's caption.
+- **A table row, cell or `<dd>`.** The content model does not admit a `<details>` in
+  between, and neither does the layout.
+- **A grid or flex item.** Its parent lays it out directly; wrap it and the parent is
+  laying out the wrapper instead.
+- **A region nowhere near its button.** A navigation drawer, a filter panel, a "show more"
+  that opens below a whole card grid.
 
-For anything else — a FAQ, a "read more" right on top of its text — use
-`<details>`, or [`<accordion-elemental>`](accordion.html) for a set of them. This
-element is deliberately not the general answer.
+For anything else — a FAQ, a "read more" on top of its own text — use `<details>`, or
+[`<accordion-elemental>`](accordion.html) for a set of them. This element is deliberately
+not the general answer.
 
 ## A region elsewhere
 
-Point `for` at the region's `id` and the element wraps nothing but the button.
-The region then lives wherever the markup needs it:
+Point `for` at the region's `id` and the element wraps nothing but the button. The region
+then lives wherever the markup needs it:
 
 <figure class="demo-figure">
   <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 120'%3E%3Ccircle cx='60' cy='60' r='34' fill='%236aa84f'/%3E%3Crect x='120' y='26' width='68' height='68' fill='%23c86b4a'/%3E%3Cpolygon points='250,26 288,94 212,94' fill='%23777'/%3E%3C/svg%3E" alt="Three shapes in a row: a green circle, an orange square and a grey triangle.">
@@ -139,49 +213,38 @@ The region then lives wherever the markup needs it:
 </figure>
 ```
 
-The `<figcaption>` is still a child of the `<figure>`, so it is still the
-figure's caption. That is the case the element exists for, and it is not
-reachable with `<details>` at all.
+The `<figcaption>` is still a child of the `<figure>`, so it is still the figure's caption
+— the case the element exists for, and one `<details>` cannot reach at all.
 
-The region is resolved once, at upgrade, so it has to be in the document by then
-— which it is, with the bundle loaded deferred or at the end of the body, as the
-rest of the book assumes. Without `for`, the region is the button's next element
-sibling.
+The region is resolved once, at upgrade, so it has to be in the document by then. With the
+bundle deferred or at the end of the body, it is.
 
 ## Find-in-page
 
-A closed region is hidden with `hidden="until-found"`, not with a bare `hidden`.
-That is the platform's own answer to the oldest problem with hiding content:
-find-in-page still searches it, a link to a fragment inside it still lands there,
-and either one reveals the region and fires `beforematch`, which the element
-listens for and answers by opening.
-
-So a search for a word buried in a closed panel finds it, opens the panel and
-scrolls to it, with nothing scripted for it — the same behaviour `<details>` has
-natively, on markup `<details>` could not have held.
+A closed region is hidden with `hidden="until-found"`, not a bare `hidden`. Find-in-page
+still searches it, a link to a fragment inside it still lands there, and either one reveals
+the region and fires `beforematch`, which the element answers by opening. Same behaviour
+`<details>` has natively, on markup `<details>` could not have held.
 
 ```html
 <!-- while closed -->
 <button aria-expanded="false" aria-controls="minard-data">…</button>
-<div id="minard-data" class="disclosure-elemental-region" hidden="until-found">
-  …
-</div>
+<div id="minard-data" class="disclosure-elemental-region" hidden="until-found">…</div>
 ```
 
-In a browser without `until-found` the attribute reads as a plain `hidden` and
-the region is simply hidden — the same content, just not found.
+Browsers without `until-found` read it as a plain `hidden` — the same content, just not
+found.
 
 > [!NOTE]
-> `hidden="until-found"` skips the region's _contents_, not its box, so a padded
-> or bordered region would leave an empty strip behind while closed. The
-> element's stylesheet zeroes the region's own margin, padding and border while
-> it is hidden, which is what the `disclosure-elemental-region` class is for.
+> `hidden="until-found"` skips the region's _contents_, not its box, so a padded or
+> bordered region would leave an empty strip behind while closed. The element's stylesheet
+> zeroes the region's own margin, padding and border while hidden, which is what the
+> `disclosure-elemental-region` class is for.
 
 ## Animation
 
-The region slides open and closed. Retime it with two custom properties — the
-element reads the duration back out of the computed styles to time itself, so the
-stylesheet stays the single source of truth:
+The region slides. Retime it with two custom properties — the element reads the duration
+back out of the computed styles, so the stylesheet stays the single source of truth:
 
 ```css
 .disclosure-elemental-region {
@@ -190,200 +253,56 @@ stylesheet stays the single source of truth:
 }
 ```
 
-They default on `:root`, and the region is the place to override them — not
+They default on `:root`, and **the region** is the place to override them — not
 `disclosure-elemental`, which a region pointed at by `for` is not inside.
 
-`prefers-reduced-motion: reduce` switches it off, in CSS and in the element. So
-does a duration of `0s`, which is worth reaching for when the region is a table
-row or anything else a height transition cannot move.
+`prefers-reduced-motion: reduce` switches it off, in CSS and in the element. So does a
+duration of `0s`, worth reaching for when the region is a table row or anything else a
+height transition cannot move.
 
-Two things about it are worth knowing:
-
-- **The region is the animated box, so do not pad or border it.** Block padding
-  is a floor the height cannot get under — `box-sizing: border-box` renders
-  `height: 0` as the padding — so the region would slide shut down to it and then
-  cut. The accordion solves this by animating a wrapper of its own and giving you
-  a second box inside it to pad; this element wraps nothing, on purpose, so the
-  inset goes on a box inside the region:
-
-  ```html
-  <figcaption id="shapes-caption">
-    <div class="caption-body">…</div>
-  </figcaption>
-  ```
-
-  Margin is fine — it is outside the height — and it is transitioned too, so the
-  stylesheet zeroing it while closed reads as the gap closing rather than as a
-  jump.
-
-- **`hidden` lands at the end of the close, not the start.** It stops the
-  region's contents being rendered, which would cut the animation off at frame
-  one. `aria-expanded` and `open` both go to false immediately, so anything keyed
-  off either turns on the first frame of the close — the theme's chevron among
-  them. There is no closing marker to pair a selector with, the way the accordion
-  needs one; `[aria-expanded="false"]` already means "closing or closed".
-
-`disclosure-toggle` fires with the state change, not with the slide.
-
-With JavaScript off the class is never added, the transition rule matches
-nothing, and there is no button either — the region is simply there.
-
-## Keyboard
-
-All of it is the button's, which is the point of using one:
-
-| Key                                 | Action             |
-| ----------------------------------- | ------------------ |
-| <kbd>Tab</kbd>                      | Move to the button |
-| <kbd>Enter</kbd> / <kbd>Space</kbd> | Toggle the region  |
-
-A closed region is out of the tab order and out of the accessibility tree
-because `hidden` takes it out of both. There is no `aria-hidden` anywhere, and
-no focus to manage.
-
-## State
-
-`open` is the single source of truth and it is reflected, so it works from
-markup, from script and from CSS:
+**The region is the animated box, so do not pad or border it.** Block padding is a floor
+the height cannot get under — `box-sizing: border-box` renders `height: 0` as the padding —
+so the region would slide shut down to it and then cut. The accordion animates a wrapper of
+its own and hands you a box inside it; this element wraps nothing, on purpose, so the inset
+goes on a box inside the region:
 
 ```html
-<disclosure-elemental open>…</disclosure-elemental>
+<figcaption id="shapes-caption">
+  <div class="caption-body">…</div>
+</figcaption>
 ```
 
-```javascript
-const disclosure = document.querySelector("disclosure-elemental");
-disclosure.open = true;
-disclosure.open; // false once the reader closes it again
-```
-
-```css
-disclosure-elemental[open] .something {
-  /* … */
-}
-```
-
-Everything that changes it — a click, a script, find-in-page — goes through the
-attribute, so there is one place the state can be read and one place it can be
-watched.
-
-## Events
-
-`disclosure-toggle` fires on the element whenever the state changes, and bubbles:
-
-```javascript
-document
-  .querySelector("disclosure-elemental")
-  .addEventListener("disclosure-toggle", (e) => {
-    console.log(e.detail.region, e.detail.open);
-  });
-```
-
-| Property        | Value                             |
-| --------------- | --------------------------------- |
-| `detail.region` | The element being shown or hidden |
-| `detail.open`   | Its new state, as a boolean       |
-
-## Attributes
-
-| Attribute | Type    | Default | Description                                                          |
-| --------- | ------- | ------- | -------------------------------------------------------------------- |
-| `open`    | boolean | `false` | Whether the region is showing. Reflected — it tracks the live state. |
-| `for`     | string  | —       | `id` of the region. Defaults to the button's next element sibling.   |
-
-`for` is also read as `data-for`. `open` is not — it is a reflected attribute
-rather than configuration, so it has one spelling and the live state is always
-readable from it.
-
-## What it writes
-
-| Attribute       | On         | Value                                                                             |
-| --------------- | ---------- | --------------------------------------------------------------------------------- |
-| `aria-expanded` | the button | `true` / `false`                                                                  |
-| `aria-controls` | the button | The region's `id`, generated if the markup has none                               |
-| `type`          | the button | `button`, only if the markup did not set a type                                   |
-| `hidden`        | the region | `until-found` while closed, absent while open — set at the end of the close slide |
-| `class`         | the region | `disclosure-elemental-region` added, nothing removed                              |
-
-`type="button"` because a `<button>` in a form submits it unless told otherwise,
-and a disclosure that posts the page away on its first click is not a disclosure.
-
-## Without JavaScript
-
-The region is not authored `hidden` — it is ordinary, visible markup, and the
-element hides it on upgrade. With scripting off it therefore stays visible, which
-for a long description is the right way round: the content is there, and the
-button that would have hidden it is not offered.
-
-```css
-/* in the element's own stylesheet */
-disclosure-elemental:not(:defined) > button {
-  display: none;
-}
-```
-
-The cost is the other way round: on a slow load the region can show for a moment
-before the element upgrades and closes it. Author the region `hidden` yourself if
-you would rather have that moment than the fallback — the element takes over from
-whatever state it finds, and you are trading a scripting-off reader's access to
-the content for it.
+Margin is fine — it is outside the height, and it transitions too, so zeroing it while
+closed reads as the gap closing rather than as a jump.
 
 ## The look
 
-The element's own stylesheet styles structure only — a light-DOM element cannot
-scope a look away from a page that did not ask for one. The look is a second,
-optional stylesheet:
+`style.scss` is structure and motion; `theme.scss` is the look and is optional — a
+light-DOM element cannot scope a look away from a page that did not ask for one.
 
-```scss
-@use "book-of-elementals/disclosure/style.scss"; // structure
-@use "book-of-elementals/disclosure/theme.scss"; // the look, entirely optional
-```
-
-```html
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/book-of-elementals/dist/elementals/disclosure.min.css"
-/>
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/book-of-elementals/dist/elementals/disclosure-theme.min.css"
-/>
-```
-
-It unstyles the browser's button back down to the page's own type and color and
-leaves it reading as text rather than as a box: no border, no inset, a medium-weight
-label — firmer than the running text it sits in, without going to bold — an
-underline on hover, and a leading
-[Octicon chevron](https://primer.style/foundations/icons/chevron-down-16/) masked
-rather than painted, so it follows a theme switch. It is still a `<button>` — the
-control toggles content in the same page, which is a button and not a link — so
-it keeps the role, the `Enter` and `Space` handling, and the focus ring, which is
-the one part of the native look the theme leaves alone. One custom property:
+It takes the browser's button down to the page's own type and color and leaves it reading
+as text: no border, no inset, a medium-weight label, an underline on hover, and a leading
+[Octicon chevron](https://primer.style/foundations/icons/chevron-down-16/) masked rather
+than painted so it follows a theme switch. It is still a `<button>` — the control toggles
+content in the same page — so the role, the Enter/Space handling and the focus ring are
+untouched. One property:
 
 | Property                            | Default |
 | ----------------------------------- | ------- |
 | `--disclosure-elemental-caret-size` | `1em`   |
 
-Closed, the chevron points at its own label; open, it points down at the content
-it revealed — the same turn a native `<summary>` marker makes, and the one
-[GOV.UK's details component](https://design-system.service.gov.uk/components/details/)
-makes. Pointing _at the label_ is a writing-mode question rather than a direction,
-so the quarter turn goes the other way under `:dir(rtl)`. The chevron is keyed off
-`[aria-expanded="true"]` rather than a class of the element's own, because the ARIA
-_is_ the state — there is no second thing to keep in step with it, and your own CSS
-can key off it just as well.
+Closed, the chevron points at its own label; open, it points down at what it revealed — the
+same turn a native `<summary>` marker makes. Pointing _at the label_ is a writing-mode
+question rather than a direction, so the quarter turn goes the other way under `:dir(rtl)`.
 
-The caret is a `::before` on the button, out of flow so a wrapping label stacks
-past it rather than beside it, and painted as a `mask` over `currentcolor` rather
-than as a `background-image` — which is what lets it follow a theme switch, and
-what your own icon has to be too:
+Your own icon has to be a mask too, for the same reason:
 
 ```css
 disclosure-elemental > button::before {
-  mask-image: url("my-caret.svg"); /* not background-image - see above */
+  mask-image: url("my-caret.svg"); /* not background-image — see above */
 }
 
-/* Or drop it and use your own affordance, remembering the button then has none
-   until you give it one. */
+/* Or drop it and use your own affordance — the button then has none until you give it one */
 disclosure-elemental > button {
   padding-inline-start: 0;
 
@@ -393,18 +312,18 @@ disclosure-elemental > button {
 }
 ```
 
-The theme stops short of a full link look on purpose: no link color, and no
-underline until hover. GOV.UK's own research on their details component found
-that ["some users avoid clicking the link to show more details, as they think it
-will take them away from the page"](https://design-system.service.gov.uk/components/details/),
-and [Adrian Roselli's user testing](https://adrianroselli.com/2020/05/disclosure-widgets.html)
-found a link-styled trigger confusing across every profile he tested. Color is
-the cue that reads as navigation, so the caret carries the affordance and the
-label stays the color of the text around it.
+The theme stops short of a full link look on purpose: no link color, no underline until
+hover. GOV.UK's research on their details component found that
+["some users avoid clicking the link to show more details, as they think it will take them
+away from the page"](https://design-system.service.gov.uk/components/details/), and
+[Adrian Roselli's testing](https://adrianroselli.com/2020/05/disclosure-widgets.html) found
+a link-styled trigger confusing across every profile. Color is the cue that reads as
+navigation, so the caret carries the affordance and the label stays the color of the text
+around it.
 
 ### A show/hide label
 
-There is no attribute for it, because it is one CSS rule and two spans:
+No attribute for it, because it is one CSS rule and two spans:
 
 <disclosure-elemental class="demo-swap">
   <button>
@@ -424,24 +343,33 @@ There is no attribute for it, because it is one CSS rule and two spans:
 }
 ```
 
-`display: none` on the wrong label takes it out of the accessible name too, so
-the button is announced as "Show the tasting notes" or "Hide the tasting notes"
-and never as both. No JavaScript, and no label state for anything to get out of
-step with.
+`display: none` on the wrong label takes it out of the accessible name too, so the button
+is announced as "Show the tasting notes" or "Hide the tasting notes" and never as both. No
+JavaScript, and no label state to get out of step.
 
-## The element's box
+## Without JavaScript
 
-`<disclosure-elemental>` is `display: contents`. It exists for the cases native
-cannot reach — a figcaption, a table row, a grid item — and every one of those is
-a case where an extra box in the tree is exactly the problem. Dropping the element
-around existing markup therefore changes no layout at all.
-
-Give it a box in your own CSS if you want something to style:
+The region is not authored `hidden` — it is ordinary, visible markup that the element hides
+on upgrade. With scripting off it stays visible, which for a long description is the right
+way round: the content is there, and the button that would have hidden it is not offered.
 
 ```css
-disclosure-elemental {
-  display: block;
+/* in the element's own stylesheet */
+disclosure-elemental:not(:defined) > button {
+  display: none;
 }
 ```
+
+The cost runs the other way: on a slow load the region can show for a moment before the
+element upgrades and closes it. Author the region `hidden` yourself if you would rather
+have that moment than the fallback — the element takes over from whatever state it finds,
+and you are trading a scripting-off reader's access to the content for it.
+
+## Layout
+
+`<disclosure-elemental>` is `display: contents`. It exists for the cases native cannot
+reach — a figcaption, a table row, a grid item — and every one of those is a case where an
+extra box in the tree is exactly the problem. Dropping it around existing markup changes no
+layout at all. Give it `display: block` in your own CSS if you want something to style.
 
 <script src="{{ relativePathPrefix }}dist/elementals/disclosure.js"></script>

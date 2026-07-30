@@ -40,12 +40,26 @@ switch-elemental {
     width: 5.5rem;
   }
 
+  // The track squares with the knob: 0.25rem plus the gap and the border is what keeps
+  // the two corners concentric rather than one rounder than the other.
   .knob-square {
     --switch-elemental-knob-radius: 0.25rem;
+    --switch-elemental-radius: 0.5rem;
   }
 
+  // A rail, the arrangement Shoelace's switch uses: a low track with a knob bigger than
+  // it, riding over it and reaching both ends. Two things make that work: a negative gap,
+  // which cancels the border so the knob starts at the track's outer edge
+  // rather than inside it, and travels the full width; and a knob that keeps its own
+  // colour, because the half of it hanging over the track paints onto the page, and the
+  // default checked knob *is* the page's background - it would vanish into it.
   .knob-rail {
-    --switch-elemental-knob-size: 0.75rem;
+    --switch-elemental-height: 1.1rem;
+    --switch-elemental-border-width: 2px;
+    --switch-elemental-gap: -2px;
+    --switch-elemental-knob-size: 1.25rem;
+    --switch-elemental-knob-checked: var(--switch-elemental-knob);
+    --switch-elemental-track-checked: color-mix(in srgb, currentcolor 30%, transparent);
   }
 
   // `0px` and not `0`: the gap is added to a length inside `calc()`, and a unitless zero
@@ -59,6 +73,15 @@ switch-elemental {
   // change.
   .knob-color {
     --switch-elemental-track-checked: #7c5cff;
+    --switch-elemental-border-color-checked: #7c5cff;
+  }
+
+  // The knob keeps its colour through both states instead of dropping out to the page's
+  // background, which means the track cannot fill solid in that same colour - so it only
+  // tints. The one arrangement that never has to know what is behind it.
+  .knob-ink {
+    --switch-elemental-knob-checked: var(--switch-elemental-knob);
+    --switch-elemental-track-checked: color-mix(in srgb, currentcolor 22%, transparent);
   }
 }
 

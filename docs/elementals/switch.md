@@ -11,9 +11,6 @@ A `<button>` that flips between on and off, per the
 [APG Switch pattern](https://www.w3.org/WAI/ARIA/apg/patterns/switch/). Light DOM, no
 shadow root, form-associated, nothing moved or wrapped.
 
-The one below is live — it flips this page's theme. Its name stays "Dark mode"; the word
-after it is [state text](#state-text), which changes:
-
 <p class="demo-row">
   <span id="switch-theme-label">Dark mode</span>
   <switch-elemental id="switch-theme-demo">
@@ -24,6 +21,42 @@ after it is [state text](#state-text), which changes:
   </switch-elemental>
   <span class="demo-state" aria-hidden="true"><span class="on">On</span><span class="off">Off</span></span>
 </p>
+
+```html
+<span id="switch-theme-label">Dark mode</span>
+<switch-elemental id="switch-theme-demo">
+  <button aria-labelledby="switch-theme-label">
+    <span class="switch-elemental-off" aria-hidden="true"
+      ><svg><!-- ... --></svg></span
+    >
+    <span class="switch-elemental-on" aria-hidden="true"
+      ><svg><!-- ... --></svg></span
+    >
+  </button>
+</switch-elemental>
+<span class="demo-state" aria-hidden="true"
+  ><span class="on">On</span><span class="off">Off</span></span
+>
+```
+
+```javascript
+const toggle = document.getElementById("switch-theme-demo");
+const root = document.documentElement;
+if (!toggle) return;
+// The label does not move - only [checked] does, and the state text keys off it.
+const sync = () => {
+  toggle.checked = root.dataset.theme === "dark";
+};
+toggle.addEventListener("switch-toggle", (e) => {
+  root.dataset.theme = e.detail.checked ? "dark" : "light";
+  try {
+    localStorage.setItem("theme", root.dataset.theme);
+  } catch (err) {}
+  sync();
+});
+new MutationObserver(sync).observe(root, { attributeFilter: ["data-theme"] });
+sync();
+```
 
 ## Usage
 
@@ -50,8 +83,14 @@ Or the single-element bundle — no build step, no script to write:
 
 ```html
 <script src="https://unpkg.com/book-of-elementals/dist/elementals/switch.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/book-of-elementals/dist/elementals/switch.min.css" />
-<link rel="stylesheet" href="https://unpkg.com/book-of-elementals/dist/elementals/switch-theme.min.css" />
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/book-of-elementals/dist/elementals/switch.min.css"
+/>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/book-of-elementals/dist/elementals/switch-theme.min.css"
+/>
 ```
 
 It registers itself on include and upgrades on connect. Nothing on `window`, nothing to
@@ -61,28 +100,28 @@ instantiate, no init call to forget.
 
 ### Attributes
 
-| Attribute  | Type    | Default | Description                                                     |
-| ---------- | ------- | ------- | --------------------------------------------------------------- |
-| `checked`  | boolean | `false` | Whether it is on. Reflected — markup, script and CSS read the same thing. |
-| `name`     | string  | —       | Submits under this name. No name, no form data.                  |
-| `value`    | string  | `on`    | What it submits while on.                                        |
-| `disabled` | boolean | `false` | Disables the button and submits nothing. A `<fieldset disabled>` does the same. |
-| `required` | boolean | `false` | The form will not submit while it is off.                        |
-| `required-message` | string | —  | What this one says while it is required and off.                 |
+| Attribute          | Type    | Default | Description                                                                     |
+| ------------------ | ------- | ------- | ------------------------------------------------------------------------------- |
+| `checked`          | boolean | `false` | Whether it is on. Reflected — markup, script and CSS read the same thing.       |
+| `name`             | string  | —       | Submits under this name. No name, no form data.                                 |
+| `value`            | string  | `on`    | What it submits while on.                                                       |
+| `disabled`         | boolean | `false` | Disables the button and submits nothing. A `<fieldset disabled>` does the same. |
+| `required`         | boolean | `false` | The form will not submit while it is off.                                       |
+| `required-message` | string  | —       | What this one says while it is required and off.                                |
 
 ### Properties
 
-| Property         | Type            | Description                                        |
-| ---------------- | --------------- | -------------------------------------------------- |
-| `checked`        | boolean         | Get/set the state. Writes the attribute.           |
-| `value`          | string          | Get/set the submitted value.                       |
-| `disabled`       | boolean         | Get/set. Reads `true` for a fieldset-disabled switch too. |
-| `required`       | boolean         | Get/set.                                           |
-| `requiredMessage` | string         | The message in force: attribute, then the static, then the browser's. |
-| `button`         | `HTMLButtonElement` | Read-only. The direct-child button.            |
-| `defaultChecked` | boolean         | What a form reset goes back to. Read at upgrade.   |
-| `validity`, `validationMessage`, `willValidate` | — | Read-only, the platform's. |
-| `checkValidity()`, `reportValidity()`, `setCustomValidity(msg)` | — | The platform's, [see below](#validation). |
+| Property                                                        | Type                | Description                                                           |
+| --------------------------------------------------------------- | ------------------- | --------------------------------------------------------------------- |
+| `checked`                                                       | boolean             | Get/set the state. Writes the attribute.                              |
+| `value`                                                         | string              | Get/set the submitted value.                                          |
+| `disabled`                                                      | boolean             | Get/set. Reads `true` for a fieldset-disabled switch too.             |
+| `required`                                                      | boolean             | Get/set.                                                              |
+| `requiredMessage`                                               | string              | The message in force: attribute, then the static, then the browser's. |
+| `button`                                                        | `HTMLButtonElement` | Read-only. The direct-child button.                                   |
+| `defaultChecked`                                                | boolean             | What a form reset goes back to. Read at upgrade.                      |
+| `validity`, `validationMessage`, `willValidate`                 | —                   | Read-only, the platform's.                                            |
+| `checkValidity()`, `reportValidity()`, `setCustomValidity(msg)` | —                   | The platform's, [see below](#validation).                             |
 
 ### Events
 
@@ -107,9 +146,9 @@ There is no `change` event: the control is a `<button>`, so the platform never f
 
 | Attribute      | Value                                           |
 | -------------- | ----------------------------------------------- |
-| `role`         | `switch`                                         |
-| `aria-checked` | `true` / `false`, written from `checked`         |
-| `type`         | `button`, only if the markup did not set a type  |
+| `role`         | `switch`                                        |
+| `aria-checked` | `true` / `false`, written from `checked`        |
+| `type`         | `button`, only if the markup did not set a type |
 
 `type="button"` because a `<button>` in a form submits it unless told otherwise, and a
 setting that posts the page away on its first flip is not a setting.
@@ -126,10 +165,14 @@ All of it is the button's, which is the point of using one:
 ### Styling hooks
 
 ```css
-switch-elemental[checked] { }                       /* the host, reflected state */
-switch-elemental > button[aria-checked="true"] { }  /* what the theme keys off */
-switch-elemental > button:disabled { }              /* own, host's, or a fieldset's */
-switch-elemental:not(:defined) { }                  /* before upgrade */
+switch-elemental[checked] {
+} /* the host, reflected state */
+switch-elemental > button[aria-checked="true"] {
+} /* what the theme keys off */
+switch-elemental > button:disabled {
+} /* own, host's, or a fieldset's */
+switch-elemental:not(:defined) {
+} /* before upgrade */
 ```
 
 ## The label
@@ -140,7 +183,9 @@ ways, in order of preference:
 ```html
 <!-- 1. Visible label beside it, referenced by id -->
 <span id="dark-label">Dark mode</span>
-<switch-elemental><button aria-labelledby="dark-label"></button></switch-elemental>
+<switch-elemental
+  ><button aria-labelledby="dark-label"></button
+></switch-elemental>
 
 <!-- 2. No visible label — the name is the button's own text -->
 <switch-elemental><button>Dark mode</button></switch-elemental>
@@ -165,7 +210,9 @@ does the swap, so there is no script and nothing to keep in step:
 
 ```html
 <span id="dark-label">Dark mode</span>
-<switch-elemental><button aria-labelledby="dark-label"></button></switch-elemental>
+<switch-elemental
+  ><button aria-labelledby="dark-label"></button
+></switch-elemental>
 <span class="switch-state" aria-hidden="true">
   <span class="on">On</span><span class="off">Off</span>
 </span>
@@ -222,15 +269,25 @@ enables:
 
 ```html
 <form>
-  <switch-elemental name="autoplay"><button aria-labelledby="…"></button></switch-elemental>
-  <switch-elemental name="replies" checked><button aria-labelledby="…"></button></switch-elemental>
-  <switch-elemental name="tier" value="pro"><button aria-labelledby="…"></button></switch-elemental>
+  <switch-elemental name="autoplay"
+    ><button aria-labelledby="…"></button
+  ></switch-elemental>
+  <switch-elemental name="replies" checked
+    ><button aria-labelledby="…"></button
+  ></switch-elemental>
+  <switch-elemental name="tier" value="pro"
+    ><button aria-labelledby="…"></button
+  ></switch-elemental>
 
   <fieldset id="beta" disabled>
-    <switch-elemental name="beta" checked><button aria-labelledby="…"></button></switch-elemental>
+    <switch-elemental name="beta" checked
+      ><button aria-labelledby="…"></button
+    ></switch-elemental>
   </fieldset>
 
-  <switch-elemental name="terms" required><button aria-labelledby="…"></button></switch-elemental>
+  <switch-elemental name="terms" required
+    ><button aria-labelledby="…"></button
+  ></switch-elemental>
   <button>Save</button>
 </form>
 ```
@@ -243,14 +300,14 @@ tier.addEventListener("switch-toggle", (e) => {
 });
 ```
 
-| Wanted                        | Markup / code                                              |
-| ----------------------------- | ---------------------------------------------------------- |
-| Submits as `autoplay=on`      | `name="autoplay"` and on                                    |
-| Submits nothing               | off, `disabled`, inside a disabled `<fieldset>`, or no `name` |
-| A value other than `on`       | `value="pro"`                                               |
-| On when the page loads        | `checked` in the markup — also what **reset** returns to    |
-| Must be on to submit          | `required`                                                  |
-| Associate with a form by id   | `form="settings"`, as any control does                      |
+| Wanted                      | Markup / code                                                 |
+| --------------------------- | ------------------------------------------------------------- |
+| Submits as `autoplay=on`    | `name="autoplay"` and on                                      |
+| Submits nothing             | off, `disabled`, inside a disabled `<fieldset>`, or no `name` |
+| A value other than `on`     | `value="pro"`                                                 |
+| On when the page loads      | `checked` in the markup — also what **reset** returns to      |
+| Must be on to submit        | `required`                                                    |
+| Associate with a form by id | `form="settings"`, as any control does                        |
 
 ### Reading it
 
@@ -292,7 +349,9 @@ toggle.validity.valueMissing; // true
 toggle.reportValidity(); // checks and shows the bubble
 
 // Your own constraint, for what the browser cannot know. "" clears it.
-toggle.setCustomValidity(data.get("beta") && !data.get("tier") ? "Beta needs Pro." : "");
+toggle.setCustomValidity(
+  data.get("beta") && !data.get("tier") ? "Beta needs Pro." : "",
+);
 ```
 
 A `disabled` switch is barred from validation, as every other control is — a required
@@ -311,7 +370,9 @@ Three levels, most specific first:
 
 ```html
 <!-- 1. this one switch -->
-<switch-elemental required required-message="Accept the terms to continue.">…</switch-elemental>
+<switch-elemental required required-message="Accept the terms to continue."
+  >…</switch-elemental
+>
 ```
 
 ```javascript
@@ -347,7 +408,8 @@ and then corrects itself:
 <script>
   (function () {
     var t = localStorage.getItem("theme");
-    if (!t) t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    if (!t)
+      t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     document.documentElement.dataset.theme = t;
   })();
 </script>
@@ -377,21 +439,23 @@ element cannot scope a look away from a page that did not ask for one. It is a p
 knob that slides, painted out of `currentcolor`, so it sits in whatever palette the page
 has — including the theme it is switching:
 
-| Property                           | Default        | Description                              |
-| ---------------------------------- | -------------- | ---------------------------------------- |
-| `--switch-elemental-width`         | `3.625rem`     | Track width                              |
-| `--switch-elemental-height`        | `2rem`         | Track height; also the pill's radius     |
-| `--switch-elemental-border-width`  | `2px`          | Track border                             |
-| `--switch-elemental-border-color`  | `currentcolor` | Track border                             |
-| `--switch-elemental-gap`           | `2px`          | Between the knob and the inside of the track |
-| `--switch-elemental-track`         | `transparent`  | Track fill, off                          |
-| `--switch-elemental-track-checked` | `currentcolor` | Track fill, on                           |
-| `--switch-elemental-knob`          | `currentcolor` | Knob fill, off                           |
-| `--switch-elemental-knob-checked`  | `Canvas`       | Knob fill, on                            |
-| `--switch-elemental-knob-size`     | derived        | Knob width/height. Travel follows it     |
-| `--switch-elemental-knob-radius`   | `50%`          | Knob shape                               |
-| `--switch-elemental-duration`      | `250ms`        | Slide and cross-fade                     |
-| `--switch-elemental-easing`        | `ease-in-out`  | Slide and cross-fade                     |
+| Property                                  | Default        | Description                                  |
+| ----------------------------------------- | -------------- | -------------------------------------------- |
+| `--switch-elemental-width`                | `3.625rem`     | Track width                                  |
+| `--switch-elemental-height`               | `2rem`         | Track height                                 |
+| `--switch-elemental-radius`               | the height     | Track corners. The height is a pill          |
+| `--switch-elemental-border-width`         | `2px`          | Track border                                 |
+| `--switch-elemental-border-color`         | `currentcolor` | Track border, off                            |
+| `--switch-elemental-border-color-checked` | the above      | Track border, on                             |
+| `--switch-elemental-gap`                  | `2px`          | Between the knob and the inside of the track |
+| `--switch-elemental-track`                | `transparent`  | Track fill, off                              |
+| `--switch-elemental-track-checked`        | `currentcolor` | Track fill, on                               |
+| `--switch-elemental-knob`                 | `currentcolor` | Knob fill, off                               |
+| `--switch-elemental-knob-checked`         | `Canvas`       | Knob fill, on                                |
+| `--switch-elemental-knob-size`            | derived        | Knob width/height. Travel follows it         |
+| `--switch-elemental-knob-radius`          | `50%`          | Knob shape                                   |
+| `--switch-elemental-duration`             | `250ms`        | Slide and cross-fade                         |
+| `--switch-elemental-easing`               | `ease-in-out`  | Slide and cross-fade                         |
 
 `prefers-reduced-motion: reduce` switches the motion off. Under `forced-colors` the track
 and knob are repainted in system colors. A disabled switch is the same switch at
@@ -464,13 +528,13 @@ can never overshoot its track. Four of them do everything worth doing to it:
       <th scope="row">Square</th>
       <td><switch-elemental class="knob-square"><button aria-label="Square knob, off"></button></switch-elemental></td>
       <td><switch-elemental class="knob-square" checked><button aria-label="Square knob, on"></button></switch-elemental></td>
-      <td><code>--switch-elemental-knob-radius: 0.25rem</code></td>
+      <td><code>--switch-elemental-knob-radius</code>, and the track squared with it.</td>
     </tr>
     <tr>
       <th scope="row">Rail</th>
       <td><switch-elemental class="knob-rail"><button aria-label="Rail knob, off"></button></switch-elemental></td>
       <td><switch-elemental class="knob-rail" checked><button aria-label="Rail knob, on"></button></switch-elemental></td>
-      <td><code>--switch-elemental-knob-size: 0.75rem</code> — smaller knob, longer travel, still centred.</td>
+      <td>A knob bigger than the track it rides on, reaching both ends — the gap goes negative to clear the border, and the knob keeps its colour so the overhang survives.</td>
     </tr>
     <tr>
       <th scope="row">Flush</th>
@@ -482,18 +546,56 @@ can never overshoot its track. Four of them do everything worth doing to it:
       <th scope="row">Colour</th>
       <td><switch-elemental class="knob-color"><button aria-label="Coloured knob, off"></button></switch-elemental></td>
       <td><switch-elemental class="knob-color" checked><button aria-label="Coloured knob, on"></button></switch-elemental></td>
-      <td>A colour of your own on the on track. The border and the knob stay as they were.</td>
+      <td>A colour of your own: track and rim on the on state, knob untouched.</td>
+    </tr>
+    <tr>
+      <th scope="row">Ink</th>
+      <td><switch-elemental class="knob-ink"><button aria-label="Ink knob, off"></button></switch-elemental></td>
+      <td><switch-elemental class="knob-ink" checked><button aria-label="Ink knob, on"></button></switch-elemental></td>
+      <td>The knob keeps its colour in both states, so the track can only tint. Never has to know what is behind it.</td>
     </tr>
   </tbody>
 </table>
 
 ```css
-.knob-square { --switch-elemental-knob-radius: 0.25rem; }
-.knob-rail   { --switch-elemental-knob-size: 0.75rem; }
-.knob-flush  { --switch-elemental-gap: 0px; } /* 0px, not 0 — see below */
+/* the track squares with the knob: 0.25rem + the gap + the border keeps the corners
+   concentric */
+.knob-square {
+  --switch-elemental-knob-radius: 0.25rem;
+  --switch-elemental-radius: 0.5rem;
+}
 
-/* the one that leaves currentcolor — one property, and only the on track moves */
-.knob-color { --switch-elemental-track-checked: #7c5cff; }
+.knob-rail {
+  --switch-elemental-height: 1.1rem;
+  --switch-elemental-border-width: 2px;
+  --switch-elemental-gap: -2px;
+  --switch-elemental-knob-size: 1.25rem;
+  --switch-elemental-knob-checked: var(--switch-elemental-knob);
+  --switch-elemental-track-checked: color-mix(
+    in srgb,
+    currentcolor 30%,
+    transparent
+  );
+}
+.knob-flush {
+  --switch-elemental-gap: 0px;
+} /* 0px, not 0 — see below */
+
+/* the one that leaves currentcolor: the on state, track and rim */
+.knob-color {
+  --switch-elemental-track-checked: #7c5cff;
+  --switch-elemental-border-color-checked: #7c5cff;
+}
+
+/* the knob keeps its colour, so the track tints instead of filling */
+.knob-ink {
+  --switch-elemental-knob-checked: var(--switch-elemental-knob);
+  --switch-elemental-track-checked: color-mix(
+    in srgb,
+    currentcolor 22%,
+    transparent
+  );
+}
 ```
 
 > [!WARNING]
@@ -507,7 +609,9 @@ can never overshoot its track. Four of them do everything worth doing to it:
 > (`--switch-elemental-knob-checked: var(--card-background)`), or on a page that themes
 > in custom properties **without declaring `color-scheme`** — there `Canvas` stays white
 > in dark mode and the knob thins out. Declaring `color-scheme: dark` fixes it, and the
-> wash knob above sidesteps it.
+> **ink** knob above sidesteps the question: a knob that keeps its own colour never asks
+> what is behind it. It is also what an oversized knob needs — one bigger than its track
+> paints over the page rather than over the track, and a `Canvas` knob disappears into it.
 
 ### Icons
 
@@ -518,8 +622,12 @@ one at the other:
 ```html
 <switch-elemental>
   <button aria-label="Dark mode">
-    <span class="switch-elemental-off" aria-hidden="true"><svg …><!-- sun --></svg></span>
-    <span class="switch-elemental-on" aria-hidden="true"><svg …><!-- moon --></svg></span>
+    <span class="switch-elemental-off" aria-hidden="true"
+      ><svg …><!-- sun --></svg></span
+    >
+    <span class="switch-elemental-on" aria-hidden="true"
+      ><svg …><!-- moon --></svg></span
+    >
   </button>
 </switch-elemental>
 ```

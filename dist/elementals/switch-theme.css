@@ -7,11 +7,13 @@ switch-elemental {
   --switch-elemental-inset: calc(var(--switch-elemental-border-width) + var(--switch-elemental-gap));
   --switch-elemental-knob-size: calc(var(--switch-elemental-height) - var(--switch-elemental-inset) * 2);
   --switch-elemental-knob-radius: 50%;
+  --switch-elemental-radius: var(--switch-elemental-height);
   --switch-elemental-travel: calc(var(--switch-elemental-width) - var(--switch-elemental-knob-size) - var(--switch-elemental-inset) * 2);
   --switch-elemental-border-color: currentcolor;
   --switch-elemental-track: transparent;
   --switch-elemental-track-checked: currentcolor;
   --switch-elemental-knob: currentcolor;
+  --switch-elemental-border-color-checked: var(--switch-elemental-border-color);
   --switch-elemental-knob-checked: Canvas;
   --switch-elemental-duration: 250ms;
   --switch-elemental-easing: ease-in-out;
@@ -27,7 +29,7 @@ switch-elemental > button {
   cursor: pointer;
   background: var(--switch-elemental-track);
   border: var(--switch-elemental-border-width) solid var(--switch-elemental-border-color);
-  border-radius: var(--switch-elemental-height);
+  border-radius: var(--switch-elemental-radius);
   transition: background var(--switch-elemental-duration) var(--switch-elemental-easing);
 }
 switch-elemental > button::before {
@@ -63,6 +65,7 @@ switch-elemental > button > .switch-elemental-on {
 }
 switch-elemental > button[aria-checked=true] {
   background: var(--switch-elemental-track-checked);
+  border-color: var(--switch-elemental-border-color-checked);
 }
 switch-elemental > button[aria-checked=true]::before {
   translate: var(--switch-elemental-travel) -50%;
