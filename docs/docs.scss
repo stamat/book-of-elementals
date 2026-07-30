@@ -54,9 +54,11 @@ switch-elemental {
     --switch-elemental-gap: 0px; // stylelint-disable-line length-zero-no-unit
   }
 
-  .knob-wash {
-    --switch-elemental-track-checked: color-mix(in srgb, currentcolor 22%, transparent);
-    --switch-elemental-knob-checked: currentcolor;
+  // The one sample that leaves `currentcolor`: a literal purple track. The border stays
+  // the default, and the knob stays the page's background, so one value is the whole
+  // change.
+  .knob-color {
+    --switch-elemental-track-checked: #7c5cff;
   }
 }
 

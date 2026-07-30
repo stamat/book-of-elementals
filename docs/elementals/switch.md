@@ -479,10 +479,10 @@ can never overshoot its track. Four of them do everything worth doing to it:
       <td><code>--switch-elemental-gap: 0px</code> — knob fills the track.</td>
     </tr>
     <tr>
-      <th scope="row">Wash</th>
-      <td><switch-elemental class="knob-wash"><button aria-label="Wash knob, off"></button></switch-elemental></td>
-      <td><switch-elemental class="knob-wash" checked><button aria-label="Wash knob, on"></button></switch-elemental></td>
-      <td>Knob stays ink, track only tints — never has to know the background.</td>
+      <th scope="row">Colour</th>
+      <td><switch-elemental class="knob-color"><button aria-label="Coloured knob, off"></button></switch-elemental></td>
+      <td><switch-elemental class="knob-color" checked><button aria-label="Coloured knob, on"></button></switch-elemental></td>
+      <td>A colour of your own on the on track. The border and the knob stay as they were.</td>
     </tr>
   </tbody>
 </table>
@@ -492,10 +492,8 @@ can never overshoot its track. Four of them do everything worth doing to it:
 .knob-rail   { --switch-elemental-knob-size: 0.75rem; }
 .knob-flush  { --switch-elemental-gap: 0px; } /* 0px, not 0 — see below */
 
-.knob-wash {
-  --switch-elemental-track-checked: color-mix(in srgb, currentcolor 22%, transparent);
-  --switch-elemental-knob-checked: currentcolor;
-}
+/* the one that leaves currentcolor — one property, and only the on track moves */
+.knob-color { --switch-elemental-track-checked: #7c5cff; }
 ```
 
 > [!WARNING]
