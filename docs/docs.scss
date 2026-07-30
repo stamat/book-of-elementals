@@ -24,42 +24,38 @@ switch-elemental {
   --switch-elemental-knob-checked: var(--bg);
 }
 
-// Demo-only, and not part of any element: the alternative looks the page lists, each one
-// nothing but the custom properties the docs print beside it. They live here rather than
-// in the theme because they are examples of using it, not part of it.
 .demo-sizes {
   display: flex;
   gap: 1rem;
   align-items: center;
 }
 
-// The classes go on the elements and not on the rows they sit in, because the theme sets
-// its defaults on `switch-elemental` itself - and a property set on the element beats one
-// inherited from an ancestor no matter how specific that ancestor's selector is.
-.demo-looks {
+// Demo-only, and not part of the element: the knob variants the page lists, each one
+// nothing but the custom properties printed beside it. The classes go on the elements
+// and not on the rows they sit in, because the theme sets its defaults on
+// `switch-elemental` itself - and a property set on the element beats one inherited from
+// an ancestor no matter how specific that ancestor's selector is.
+.demo-knobs {
   td:has(switch-elemental) {
     width: 5.5rem;
   }
 
-  .look-hairline {
-    --switch-elemental-border-width: 1px;
+  .knob-square {
+    --switch-elemental-knob-radius: 0.25rem;
   }
 
-  .look-accent {
-    --switch-elemental-border-width: 1px;
-    --switch-elemental-border-color: color-mix(in srgb, currentcolor 30%, transparent);
-    --switch-elemental-track-checked: var(--accent);
-    --switch-elemental-knob-checked: var(--accent-fg);
+  .knob-rail {
+    --switch-elemental-knob-size: 0.75rem;
   }
 
-  .look-wash {
-    --switch-elemental-border-color: color-mix(in srgb, currentcolor 35%, transparent);
+  // `0px` and not `0`: the gap is added to a length inside `calc()`, and a unitless zero
+  // there is invalid - the knob would compute to nothing at all.
+  .knob-flush {
+    --switch-elemental-gap: 0px; // stylelint-disable-line length-zero-no-unit
+  }
+
+  .knob-wash {
     --switch-elemental-track-checked: color-mix(in srgb, currentcolor 22%, transparent);
-    --switch-elemental-knob-checked: currentcolor;
-  }
-
-  .look-outline {
-    --switch-elemental-track-checked: transparent;
     --switch-elemental-knob-checked: currentcolor;
   }
 }
@@ -71,6 +67,22 @@ switch-elemental {
   display: flex;
   gap: 0.75rem;
   align-items: center;
+}
+
+// Demo-only: state text beside the switch, the Carbon arrangement - the accessible name
+// stays still and the *word* for the state sits outside it, `aria-hidden` because
+// `aria-checked` has already said it. The reflected `checked` attribute does the swap,
+// so there is no script. A fixed width because "On" and "Off" are different widths and
+// the row must not jump when it flips.
+.demo-state {
+  min-width: 2ch;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+switch-elemental[checked] + .demo-state .off,
+switch-elemental:not([checked]) + .demo-state .on {
+  display: none;
 }
 
 // Demo-only: the settings-row layout the form sample sits in. A `<label>` is not one of
@@ -91,6 +103,19 @@ switch-elemental {
   & + .demo-form-row {
     border-top: 1px solid var(--border);
   }
+}
+
+// Demo-only: the fieldset in the form sample carries nothing but its `disabled`, so it
+// is stripped back to a row like any other.
+.demo-form-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.demo-form-buttons {
+  margin: 0.75rem 0 0;
 }
 
 .demo-form-out {

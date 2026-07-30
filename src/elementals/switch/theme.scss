@@ -16,9 +16,11 @@ switch-elemental {
 
   // The knob fills the track's height minus the border and the gap on both sides, and
   // travels the width it does not fill. Derived rather than set, so the two can never
-  // drift apart into a knob that overshoots its own track.
+  // drift apart into a knob that overshoots its own track - and set the size yourself
+  // and the travel follows it, because it is read from the same property.
   --switch-elemental-inset: calc(var(--switch-elemental-border-width) + var(--switch-elemental-gap));
   --switch-elemental-knob-size: calc(var(--switch-elemental-height) - var(--switch-elemental-inset) * 2);
+  --switch-elemental-knob-radius: 50%;
   --switch-elemental-travel: calc(var(--switch-elemental-width) - var(--switch-elemental-knob-size) - var(--switch-elemental-inset) * 2);
 
   // Off, the track is empty and the knob is the only ink; on, they swap - the track
@@ -60,12 +62,16 @@ switch-elemental {
     &::before {
       content: "";
       position: absolute;
-      inset-block-start: var(--switch-elemental-gap);
+
+      // Centred rather than inset from the top, so a knob smaller than the one the
+      // height implies still sits in the middle of its track.
+      inset-block-start: 50%;
       inset-inline-start: var(--switch-elemental-gap);
       inline-size: var(--switch-elemental-knob-size);
       block-size: var(--switch-elemental-knob-size);
+      translate: 0 -50%;
       background: var(--switch-elemental-knob);
-      border-radius: 50%;
+      border-radius: var(--switch-elemental-knob-radius);
       transition:
         translate var(--switch-elemental-duration) var(--switch-elemental-easing),
         background var(--switch-elemental-duration) var(--switch-elemental-easing);
@@ -107,7 +113,7 @@ switch-elemental {
       background: var(--switch-elemental-track-checked);
 
       &::before {
-        translate: var(--switch-elemental-travel);
+        translate: var(--switch-elemental-travel) -50%;
         background: var(--switch-elemental-knob-checked);
       }
 
@@ -120,11 +126,18 @@ switch-elemental {
       }
     }
 
+    // Disabled by its own attribute, by the element's, or by a `<fieldset disabled>`
+    // above it - all three land on the button, so one selector covers them.
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
     // `translate` has no logical form, so the one direction in here that is not already
     // a logical property has to be flipped by hand. Everything else - the insets, the
     // icon ends - is logical and turns around on its own.
     &:dir(rtl)[aria-checked="true"]::before {
-      translate: calc(var(--switch-elemental-travel) * -1);
+      translate: calc(var(--switch-elemental-travel) * -1) -50%;
     }
 
     // Forced-colors mode overrides author backgrounds, which here are the whole control:
@@ -161,14 +174,19 @@ switch-elemental {
     }
   }
 
-  // The one size preset worth shipping, because "the same switch but smaller" is a size
-  // rather than a look and there is nothing to design about it. Two numbers, because the
-  // rest is derived - which is also the whole recipe for any other size, so there is no
-  // scale here, no `medium` that means the default, and nothing stopping you setting the
-  // two properties directly instead. Icons are the author's own SVGs at the author's own
-  // size, so size them down too if you use them at this one.
+  // The two presets worth shipping, because "the same switch but smaller" and "the same
+  // switch but lighter" are sizes rather than looks and there is nothing to design about
+  // either. Two numbers and one number, because the rest is derived - which is also the
+  // whole recipe for any other size, so there is no scale here, no `medium` that means the
+  // default, and nothing stopping you setting the properties directly instead. They
+  // combine. Icons are the author's own SVGs at the author's own size, so size them down
+  // too if you use them at the small one.
   &.switch-elemental-small {
     --switch-elemental-width: 2.75rem;
     --switch-elemental-height: 1.5rem;
+  }
+
+  &.switch-elemental-thin {
+    --switch-elemental-border-width: 1px;
   }
 }

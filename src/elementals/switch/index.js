@@ -36,15 +36,71 @@ import { ElementBase, define } from '../../core.js';
  *
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/switch/
  */
+/**
+ * What a form takes from the switch: the value when it is on, and nothing at all when it
+ * is off or disabled. `null` rather than an empty string, because an unchecked checkbox
+ * does not submit an empty value - it does not appear in the form data at all, and that
+ * absence is what every server-side "was this box ticked" check is already written
+ * against. A disabled control submits nothing either, which is the platform's rule for
+ * every other form control and has to be honoured by hand here.
+ */
+export function formValue(checked, disabled, value) {
+  return checked && !disabled ? value : null;
+}
+
+/**
+ * The validity a switch can have, which is one thing: a required switch has to be on.
+ * A custom message wins, as it does on a native control - it is the author saying the
+ * value is wrong for a reason the browser cannot know.
+ */
+export function validityState(required, checked, customMessage, missingMessage) {
+  if (customMessage) return { flags: { customError: true }, message: customMessage };
+  if (required && !checked) return { flags: { valueMissing: true }, message: missingMessage };
+  return { flags: {}, message: '' };
+}
+
+let borrowed;
+
+/**
+ * What a required switch says while it is off, when nobody has said otherwise.
+ *
+ * `setValidity` throws on an empty message, and a form-associated custom element gets no
+ * platform default to ask for - so the nearest true thing is borrowed: the browser's own
+ * message for a required checkbox, which arrives already translated into the reader's
+ * language. It says "box" rather than "switch", and a reader given the right language
+ * with the wrong noun is better served than one given English. Read once and kept.
+ */
+export function borrowedValueMissingMessage() {
+  if (borrowed === undefined) {
+    let message = '';
+    if (typeof document !== 'undefined') {
+      const probe = document.createElement('input');
+      probe.type = 'checkbox';
+      probe.required = true;
+      message = probe.validationMessage;
+    }
+    borrowed = message || 'Please switch this on.';
+  }
+  return borrowed;
+}
+
 export class SwitchElemental extends ElementBase {
-  // Opts the element into form ownership: `name`, submission, reset and state restore.
+  // Opts the element into form ownership: `name`, submission, reset, state restore,
+  // validation and the disabled state a `<fieldset disabled>` hands down.
   static get formAssociated() {
     return true;
   }
 
   static get observedAttributes() {
-    return ['checked', 'value'];
+    return ['checked', 'value', 'disabled', 'required', 'required-message'];
   }
+
+  /**
+   * The page-wide default for what a required switch says while it is off. `null` means
+   * the browser's own translated message is used, which is the right answer until a page
+   * has a reason of its own - one line at boot changes every switch on it.
+   */
+  static requiredMessage = null;
 
   constructor() {
     super();
@@ -70,6 +126,85 @@ export class SwitchElemental extends ElementBase {
     this.toggleAttribute('checked', !!value);
   }
 
+  /**
+   * Disabled by its own attribute, or by a `<fieldset disabled>` somewhere above it -
+   * which the button already answers for, since `:disabled` matches a button inside a
+   * disabled fieldset whether or not it carries the attribute itself.
+   */
+  get disabled() {
+    const button = this.button;
+    return this.hasAttribute('disabled') || !!(button && button.matches(':disabled'));
+  }
+
+  set disabled(value) {
+    this.toggleAttribute('disabled', !!value);
+  }
+
+  /** Whether the form refuses to submit while this is off. */
+  get required() {
+    return this.hasAttribute('required');
+  }
+
+  set required(value) {
+    this.toggleAttribute('required', !!value);
+  }
+
+  /**
+   * What this switch says while it is required and off, in three steps: its own
+   * `required-message`, then whatever the page put on `SwitchElemental.requiredMessage`,
+   * then the browser's own translated one. One switch, one page, or every language.
+   */
+  get requiredMessage() {
+    return this.getAttribute('required-message')
+      || this.constructor.requiredMessage
+      || borrowedValueMissingMessage();
+  }
+
+  set requiredMessage(value) {
+    this.setAttribute('required-message', value);
+  }
+
+  // The rest of the constraint API is the platform's, read straight off the internals so
+  // there is no second copy of the state to disagree with it. Without `attachInternals`
+  // there is no validation either, and a switch that always validates is the honest
+  // answer there - the form it is in has no value from it to check in the first place.
+  get validity() {
+    return this.internals && this.internals.validity;
+  }
+
+  get validationMessage() {
+    return this.internals ? this.internals.validationMessage : '';
+  }
+
+  get willValidate() {
+    return this.internals ? this.internals.willValidate : false;
+  }
+
+  checkValidity() {
+    return this.internals ? this.internals.checkValidity() : true;
+  }
+
+  reportValidity() {
+    return this.internals ? this.internals.reportValidity() : true;
+  }
+
+  /** Your own message, for the constraint the browser cannot know about. `''` clears it. */
+  setCustomValidity(message) {
+    this.customMessage = message || '';
+    this.validate();
+  }
+
+  /**
+   * Push the current constraint onto the form. The button is the anchor, so the
+   * browser's own bubble points at the control the reader has to flip - and not at an
+   * element that is `display: contents` and has no box to point at.
+   */
+  validate() {
+    if (!this.internals || !this.internals.setValidity) return;
+    const { flags, message } = validityState(this.required, this.checked, this.customMessage, this.requiredMessage);
+    this.internals.setValidity(flags, message, this.button || undefined);
+  }
+
   connectedCallback() {
     // Wait until the light-DOM children have been parsed. The bundle is loaded
     // deferred or at the end of the body, so by upgrade time the button is there.
@@ -89,6 +224,10 @@ export class SwitchElemental extends ElementBase {
     // state the markup arrived in has to be remembered separately or it is gone the
     // first time anyone flips the switch.
     this.defaultChecked = this.checked;
+    // Whether the markup disabled the button on its own, so a fieldset re-enabling
+    // everything below it does not quietly enable a button that was never meant to be.
+    this.buttonDisabled = button.hasAttribute('disabled');
+    if (this.hasAttribute('disabled')) button.disabled = true;
 
     this.onClick = this.onClick.bind(this);
     this.addEventListener('click', this.onClick);
@@ -119,10 +258,19 @@ export class SwitchElemental extends ElementBase {
   apply() {
     const button = this.button;
     if (button) button.setAttribute('aria-checked', this.checked ? 'true' : 'false');
-    // `null` rather than an empty string, because an unchecked checkbox does not submit
-    // an empty value - it does not appear in the form data at all, and that absence is
-    // what every server-side "was this box ticked" check is already written against.
-    if (this.internals) this.internals.setFormValue(this.checked ? this.value : null);
+    if (this.internals) this.internals.setFormValue(formValue(this.checked, this.disabled, this.value));
+    this.validate();
+  }
+
+  /**
+   * The element's own `disabled` attribute, or a `<fieldset disabled>` above it. The
+   * button is disabled with it, because a switch that takes focus and then does nothing
+   * is worse than one that is plainly out of reach - and the form value goes with it.
+   */
+  formDisabledCallback(disabled) {
+    const button = this.button;
+    if (button) button.disabled = disabled || this.buttonDisabled;
+    this.apply();
   }
 
   /** The form is putting its controls back to the state the markup arrived in. */
@@ -145,11 +293,18 @@ export class SwitchElemental extends ElementBase {
    */
   attributeChangedCallback(name, previous, current) {
     if (!this.initialized || previous === current) return;
+    // `formDisabledCallback` is the platform's, and only arrives where `attachInternals`
+    // does; routing the attribute through it means the same one place handles both.
+    if (name === 'disabled') {
+      this.formDisabledCallback(current !== null);
+      return;
+    }
     this.apply();
-    // A new `value` is what the switch would submit, not a change in whether it is on.
-    // It still has to reach the form, which `apply` has just done, but there is no
+    // A new `value` is what the switch would submit, and `required` and its message are
+    // what the form makes of it being off - none of them is a change in whether it is
+    // on. All three have to reach the form, which `apply` has just done, but there is no
     // toggle to announce.
-    if (name === 'value') return;
+    if (name !== 'checked') return;
     this.dispatchEvent(new CustomEvent('switch-toggle', {
       bubbles: true,
       detail: { checked: this.checked }
@@ -159,7 +314,7 @@ export class SwitchElemental extends ElementBase {
   onClick(e) {
     const button = e.target.closest && e.target.closest('button');
     // Not the control means a button beside it, or a nested switch's.
-    if (!button || button !== this.button) return;
+    if (!button || button !== this.button || this.disabled) return;
     this.checked = !this.checked;
   }
 }

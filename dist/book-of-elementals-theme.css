@@ -147,6 +147,7 @@ switch-elemental {
   --switch-elemental-gap: 2px;
   --switch-elemental-inset: calc(var(--switch-elemental-border-width) + var(--switch-elemental-gap));
   --switch-elemental-knob-size: calc(var(--switch-elemental-height) - var(--switch-elemental-inset) * 2);
+  --switch-elemental-knob-radius: 50%;
   --switch-elemental-travel: calc(var(--switch-elemental-width) - var(--switch-elemental-knob-size) - var(--switch-elemental-inset) * 2);
   --switch-elemental-border-color: currentcolor;
   --switch-elemental-track: transparent;
@@ -173,12 +174,13 @@ switch-elemental > button {
 switch-elemental > button::before {
   content: "";
   position: absolute;
-  inset-block-start: var(--switch-elemental-gap);
+  inset-block-start: 50%;
   inset-inline-start: var(--switch-elemental-gap);
   inline-size: var(--switch-elemental-knob-size);
   block-size: var(--switch-elemental-knob-size);
+  translate: 0 -50%;
   background: var(--switch-elemental-knob);
-  border-radius: 50%;
+  border-radius: var(--switch-elemental-knob-radius);
   transition: translate var(--switch-elemental-duration) var(--switch-elemental-easing), background var(--switch-elemental-duration) var(--switch-elemental-easing);
 }
 switch-elemental > button > .switch-elemental-on,
@@ -204,7 +206,7 @@ switch-elemental > button[aria-checked=true] {
   background: var(--switch-elemental-track-checked);
 }
 switch-elemental > button[aria-checked=true]::before {
-  translate: var(--switch-elemental-travel);
+  translate: var(--switch-elemental-travel) -50%;
   background: var(--switch-elemental-knob-checked);
 }
 switch-elemental > button[aria-checked=true] > .switch-elemental-off {
@@ -213,8 +215,12 @@ switch-elemental > button[aria-checked=true] > .switch-elemental-off {
 switch-elemental > button[aria-checked=true] > .switch-elemental-on {
   opacity: 1;
 }
+switch-elemental > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
 switch-elemental > button:dir(rtl)[aria-checked=true]::before {
-  translate: calc(var(--switch-elemental-travel) * -1);
+  translate: calc(var(--switch-elemental-travel) * -1) -50%;
 }
 @media (forced-colors: active) {
   switch-elemental > button::before {
@@ -240,5 +246,8 @@ switch-elemental > button:dir(rtl)[aria-checked=true]::before {
 switch-elemental.switch-elemental-small {
   --switch-elemental-width: 2.75rem;
   --switch-elemental-height: 1.5rem;
+}
+switch-elemental.switch-elemental-thin {
+  --switch-elemental-border-width: 1px;
 }
 /*# sourceMappingURL=book-of-elementals-theme.css.map */
