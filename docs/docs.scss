@@ -73,6 +73,35 @@ switch-elemental {
   align-items: center;
 }
 
+// Demo-only: the settings-row layout the form sample sits in. A `<label>` is not one of
+// the options here - it binds to form controls and the switch's control is a `<button>` -
+// so each row is a span the switch points at with `aria-labelledby`.
+.demo-form {
+  max-width: 26rem;
+  margin: 0;
+}
+
+.demo-form-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+
+  & + .demo-form-row {
+    border-top: 1px solid var(--border);
+  }
+}
+
+.demo-form-out {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.85em;
+  background: var(--bg-code);
+  border-radius: var(--radius);
+}
+
 // Demo-only, and not part of any element: the figure the disclosure examples hang
 // off. The element itself styles nothing around the image, because the image is
 // none of its business.

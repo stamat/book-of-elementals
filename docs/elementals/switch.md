@@ -30,20 +30,15 @@ takes effect:
 - A **switch** is a setting that takes effect the moment you flip it. A theme toggle, a
   mute, autoplay, notifications. There is no submit, no cancel, and no third state.
 
-If the setting lives in a form and you do not need the look, the platform already has it
-and it needs no JavaScript at all:
+That is a question about meaning, not about markup, and being inside a `<form>` does not
+settle it — plenty of settings pages are a form full of switches that each take effect on
+submit. Pick by which promise you are making, then use this element either way: give it a
+`name` and it [submits, resets and restores](#in-a-form) exactly as a checkbox does.
 
-```html
-<label> <input type="checkbox" role="switch" name="autoplay" /> Autoplay </label>
-```
-
-That submits, resets, restores on back-navigation and derives `aria-checked` from
-`checked` on its own — and being a real form control, it also gets `<label>`. It is the
-better answer whenever it is enough, because it keeps working with scripting off.
-
-This element still [submits with a form](#in-a-form) when you give it a `name`, so you do
-not have to choose between the look and the form data. The look styles either one — see
-[The look](#the-look).
+Two things still send you to `<input type="checkbox" role="switch">` instead, and neither
+is "it is in a form": it keeps working with **scripting off**, and it can be labelled by
+`<label>`. Both are covered where they come up — [without JavaScript](#without-javascript)
+and [the label](#the-label).
 
 ## Usage
 
@@ -109,8 +104,9 @@ and "Enabled" are what `aria-checked` already announces, and a label that change
 the state gives a screen reader user two contradicting halves of the same sentence.
 
 `<label>` is not one of the options: it only binds to form controls, and a `<button>` is
-not one. That is the second reason to reach for `<input type="checkbox" role="switch">`
-when the setting is in a form — the native label association comes with it.
+not one — `aria-labelledby` is the equivalent, and the first form above is what it looks
+like. If you specifically want a wrapping `<label>`, that is one of the two reasons to use
+`<input type="checkbox" role="switch">` instead; it is a real form control, so it gets one.
 
 ## Keyboard
 
@@ -206,22 +202,39 @@ had already stamped `[data-theme]`.
 Give it a `name` and it submits with its form, exactly as a checkbox does — the value
 when it is on, and nothing at all when it is off:
 
+<form class="demo-form">
+  <div class="demo-form-row">
+    <span id="form-autoplay">Autoplay</span>
+    <switch-elemental name="autoplay"><button aria-labelledby="form-autoplay"></button></switch-elemental>
+  </div>
+  <div class="demo-form-row">
+    <span id="form-replies">Email me replies</span>
+    <switch-elemental name="replies" checked><button aria-labelledby="form-replies"></button></switch-elemental>
+  </div>
+  <div class="demo-form-row">
+    <span id="form-tier">Pro tier</span>
+    <switch-elemental name="tier" value="pro"><button aria-labelledby="form-tier"></button></switch-elemental>
+  </div>
+  <p class="demo-form-out" aria-live="polite">…</p>
+</form>
+
 ```html
 <form>
-  <switch-elemental name="autoplay"><button aria-label="Autoplay"></button></switch-elemental>
-  <switch-elemental name="tier" value="pro" checked>
-    <button aria-label="Pro"></button>
-  </switch-elemental>
+  <switch-elemental name="autoplay"><button aria-labelledby="…"></button></switch-elemental>
+  <switch-elemental name="replies" checked><button aria-labelledby="…"></button></switch-elemental>
+  <switch-elemental name="tier" value="pro"><button aria-labelledby="…"></button></switch-elemental>
 </form>
 ```
 
-```javascript
-new FormData(form); // tier=pro   — autoplay is off, so it is simply absent
-```
+Flip them — the line underneath is the form's live `FormData`, read straight off the form
+on every `change`.
 
-That absence is the point: it is what a checkbox does, and what every server-side "was
-this ticked" check is already written against. `value` defaults to `on`, as a checkbox's
-does.
+An off switch is **absent** rather than empty, which is the point: it is what a checkbox
+does, and what every server-side "was this ticked" check is already written against.
+`value` defaults to `on`, as a checkbox's does.
+
+So a switch inside a form is still this element — you do not have to drop to a checkbox to
+get the form data, and you do not have to hand-roll a hidden input to bridge the two.
 
 Form **reset** puts it back to the state its markup arrived in, and **back-navigation**
 restores whatever the reader left it at. Neither is wired up here — the element is
@@ -269,10 +282,11 @@ switch-elemental:not(:defined) > button {
 }
 ```
 
-A switch that silently does not switch is worse than no switch at all. If the setting has
-to survive scripting being off, use `<input type="checkbox" role="switch">`, which needs
-no script in the first place — that is true even of the form case above, since an element
-that never upgrades never sets a form value either.
+A switch that silently does not switch is worse than no switch at all. This is the other
+reason to use `<input type="checkbox" role="switch">`: it needs no script in the first
+place. It applies to [the form case](#in-a-form) too — an element that never upgrades
+never sets a form value either, so a form that has to work without JavaScript wants the
+native control, not this one.
 
 ## The look
 
@@ -475,25 +489,13 @@ always the one at the other:
 already said it, and the label says what is being switched. Each icon takes the knob
 color of the state it belongs to, so draw them in `currentColor` and they follow.
 
-### On a checkbox instead
+### On a native checkbox
 
-The theme keys off `[aria-checked="true"]`, which a native
-`<input type="checkbox" role="switch">` sets for itself — but only in the accessibility
-tree, not as an attribute CSS can see. One extra selector covers it:
-
-```css
-switch-elemental > button,
-input[type="checkbox"][role="switch"] {
-  /* … the track rules … */
-}
-
-input[type="checkbox"][role="switch"]:checked {
-  /* … what [aria-checked="true"] does … */
-}
-```
-
-Not shipped, because it is a second copy of every rule for a control that is already
-the platform's. Two selectors in your own stylesheet if you want both looks to match.
+The theme dresses this element's `<button>` and nothing else. If you use
+`<input type="checkbox" role="switch">` instead and want the two to match, the box is
+identical and only the state selector differs — `:checked` where this keys off
+`[aria-checked="true"]`. Not shipped, because it is a second copy of every rule for a
+control that is already the platform's.
 
 ## The element's box
 
@@ -511,3 +513,29 @@ switch-elemental {
 ```
 
 <script src="{{ relativePathPrefix }}dist/elementals/switch.js"></script>
+
+<!-- Demo-only: prints the form's live FormData under the form sample, so the page shows
+     what the element actually puts in it. Nothing here touches the switches themselves. -->
+<script>
+  (function () {
+    var form = document.querySelector(".demo-form");
+    if (!form) return;
+    var out = form.querySelector(".demo-form-out");
+    function show() {
+      var pairs = [];
+      new FormData(form).forEach(function (value, name) {
+        pairs.push(name + "=" + value);
+      });
+      out.textContent = pairs.length
+        ? "new FormData(form) → " + pairs.join("  ")
+        : "new FormData(form) → (empty, every switch is off)";
+    }
+    // `switch-toggle`, not `change`: the control is a button, so there is no `change`
+    // event to hear. It bubbles, so one listener on the form covers all three.
+    form.addEventListener("switch-toggle", show);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+    });
+    show();
+  })();
+</script>

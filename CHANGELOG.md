@@ -43,9 +43,11 @@ may already be targeting**, since neither shows up in a function signature.
   mirroring the state: a second node holding the same boolean is a second node that can
   disagree with the first, and it would leave reset and restore to be hand-written. Needs
   `attachInternals`, which Safari only got in 16.4; without it the switch simply does not
-  submit and nothing else changes. `<input type="checkbox" role="switch">` remains the better
-  answer for a plain form control, since it needs no JavaScript at all and so survives
-  scripting being off.
+  submit and nothing else changes. Being in a form is not what picks the control — a switch in a
+  form is still this element. Two specific things send you to
+  `<input type="checkbox" role="switch">` instead: it needs no JavaScript at all, so it
+  survives scripting being off, and being a real form control it can be labelled by a
+  `<label>`, which a `<button>` cannot.
 
   The element is `display: contents`, so dropping it around an existing button changes no
   layout — a switch is usually a flex or grid item beside its label. With scripting off the

@@ -221,12 +221,12 @@ value when on, nothing at all when off — and resets and restores with it too. 
 is `ElementInternals`, not a hidden `<input>` mirroring the state, so the platform
 owns all three and there is no second node to disagree with the first.
 
-`<input type="checkbox" role="switch">` is still the better answer for a plain form
-control: it is the same switch with no JavaScript at all, so it survives scripting
-being off, and it gets `<label>` for free. Reach for this element when you want the
-look or the event on something that also has to submit. The button is hidden until
-the element upgrades, because a switch that silently does not switch is worse than
-no switch.
+Being in a form is not what picks the control — a switch in a form is still this
+element. Two specific things send you to `<input type="checkbox" role="switch">`
+instead: it needs no JavaScript at all, so it survives scripting being off, and being
+a real form control it can be labelled by a `<label>`. The button here is hidden until
+the element upgrades, because a switch that silently does not switch is worse than no
+switch — which is the same reason the first of those two matters.
 
 The optional theme draws a pill whose knob slides and whose track fills, mixed out
 of `currentcolor` so it sits in the palette it is switching. Geometry derives from

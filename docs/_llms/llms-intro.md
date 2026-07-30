@@ -44,9 +44,10 @@ Elements published so far:
   `aria-checked`, for a setting that takes effect the moment it is flipped (a
   theme toggle, a mute). Reflected `checked` and a bubbling `switch-toggle`
   event. Form-associated through `ElementInternals`, so `name`/`value` submit,
-  reset and restore exactly as a checkbox's do — no hidden `<input>`. For a plain
-  form control `<input type="checkbox" role="switch">` is still better: no
-  JavaScript at all, so it survives scripting being off.
+  reset and restore exactly as a checkbox's do — no hidden `<input>`, and a switch
+  in a form is still this element. Two things send you to
+  `<input type="checkbox" role="switch">` instead: it needs no JavaScript at all, so
+  it survives scripting being off, and it can be labelled by a `<label>`.
 
 Sibling project: [book-of-spells](https://github.com/stamat/book-of-spells),
 which holds the plain JavaScript helpers. This book holds the elements.

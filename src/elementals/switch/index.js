@@ -9,9 +9,9 @@ import { ElementBase, define } from '../../core.js';
  * A switch and a checkbox are the same boolean wearing different promises. A checkbox
  * is a value you are *about to submit*; a switch is a setting that takes effect the
  * moment you flip it - a theme toggle, a mute, an autoplay preference. Which is why
- * this is a `<button>` and not a checkbox: there is no form, nothing to submit, and no
- * third indeterminate state a switch is allowed to have. Put the setting in a form and
- * the platform already has the answer - see below.
+ * this is a `<button>` and not a checkbox: pressing it *is* the action, and there is no
+ * third indeterminate state a switch is allowed to have. That the setting also has to be
+ * submitted somewhere does not change what it is, so it submits too - see below.
  *
  * What it does, and nothing more: marks the button `role="switch"`, keeps `aria-checked`
  * in step with a reflected `checked` attribute on the host, and flips it on click.
@@ -28,10 +28,11 @@ import { ElementBase, define } from '../../core.js';
  * would still leave `reset` and back-navigation to be hand-written. The platform owns
  * all three here, and there is nothing to keep in step.
  *
- * ponytail: `<input type="checkbox" role="switch">` is still the better answer for a
- * plain form control - it is the same switch with no JavaScript at all, so it survives
- * scripting being off. Reach for this one when you want the shipped look, or the
- * `switch-toggle` event, on something that also has to submit.
+ * ponytail: being in a form is not what picks the control - a switch in a form is still
+ * this element. Two specific things send you to `<input type="checkbox" role="switch">`
+ * instead: it needs no JavaScript at all, so it survives scripting being off, and being a
+ * real form control it can be labelled by a `<label>`. Neither is reachable from here, and
+ * neither is worth growing this element to fake.
  *
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/switch/
  */

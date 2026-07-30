@@ -129,11 +129,10 @@ switch-elemental {
 
     // Forced-colors mode overrides author backgrounds, which here are the whole control:
     // the track fill and the knob are the only things telling the two states apart.
-    // System color keywords are honoured there, so both are repainted in
-    // them rather than lost - `Highlight` for the on track, because that is the mode's
-    // own colour for a control that is set, and `HighlightText` for what sits on it,
-    // because the mode guarantees that pair contrasts and guarantees nothing about any
-    // other.
+    // System color keywords are honoured there, so both are repainted in them rather than
+    // lost - `Highlight` for the on track, because that is the mode's own colour for a
+    // control that is set, and `HighlightText` for what sits on it, because the mode
+    // guarantees that pair contrasts and guarantees nothing about any other.
     @media (forced-colors: active) {
       &::before {
         background: CanvasText;
