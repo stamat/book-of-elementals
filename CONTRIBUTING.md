@@ -57,6 +57,11 @@ which browser and assistive technology. A minimal page beats a description.
   comment saying why.
 - **Add a changelog entry** under `## [Unreleased]` in
   [CHANGELOG.md](CHANGELOG.md) — that file explains the format.
+- **Agent-written code is welcome — you still own it.** It meets the same bar
+  as handwritten code: tests, lint, CI green, checked against the APG pattern.
+  You understand every line well enough to answer review questions; "the agent
+  wrote it" is not an answer. Point your agent at [AGENTS.md](AGENTS.md)
+  before it starts.
 
 Commit messages are freeform, write something that says what changed.
 

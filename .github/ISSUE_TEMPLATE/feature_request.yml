@@ -1,0 +1,61 @@
+name: Feature request
+description: Something an existing elemental should be able to do and can't
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Lead with the problem, not the solution. A feature described as a
+        problem can be solved in ways you had not thought of; one described as
+        an implementation can only be accepted or refused.
+
+        For a new element, use the elemental request form instead.
+
+  - type: input
+    id: elemental
+    attributes:
+      label: Which elemental
+      placeholder: accordion, disclosure, menu, …
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What were you trying to do, and where did the element get in the way?
+      placeholder: |
+        I want to … but the only way to do it today is …
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like to happen
+      description: How it would look to use it — the attribute, the markup, the CSS hook.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you do today instead
+      description: >
+        The workaround, and why it is not good enough. A workaround that is
+        merely ugly is worth knowing about; one that is wrong is the argument
+        for the feature.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you file
+      options:
+        - label: I searched the existing issues, open and closed
+          required: true
+        - label: This isn't something native HTML or CSS already does
+          required: true
+        - label: I would be willing to open a pull request for this
+          required: false

@@ -1,0 +1,76 @@
+name: Elemental request
+description: A new element the book should contain
+labels: ["enhancement", "new elemental"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        An elemental takes ordinary HTML, adds the roles, states and keyboard
+        behaviour its APG pattern asks for, and leaves the page working if the
+        script never loads. The questions below are the ones a new element has
+        to survive — answering them here is most of the proposal.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: The element
+      description: What it is and what it does for the author, in a sentence or two.
+    validations:
+      required: true
+
+  - type: textarea
+    id: native-gap
+    attributes:
+      label: Why native HTML/CSS doesn't cover it
+      description: >
+        `<details>`, `<dialog>`, popover, CSS `:has()` and scroll-snap have
+        eaten a lot of former component territory. What's the gap this element
+        fills that the platform doesn't?
+    validations:
+      required: true
+
+  - type: input
+    id: apg
+    attributes:
+      label: APG pattern
+      description: >
+        Link to the pattern at
+        https://www.w3.org/WAI/ARIA/apg/patterns/ — no pattern usually means
+        it's not this project's kind of element.
+    validations:
+      required: true
+
+  - type: textarea
+    id: markup
+    attributes:
+      label: The markup it would upgrade
+      description: >
+        The plain HTML an author would have written anyway, that this element
+        wraps and enhances. If the element needs its own markup vocabulary to
+        be useful, it belongs in a different project.
+      render: html
+    validations:
+      required: true
+
+  - type: textarea
+    id: prior-art
+    attributes:
+      label: Prior art
+      description: >
+        How do other libraries do it — what markup, attributes and keyboard
+        behaviour do they expose? A link per claim. What would this one do
+        better?
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you file
+      options:
+        - label: I searched the existing issues, open and closed
+          required: true
+        - label: No existing elemental covers this
+          required: true
+        - label: I would be willing to open a pull request for this
+          required: false
