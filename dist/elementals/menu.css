@@ -23,9 +23,17 @@ menu-elemental [hidden] {
 menu-elemental[data-mode=flyout] > ul,
 menu-elemental[data-mode=flyout] > menu {
   position: absolute;
-  top: 100%;
-  left: 0;
+  inset-block-start: 100%;
+  inset-inline-start: 0;
   z-index: 10;
+}
+menu-elemental[data-mode=flyout] > ul[data-side=block-start],
+menu-elemental[data-mode=flyout] > menu[data-side=block-start] {
+  inset-block: auto 100%;
+}
+menu-elemental[data-mode=flyout] > ul[data-align=end],
+menu-elemental[data-mode=flyout] > menu[data-align=end] {
+  inset-inline: auto 0;
 }
 menu-elemental[data-mode=flyout] li {
   position: relative;
@@ -33,8 +41,16 @@ menu-elemental[data-mode=flyout] li {
 menu-elemental[data-mode=flyout] li > ul,
 menu-elemental[data-mode=flyout] li > menu {
   position: absolute;
-  top: 0;
-  left: 100%;
+  inset-block-start: 0;
+  inset-inline-start: 100%;
+}
+menu-elemental[data-mode=flyout] li > ul[data-side=inline-start],
+menu-elemental[data-mode=flyout] li > menu[data-side=inline-start] {
+  inset-inline: auto 100%;
+}
+menu-elemental[data-mode=flyout] li > ul[data-align=end],
+menu-elemental[data-mode=flyout] li > menu[data-align=end] {
+  inset-block: auto 0;
 }
 menu-elemental[data-mode=flyout] ul,
 menu-elemental[data-mode=flyout] menu {

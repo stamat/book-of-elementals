@@ -1,4 +1,58 @@
-import { typeAheadIndex } from './index.js';
+import { placeFlyout, placeSubmenu, typeAheadIndex } from './index.js';
+
+const VIEWPORT = { width: 1000, height: 800 };
+const PANEL = { width: 200, height: 300 };
+const rect = (left, top, width = 100, height = 30) => ({
+  left, top, right: left + width, bottom: top + height
+});
+
+test('a button with room below and to the right keeps the preferred placement', () => {
+  expect(placeFlyout(rect(20, 20), PANEL, VIEWPORT, false)).toEqual({
+    side: 'block-end',
+    align: 'start'
+  });
+});
+
+test('a button near the bottom right opens up and back to the left', () => {
+  expect(placeFlyout(rect(900, 760), PANEL, VIEWPORT, false)).toEqual({
+    side: 'block-start',
+    align: 'end'
+  });
+});
+
+test('a button hemmed in on both sides keeps the preferred placement anyway', () => {
+  const tiny = { width: 400, height: 100 };
+  expect(placeFlyout(rect(20, 40), PANEL, tiny, false)).toEqual({
+    side: 'block-end',
+    align: 'start'
+  });
+});
+
+test('right to left flips which edge counts as the start', () => {
+  // Flush against the left edge: aligning to the inline start in RTL runs the panel off
+  // that edge, so it has to run the other way.
+  expect(placeFlyout(rect(0, 20), PANEL, VIEWPORT, true).align).toBe('end');
+  expect(placeFlyout(rect(900, 20), PANEL, VIEWPORT, true).align).toBe('start');
+});
+
+test('a submenu with room beside it opens beside it, downwards', () => {
+  expect(placeSubmenu(rect(20, 20), PANEL, VIEWPORT, false)).toEqual({
+    side: 'inline-end',
+    align: 'start'
+  });
+});
+
+test('a submenu in the bottom right corner opens up and to the left', () => {
+  expect(placeSubmenu(rect(880, 700), PANEL, VIEWPORT, false)).toEqual({
+    side: 'inline-start',
+    align: 'end'
+  });
+});
+
+test('a submenu in RTL prefers the left and flips to the right', () => {
+  expect(placeSubmenu(rect(500, 20), PANEL, VIEWPORT, true).side).toBe('inline-end');
+  expect(placeSubmenu(rect(20, 20), PANEL, VIEWPORT, true).side).toBe('inline-start');
+});
 
 const LABELS = ['Profile', 'Preferences', 'Archive', 'Sign out'];
 

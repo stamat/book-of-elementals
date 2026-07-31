@@ -83,6 +83,12 @@ menu-elemental li > button[aria-haspopup]::after {
 menu-elemental li > button[aria-haspopup]:dir(rtl)::after {
   rotate: 90deg;
 }
+menu-elemental li:has(> ul[data-side=inline-start], > menu[data-side=inline-start]) > button::after {
+  rotate: 90deg;
+}
+menu-elemental li:has(> ul[data-side=inline-start], > menu[data-side=inline-start]) > button:dir(rtl)::after {
+  rotate: -90deg;
+}
 menu-elemental[data-mode=inline] li > button[aria-expanded]::after {
   content: "";
   width: var(--menu-elemental-caret-size);

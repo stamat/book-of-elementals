@@ -30,6 +30,75 @@ export function typeAheadIndex(labels, current, buffer) {
 }
 
 /** How long a type-ahead keeps collecting keystrokes, in milliseconds. */
+/**
+ * Whether a panel of `size` starting at `at` is inside a viewport of `limit`.
+ *
+ * Both ends, because a panel that runs off the top is as unreachable as one that runs
+ * off the bottom, and the flipped placement is exactly as capable of doing it.
+ */
+function fits(at, size, limit) {
+  return at >= 0 && at + size <= limit;
+}
+
+/**
+ * Where the root list goes: under the button, or over it when there is no room under;
+ * and running from the button's inline start, or back the other way when that would take
+ * it off the edge.
+ *
+ * The preferred placement wins ties and wins when neither fits, because a panel with
+ * nowhere good to go should at least land where the reader expects it.
+ *
+ * @param {DOMRect|object} trigger Rect of the button, in viewport coordinates.
+ * @param {{width: number, height: number}} panel Size of the list.
+ * @param {{width: number, height: number}} viewport
+ * @param {boolean} rtl Whether the menu runs right to left.
+ * @returns {{side: string, align: string}}
+ */
+export function placeFlyout(trigger, panel, viewport, rtl) {
+  const below = fits(trigger.bottom, panel.height, viewport.height);
+  const above = fits(trigger.top - panel.height, panel.height, viewport.height);
+
+  // Aligned to the trigger's inline start means its left edge in LTR and its right in
+  // RTL, so the sums are written in physical terms and the direction picks the edge.
+  const start = rtl ? trigger.right - panel.width : trigger.left;
+  const end = rtl ? trigger.left : trigger.right - panel.width;
+
+  return {
+    side: below || !above ? 'block-end' : 'block-start',
+    align: fits(start, panel.width, viewport.width) || !fits(end, panel.width, viewport.width)
+      ? 'start'
+      : 'end'
+  };
+}
+
+/**
+ * Where a submenu goes: beside its own item, on the inline end unless the edge is there,
+ * and running down from the item unless the bottom is.
+ *
+ * Which is how a menu near the bottom right corner ends up opening up and to the left,
+ * one decision per axis rather than a list of corners.
+ *
+ * @param {DOMRect|object} item Rect of the item that opens it.
+ * @param {{width: number, height: number}} panel
+ * @param {{width: number, height: number}} viewport
+ * @param {boolean} rtl
+ * @returns {{side: string, align: string}}
+ */
+export function placeSubmenu(item, panel, viewport, rtl) {
+  const inlineEnd = rtl ? item.left - panel.width : item.right;
+  const inlineStart = rtl ? item.right : item.left - panel.width;
+
+  const down = fits(item.top, panel.height, viewport.height);
+  const up = fits(item.bottom - panel.height, panel.height, viewport.height);
+
+  return {
+    side: fits(inlineEnd, panel.width, viewport.width) || !fits(inlineStart, panel.width, viewport.width)
+      ? 'inline-end'
+      : 'inline-start',
+    align: down || !up ? 'start' : 'end'
+  };
+}
+
 const TYPE_AHEAD_WINDOW = 500;
 
 // How long a hover-opened menu waits after the pointer leaves. Long enough to cross the
@@ -149,6 +218,7 @@ export class MenuElemental extends ElementBase {
     this.onMediaChange = this.onMediaChange.bind(this);
     this.onPointerOver = this.onPointerOver.bind(this);
     this.onPointerLeave = this.onPointerLeave.bind(this);
+    this.placeOpen = this.placeOpen.bind(this);
 
     this.addEventListener('click', this.onClick);
     this.addEventListener('keydown', this.onKeyDown);
@@ -161,6 +231,11 @@ export class MenuElemental extends ElementBase {
     // elsewhere: either way the menu is behind the reader now.
     this.addEventListener('focusout', this.onFocusOut);
     document.addEventListener('click', this.onDocumentClick);
+    // The corner a panel fits in is a fact about the viewport, so it is re-decided when
+    // the viewport changes under it. Scrolling is not listened for: the page scrolling
+    // with a menu open is the page moving out from under a reader who is in the middle
+    // of using it, and re-placing on every frame of that would cost more than it fixes.
+    window.addEventListener('resize', this.placeOpen);
 
     // Every branch starts closed. The markup authors them plainly visible, so with
     // no script the whole thing is still a nested list of links; this is the first
@@ -182,6 +257,7 @@ export class MenuElemental extends ElementBase {
     this.removeEventListener('pointerover', this.onPointerOver);
     this.removeEventListener('pointerleave', this.onPointerLeave);
     document.removeEventListener('click', this.onDocumentClick);
+    window.removeEventListener('resize', this.placeOpen);
     clearTimeout(this.hoverTimer);
     if (this.query) this.query.removeEventListener('change', this.onMediaChange);
 
@@ -321,6 +397,51 @@ export class MenuElemental extends ElementBase {
     // A submenu left open inside a closed menu would be waiting there for the next
     // time it is opened, on a branch nobody chose this time.
     if (!this.open) this.closeSubmenus(menu);
+    else this.place(menu);
+  }
+
+  /**
+   * Point a list at whichever corner it fits in, and write that on it so the stylesheet
+   * can put it there - the same trade as `data-mode`, and for the same reason: the
+   * measuring is the element's, the positioning is CSS's.
+   *
+   * Measured from the preferred placement rather than from wherever the last flip left
+   * it, so a panel does not decide where to go from a position it only has because it
+   * went there last time.
+   *
+   * The carets read this back too: a submenu that opened to the left is announced by an
+   * arrow that points left, which no `position-try` fallback can say.
+   */
+  place(menu) {
+    const isRoot = menu === this.menu;
+    const trigger = isRoot ? this.button : this.triggerOf(menu);
+    // Inline there is no floating and nothing to collide with - the lists are in the
+    // flow, and a stylesheet keyed on these would be positioning a block.
+    if (!trigger || this.inline) {
+      menu.removeAttribute('data-side');
+      menu.removeAttribute('data-align');
+      return;
+    }
+
+    menu.removeAttribute('data-side');
+    menu.removeAttribute('data-align');
+
+    const panel = { width: menu.offsetWidth, height: menu.offsetHeight };
+    const viewport = { width: window.innerWidth, height: window.innerHeight };
+    const rtl = window.getComputedStyle(menu).direction === 'rtl';
+    const at = isRoot
+      ? placeFlyout(trigger.getBoundingClientRect(), panel, viewport, rtl)
+      : placeSubmenu(trigger.getBoundingClientRect(), panel, viewport, rtl);
+
+    menu.setAttribute('data-side', at.side);
+    menu.setAttribute('data-align', at.align);
+  }
+
+  /** Re-place every open list. The viewport moved under them. */
+  placeOpen() {
+    for (const menu of this.menus) {
+      if (this.isOpen(menu) && (menu !== this.menu || this.open)) this.place(menu);
+    }
   }
 
   // ---- opening and closing ----
@@ -345,6 +466,9 @@ export class MenuElemental extends ElementBase {
 
     trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
     submenu.toggleAttribute('hidden', !open);
+    // After unhiding, because a hidden box has no size to measure and a panel with no
+    // size fits everywhere.
+    if (open) this.place(submenu);
     this.dispatchEvent(new CustomEvent('menu-toggle', {
       bubbles: true,
       detail: { menu: submenu, open: open }

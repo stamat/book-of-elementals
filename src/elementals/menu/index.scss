@@ -37,14 +37,30 @@ menu-elemental {
   }
 }
 
-// Flyout: the root list hangs under the button, a submenu beside its own item.
+// Flyout: the root list hangs under the button, a submenu beside its own item - unless
+// the viewport says otherwise, which the element measures and writes back as
+// `data-side` (which side of the trigger) and `data-align` (which way it runs from
+// there). Logical properties throughout, so RTL turns the whole thing around and only
+// the measuring has to know about left and right.
 menu-elemental[data-mode="flyout"] {
   > ul,
   > menu {
     position: absolute;
-    top: 100%;
-    left: 0;
+    inset-block-start: 100%;
+    inset-inline-start: 0;
     z-index: 10;
+  }
+
+  // No room underneath: over the button instead.
+  > ul[data-side="block-start"],
+  > menu[data-side="block-start"] {
+    inset-block: auto 100%;
+  }
+
+  // No room running to the inline end: back the other way, from the button's far edge.
+  > ul[data-align="end"],
+  > menu[data-align="end"] {
+    inset-inline: auto 0;
   }
 
   li {
@@ -54,8 +70,20 @@ menu-elemental[data-mode="flyout"] {
   li > ul,
   li > menu {
     position: absolute;
-    top: 0;
-    left: 100%;
+    inset-block-start: 0;
+    inset-inline-start: 100%;
+  }
+
+  // No room beside it on the inline end: on the other side of its own item.
+  li > ul[data-side="inline-start"],
+  li > menu[data-side="inline-start"] {
+    inset-inline: auto 100%;
+  }
+
+  // No room running down: up from the item's bottom edge instead.
+  li > ul[data-align="end"],
+  li > menu[data-align="end"] {
+    inset-block: auto 0;
   }
 
   // Long labels are what a menu is mostly made of, and a menu that wraps them is a

@@ -168,7 +168,8 @@ see below.
 | `[hidden]`                            | A closed list                     |
 
 The element writes `data-mode` itself, so a stylesheet reads the breakpoint back off
-the element rather than repeating the query in `media` and drifting from it.
+the element rather than repeating the query in `media` and drifting from it. It writes
+[`data-side` and `data-align`](#staying-on-screen) on the lists for the same reason.
 
 ## Two modes
 
@@ -206,6 +207,39 @@ The rest of the differences follow from that:
 
 Crossing the breakpoint closes whatever was open, because the thing that was open
 belonged to the other widget.
+
+## Staying on screen
+
+A flyout near an edge would open past it, so the element measures before it paints and
+writes where the list went. The stylesheet does the positioning from there — the same
+trade as `data-mode`:
+
+| Attribute    | On a list | Values                                              |
+| ------------ | --------- | ---------------------------------------------------- |
+| `data-side`  | the root  | `block-end` (under the button) / `block-start` (over it) |
+| `data-side`  | a submenu | `inline-end` (beside it) / `inline-start` (the other side) |
+| `data-align` | either    | `start` / `end` — which way it runs from there       |
+
+One decision per axis, which is how a button in the bottom right corner ends up with a
+menu that opens upward and a submenu that opens up **and** to the left. The preferred
+placement wins when neither fits, so a panel with nowhere good to go still lands where the
+reader expects it.
+
+```css
+/* your own panel, on the two attributes the element writes */
+menu-elemental > ul[data-side="block-start"] {
+  box-shadow: 0 -4px 20px rgb(0 0 0 / 15%);
+}
+```
+
+The theme reads them too: a submenu that had to open on the inline start says so with a
+caret pointing that way, which is the reason this is measured in the element rather than
+left to CSS `position-try-fallbacks` — nothing in CSS can select the fallback that won.
+
+Placement is decided when a list opens and again on `resize`. Not on scroll: a page
+scrolling under an open menu is the page moving out from under someone in the middle of
+using it, and re-placing every frame of that costs more than it fixes. It is skipped
+entirely inline, where the lists are in the flow and there is nothing to collide with.
 
 ## Opening on hover
 

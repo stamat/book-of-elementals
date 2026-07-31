@@ -36,6 +36,29 @@
     }
     return null;
   }
+  function fits(at, size, limit) {
+    return at >= 0 && at + size <= limit;
+  }
+  function placeFlyout(trigger, panel, viewport, rtl) {
+    const below = fits(trigger.bottom, panel.height, viewport.height);
+    const above = fits(trigger.top - panel.height, panel.height, viewport.height);
+    const start = rtl ? trigger.right - panel.width : trigger.left;
+    const end = rtl ? trigger.left : trigger.right - panel.width;
+    return {
+      side: below || !above ? "block-end" : "block-start",
+      align: fits(start, panel.width, viewport.width) || !fits(end, panel.width, viewport.width) ? "start" : "end"
+    };
+  }
+  function placeSubmenu(item, panel, viewport, rtl) {
+    const inlineEnd = rtl ? item.left - panel.width : item.right;
+    const inlineStart = rtl ? item.right : item.left - panel.width;
+    const down = fits(item.top, panel.height, viewport.height);
+    const up = fits(item.bottom - panel.height, panel.height, viewport.height);
+    return {
+      side: fits(inlineEnd, panel.width, viewport.width) || !fits(inlineStart, panel.width, viewport.width) ? "inline-end" : "inline-start",
+      align: down || !up ? "start" : "end"
+    };
+  }
   var TYPE_AHEAD_WINDOW = 500;
   var HOVER_CLOSE_DELAY = 250;
   var menuCount = 0;
@@ -102,12 +125,14 @@
       this.onMediaChange = this.onMediaChange.bind(this);
       this.onPointerOver = this.onPointerOver.bind(this);
       this.onPointerLeave = this.onPointerLeave.bind(this);
+      this.placeOpen = this.placeOpen.bind(this);
       this.addEventListener("click", this.onClick);
       this.addEventListener("keydown", this.onKeyDown);
       this.addEventListener("pointerover", this.onPointerOver);
       this.addEventListener("pointerleave", this.onPointerLeave);
       this.addEventListener("focusout", this.onFocusOut);
       document.addEventListener("click", this.onDocumentClick);
+      window.addEventListener("resize", this.placeOpen);
       for (const menu of this.menus) {
         if (menu !== this.menu) menu.setAttribute("hidden", "");
       }
@@ -123,6 +148,7 @@
       this.removeEventListener("pointerover", this.onPointerOver);
       this.removeEventListener("pointerleave", this.onPointerLeave);
       document.removeEventListener("click", this.onDocumentClick);
+      window.removeEventListener("resize", this.placeOpen);
       clearTimeout(this.hoverTimer);
       if (this.query) this.query.removeEventListener("change", this.onMediaChange);
       for (const menu of this.menus) {
@@ -228,6 +254,42 @@
       button.setAttribute("aria-expanded", this.open ? "true" : "false");
       menu.toggleAttribute("hidden", !this.open);
       if (!this.open) this.closeSubmenus(menu);
+      else this.place(menu);
+    }
+    /**
+     * Point a list at whichever corner it fits in, and write that on it so the stylesheet
+     * can put it there - the same trade as `data-mode`, and for the same reason: the
+     * measuring is the element's, the positioning is CSS's.
+     *
+     * Measured from the preferred placement rather than from wherever the last flip left
+     * it, so a panel does not decide where to go from a position it only has because it
+     * went there last time.
+     *
+     * The carets read this back too: a submenu that opened to the left is announced by an
+     * arrow that points left, which no `position-try` fallback can say.
+     */
+    place(menu) {
+      const isRoot = menu === this.menu;
+      const trigger = isRoot ? this.button : this.triggerOf(menu);
+      if (!trigger || this.inline) {
+        menu.removeAttribute("data-side");
+        menu.removeAttribute("data-align");
+        return;
+      }
+      menu.removeAttribute("data-side");
+      menu.removeAttribute("data-align");
+      const panel = { width: menu.offsetWidth, height: menu.offsetHeight };
+      const viewport = { width: window.innerWidth, height: window.innerHeight };
+      const rtl = window.getComputedStyle(menu).direction === "rtl";
+      const at = isRoot ? placeFlyout(trigger.getBoundingClientRect(), panel, viewport, rtl) : placeSubmenu(trigger.getBoundingClientRect(), panel, viewport, rtl);
+      menu.setAttribute("data-side", at.side);
+      menu.setAttribute("data-align", at.align);
+    }
+    /** Re-place every open list. The viewport moved under them. */
+    placeOpen() {
+      for (const menu of this.menus) {
+        if (this.isOpen(menu) && (menu !== this.menu || this.open)) this.place(menu);
+      }
     }
     // ---- opening and closing ----
     /**
@@ -248,6 +310,7 @@
       if (!open) this.closeSubmenus(submenu);
       trigger.setAttribute("aria-expanded", open ? "true" : "false");
       submenu.toggleAttribute("hidden", !open);
+      if (open) this.place(submenu);
       this.dispatchEvent(new CustomEvent("menu-toggle", {
         bubbles: true,
         detail: { menu: submenu, open }

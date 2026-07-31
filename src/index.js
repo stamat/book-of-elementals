@@ -4,4 +4,5 @@ export * from './core.js';
 export * from './elementals/accordion/index.js';
 export * from './elementals/disclosure/index.js';
 export * from './elementals/menu/index.js';
+export * from './elementals/navbar/index.js';
 export * from './elementals/switch/index.js';

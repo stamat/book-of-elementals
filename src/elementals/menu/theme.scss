@@ -118,6 +118,17 @@ menu-elemental {
     rotate: 90deg;
   }
 
+  // A submenu that had to open on the other side is announced by an arrow that points
+  // that way. `:has()` rather than a second attribute on the trigger: the placement is
+  // already written on the panel, and a copy of it here is a copy that can disagree.
+  li:has(> ul[data-side="inline-start"], > menu[data-side="inline-start"]) > button::after {
+    rotate: 90deg;
+  }
+
+  li:has(> ul[data-side="inline-start"], > menu[data-side="inline-start"]) > button:dir(rtl)::after {
+    rotate: -90deg;
+  }
+
   // Inline, the branches open downwards in the flow, so the caret turns the way a
   // disclosure's does: closed points at its label, open points at what it revealed.
   // No `aria-haspopup` here, so this is a rule of its own rather than an override.

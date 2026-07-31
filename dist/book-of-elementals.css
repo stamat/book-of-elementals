@@ -74,9 +74,17 @@ menu-elemental [hidden] {
 menu-elemental[data-mode=flyout] > ul,
 menu-elemental[data-mode=flyout] > menu {
   position: absolute;
-  top: 100%;
-  left: 0;
+  inset-block-start: 100%;
+  inset-inline-start: 0;
   z-index: 10;
+}
+menu-elemental[data-mode=flyout] > ul[data-side=block-start],
+menu-elemental[data-mode=flyout] > menu[data-side=block-start] {
+  inset-block: auto 100%;
+}
+menu-elemental[data-mode=flyout] > ul[data-align=end],
+menu-elemental[data-mode=flyout] > menu[data-align=end] {
+  inset-inline: auto 0;
 }
 menu-elemental[data-mode=flyout] li {
   position: relative;
@@ -84,12 +92,132 @@ menu-elemental[data-mode=flyout] li {
 menu-elemental[data-mode=flyout] li > ul,
 menu-elemental[data-mode=flyout] li > menu {
   position: absolute;
-  top: 0;
-  left: 100%;
+  inset-block-start: 0;
+  inset-inline-start: 100%;
+}
+menu-elemental[data-mode=flyout] li > ul[data-side=inline-start],
+menu-elemental[data-mode=flyout] li > menu[data-side=inline-start] {
+  inset-inline: auto 100%;
+}
+menu-elemental[data-mode=flyout] li > ul[data-align=end],
+menu-elemental[data-mode=flyout] li > menu[data-align=end] {
+  inset-block: auto 0;
 }
 menu-elemental[data-mode=flyout] ul,
 menu-elemental[data-mode=flyout] menu {
   min-width: max-content;
+}
+
+navbar-elemental {
+  display: block;
+}
+navbar-elemental:not(:defined) [data-navbar-toggle] {
+  display: none;
+}
+navbar-elemental ul,
+navbar-elemental menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+[data-navbar-rail] {
+  display: grid;
+  align-items: center;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+[data-navbar-rail] > * {
+  grid-area: 1/1;
+}
+
+[data-navbar-probe] {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+[data-navbar-more] {
+  display: none;
+}
+
+[data-navbar-probe] > [data-navbar-more] {
+  display: block;
+}
+
+navbar-elemental[data-mode=bar][data-overflowing] [data-navbar-more] {
+  display: block;
+}
+
+navbar-elemental[data-mode=bar] [hidden] {
+  display: none;
+}
+navbar-elemental[data-mode=bar] [data-navbar-toggle] {
+  display: none;
+}
+navbar-elemental[data-mode=bar] li[data-overflow] {
+  display: none;
+}
+navbar-elemental[data-mode=bar] [data-navbar-stack] {
+  display: none;
+}
+
+[data-navbar-rail] > :is(ul, menu):not([data-navbar-probe]) {
+  min-width: 0;
+}
+
+navbar-elemental[data-mode=bar] [data-navbar-rail] > :is(ul, menu):not([data-navbar-probe]) {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+navbar-elemental[data-mode=bar] li > :is(ul, menu) {
+  position: absolute;
+  z-index: 10;
+  min-width: max-content;
+}
+
+navbar-elemental[data-mode=bar] li > :is(ul, menu) li > :is(ul, menu) {
+  position: static;
+}
+
+@supports (position-area: block-end) {
+  navbar-elemental[data-mode=bar] [data-navbar-rail] > :is(ul, menu) > li {
+    anchor-scope: --navbar-elemental-branch;
+  }
+  navbar-elemental[data-mode=bar] [data-navbar-rail] > :is(ul, menu) > li > button {
+    anchor-name: --navbar-elemental-branch;
+  }
+  navbar-elemental[data-mode=bar] [data-navbar-rail] > :is(ul, menu) > li > ul,
+  navbar-elemental[data-mode=bar] [data-navbar-rail] > :is(ul, menu) > li > menu {
+    position-anchor: --navbar-elemental-branch;
+    position-area: block-end span-inline-end;
+    position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+  }
+}
+navbar-elemental[data-mode=stack] {
+  position: relative;
+}
+navbar-elemental[data-mode=stack] li > :is(ul, menu) {
+  position: static;
+}
+
+navbar-elemental[data-mode=stack] [data-navbar-rail] > :is(ul, menu):not([data-navbar-probe]) {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 100%;
+  z-index: 20;
+}
+
+navbar-elemental[data-mode=stack] [data-navbar-rail] > :is(ul, menu):not([data-navbar-probe])[hidden] {
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
 }
 
 switch-elemental {

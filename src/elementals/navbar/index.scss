@@ -1,0 +1,192 @@
+// Structure only: where the lists sit, which of them is on screen, and the one piece of
+// machinery the element cannot do without - the copy of the row it measures. Everything that
+// makes a navbar look like one - frames, carets, hover, the hamburger - is in `theme.scss`.
+
+// What is deliberately not here: the bar itself. Where the logo goes, how wide the search
+// field is, whether the calls to action sit inside the element or beside it - that is the
+// page's layout, and the element has no opinion about it. The element lays out the row, its
+// panels and its drawer, and writes `data-mode` so the page can lay out the rest.
+
+navbar-elemental {
+  // A box, because the drawer is positioned against it while stacked. Not `relative` while it
+  // is a bar, though - see the panels below.
+  display: block;
+
+  // Until the element is defined the buttons open nothing, so they are not offered: with
+  // scripting off what is left is a row of links with every nested list under it, all of them
+  // reachable, which is the whole degradation and the reason the panels are not authored
+  // `hidden`.
+  &:not(:defined) [data-navbar-toggle] {
+    display: none;
+  }
+
+  ul,
+  menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+// The rail: the box the row shares with the copy of itself, stacked in one grid cell so that
+// the two are always exactly as wide as each other, whatever the page does to the bar around
+// them. The element writes this attribute on whatever the page put the row in.
+[data-navbar-rail] {
+  display: grid;
+  align-items: center;
+  min-width: 0;
+
+  // `minmax(0, 1fr)` and not the automatic track, which is the difference between this working
+  // and not: an `auto` track is sized by its widest item, so the copy - the one thing in here
+  // that is deliberately too wide - would stretch the track to fit itself, and then every item
+  // in it would fit and nothing would ever overflow. Pinned to the rail's own width, the copy
+  // overflows it, which is the measurement.
+  grid-template-columns: minmax(0, 1fr);
+}
+
+[data-navbar-rail] > * {
+  grid-area: 1 / 1;
+}
+
+// The copy, and the only thing in here that is always laid out the same way in both modes -
+// which is not a detail. If the copy stopped being a single unwrapped line while stacked, its
+// items would all report that they fit, the bar would decide it can come out of the drawer,
+// the row would overflow again, and the two modes would swap places forever.
+[data-navbar-probe] {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+
+  // `visibility: hidden` and not `display: none`: a box with no layout has nothing to measure.
+  // It also takes the copy out of the tab order and out of the accessibility tree, so the
+  // links in it are neither reachable nor announced a second time.
+  visibility: hidden;
+  pointer-events: none;
+}
+
+// The overflow item is hidden by default, and shown in the two places it belongs: in the copy,
+// where its box reserves the room the real one is going to take, and on a bar that has
+// something behind it.
+[data-navbar-more] {
+  display: none;
+}
+
+[data-navbar-probe] > [data-navbar-more] {
+  display: block;
+}
+
+navbar-elemental[data-mode="bar"][data-overflowing] [data-navbar-more] {
+  display: block;
+}
+
+// ---- The bar ----
+navbar-elemental[data-mode="bar"] {
+  // A closed panel, and the rule that has to outrank whatever `display` a theme or a page puts
+  // on the lists - `[hidden]`'s own is the UA's, which loses to everything.
+  [hidden] {
+    display: none;
+  }
+
+  [data-navbar-toggle] {
+    display: none;
+  }
+
+  // An item that did not fit. Gone from the row rather than dimmed in it: the row is not what
+  // is being measured, so it is free to change - which is what lets the overflow button sit
+  // immediately after the last link that fits rather than somewhere off the end of the bar.
+  li[data-overflow] {
+    display: none;
+  }
+
+  // An item the page has said belongs to the drawer: a sign-in link, a language picker, the
+  // things a header keeps outside its navigation until there is no outside left.
+  [data-navbar-stack] {
+    display: none;
+  }
+}
+
+[data-navbar-rail] > :is(ul, menu):not([data-navbar-probe]) {
+  min-width: 0;
+}
+
+navbar-elemental[data-mode="bar"] [data-navbar-rail] > :is(ul, menu):not([data-navbar-probe]) {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+// The panels: hung under their own item, and given somewhere else to go when the preferred
+// corner does not fit. Anchor positioning rather than measuring in JavaScript - unlike
+// `<menu-elemental>`, whose submenu carets have to point at the side the panel actually took,
+// nothing here needs to know which fallback won, because a caret on a bar points down.
+
+// Nothing above a panel may be `position: relative`. A positioned ancestor becomes the panel's
+// containing block, and the fallbacks are judged against *that* box - one the size of a bar,
+// which every panel overflows and none can escape, so none of the flips ever fire. Which is
+// also why `container-type` is out on anything above this: it brings layout containment with
+// it, and layout containment is a containing block.
+navbar-elemental[data-mode="bar"] li > :is(ul, menu) {
+  position: absolute;
+  z-index: 10;
+  min-width: max-content;
+}
+
+// A panel inside a panel stays in the flow: one surface, indented, rather than a second one
+// floating beside the first. Deeper than the rule above, so that one is undone rather than
+// worked around.
+navbar-elemental[data-mode="bar"] li > :is(ul, menu) li > :is(ul, menu) {
+  position: static;
+}
+
+@supports (position-area: block-end) {
+  navbar-elemental[data-mode="bar"] [data-navbar-rail] > :is(ul, menu) > li {
+    // Every item on the bar scopes its own anchor name. Without this they all resolve the same
+    // one and every panel stacks on the first button.
+    anchor-scope: --navbar-elemental-branch;
+
+    > button {
+      anchor-name: --navbar-elemental-branch;
+    }
+
+    > ul,
+    > menu {
+      position-anchor: --navbar-elemental-branch;
+      position-area: block-end span-inline-end;
+      position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+    }
+  }
+}
+
+// ---- The drawer ----
+navbar-elemental[data-mode="stack"] {
+  // Safe here, and only here: a stacked navbar has no anchor-positioned panel whose fallbacks
+  // a containing block could break.
+  position: relative;
+
+  // Stacked, every list is in the flow and every open one is on screen.
+  li > :is(ul, menu) {
+    position: static;
+  }
+}
+
+// The row leaves the bar's line and hangs under the whole element. The rail keeps its place in
+// the page's layout, because the copy is still in it being measured - which is what makes
+// coming back out of the drawer possible at all.
+navbar-elemental[data-mode="stack"] [data-navbar-rail] > :is(ul, menu):not([data-navbar-probe]) {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 100%;
+  z-index: 20;
+}
+
+// A closed drawer is `hidden="until-found"`, which skips a box's contents and keeps the box.
+// That is what makes find-in-page work down here, and it is also what would leave an empty
+// framed strip under the bar - a border, a background and a shadow around nothing. The frame
+// belongs to whoever styled the drawer, but the retained box is the element's own doing, so the
+// element is what takes it back off, for any theme and any page.
+navbar-elemental[data-mode="stack"] [data-navbar-rail] > :is(ul, menu):not([data-navbar-probe])[hidden] {
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}

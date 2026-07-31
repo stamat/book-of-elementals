@@ -6,6 +6,7 @@ const browserGlobals = {
   CustomEvent: 'readonly',
   HTMLElement: 'readonly',
   customElements: 'readonly',
+  IntersectionObserver: 'readonly',
   decodeURIComponent: 'readonly',
   setTimeout: 'readonly',
   clearTimeout: 'readonly'
