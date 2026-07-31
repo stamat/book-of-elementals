@@ -6,8 +6,7 @@
       "sourcemap": true,
       "minify": true,
       "justMinified": false,
-      "format": "iife",
-      "target": "es2019"
+      "format": "iife"
     }
   },
   {
@@ -17,8 +16,7 @@
       "sourcemap": true,
       "minify": true,
       "justMinified": false,
-      "format": "iife",
-      "target": "es2019"
+      "format": "iife"
     }
   },
   {
@@ -27,8 +25,7 @@
     "options": {
       "minify": true,
       "justMinified": true,
-      "format": "iife",
-      "target": "es2019"
+      "format": "iife"
     }
   }],
   "styles": [{
@@ -82,25 +79,25 @@
       "nav": "nav.json",
       "searchIndex": "search-index.json",
       "llms": {
-        "output": "llms.txt",
+        "out": "llms.txt",
         "intro": "docs/_llms/llms-intro.md",
         "full": true,
         "fullIntro": "docs/_llms/llms-intro-full.md"
       },
-      "robots": "robots.txt"
-    },
-    "site": {
-      "title": "Book of Elementals",
-      "brand": "book-of-elementals",
-      "brandMark": "📓",
-      "description": "Accessible custom elements. Light DOM, no build step required.",
-      "lang": "en",
-      "url": "https://stamat.github.io/book-of-elementals",
-      "repo": "https://github.com/stamat/book-of-elementals",
-      "branch": "main",
-      "links": [
-        { "title": "npm", "url": "https://www.npmjs.com/package/book-of-elementals" }
-      ]
+      "robots": "robots.txt",
+      "site": {
+        "title": "Book of Elementals",
+        "brand": "book-of-elementals",
+        "brandMark": "📓",
+        "description": "Accessible custom elements. Light DOM, no build step required.",
+        "lang": "en",
+        "url": "https://stamat.github.io/book-of-elementals",
+        "repo": "https://github.com/stamat/book-of-elementals",
+        "branch": "main",
+        "links": [
+          { "title": "npm", "url": "https://www.npmjs.com/package/book-of-elementals" }
+        ]
+      }
     }
   },
   "copy": [
@@ -125,8 +122,7 @@
   },
   "banner": "/* {{ name }} v{{ version }} | {{ homepage }} | {{ license }} License */",
   "serve": {
-    "port": 4040,
-    "base": "/_site"
+    "port": 4040
   },
   "livereload": true,
   "watch": [

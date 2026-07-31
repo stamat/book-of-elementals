@@ -148,7 +148,7 @@
   var WRAPPER_CLASS = "accordion-elemental-content-wrapper";
   var CONTENT_CLASS = "accordion-elemental-content";
   var CLOSING_CLASS = "accordion-elemental-closing";
-  var DETACHED_NAME = Symbol("detachedName");
+  var DETACHED_NAME = /* @__PURE__ */ Symbol("detachedName");
   var groupCount = 0;
   function exclusiveOpen(states) {
     let seen = false;
