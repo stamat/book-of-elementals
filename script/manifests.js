@@ -24,6 +24,13 @@ import { dirname, join } from 'node:path';
 const cumulative = join('dist', 'custom-elements.json');
 const manifest = JSON.parse(readFileSync(cumulative, 'utf8'));
 
+// The analyzer's glob returns files in readdir order, which is not stable between
+// runs - the same source produced a differently-ordered manifest every build, and
+// the committed file churned. Sorted here and written back, so the cumulative file
+// is deterministic before anything is cut from it.
+manifest.modules.sort((a, b) => a.path.localeCompare(b.path));
+writeFileSync(cumulative, `${JSON.stringify(manifest, null, 2)}\n`);
+
 for (const module of manifest.modules) {
   const name = /elementals\/([^/]+)\//.exec(module.path);
   // A module that is not an elemental's entry - core, a helper - travels in the
