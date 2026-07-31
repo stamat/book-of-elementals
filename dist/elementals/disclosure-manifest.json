@@ -1,0 +1,189 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/disclosure/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "disclosureState",
+          "parameters": [
+            {
+              "name": "open",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "The state a disclosure's button and region carry, for a given open state.\n\n`until-found` rather than a bare `hidden` because it is the platform's own answer\nto the oldest problem with hiding content: find-in-page and a link to a fragment\ninside the region still reveal it, and the reveal comes back as `beforematch`.\nBrowsers without it read any value at all as plain hidden, which is the same\ncontent, just not found.",
+          "return": {
+            "type": {
+              "text": "{expanded: string, hidden: string|null}"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "slideFrom",
+          "parameters": [
+            {
+              "name": "open",
+              "description": "The state being moved to.",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "hidden",
+              "description": "Whether the region is hidden right now.",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "height",
+              "description": "Its rendered height right now.",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "description": "The height, in pixels, a slide of the region starts from.\n\nZero only when opening a region that is currently hidden, because that is the one case\nwith no height to read: `hidden=\"until-found\"` sizes the box as if it were empty.\nEverything else is a region already on screen - one being closed, or one caught\nmid-slide and sent back the other way - and its rendered height is the honest start.\nWhich is also why the measurement has to happen *before* unhiding: after, the region\nis at full height and a slide that starts where it ends is not a slide.",
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<disclosure-elemental>` custom element.\n\nA real `<button>` wired to a region it shows and hides, per the\n[APG Disclosure pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/).\n\nNative `<details>`/`<summary>` is a disclosure already, and where it fits it wins -\n`<accordion-elemental>` is built on it for exactly that reason. It fits when the\nregion can live *inside* the trigger's element. This element is for when it cannot:\na `<figcaption>`, which HTML requires to be a child of its `<figure>`; a table row;\na grid or flex item whose parent lays it out directly; a panel on the other side of\nthe page from the button that opens it. Wrapping any of those in a `<details>`\nmoves them out of the parent that gives them meaning.\n\nWhat it does, and nothing more: keeps `aria-expanded` on the button and `hidden` on\nthe region in step, points one at the other with `aria-controls`, re-opens on\n`beforematch` so find-in-page still finds what is inside, and slides the region's\nheight on the way in and out.\n\nLight DOM, no shadow root, and nothing is moved or wrapped - the region stays\nexactly where the markup put it, which is the whole point.",
+          "name": "DisclosureElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Caret size, on the caret look.",
+              "name": "--disclosure-elemental-caret-size",
+              "default": "1em"
+            }
+          ],
+          "slots": [
+            {
+              "description": "The `<button>` that toggles, and - unless `for` points elsewhere - the region right after it.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "button",
+              "description": "The `<button>` that toggles the region. Direct child, so a button inside the\nregion - or inside a nested disclosure - is not mistaken for the trigger.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "region",
+              "description": "The region the button shows and hides: what `for` names, else the button's\nnext sibling.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "open",
+              "description": "Whether the region is showing. Reflected, so `[open]` is a styling hook too."
+            },
+            {
+              "kind": "method",
+              "name": "apply",
+              "parameters": [
+                {
+                  "name": "animate",
+                  "default": "false",
+                  "optional": true,
+                  "type": {
+                    "text": "boolean"
+                  }
+                }
+              ],
+              "description": "Push the current state onto the button and the region, sliding the region's height\non the way if asked to.\n\n`animate` is off by default, because most of what lands here is not a state change\nto animate: the state a page loads with is where the region starts, and one the\nbrowser has already put on screen for find-in-page is already there."
+            },
+            {
+              "kind": "method",
+              "name": "onClick",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onBeforeMatch"
+            }
+          ],
+          "events": [
+            {
+              "name": "disclosure-toggle",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "`detail.region` is the element being shown or hidden, `detail.open` its new state."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "open",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether the region is showing. Reflected - it tracks the live state.",
+              "default": "false"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "`id` of the region. Defaults to the button's next element sibling.",
+              "name": "for"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "disclosure-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "disclosureState",
+          "declaration": {
+            "name": "disclosureState",
+            "module": "src/elementals/disclosure/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "slideFrom",
+          "declaration": {
+            "name": "slideFrom",
+            "module": "src/elementals/disclosure/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DisclosureElemental",
+          "declaration": {
+            "name": "DisclosureElemental",
+            "module": "src/elementals/disclosure/index.js"
+          }
+        }
+      ]
+    }
+  ]
+}

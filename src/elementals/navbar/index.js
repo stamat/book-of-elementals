@@ -93,6 +93,25 @@ let navbarCount = 0;
  * wrapped.
  *
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/
+ *
+ * @tag navbar-elemental
+ * @attr {string} media - The media query the bar exists in. Outside it, the drawer. Unset means a bar at every width, until the links stop fitting.
+ * @attr {boolean} [open=false] - Whether the drawer is showing. Reflected, so `[open]` is a styling hook.
+ * @attr {boolean} [hover=false] - A mouse also opens a panel by pointing at it. Never on touch, never stacked.
+ *
+ * @cssprop {<length>} [--navbar-elemental-radius=0.375rem] - Corner radius of a floating panel.
+ * @cssprop {<length>} [--navbar-elemental-inset=0.35rem] - Padding inside a panel, and around each item.
+ * @cssprop {<length>} [--navbar-elemental-gap=0.15rem] - Between the items of the row.
+ * @cssprop {<length>} [--navbar-elemental-caret-size=0.75em] - The caret on a trigger that opens a panel.
+ * @cssprop {<length>} [--navbar-elemental-hamburger-size=1.25em] - The generated hamburger icon.
+ * @cssprop {<color>} [--navbar-elemental-surface=Canvas] - What a floating panel is painted on. The page's own background, so re-point it on a card.
+ * @cssprop {<color>} [--navbar-elemental-hover=color-mix(in srgb, currentcolor 10%, transparent)] - Item background under the pointer, and while focused.
+ * @cssprop {<color>} [--navbar-elemental-border=color-mix(in srgb, currentcolor 20%, transparent)] - The rim around a floating panel.
+ * @cssprop {<shadow>} [--navbar-elemental-shadow=0 4px 20px rgb(0 0 0 / 15%)] - What lifts a floating panel off the page.
+ *
+ * @fires navbar-toggle - `detail.panel` is the list that opened or closed, `detail.open` which way it went.
+ *
+ * @slot - The `<ul>` of links, optionally a `[data-navbar-more]` overflow item and a `[data-navbar-toggle]` button.
  */
 export class NavbarElemental extends ElementBase {
   static get observedAttributes() {

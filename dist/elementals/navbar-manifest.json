@@ -1,0 +1,533 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/navbar/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "stepIndex",
+          "parameters": [
+            {
+              "name": "current",
+              "description": "Index of the focused item, `-1` for none.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "key",
+              "description": "KeyboardEvent.key value.",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "length",
+              "description": "Number of items in the set.",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "description": "Where an arrow, Home or End key moves focus in a list of navigation items.\n\nNot `nextIndex` from core, which wraps: this is the APG's disclosure navigation, whose\nwording for every one of these keys is \"and it is not the last\" - a bar has ends, and\nrunning off one is how you get back to the rest of the page.",
+          "return": {
+            "type": {
+              "text": "number|null"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "navbarMode",
+          "parameters": [
+            {
+              "name": "matches",
+              "description": "Whether the `media` query matches, or there is no query.",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "overflowed",
+              "description": "How many items did not fit.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "total",
+              "description": "How many items there are.",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "description": "Which of the two widgets the bar is right now.\n\nTwo inputs, because there are two ways to run out of room and only one of them is a\nwidth. `media` not matching is the author saying \"this is a phone\"; every item having\noverflowed is the bar saying \"there is nothing left on me\" - at which point the overflow\nbutton is not an overflow any more, it is the whole navigation, and a drawer is the\nhonest name for that.",
+          "return": {
+            "type": {
+              "text": "\"bar\"|\"stack\""
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<navbar-elemental>` custom element.\n\nA site's navigation bar: a row of links, some of them opening a panel of more links, and\ntwo things a row of links always ends up needing - somewhere for the ones that do not fit\nto go, and a way to be a drawer instead on a narrow screen.\n\nIt is the APG's\n[Disclosure Navigation Menu](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/)\nand not a menubar. `role=\"menuitem\"` replaces link semantics, and the APG's own menubar\nexample opens by recommending this pattern instead for exactly that reason. So there are\nno roles here at all: the items are links in a list, `Tab` reaches every one of them, and\nthe buttons are buttons with `aria-expanded`. The optional arrow keys from that example\nare implemented, because they cost twenty lines and a bar of eight items wants them.\n\nWhat it adds to the pattern is the thing CSS cannot do: noticing that the links have run\nout of room. A breakpoint cannot know how many links a site has, how long their labels\nare, or what the reader's font does to them - so the row is measured instead, and the\nitems that do not fit move into the overflow panel one at a time. When none of them fit\nthe whole bar becomes a drawer.\n\nThe measuring is an `IntersectionObserver` on a copy of the row rather than on the row\nitself, which is the one idea in here worth stealing. Hiding an overflowing item shrinks\nthe row, which makes the next item fit, which hides that one instead - an observer\nwatching the box it is also changing is an infinite loop. So the copy is what is watched\nand the row is what changes, and nothing ever invalidates its own measurement. It also\nmeans late-arriving webfonts are free: they change the copy's geometry, the observer says\nso, and the row settles again. A cached set of widths would simply be wrong from then on.\n\nLight DOM, no shadow root. Two things are generated - the copy being measured, and the\ncopies of the items inside the overflow panel - and nothing the page wrote is moved or\nwrapped.",
+          "name": "NavbarElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Corner radius of a floating panel.",
+              "name": "--navbar-elemental-radius",
+              "default": "0.375rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Padding inside a panel, and around each item.",
+              "name": "--navbar-elemental-inset",
+              "default": "0.35rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between the items of the row.",
+              "name": "--navbar-elemental-gap",
+              "default": "0.15rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "The caret on a trigger that opens a panel.",
+              "name": "--navbar-elemental-caret-size",
+              "default": "0.75em"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "The generated hamburger icon.",
+              "name": "--navbar-elemental-hamburger-size",
+              "default": "1.25em"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "What a floating panel is painted on. The page's own background, so re-point it on a card.",
+              "name": "--navbar-elemental-surface",
+              "default": "Canvas"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Item background under the pointer, and while focused.",
+              "name": "--navbar-elemental-hover",
+              "default": "color-mix(in srgb, currentcolor 10%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The rim around a floating panel.",
+              "name": "--navbar-elemental-border",
+              "default": "color-mix(in srgb, currentcolor 20%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<shadow>"
+              },
+              "description": "What lifts a floating panel off the page.",
+              "name": "--navbar-elemental-shadow",
+              "default": "0 4px 20px rgb(0 0 0 / 15%)"
+            }
+          ],
+          "slots": [
+            {
+              "description": "The `<ul>` of links, optionally a `[data-navbar-more]` overflow item and a `[data-navbar-toggle]` button.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "row",
+              "description": "The row: the first list in the element. A nested `<navbar-elemental>` keeps its own.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "rail",
+              "description": "The box the row is measured inside, which is whatever the page put the row in. The copy\ngoes in here beside it, so the two are the same width without either of them having to\nbe told what that width is.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "moreItem",
+              "description": "The item holding the overflow button, if the page authored one.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "morePanel",
+              "description": "The list inside it, which the element fills with copies.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "toggle",
+              "description": "The button that opens the drawer in stack mode.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "items",
+              "description": "The items being measured: the row's own, minus the two kinds that are not links competing\nfor room - the overflow button, and anything the page has marked as the drawer's alone.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "lists",
+              "description": "Every list in this navbar, the row included.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "stacked",
+              "description": "Whether the bar is currently the drawer rather than the row.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "open",
+              "description": "Whether the drawer is showing. Reflected, so `[open]` is a styling hook too."
+            },
+            {
+              "kind": "field",
+              "name": "hover",
+              "description": "Whether a mouse opens a panel by pointing at it rather than by clicking.\n\nOpt-in, and only ever an addition. Off while stacked, where the panels are in the flow\nand a pointer crossing the drawer on its way somewhere would open every one it passed."
+            },
+            {
+              "kind": "method",
+              "name": "fillMore",
+              "description": "Put a copy of every item inside the overflow panel, and hand back the copies in the\norder their originals are in.\n\nCopies rather than the items themselves, because moving an item out of the row would\nmove it out of the thing being measured - and because a link that is both on the bar and\nin the panel is one link the reader can reach two ways, which is the point of an\noverflow."
+            },
+            {
+              "kind": "method",
+              "name": "buildProbe",
+              "description": "Build the copy of the row that gets measured, and put it in the rail beside the row.\n\nTwo things are done to it, and both are about width. The panels come out: an absolutely\npositioned box adds nothing to a row's width, and a copy of one would be a second box\nanswering to the same anchor name. And the overflow item moves to the front, where its\nbox reserves exactly the room it is going to take at the other end - the row has to be\nmeasured against the space that will be left once the overflow button is on it, or the\nlast link and the button would fight over the same pixels."
+            },
+            {
+              "kind": "method",
+              "name": "itemsOf",
+              "parameters": [
+                {
+                  "name": "list"
+                }
+              ],
+              "description": "The items of one list: what its `<li>`s hold, and not what its panels do."
+            },
+            {
+              "kind": "method",
+              "name": "panelOf",
+              "parameters": [
+                {
+                  "name": "trigger"
+                }
+              ],
+              "description": "The list a trigger opens, if it opens one."
+            },
+            {
+              "kind": "method",
+              "name": "triggerOf",
+              "parameters": [
+                {
+                  "name": "list"
+                }
+              ],
+              "description": "The trigger that opens a list: the button beside it in the same `<li>`."
+            },
+            {
+              "kind": "method",
+              "name": "isOpen",
+              "parameters": [
+                {
+                  "name": "list"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "navigable",
+              "parameters": [
+                {
+                  "name": "from"
+                }
+              ],
+              "description": "The set the arrow keys walk from here.\n\nA panel is its own surface, so inside one the arrows stay inside it. On the bar they walk\nthe bar. Stacked, there are no surfaces: the open panels are on screen, in the flow, and\nstopping at the edge of a list the reader is looking straight through would be arbitrary."
+            },
+            {
+              "kind": "method",
+              "name": "visibleItems",
+              "parameters": [
+                {
+                  "name": "list"
+                }
+              ],
+              "description": "Every item on screen from `list` down, in the order they are rendered."
+            },
+            {
+              "kind": "method",
+              "name": "watchMedia"
+            },
+            {
+              "kind": "method",
+              "name": "onMediaChange"
+            },
+            {
+              "kind": "method",
+              "name": "wire",
+              "description": "Point every trigger at what it opens. `aria-expanded` and `aria-controls` are the whole\nof the ARIA here - there is no role to write, which is the pattern's point."
+            },
+            {
+              "kind": "method",
+              "name": "observe"
+            },
+            {
+              "kind": "method",
+              "name": "onIntersect",
+              "parameters": [
+                {
+                  "name": "entries"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "apply",
+              "description": "Push the current mode onto the element, and the drawer's state onto the row.\n\nCrossing between the two closes whatever was open, because what was open belonged to the\nother widget: a dropdown left open on a bar that has just become a drawer is a floating\npanel in a stack."
+            },
+            {
+              "kind": "method",
+              "name": "applyDrawer",
+              "description": "The drawer is the row itself, hidden behind the toggle while stacked and simply the bar\nagain while not - so there is one list in the page rather than a row and a copy of it in\na panel, and one set of links to keep in step with the site."
+            },
+            {
+              "kind": "method",
+              "name": "setPanel",
+              "parameters": [
+                {
+                  "name": "trigger"
+                },
+                {
+                  "name": "open"
+                }
+              ],
+              "description": "Show or hide one panel.\n\nOn the bar the panels overlap, so opening one closes its siblings - that is what makes a\nbar readable. Stacked they are in the flow, and closing a branch the reader opened on\npurpose only loses their place."
+            },
+            {
+              "kind": "method",
+              "name": "closeSiblings",
+              "parameters": [
+                {
+                  "name": "trigger"
+                }
+              ],
+              "description": "Close every other panel of the same list."
+            },
+            {
+              "kind": "method",
+              "name": "closePanels",
+              "parameters": [
+                {
+                  "name": "list"
+                }
+              ],
+              "description": "Close every open panel below a list, deepest first."
+            },
+            {
+              "kind": "method",
+              "name": "holdsFocus",
+              "parameters": [
+                {
+                  "name": "trigger"
+                }
+              ],
+              "description": "Whether the panel this trigger opens has focus in it."
+            },
+            {
+              "kind": "method",
+              "name": "closeBar",
+              "parameters": [
+                {
+                  "name": "except"
+                }
+              ],
+              "description": "Close every panel on the bar, except one, and except any the keyboard is inside."
+            },
+            {
+              "kind": "method",
+              "name": "controlFor",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "The control this event happened on, or null for anything outside this navbar."
+            },
+            {
+              "kind": "method",
+              "name": "onClick",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onKeyDown",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "closeBranch",
+              "parameters": [
+                {
+                  "name": "list"
+                }
+              ],
+              "description": "Close the list focus is in and hand focus back to whatever opened it. Off the end of a\npanel, Escape goes to that panel's own trigger; on the bar itself it closes the drawer."
+            },
+            {
+              "kind": "method",
+              "name": "onPointerOver",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "Point at it and it opens - and pointing at one panel is also the instruction to close the\nothers, since they overlap and only one of them can be read at a time.\n\n`pointerover` rather than `pointerenter` because it bubbles, so one listener covers every\nitem; mouse only, because a touch \"hover\" is the tap that was about to choose something."
+            },
+            {
+              "kind": "method",
+              "name": "onPointerLeave",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "The pointer has left the whole bar, so the panels close - after a beat, because the gap\nbetween a label and its panel is a place the pointer passes through rather than a place\nit means to be."
+            },
+            {
+              "kind": "method",
+              "name": "onFocusOut",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "Tab out of a panel and it is behind you. The APG asks for this, and `1.4.13 Content on\nHover or Focus` asks for it too: `relatedTarget` is null when focus lands outside the\ndocument altogether, which counts as leaving."
+            },
+            {
+              "kind": "method",
+              "name": "onDocumentClick",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onBeforeMatch",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            }
+          ],
+          "events": [
+            {
+              "name": "navbar-toggle",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "`detail.panel` is the list that opened or closed, `detail.open` which way it went."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "media",
+              "type": {
+                "text": "string"
+              },
+              "description": "The media query the bar exists in. Outside it, the drawer. Unset means a bar at every width, until the links stop fitting."
+            },
+            {
+              "name": "open",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether the drawer is showing. Reflected, so `[open]` is a styling hook.",
+              "default": "false"
+            },
+            {
+              "type": {
+                "text": "boolean"
+              },
+              "description": "A mouse also opens a panel by pointing at it. Never on touch, never stacked.",
+              "name": "hover",
+              "default": "false"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "navbar-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "stepIndex",
+          "declaration": {
+            "name": "stepIndex",
+            "module": "src/elementals/navbar/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "navbarMode",
+          "declaration": {
+            "name": "navbarMode",
+            "module": "src/elementals/navbar/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "NavbarElemental",
+          "declaration": {
+            "name": "NavbarElemental",
+            "module": "src/elementals/navbar/index.js"
+          }
+        }
+      ]
+    }
+  ]
+}

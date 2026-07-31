@@ -146,6 +146,23 @@ function set(element, name, value) {
  *
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/menu/
+ *
+ * @tag menu-elemental
+ * @attr {string} media - The media query the flyout exists in. Outside it, nested disclosures. Unset means a menu at every width.
+ * @attr {boolean} [open=false] - Whether the root list is showing. Reflected, so `[open]` is a styling hook.
+ * @attr {boolean} [hover=false] - A mouse also opens it by pointing at it. Never on touch, never inline.
+ *
+ * @cssprop {<length>} [--menu-elemental-radius=0.375rem] - Corner radius of a flyout list.
+ * @cssprop {<length>} [--menu-elemental-inset=0.35rem] - Padding inside a list, and around each item.
+ * @cssprop {<length>} [--menu-elemental-caret-size=0.75em] - The caret on an item that opens a submenu.
+ * @cssprop {<length>} [--menu-elemental-hamburger-size=1.25em] - The generated hamburger icon.
+ * @cssprop {<color>} [--menu-elemental-surface=Canvas] - What a flyout list is painted on. The page's own background, so re-point it on a card.
+ * @cssprop {<color>} [--menu-elemental-hover=color-mix(in srgb, currentcolor 10%, transparent)] - Item background under the pointer, and while focused.
+ * @cssprop {<color>} [--menu-elemental-border=color-mix(in srgb, currentcolor 20%, transparent)] - The rim around a flyout list.
+ *
+ * @fires menu-toggle - `detail.menu` is the list that opened or closed, `detail.open` which way it went.
+ *
+ * @slot - The `<button>` that opens it, and the `<ul>` it opens - submenus nested in their own `<li>`.
  */
 export class MenuElemental extends ElementBase {
   static get observedAttributes() {

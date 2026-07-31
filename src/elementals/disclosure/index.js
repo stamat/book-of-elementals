@@ -68,6 +68,16 @@ let regionCount = 0;
  * exactly where the markup put it, which is the whole point.
  *
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/
+ *
+ * @tag disclosure-elemental
+ * @attr {boolean} [open=false] - Whether the region is showing. Reflected - it tracks the live state.
+ * @attr {string} for - `id` of the region. Defaults to the button's next element sibling.
+ *
+ * @cssprop {<length>} [--disclosure-elemental-caret-size=1em] - Caret size, on the caret look.
+ *
+ * @fires disclosure-toggle - `detail.region` is the element being shown or hidden, `detail.open` its new state.
+ *
+ * @slot - The `<button>` that toggles, and - unless `for` points elsewhere - the region right after it.
  */
 export class DisclosureElemental extends ElementBase {
   static get observedAttributes() {

@@ -107,6 +107,12 @@
     "in": "dist",
     "out": "_site"
   },
+  "exec": {
+    "scripts": [
+      "npx cem analyze --globs \"src/elementals/*/index.js\" --outdir dist",
+      "node script/manifests.js"
+    ]
+  },
   "banner": "/* {{ name }} v{{ version }} | {{ homepage }} | {{ license }} License */",
   "serve": {
     "port": 4040,

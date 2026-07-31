@@ -16,6 +16,25 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Added
 
+- **A [Custom Elements Manifest](https://github.com/webcomponents/custom-elements-manifest)** —
+  `dist/custom-elements.json`, generated from the JSDoc on each element by
+  `@custom-elements-manifest/analyzer` and pointed at by the `customElements` key in
+  `package.json`. That key is what VS Code and JetBrains read for attribute autocomplete, what
+  Storybook builds an args table from, and what a live options panel can generate controls from.
+
+  It ships twice, because the two readers want opposite things. The cumulative file is one
+  request for every element in the book, which is what an editor or a converter wants. Per
+  element there is also `dist/elementals/<name>-manifest.json`, exported as
+  `book-of-elementals/switch/manifest` — a page that loads one element's bundle and one
+  element's stylesheet has no use for the other four elements' documentation. Both come out of
+  a single analyzer pass, so they cannot end up describing the same element differently.
+
+  The tags are a transcription of the tables already in `docs/elementals/*.md`, with one
+  deliberate omission: `--switch-elemental-inset`, `--switch-elemental-knob-size` and
+  `--switch-elemental-travel` are `calc()`-derived from the geometry properties and are not
+  tagged. The manifest is the curation — anything in it is something a reader is being invited
+  to change, and setting a derived property by hand is how a knob overshoots its own track.
+
 - `<switch-elemental>` — the [APG Switch pattern](https://www.w3.org/WAI/ARIA/apg/patterns/switch/):
   an on/off setting that takes effect the moment it is flipped, on a real `<button>`.
 

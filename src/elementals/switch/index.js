@@ -84,6 +84,45 @@ export function borrowedValueMissingMessage() {
   return borrowed;
 }
 
+/**
+ * A real `<button>` turned into an on/off switch, per the APG Switch pattern. Submits
+ * with its form when given a `name`. The prose above is the whole story; these tags are
+ * the same API in the form a machine can read - `custom-elements.json` is generated from
+ * them, and the docs tables, editor autocomplete and the live options panel in the docs
+ * all come out of that one file rather than out of four hand-kept copies.
+ *
+ * Curated by omission: `--switch-elemental-inset`, `--switch-elemental-knob-size` and
+ * `--switch-elemental-travel` are `calc()`-derived from the four geometry properties and
+ * are deliberately not tagged. Setting them by hand is how a knob ends up overshooting
+ * its own track, and anything tagged here is something a reader is being invited to turn.
+ *
+ * @tag switch-elemental
+ * @attr {boolean} [checked=false] - Whether it is on. Reflected, so markup, script and CSS read the same thing.
+ * @attr {string} name - Submits under this name. No name, no form data.
+ * @attr {string} [value=on] - What it submits while on.
+ * @attr {boolean} [disabled=false] - Disables the button and submits nothing. A `<fieldset disabled>` does the same.
+ * @attr {boolean} [required=false] - The form will not submit while it is off.
+ * @attr {string} required-message - What this one says while it is required and off.
+ *
+ * @cssprop {<length>} [--switch-elemental-width=3.625rem] - Track width.
+ * @cssprop {<length>} [--switch-elemental-height=2rem] - Track height.
+ * @cssprop {<length>} [--switch-elemental-radius=var(--switch-elemental-height)] - Track corners. The height is a pill.
+ * @cssprop {<length>} [--switch-elemental-border-width=2px] - Track border width.
+ * @cssprop {<color>} [--switch-elemental-border-color=currentcolor] - Track border, off.
+ * @cssprop {<color>} [--switch-elemental-border-color-checked=var(--switch-elemental-border-color)] - Track border, on.
+ * @cssprop {<length>} [--switch-elemental-gap=2px] - Between the knob and the inside of the track.
+ * @cssprop {<color>} [--switch-elemental-track=transparent] - Track fill, off.
+ * @cssprop {<color>} [--switch-elemental-track-checked=currentcolor] - Track fill, on.
+ * @cssprop {<color>} [--switch-elemental-knob=currentcolor] - Knob fill, off.
+ * @cssprop {<color>} [--switch-elemental-knob-checked=Canvas] - Knob fill, on. The page's own background, so re-point it on a card.
+ * @cssprop {<length-percentage>} [--switch-elemental-knob-radius=50%] - Knob shape. `50%` is a circle, `0` a square.
+ * @cssprop {<time>} [--switch-elemental-duration=250ms] - Slide and cross-fade.
+ * @cssprop {ease | ease-in | ease-out | ease-in-out | linear} [--switch-elemental-easing=ease-in-out] - Slide and cross-fade.
+ *
+ * @fires switch-toggle - `detail.checked` is the new state. Fires on flip, not on `value` or `required` changing.
+ *
+ * @slot - The `<button>` that flips, and optionally a `.switch-elemental-on` and a `.switch-elemental-off` icon inside it.
+ */
 export class SwitchElemental extends ElementBase {
   // Opts the element into form ownership: `name`, submission, reset, state restore,
   // validation and the disabled state a `<fieldset disabled>` hands down.

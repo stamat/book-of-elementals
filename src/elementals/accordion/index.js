@@ -45,6 +45,17 @@ let groupCount = 0;
  * Light DOM, no shadow root, so every part stays stylable by the page author.
  *
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/accordion/
+ *
+ * @tag accordion-elemental
+ * @attr {boolean} [exclusive=false] - Only one panel open at a time.
+ * @attr {string} name - The shared `name` `exclusive` assigns. Generated if unset.
+ *
+ * @cssprop {<color>} [--accordion-elemental-border-color=color-mix(in srgb, currentcolor 15%, transparent)] - Rule between the panels.
+ * @cssprop {<length>} [--accordion-elemental-radius=0.5rem] - Corner radius, on the grouped look.
+ *
+ * @fires accordion-toggle - `detail.panel` is the `<details>` that toggled, `detail.open` its new state. On the group, because `toggle` does not bubble.
+ *
+ * @slot - The `<details>` panels, each with its own `<summary>`.
  */
 export class AccordionElemental extends ElementBase {
   /** Direct-child panels only, so a nested accordion is not swallowed. */

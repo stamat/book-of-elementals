@@ -1,0 +1,195 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/accordion/index.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "`<accordion-elemental>` custom element.\n\nA thin coordinator over native `<details>`/`<summary>` rather than a\nreimplementation of the APG Accordion pattern. Native already provides the\ndisclosure semantics, Enter/Space activation, screen-reader announcement and\nfind-in-page expansion. This element only adds what native leaves out:\n\n- `exclusive`: assigns a shared `name` so only one panel stays open\n- arrow/Home/End navigation between headers (APG accordion, optional but recommended)\n- opening the panel that contains the current URL fragment\n- an `accordion-toggle` event on the group, since `toggle` does not bubble\n- a height animation on open and close\n\nLight DOM, no shadow root, so every part stays stylable by the page author.",
+          "name": "AccordionElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Rule between the panels.",
+              "name": "--accordion-elemental-border-color",
+              "default": "color-mix(in srgb, currentcolor 15%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Corner radius, on the grouped look.",
+              "name": "--accordion-elemental-radius",
+              "default": "0.5rem"
+            }
+          ],
+          "slots": [
+            {
+              "description": "The `<details>` panels, each with its own `<summary>`.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "panels",
+              "description": "Direct-child panels only, so a nested accordion is not swallowed.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "headers",
+              "description": "The `<summary>` of each panel, in document order.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "wrapPanels",
+              "description": "Wrap each panel body in two divs, because a height transition needs one box to\nmeasure and clip and `<details>` hands you a bare run of siblings. Idempotent,\nso moving the group in the DOM does not nest a second wrapper.\n\nTwo rather than one because the box being animated cannot be padded: block\npadding is a floor the height cannot get under, since `box-sizing: border-box`\nrenders `height: 0` as the padding, and the panel would slide shut down to it\nand then cut. The outer box is the library's and stays inert; the inner one is\nwhere a stylesheet puts the panel's inset, on one box rather than spread over\nwhichever children it thought to name.\n\nponytail: `::details-content` is the wrapper the platform already has, but\nanimating it from 0 to `auto` also needs `interpolate-size`, which is not\neverywhere yet. Drop the outer div for the pseudo-element once it is."
+            },
+            {
+              "kind": "method",
+              "name": "wrapperOf",
+              "parameters": [
+                {
+                  "name": "panel"
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "HTMLElement|null"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "applyExclusive",
+              "description": "Give every panel the same `name`, which is what makes native `<details>`\nmutually exclusive."
+            },
+            {
+              "kind": "method",
+              "name": "openPanel",
+              "parameters": [
+                {
+                  "name": "panel"
+                }
+              ],
+              "description": "Open a panel and slide its body down. The panel opens first, since the body\nis `display: none` until it does and an unrendered box has no height."
+            },
+            {
+              "kind": "method",
+              "name": "closePanel",
+              "parameters": [
+                {
+                  "name": "panel"
+                }
+              ],
+              "description": "Slide a panel's body up, and only then actually close it - `<details>` sets\nits contents to `display: none` on close, which would cut the animation off\nat frame one."
+            },
+            {
+              "kind": "method",
+              "name": "restoreName",
+              "parameters": [
+                {
+                  "name": "panel"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onClick",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "Take over the toggle so the close can outlive the click. Enter and Space on a\n`<summary>` dispatch a click too, so this covers the keyboard as well."
+            },
+            {
+              "kind": "method",
+              "name": "onKeyDown",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onToggle",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onHashChange"
+            },
+            {
+              "kind": "method",
+              "name": "openFromHash",
+              "description": "Open the panel containing the element the URL fragment points at, so a link\nto a single question lands on it opened. Instant rather than animated: a deep\nlink should arrive at the content, not at a panel still on its way open."
+            }
+          ],
+          "events": [
+            {
+              "name": "accordion-toggle",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "`detail.panel` is the `<details>` that toggled, `detail.open` its new state. On the group, because `toggle` does not bubble."
+            }
+          ],
+          "attributes": [
+            {
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Only one panel open at a time.",
+              "name": "exclusive",
+              "default": "false"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "The shared `name` `exclusive` assigns. Generated if unset.",
+              "name": "name"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "accordion-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "nextIndex",
+          "declaration": {
+            "name": "nextIndex",
+            "module": "src/elementals/accordion/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "AccordionElemental",
+          "declaration": {
+            "name": "AccordionElemental",
+            "module": "src/elementals/accordion/index.js"
+          }
+        }
+      ]
+    }
+  ]
+}
