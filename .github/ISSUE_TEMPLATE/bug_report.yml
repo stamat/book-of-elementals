@@ -1,0 +1,88 @@
+name: Bug report
+description: Something behaves differently than it says it does
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. The fastest fixes come from reports that
+        someone else can run — a few lines that reproduce it beat a paragraph
+        describing it.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you ran, and what you got.
+      placeholder: |
+        `<tabs-elemental>` moves focus to the panel on arrow keys instead of the next tab.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations:
+      required: true
+
+  - type: input
+    id: elemental
+    attributes:
+      label: Which elemental
+      placeholder: accordion, disclosure, menu, navbar, switch, tabs
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: >
+        The markup you gave the element, and the keys you pressed. For a
+        keyboard or screen reader bug, say what was announced and what you
+        expected to hear.
+      placeholder: |
+        1. …
+        2. …
+        3. …
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Book of Elementals version
+      description: A release, a tag, or `main` at a commit.
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Browser, OS, and assistive technology
+      description: Include the screen reader and version if the bug is about what was announced.
+      placeholder: "Safari 26 / macOS 26 / VoiceOver — or Chrome 150 / Windows 11 / NVDA 2026.1"
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: The DOM the element produced
+      description: Copy it out of the inspector, or paste the console error. Whole, not trimmed to the line you suspect.
+      render: html
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you file
+      options:
+        - label: I searched the existing issues, open and closed
+          required: true
+        - label: I can reproduce this on the latest release
+          required: false
+        - label: I agree to follow this project's [Code of Conduct](https://github.com/stamat/book-of-elementals/blob/main/CODE_OF_CONDUCT.md)
+          required: true

@@ -33,6 +33,31 @@ script/lint      # eslint + stylelint (the authority; CI runs it)
 - Tests sit next to source as `src/**/*.test.js`.
 - New elemental → also add its export map entries in `package.json`.
 
+## Documentation
+
+Markdown in `docs/`, built by [poops](https://github.com/stamat/poops) with
+[poops-docs-theme](https://github.com/stamat/poops-docs-theme) into `_site/`,
+deployed by [pages.yml](.github/workflows/pages.yml). One page per elemental
+under `docs/elementals/`, plus `docs/examples/`.
+
+Two parts of a page are not prose:
+
+- **The option panels come from `dist/custom-elements.json`**, which
+  `cem analyze` builds from the JSDoc on the class. An attribute or custom
+  property without a tag is invisible in the docs, whatever the page says.
+- **A sample marked `<!-- demo switch -->` becomes a live preview**, wrapped by
+  `script/demos.js` after the markup stage. The fence stays the only source, so
+  the code shown and the thing rendered cannot drift.
+
+Rules:
+
+- **Document in the same change as the code.** A new attribute is not shipped
+  until its JSDoc tag and its page section both exist.
+- **Edit the page that already covers it.** No new pages, summary files or
+  migration notes nobody asked for.
+- **Write for the author using the element**: the markup they write, one
+  example that runs, and the part that would otherwise surprise them.
+
 ## Principles
 
 - **Accessibility is the point.** WCAG and the matching
