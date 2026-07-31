@@ -2,19 +2,55 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
 
 jobs:
-  build:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22, 24]
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
         with:
-          node-version: 24
-          cache: npm
-      - run: npm ci --no-audit --no-fund
-      - run: npm run lint
-      - run: npm test
-      - run: npm run build
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      # the package ships dist/, and the manifest is what the docs option panels
+      # read — poops -b exits 0 when it has nothing to compile, so check output
+      - name: Verify build output
+        shell: bash
+        run: |
+          test -s dist/book-of-elementals.js
+          test -s dist/book-of-elementals.css
+          test -s dist/custom-elements.json
+          test -s _site/index.html
+
+      # Browser-support gates on the emitted bundles: stylelint checks the CSS
+      # against .browserslistrc, es-check confirms the JS parses at the esbuild
+      # target. Both read dist/, so they only run after the build step.
+      - name: Check browser compatibility
+        shell: bash
+        run: |
+          npm run lint:browsers
+          npm run lint:es
