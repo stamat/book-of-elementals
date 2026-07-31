@@ -103,15 +103,25 @@
       ]
     }
   },
-  "copy": {
-    "in": "dist",
-    "out": "_site"
-  },
+  "copy": [
+    {
+      "in": "dist",
+      "out": "_site"
+    },
+    {
+      "in": [
+        "node_modules/code-preview-element/dist/code-preview-hljs.min.js",
+        "node_modules/code-preview-element/dist/code-preview-options.min.js"
+      ],
+      "out": "_site/js"
+    }
+  ],
   "exec": {
     "scripts": [
       "npx cem analyze --globs \"src/elementals/*/index.js\" --outdir dist",
       "node script/manifests.js"
-    ]
+    ],
+    "markup": "node script/demos.js"
   },
   "banner": "/* {{ name }} v{{ version }} | {{ homepage }} | {{ license }} License */",
   "serve": {

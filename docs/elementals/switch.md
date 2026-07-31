@@ -61,7 +61,11 @@ sync();
 ## Usage
 
 Write a `<button>` and wrap it. The button must be a real `<button>` and a direct child —
-without one there is no switch, and nothing is enforced beyond that:
+without one there is no switch, and nothing is enforced beyond that. Edit the sample and
+the preview above it follows as you type; take the `<button>` out and watch it stop being
+a switch:
+
+<!-- demo switch -->
 
 ```html
 <span id="dark-label">Dark mode</span>
@@ -456,6 +460,26 @@ has — including the theme it is switching:
 | `--switch-elemental-knob-radius`          | `50%`          | Knob shape                                   |
 | `--switch-elemental-duration`             | `250ms`        | Slide and cross-fade                         |
 | `--switch-elemental-easing`               | `ease-in-out`  | Slide and cross-fade                         |
+
+That is the table above, live. Turn the knobs in the **Options** tab until the switch looks
+the way you want it, then copy the rule out of the bottom of the panel — that rule is the
+whole of what you would write, and its selector is the element rather than `:root` for the
+reason the note below gives:
+
+<!-- demo switch tab="options" -->
+
+```html
+<span id="knobs-label">Turn me in the Options tab</span>
+<switch-elemental checked>
+  <button aria-labelledby="knobs-label"></button>
+</switch-elemental>
+```
+
+Three of the fourteen are not in the panel, and deliberately: `--switch-elemental-inset`,
+`--switch-elemental-knob-size` and `--switch-elemental-travel` are `calc()`-derived from the
+four geometry properties, and setting one by hand is how a knob ends up overshooting its own
+track. Size it with `--switch-elemental-width` and `--switch-elemental-height` and the rest
+follows.
 
 `prefers-reduced-motion: reduce` switches the motion off. Under `forced-colors` the track
 and knob are repainted in system colors. A disabled switch is the same switch at

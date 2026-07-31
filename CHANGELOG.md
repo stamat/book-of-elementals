@@ -16,6 +16,24 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Added
 
+- **Live samples in the docs.** Twelve of the code samples on the element pages are now
+  editable previews rather than static fences — the element rendered in an iframe above the
+  code that produced it, edits applied as you type, and an **Options** tab whose controls are
+  generated from that element's `custom-elements.json`. Every page has one in _Usage_ opening
+  on the code, and one in _The look_ opening on the panel, where turning a knob prints the
+  rule to copy into your own stylesheet. Docs only — nothing about the package changes.
+
+  A sample opts in with `<!-- demo switch -->` in the markdown, and `script/demos.js` does the
+  wrapping after the markup stage. The marker rather than the fence's info string, because a
+  demo has to carry its own settings (`tab="options"`, `viewport-widths="375 768"`) and the
+  info string cannot hold an `=`. The sample stays an ordinary fence in `docs/`, so it is
+  still one block of real HTML to read and copy, still highlighted at build time, and still
+  in `llms.txt` and the search index.
+
+  The manifests are what make the panel worth having, and the curation shows: the switch
+  offers twenty knobs and not the three `calc()`-derived properties, because those were never
+  tagged.
+
 - `<tabs-elemental>` — the [APG Tabs pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/),
   horizontal or vertical.
 

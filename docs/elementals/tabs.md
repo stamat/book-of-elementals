@@ -28,6 +28,8 @@ Light DOM, no shadow root, nothing you wrote is moved or wrapped.
   </div>
 </tabs-elemental>
 
+<!-- demo tabs -->
+
 ```html
 <tabs-elemental>
   <ul>
@@ -35,9 +37,9 @@ Light DOM, no shadow root, nothing you wrote is moved or wrapped.
     <li><a href="#usage">Usage</a></li>
     <li><a href="#support">Support</a></li>
   </ul>
-  <div id="install">…</div>
-  <div id="usage">…</div>
-  <div id="support">…</div>
+  <div id="install">One npm install.</div>
+  <div id="usage">Import it and write the markup.</div>
+  <div id="support">Every browser with custom elements.</div>
 </tabs-elemental>
 ```
 
@@ -319,6 +321,24 @@ sits in whatever palette the page has:
 | `--tabs-elemental-border`          | 20% of `currentcolor`  | The rule the tabs sit on                        |
 | `--tabs-elemental-hover`           | 10% of `currentcolor`  | Tab background under the pointer                |
 | `--tabs-elemental-muted`           | 65% of `currentcolor`  | Text of a tab that is not selected              |
+
+Turn them in the **Options** tab and copy the rule out of the bottom of the panel — the same
+table, with the values live:
+
+<!-- demo tabs tab="options" -->
+
+```html
+<tabs-elemental>
+  <ul>
+    <li><a href="#one">Gap</a></li>
+    <li><a href="#two">Inset</a></li>
+    <li><a href="#three">Indicator</a></li>
+  </ul>
+  <div id="one">Between the tabs.</div>
+  <div id="two">Padding inside one.</div>
+  <div id="three">What marks the selected one.</div>
+</tabs-elemental>
+```
 
 The selected tab is marked with a border rather than with a bar that slides between them. A
 sliding one has to be re-measured after every reflow — a webfont landing, a label

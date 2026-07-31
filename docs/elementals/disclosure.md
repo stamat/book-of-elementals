@@ -44,12 +44,15 @@ _A long description for an image whose `alt` can only carry the gist. Try find-i
 
 ## Usage
 
-Write a `<button>` and the region it controls, and wrap them:
+Write a `<button>` and the region it controls, and wrap them — edit the sample and the
+preview above it follows as you type:
+
+<!-- demo disclosure -->
 
 ```html
 <disclosure-elemental>
   <button>Data table for the chart</button>
-  <div id="minard-data">…</div>
+  <div id="minard-data">Six columns of numbers.</div>
 </disclosure-elemental>
 ```
 
@@ -290,6 +293,18 @@ untouched. One property:
 | Property                            | Default |
 | ----------------------------------- | ------- |
 | `--disclosure-elemental-caret-size` | `1em`   |
+
+Turn it in the **Options** tab and copy the rule out of the bottom of the panel — the same
+table, with the values live:
+
+<!-- demo disclosure tab="options" -->
+
+```html
+<disclosure-elemental>
+  <button>What the panel writes</button>
+  <p>Whatever you set here goes into a stylesheet, never into the sample.</p>
+</disclosure-elemental>
+```
 
 Closed, the chevron points at its own label; open, it points down at what it revealed — the
 same turn a native `<summary>` marker makes. Pointing _at the label_ is a writing-mode

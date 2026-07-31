@@ -325,6 +325,32 @@ The element is a `grid` with every panel in the same cell, which is the one layo
 insists on: panels laid out one after another mean a page that jumps by the height of the
 last one every time you change tabs. `vertical` puts the strip beside them instead of above.
 
+## Live samples in the docs
+
+Every sample marked `<!-- demo <element> -->` in `docs/` becomes a live, editable preview on
+the built page: the element rendered in an iframe above the code that produced it, the code
+editable, and a second tab of controls generated from that element's manifest.
+
+```md
+<!-- demo switch tab="options" -->
+
+​```html
+<switch-elemental checked><button aria-label="Dark mode"></button></switch-elemental>
+​```
+```
+
+A bare word is an element to load — its stylesheet, its optional theme and its bundle —
+and anything with an `=` is passed through to
+[`<code-preview>`](https://github.com/stamat/code-preview-element), which is how a demo asks
+for `tab="options"` or a set of `viewport-widths`. One element takes its own manifest; a
+sample using two takes the cumulative one.
+
+The wrapping happens in `script/demos.js`, after the markup stage, which is the point of the
+marker: the sample stays an ordinary fence in the markdown, so it is still one block of real
+HTML to read and copy, still highlighted at build time, and still in `llms.txt` and the
+search index. Opting in per fence is deliberate — these pages are full of HTML fences that
+are not demos.
+
 ## Custom Elements Manifest
 
 Every element's API is also machine-readable, as a

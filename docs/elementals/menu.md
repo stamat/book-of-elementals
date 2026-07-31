@@ -39,6 +39,12 @@ markup.
 
 ## Usage
 
+Edit the sample and the preview above it follows as you type. The width buttons are the
+point here — `media` is what decides whether this is a flyout or a stack of disclosures,
+and 375px is the width where it stops being a menu:
+
+<!-- demo menu viewport-widths="375 768" -->
+
 ```html
 <menu-elemental media="(min-width: 40rem)">
   <button>Account</button>
@@ -348,6 +354,23 @@ switch without configuration.
 | `--menu-elemental-surface`     | `Canvas`                       |
 | `--menu-elemental-hover`       | `currentcolor` at 10%          |
 | `--menu-elemental-border`      | `currentcolor` at 20%          |
+
+Turn them in the **Options** tab and copy the rule out of the bottom of the panel — the same
+table, with the values live. `--menu-elemental-surface` is the one to try first: `Canvas` is
+the page's own background, and it is what to re-point when the menu opens over a card:
+
+<!-- demo menu tab="options" -->
+
+```html
+<menu-elemental>
+  <button>Account</button>
+  <ul>
+    <li><a href="/profile/">Profile</a></li>
+    <li><a href="/settings/">Settings</a></li>
+    <li><a href="/sign-out/">Sign out</a></li>
+  </ul>
+</menu-elemental>
+```
 
 ### The hamburger
 

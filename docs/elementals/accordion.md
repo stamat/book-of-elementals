@@ -40,7 +40,10 @@ _Live, with `exclusive` and both theme classes. Focus a header and press the arr
 
 ## Usage
 
-Write ordinary `<details>` panels and wrap them:
+Write ordinary `<details>` panels and wrap them — edit the sample and the preview above it
+follows as you type:
+
+<!-- demo accordion -->
 
 ```html
 <accordion-elemental>
@@ -267,6 +270,24 @@ has its own value for:
 | ------------------------------------ | --------------------------------------------------- |
 | `--accordion-elemental-border-color` | `color-mix(in srgb, currentcolor 15%, transparent)` |
 | `--accordion-elemental-radius`       | `0.5rem`                                            |
+
+Turn them in the **Options** tab and copy the rule out of the bottom of the panel — the same
+table, with the values live:
+
+<!-- demo accordion tab="options" -->
+
+```html
+<accordion-elemental class="grouped">
+  <details open>
+    <summary>Both properties are on this one</summary>
+    <p>The rule the panel writes is the rule you would have written.</p>
+  </details>
+  <details>
+    <summary>And the border between us</summary>
+    <p>Set on the element, never on <code>:root</code>.</p>
+  </details>
+</accordion-elemental>
+```
 
 ```css
 accordion-elemental {

@@ -54,6 +54,12 @@ Nothing in that sequence is a number anybody typed.
 
 ## Usage
 
+Edit the sample and the preview above it follows as you type. Narrow it with the width
+buttons to watch the links move behind **More** one at a time, and then the whole row
+become a drawer — the element is measuring, not guessing, so it answers a real viewport:
+
+<!-- demo navbar viewport-widths="375 768 1024" -->
+
 ```html
 <navbar-elemental media="(min-width: 40rem)" hover>
   <div class="rail">
@@ -409,7 +415,28 @@ configuration.
 | `--navbar-elemental-shadow`         | `0 4px 20px` at 15%   |
 
 `--navbar-elemental-surface` is the one worth re-pointing: a page whose background is not
-quite `Canvas` wants its panels to match the page rather than the browser.
+quite `Canvas` wants its panels to match the page rather than the browser. Turn it in the
+**Options** tab and copy the rule out of the bottom of the panel:
+
+<!-- demo navbar tab="options" -->
+
+```html
+<navbar-elemental>
+  <div class="rail">
+    <ul>
+      <li><a href="/overview">Overview</a></li>
+      <li>
+        <button>Products</button>
+        <ul>
+          <li><a href="/cloud">Kestrel Cloud</a></li>
+          <li><a href="/edge">Kestrel Edge</a></li>
+        </ul>
+      </li>
+      <li><a href="/pricing">Pricing</a></li>
+    </ul>
+  </div>
+</navbar-elemental>
+```
 
 ## What is deliberately not here
 
