@@ -29,6 +29,27 @@ const DETACHED_NAME = Symbol('detachedName');
 let groupCount = 0;
 
 /**
+ * Which panels of an exclusive group are left open, given how they were authored: the
+ * first one with `open` on it, and no other.
+ *
+ * The decision has to be made before the shared `name` goes on. Naming several
+ * already-open panels leaves it to the browser which of them survives, and a group that
+ * opens on a different panel depending on the engine is not a group anybody authored.
+ * Choosing here makes it the first, everywhere.
+ *
+ * @param {boolean[]} states - `open` of each panel, in document order.
+ * @returns {boolean[]} What each panel's `open` should be.
+ */
+export function exclusiveOpen(states) {
+  let seen = false;
+  return states.map((open) => {
+    const keep = open && !seen;
+    seen = seen || open;
+    return keep;
+  });
+}
+
+/**
  * `<accordion-elemental>` custom element.
  *
  * A thin coordinator over native `<details>`/`<summary>` rather than a
@@ -156,15 +177,9 @@ export class AccordionElemental extends ElementBase {
   applyExclusive() {
     const panels = this.panels;
 
-    // Close extras *before* naming them: assigning a shared name to several
-    // already-open panels leaves it to the browser which one survives. Doing it
-    // here means the first authored `open` wins, deterministically.
-    let seenOpen = false;
-    for (const panel of panels) {
-      if (!panel.open) continue;
-      if (seenOpen) panel.open = false;
-      seenOpen = true;
-    }
+    // Close the extras *before* naming them - see `exclusiveOpen`.
+    const open = exclusiveOpen(panels.map((panel) => panel.open));
+    panels.forEach((panel, at) => { panel.open = open[at]; });
 
     // Remember the name so moving the group in the DOM re-uses it instead of
     // minting a new one on every reconnect. A name already on the panels is kept:

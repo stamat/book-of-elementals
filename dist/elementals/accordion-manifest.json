@@ -7,6 +7,25 @@
       "path": "src/elementals/accordion/index.js",
       "declarations": [
         {
+          "kind": "function",
+          "name": "exclusiveOpen",
+          "parameters": [
+            {
+              "name": "states",
+              "description": "`open` of each panel, in document order.",
+              "type": {
+                "text": "boolean[]"
+              }
+            }
+          ],
+          "description": "Which panels of an exclusive group are left open, given how they were authored: the\nfirst one with `open` on it, and no other.\n\nThe decision has to be made before the shared `name` goes on. Naming several\nalready-open panels leaves it to the browser which of them survives, and a group that\nopens on a different panel depending on the engine is not a group anybody authored.\nChoosing here makes it the first, everywhere.",
+          "return": {
+            "type": {
+              "text": "boolean[]"
+            }
+          }
+        },
+        {
           "kind": "class",
           "description": "`<accordion-elemental>` custom element.\n\nA thin coordinator over native `<details>`/`<summary>` rather than a\nreimplementation of the APG Accordion pattern. Native already provides the\ndisclosure semantics, Enter/Space activation, screen-reader announcement and\nfind-in-page expansion. This element only adds what native leaves out:\n\n- `exclusive`: assigns a shared `name` so only one panel stays open\n- arrow/Home/End navigation between headers (APG accordion, optional but recommended)\n- opening the panel that contains the current URL fragment\n- an `accordion-toggle` event on the group, since `toggle` does not bubble\n- a height animation on open and close\n\nLight DOM, no shadow root, so every part stays stylable by the page author.",
           "name": "AccordionElemental",
@@ -178,6 +197,14 @@
           "name": "nextIndex",
           "declaration": {
             "name": "nextIndex",
+            "module": "src/elementals/accordion/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "exclusiveOpen",
+          "declaration": {
+            "name": "exclusiveOpen",
             "module": "src/elementals/accordion/index.js"
           }
         },

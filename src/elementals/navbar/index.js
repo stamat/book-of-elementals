@@ -305,10 +305,16 @@ export class NavbarElemental extends ElementBase {
    * box reserves exactly the room it is going to take at the other end - the row has to be
    * measured against the space that will be left once the overflow button is on it, or the
    * last link and the button would fight over the same pixels.
+   *
+   * The stylesheet hides it, but the copy is a second, focusable, announced navigation
+   * until it does - so the neutralising is done here too, where it holds whether or not the
+   * structure styles ever arrive.
    */
   buildProbe() {
     const probe = this.row.cloneNode(true);
     probe.setAttribute('data-navbar-probe', '');
+    probe.inert = true;
+    probe.setAttribute('aria-hidden', 'true');
     for (const panel of probe.querySelectorAll('ul, menu')) panel.remove();
     // Items that only exist in the drawer are not on the bar, so they must not reserve any of
     // the bar's room either.

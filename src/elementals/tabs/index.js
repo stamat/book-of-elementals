@@ -23,10 +23,12 @@ export function tabKey(key, vertical) {
 /**
  * Which tab the `selected` attribute is naming, given how many there are.
  *
- * Everything that is not an index in range is the first tab, because a tab set with
- * nothing selected is not a state this pattern has: one tab is always current, and a
- * typo, a missing attribute or an index left behind by a tab that has since been removed
- * all mean the same thing here.
+ * Every value is answered with a tab, because a tab set with nothing selected is not a
+ * state this pattern has: one tab is always current. A missing attribute, a typo and a
+ * negative index are the first tab - there is no earlier one to mean. An index past the
+ * end, which is what a tab removed from under a `selected` leaves behind, is clamped to
+ * the last tab rather than sent back to the start: the reader was at the far end of the
+ * set, and that is the nearest tab still there.
  *
  * @param {string|null} value - The attribute, as authored.
  * @param {number} length - How many tabs there are.

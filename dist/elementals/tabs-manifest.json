@@ -51,7 +51,7 @@
               }
             }
           ],
-          "description": "Which tab the `selected` attribute is naming, given how many there are.\n\nEverything that is not an index in range is the first tab, because a tab set with\nnothing selected is not a state this pattern has: one tab is always current, and a\ntypo, a missing attribute or an index left behind by a tab that has since been removed\nall mean the same thing here.",
+          "description": "Which tab the `selected` attribute is naming, given how many there are.\n\nEvery value is answered with a tab, because a tab set with nothing selected is not a\nstate this pattern has: one tab is always current. A missing attribute, a typo and a\nnegative index are the first tab - there is no earlier one to mean. An index past the\nend, which is what a tab removed from under a `selected` leaves behind, is clamped to\nthe last tab rather than sent back to the start: the reader was at the far end of the\nset, and that is the nearest tab still there.",
           "return": {
             "type": {
               "text": "number"

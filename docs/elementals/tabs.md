@@ -105,6 +105,11 @@ then position is the pairing:
 </tabs-elemental>
 ```
 
+Position counts every child that is not the tablist, so it holds only while the panels are
+the element's only other children — slip a heading in between and it takes the first tab's
+place, shifting every pairing after it. If the element has to hold anything else, name the
+pairing with a fragment or `aria-controls` and position stops mattering.
+
 ## API
 
 ### Attributes

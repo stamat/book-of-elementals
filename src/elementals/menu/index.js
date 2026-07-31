@@ -29,7 +29,6 @@ export function typeAheadIndex(labels, current, buffer) {
   return null;
 }
 
-/** How long a type-ahead keeps collecting keystrokes, in milliseconds. */
 /**
  * Whether a panel of `size` starting at `at` is inside a viewport of `limit`.
  *
@@ -99,6 +98,7 @@ export function placeSubmenu(item, panel, viewport, rtl) {
   };
 }
 
+/** How long a type-ahead keeps collecting keystrokes, in milliseconds. */
 const TYPE_AHEAD_WINDOW = 500;
 
 // How long a hover-opened menu waits after the pointer leaves. Long enough to cross the
@@ -280,10 +280,18 @@ export class MenuElemental extends ElementBase {
 
     // Lists left hidden by an element that is no longer here have nothing to open
     // them again. The roles go with them: a `role="menu"` nobody is driving is a
-    // keyboard contract with no keyboard behind it.
+    // keyboard contract with no keyboard behind it. So does the triggers' half of the
+    // contract - an `aria-expanded="false"` on a list that is now plainly open is worse
+    // than no state at all.
     for (const menu of this.menus) {
       menu.removeAttribute('hidden');
       set(menu, 'role', null);
+
+      const trigger = this.triggerOf(menu);
+      set(trigger, 'aria-controls', null);
+      set(trigger, 'aria-haspopup', null);
+      set(trigger, 'aria-expanded', null);
+
       for (const item of this.itemsOf(menu)) {
         set(item.parentElement, 'role', null);
         set(item, 'role', null);
@@ -291,6 +299,7 @@ export class MenuElemental extends ElementBase {
       }
     }
 
+    delete this.dataset.mode;
     this.initialized = false;
   }
 

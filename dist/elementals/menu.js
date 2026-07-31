@@ -154,12 +154,17 @@
       for (const menu of this.menus) {
         menu.removeAttribute("hidden");
         set(menu, "role", null);
+        const trigger = this.triggerOf(menu);
+        set(trigger, "aria-controls", null);
+        set(trigger, "aria-haspopup", null);
+        set(trigger, "aria-expanded", null);
         for (const item of this.itemsOf(menu)) {
           set(item.parentElement, "role", null);
           set(item, "role", null);
           set(item, "tabindex", null);
         }
       }
+      delete this.dataset.mode;
       this.initialized = false;
     }
     // ---- structure ----

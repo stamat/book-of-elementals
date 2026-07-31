@@ -150,6 +150,14 @@
   var CLOSING_CLASS = "accordion-elemental-closing";
   var DETACHED_NAME = Symbol("detachedName");
   var groupCount = 0;
+  function exclusiveOpen(states) {
+    let seen = false;
+    return states.map((open) => {
+      const keep = open && !seen;
+      seen = seen || open;
+      return keep;
+    });
+  }
   var AccordionElemental = class extends ElementBase {
     /** Direct-child panels only, so a nested accordion is not swallowed. */
     get panels() {
@@ -228,12 +236,10 @@
      */
     applyExclusive() {
       const panels = this.panels;
-      let seenOpen = false;
-      for (const panel of panels) {
-        if (!panel.open) continue;
-        if (seenOpen) panel.open = false;
-        seenOpen = true;
-      }
+      const open = exclusiveOpen(panels.map((panel) => panel.open));
+      panels.forEach((panel, at) => {
+        panel.open = open[at];
+      });
       if (!this.groupName) {
         this.groupName = this.getAttribute("name") || panels[0] && panels[0].getAttribute("name") || "accordion-elemental-" + ++groupCount;
       }
@@ -593,12 +599,17 @@
       for (const menu of this.menus) {
         menu.removeAttribute("hidden");
         set(menu, "role", null);
+        const trigger = this.triggerOf(menu);
+        set(trigger, "aria-controls", null);
+        set(trigger, "aria-haspopup", null);
+        set(trigger, "aria-expanded", null);
         for (const item of this.itemsOf(menu)) {
           set(item.parentElement, "role", null);
           set(item, "role", null);
           set(item, "tabindex", null);
         }
       }
+      delete this.dataset.mode;
       this.initialized = false;
     }
     // ---- structure ----
@@ -1088,10 +1099,16 @@
      * box reserves exactly the room it is going to take at the other end - the row has to be
      * measured against the space that will be left once the overflow button is on it, or the
      * last link and the button would fight over the same pixels.
+     *
+     * The stylesheet hides it, but the copy is a second, focusable, announced navigation
+     * until it does - so the neutralising is done here too, where it holds whether or not the
+     * structure styles ever arrive.
      */
     buildProbe() {
       const probe = this.row.cloneNode(true);
       probe.setAttribute("data-navbar-probe", "");
+      probe.inert = true;
+      probe.setAttribute("aria-hidden", "true");
       for (const panel of probe.querySelectorAll("ul, menu")) panel.remove();
       for (const one of probe.querySelectorAll("[data-navbar-stack]")) one.remove();
       for (const one of probe.querySelectorAll("[id]")) one.removeAttribute("id");

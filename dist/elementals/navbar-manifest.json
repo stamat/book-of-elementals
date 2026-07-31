@@ -223,7 +223,7 @@
             {
               "kind": "method",
               "name": "buildProbe",
-              "description": "Build the copy of the row that gets measured, and put it in the rail beside the row.\n\nTwo things are done to it, and both are about width. The panels come out: an absolutely\npositioned box adds nothing to a row's width, and a copy of one would be a second box\nanswering to the same anchor name. And the overflow item moves to the front, where its\nbox reserves exactly the room it is going to take at the other end - the row has to be\nmeasured against the space that will be left once the overflow button is on it, or the\nlast link and the button would fight over the same pixels."
+              "description": "Build the copy of the row that gets measured, and put it in the rail beside the row.\n\nTwo things are done to it, and both are about width. The panels come out: an absolutely\npositioned box adds nothing to a row's width, and a copy of one would be a second box\nanswering to the same anchor name. And the overflow item moves to the front, where its\nbox reserves exactly the room it is going to take at the other end - the row has to be\nmeasured against the space that will be left once the overflow button is on it, or the\nlast link and the button would fight over the same pixels.\n\nThe stylesheet hides it, but the copy is a second, focusable, announced navigation\nuntil it does - so the neutralising is done here too, where it holds whether or not the\nstructure styles ever arrive."
             },
             {
               "kind": "method",

@@ -146,6 +146,14 @@
   var CLOSING_CLASS = "accordion-elemental-closing";
   var DETACHED_NAME = Symbol("detachedName");
   var groupCount = 0;
+  function exclusiveOpen(states) {
+    let seen = false;
+    return states.map((open) => {
+      const keep = open && !seen;
+      seen = seen || open;
+      return keep;
+    });
+  }
   var AccordionElemental = class extends ElementBase {
     /** Direct-child panels only, so a nested accordion is not swallowed. */
     get panels() {
@@ -224,12 +232,10 @@
      */
     applyExclusive() {
       const panels = this.panels;
-      let seenOpen = false;
-      for (const panel of panels) {
-        if (!panel.open) continue;
-        if (seenOpen) panel.open = false;
-        seenOpen = true;
-      }
+      const open = exclusiveOpen(panels.map((panel) => panel.open));
+      panels.forEach((panel, at) => {
+        panel.open = open[at];
+      });
       if (!this.groupName) {
         this.groupName = this.getAttribute("name") || panels[0] && panels[0].getAttribute("name") || "accordion-elemental-" + ++groupCount;
       }
