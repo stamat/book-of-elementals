@@ -16,6 +16,52 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Added
 
+- `<tabs-elemental>` — the [APG Tabs pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/),
+  horizontal or vertical.
+
+  ```html
+  <tabs-elemental>
+    <ul>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#usage">Usage</a></li>
+    </ul>
+    <div id="install">…</div>
+    <div id="usage">…</div>
+  </tabs-elemental>
+  ```
+
+  Written on the markup the page would have had anyway: a list of in-page links and the
+  sections they point at. Which panel belongs to which tab is the tab's own `#fragment`,
+  or its `aria-controls`, or failing both the child in the same position — the fragment
+  being the one worth writing, since it is a working link before the element upgrades and
+  after it fails to.
+
+  **DOM it produces:** `role="tablist"` and `data-tabs-list` on the list, `role="none"` on
+  its `<li>`s, `role="tab"` with `aria-selected`, `aria-controls` and a roving `tabindex`
+  on each tab, and `role="tabpanel"` with `aria-labelledby` and `data-tabs-panel` on each
+  panel. Ids are generated either side of those pairings where the markup had none.
+  `aria-orientation="vertical"` is written only when `vertical` is set, since horizontal is
+  the attribute's own default. Nothing is wrapped and nothing is moved. `selected` on the
+  host is the single source of truth and is reflected, so `[selected]` is a styling hook;
+  changes fire a bubbling `tabs-select` carrying `{ tab, panel, index }`.
+
+  **Keyboard:** the strip is one tab stop, not one per tab — the selected tab is the only
+  one `Tab` lands on and the arrows do the rest. Arrows answer on the strip's own axis and
+  leave the other one to the page, `Home` and `End` go to the ends, and the selection
+  follows the focus unless `manual` is set, which is for panels whose content is not
+  already in the page.
+
+  **CSS:** the element is `display: grid` with every panel in the same cell. That is the
+  one layout it insists on, because panels laid out one after another mean a page that
+  jumps by the height of the last one on every change of tab. `vertical` turns it into two
+  columns. Panels that are not showing are hidden with `hidden="until-found"`, so
+  find-in-page still searches them and finding one selects its tab — that keeps the panel's
+  box, which the element's stylesheet strips back to nothing, since three retained boxes
+  sharing a cell with the one being read would paint across it and take its clicks. The
+  optional theme marks the selected tab with a border on the strip's own rule rather than
+  with a bar that slides, which needs no measuring and can never disagree with where the
+  tab is.
+
 - **A [Custom Elements Manifest](https://github.com/webcomponents/custom-elements-manifest)** —
   `dist/custom-elements.json`, generated from the JSDoc on each element by
   `@custom-elements-manifest/analyzer` and pointed at by the `customElements` key in

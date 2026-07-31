@@ -1,0 +1,56 @@
+// Structure only: where the strip sits, where the panels sit, and which of them is on
+// screen. Everything that makes a tab look like a tab - the rule, the mark on the selected
+// one, the hover - is in `theme.scss`.
+
+// The one layout the element does have an opinion about, because the pattern cannot work
+// without it: every panel is in the same grid cell. A tab set whose panels are laid out one
+// after another is a page that jumps by the height of the last panel every time you change
+// tabs, and nothing in the markup says what that height was going to be.
+tabs-elemental {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+// The element writes both of these as it upgrades, so this stylesheet never has to guess
+// which child is the strip and which are the panels - and before it upgrades neither exists,
+// which is how the no-script view falls back to plain blocks in source order: a list of
+// in-page links, and every panel under it, all of them reachable.
+tabs-elemental > [data-tabs-list] {
+  grid-area: 1 / 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+tabs-elemental > [data-tabs-panel] {
+  grid-area: 2 / 1;
+}
+
+// ---- Vertical ----
+// The strip beside the panels rather than above them. `auto` for the strip, so it is as wide
+// as its labels, and `minmax(0, 1fr)` for the panels, so a wide table inside one shrinks it
+// instead of stretching the element past its container.
+tabs-elemental[vertical] {
+  grid-template-columns: auto minmax(0, 1fr);
+
+  > [data-tabs-panel] {
+    grid-area: 1 / 2;
+  }
+}
+
+// ---- The panels nobody is looking at ----
+// Hidden with `until-found`, which is what keeps find-in-page working across a tab set: the
+// text is searchable, and finding it fires `beforematch`, which the element takes as the
+// instruction to select that tab. The price is that `until-found` hides with `content-visibility`, which skips a box's
+// contents and keeps the box. Four panels stacked in one cell means three retained boxes
+// sitting over the one being read - painting their borders and backgrounds across it, and
+// taking the clicks meant for what is underneath. So the box is taken back off here, for any
+// theme and any page: the frame belongs to whoever styled the panel, but the retained box is
+// the element's own doing.
+tabs-elemental > [data-tabs-panel][hidden] {
+  padding: 0;
+  pointer-events: none;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}

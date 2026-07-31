@@ -8,6 +8,7 @@
 @use "../src/elementals/menu/theme" as *;
 @use "../src/elementals/navbar/theme" as *;
 @use "../src/elementals/switch/theme" as *;
+@use "../src/elementals/tabs/theme" as *;
 
 // The demos wear the shipped optional theme rather than a skin of their own, so
 // what the pages show is what the import gives you. Its two custom properties are
@@ -443,5 +444,25 @@ switch-elemental:not([checked]) + .demo-state .on {
   [aria-expanded="false"] .hide,
   [aria-expanded="true"] .show {
     display: none;
+  }
+}
+
+// Demo-only: the tab sets on this page. The element and its theme do the strip; what is left
+// is undoing the docs prose, which puts a margin on every list item it contains - a tab strip
+// is not a list of paragraphs, and a margin on a tab pushes it off the rule it is marked on.
+// The underline and the link colour need no undoing: the theme's own selector for a tab is
+// more specific than `.prose a`, which is not true of the margins.
+.demo-tabs {
+  margin-block: 1rem;
+
+  li {
+    margin: 0;
+  }
+
+  // The panels are prose, so their last paragraph keeps the margin it would have had anywhere
+  // else - which under the panel's own top inset is a gap at the bottom of the demo and
+  // nothing else.
+  [data-tabs-panel] > :last-child {
+    margin-block-end: 0;
   }
 }

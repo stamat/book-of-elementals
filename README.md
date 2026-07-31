@@ -22,6 +22,7 @@ holds the JavaScript helpers, this one holds the elements.
 | `<disclosure-elemental>` | [APG Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), where `<details>` cannot go |
 | `<menu-elemental>`       | [APG Menu Button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/), nested, and not a menu below a breakpoint |
 | `<switch-elemental>`     | [APG Switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/), for a setting that takes effect at once |
+| `<tabs-elemental>`       | [APG Tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), horizontal or vertical, on a list of in-page links |
 
 ## Docs
 
@@ -284,6 +285,45 @@ properties — `.switch-elemental-small` ships as the one preset. An icon per st
 is optional, in `.switch-elemental-on` and `.switch-elemental-off` spans inside the
 button. The docs page shows the hairline, accent, wash and outline variants, each
 one nothing but a few of the theme's custom properties.
+
+## `<tabs-elemental>`
+
+One panel at a time out of a set of them, on the markup the page would have had anyway:
+a list of in-page links, and the sections they point at.
+
+```html
+<tabs-elemental>
+  <ul>
+    <li><a href="#install">Install</a></li>
+    <li><a href="#usage">Usage</a></li>
+  </ul>
+  <div id="install">…</div>
+  <div id="usage">…</div>
+</tabs-elemental>
+```
+
+| Attribute  | Type    | Default | Description                                                              |
+| ---------- | ------- | ------- | ------------------------------------------------------------------------ |
+| `selected` | number  | `0`     | Index of the selected tab. Reflected — it tracks the live state.         |
+| `vertical` | boolean | `false` | The strip runs down the page. The arrow keys go with it.                 |
+| `manual`   | boolean | `false` | Arrows move focus without selecting; <kbd>Enter</kbd> or <kbd>Space</kbd> selects. |
+
+The element writes `role="tablist"`, `role="tab"` and `role="tabpanel"`, keeps
+`aria-selected` and the roving tabindex in step, and answers to the arrow keys on the axis
+`aria-orientation` promises and not the other one. State changes fire a bubbling
+`tabs-select`.
+
+Which panel belongs to which tab is the tab's own `#fragment`, or its `aria-controls`, or
+failing both the child in the same position. The fragment is the one worth writing: it is a
+working link before the element upgrades and after it fails to, which is the whole
+degradation — every panel on screen and every link jumping to one. Following such a link
+with no script leaves a fragment in the URL that this element then reads back as the
+selected tab, and find-in-page reaches the panels that are not showing, because they are
+hidden with `hidden="until-found"`.
+
+The element is a `grid` with every panel in the same cell, which is the one layout it
+insists on: panels laid out one after another mean a page that jumps by the height of the
+last one every time you change tabs. `vertical` puts the strip beside them instead of above.
 
 ## Custom Elements Manifest
 

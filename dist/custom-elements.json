@@ -193,371 +193,111 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/elementals/menu/index.js",
+      "path": "src/elementals/disclosure/index.js",
       "declarations": [
         {
           "kind": "function",
-          "name": "typeAheadIndex",
+          "name": "disclosureState",
           "parameters": [
             {
-              "name": "labels",
-              "description": "The items' text, in menu order.",
+              "name": "open",
               "type": {
-                "text": "string[]"
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "The state a disclosure's button and region carry, for a given open state.\n\n`until-found` rather than a bare `hidden` because it is the platform's own answer\nto the oldest problem with hiding content: find-in-page and a link to a fragment\ninside the region still reveal it, and the reveal comes back as `beforematch`.\nBrowsers without it read any value at all as plain hidden, which is the same\ncontent, just not found.",
+          "return": {
+            "type": {
+              "text": "{expanded: string, hidden: string|null}"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "slideFrom",
+          "parameters": [
+            {
+              "name": "open",
+              "description": "The state being moved to.",
+              "type": {
+                "text": "boolean"
               }
             },
             {
-              "name": "current",
-              "description": "Index of the focused item, `-1` for none.",
+              "name": "hidden",
+              "description": "Whether the region is hidden right now.",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "height",
+              "description": "Its rendered height right now.",
               "type": {
                 "text": "number"
               }
-            },
-            {
-              "name": "buffer",
-              "description": "What has been typed inside the type-ahead window.",
-              "type": {
-                "text": "string"
-              }
             }
           ],
-          "description": "Where a type-ahead lands in a menu, given what has been typed so far.\n\nTwo rules that look like edge cases and are not. Holding or repeating one letter\ncycles the items starting with it - `aaa` is someone pressing `a` three times\nlooking for the next \"Archive\", not an item named \"aaa\". And a search that is one\ncharacter long starts *after* the focused item, so pressing that letter again moves\non, while a buffer still being typed starts *at* it, so the match narrows onto the\nitem the reader is already on instead of skipping past it.",
+          "description": "The height, in pixels, a slide of the region starts from.\n\nZero only when opening a region that is currently hidden, because that is the one case\nwith no height to read: `hidden=\"until-found\"` sizes the box as if it were empty.\nEverything else is a region already on screen - one being closed, or one caught\nmid-slide and sent back the other way - and its rendered height is the honest start.\nWhich is also why the measurement has to happen *before* unhiding: after, the region\nis at full height and a slide that starts where it ends is not a slide.",
           "return": {
             "type": {
-              "text": "number|null"
-            }
-          }
-        },
-        {
-          "kind": "function",
-          "name": "placeFlyout",
-          "parameters": [
-            {
-              "name": "trigger",
-              "description": "Rect of the button, in viewport coordinates.",
-              "type": {
-                "text": "DOMRect|object"
-              }
-            },
-            {
-              "name": "panel",
-              "description": "Size of the list.",
-              "type": {
-                "text": "{width: number, height: number}"
-              }
-            },
-            {
-              "name": "viewport",
-              "type": {
-                "text": "{width: number, height: number}"
-              }
-            },
-            {
-              "name": "rtl",
-              "description": "Whether the menu runs right to left.",
-              "type": {
-                "text": "boolean"
-              }
-            }
-          ],
-          "description": "Where the root list goes: under the button, or over it when there is no room under;\nand running from the button's inline start, or back the other way when that would take\nit off the edge.\n\nThe preferred placement wins ties and wins when neither fits, because a panel with\nnowhere good to go should at least land where the reader expects it.",
-          "return": {
-            "type": {
-              "text": "{side: string, align: string}"
-            }
-          }
-        },
-        {
-          "kind": "function",
-          "name": "placeSubmenu",
-          "parameters": [
-            {
-              "name": "item",
-              "description": "Rect of the item that opens it.",
-              "type": {
-                "text": "DOMRect|object"
-              }
-            },
-            {
-              "name": "panel",
-              "type": {
-                "text": "{width: number, height: number}"
-              }
-            },
-            {
-              "name": "viewport",
-              "type": {
-                "text": "{width: number, height: number}"
-              }
-            },
-            {
-              "name": "rtl",
-              "type": {
-                "text": "boolean"
-              }
-            }
-          ],
-          "description": "Where a submenu goes: beside its own item, on the inline end unless the edge is there,\nand running down from the item unless the bottom is.\n\nWhich is how a menu near the bottom right corner ends up opening up and to the left,\none decision per axis rather than a list of corners.",
-          "return": {
-            "type": {
-              "text": "{side: string, align: string}"
+              "text": "number"
             }
           }
         },
         {
           "kind": "class",
-          "description": "`<menu-elemental>` custom element.\n\nA button and the nested lists it opens, per the\n[APG Menu Button pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/) -\nwith one addition the APG has no opinion on, because it is a layout question:\nbelow a breakpoint the whole thing stops being a menu.\n\nThat is the `media` attribute, and it is the point of the element. A flyout is a\ndesktop object: it floats over the page, only one branch of it is open at a time,\narrows move between items because the items are not in the tab order. On a phone\nthe same markup wants to be a stack of nested disclosures inside a drawer - links\nyou tab through, submenus that stay open where you left them, no `role=\"menu\"` at\nall. Two widgets, one set of markup, and the viewport decides which one is on.\n\nWhich also means the ARIA changes with the mode, not just the CSS. `role=\"menu\"`\nis a promise that the arrow keys work and Tab does not, so making it while the\nitems are a plain tabbable list would be a lie told to exactly the readers who\ncannot see the layout that makes it obvious.\n\nponytail: not built on the Popover API. For a dropdown holding *links* it would be\nthe whole answer - Escape, light dismiss, focus return, tab order, all native, no\nscript - and `<disclosure-elemental>` plus `popover` is the better thing to reach\nfor there. A menu has to own focus anyway for the roving tabindex and the\ntype-ahead, so popover would save the small half of the work and cost the inline\nmode, which cannot be in the top layer.\n\nLight DOM, no shadow root, and nothing is moved or wrapped.",
-          "name": "MenuElemental",
+          "description": "`<disclosure-elemental>` custom element.\n\nA real `<button>` wired to a region it shows and hides, per the\n[APG Disclosure pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/).\n\nNative `<details>`/`<summary>` is a disclosure already, and where it fits it wins -\n`<accordion-elemental>` is built on it for exactly that reason. It fits when the\nregion can live *inside* the trigger's element. This element is for when it cannot:\na `<figcaption>`, which HTML requires to be a child of its `<figure>`; a table row;\na grid or flex item whose parent lays it out directly; a panel on the other side of\nthe page from the button that opens it. Wrapping any of those in a `<details>`\nmoves them out of the parent that gives them meaning.\n\nWhat it does, and nothing more: keeps `aria-expanded` on the button and `hidden` on\nthe region in step, points one at the other with `aria-controls`, re-opens on\n`beforematch` so find-in-page still finds what is inside, and slides the region's\nheight on the way in and out.\n\nLight DOM, no shadow root, and nothing is moved or wrapped - the region stays\nexactly where the markup put it, which is the whole point.",
+          "name": "DisclosureElemental",
           "cssProperties": [
             {
               "type": {
                 "text": "<length>"
               },
-              "description": "Corner radius of a flyout list.",
-              "name": "--menu-elemental-radius",
-              "default": "0.375rem"
-            },
-            {
-              "type": {
-                "text": "<length>"
-              },
-              "description": "Padding inside a list, and around each item.",
-              "name": "--menu-elemental-inset",
-              "default": "0.35rem"
-            },
-            {
-              "type": {
-                "text": "<length>"
-              },
-              "description": "The caret on an item that opens a submenu.",
-              "name": "--menu-elemental-caret-size",
-              "default": "0.75em"
-            },
-            {
-              "type": {
-                "text": "<length>"
-              },
-              "description": "The generated hamburger icon.",
-              "name": "--menu-elemental-hamburger-size",
-              "default": "1.25em"
-            },
-            {
-              "type": {
-                "text": "<color>"
-              },
-              "description": "What a flyout list is painted on. The page's own background, so re-point it on a card.",
-              "name": "--menu-elemental-surface",
-              "default": "Canvas"
-            },
-            {
-              "type": {
-                "text": "<color>"
-              },
-              "description": "Item background under the pointer, and while focused.",
-              "name": "--menu-elemental-hover",
-              "default": "color-mix(in srgb, currentcolor 10%, transparent)"
-            },
-            {
-              "type": {
-                "text": "<color>"
-              },
-              "description": "The rim around a flyout list.",
-              "name": "--menu-elemental-border",
-              "default": "color-mix(in srgb, currentcolor 20%, transparent)"
+              "description": "Caret size, on the caret look.",
+              "name": "--disclosure-elemental-caret-size",
+              "default": "1em"
             }
           ],
           "slots": [
             {
-              "description": "The `<button>` that opens it, and the `<ul>` it opens - submenus nested in their own `<li>`.",
+              "description": "The `<button>` that toggles, and - unless `for` points elsewhere - the region right after it.",
               "name": ""
             }
           ],
           "members": [
             {
               "kind": "field",
-              "name": "hover",
-              "description": "Whether a mouse opens the menu by pointing at it rather than by clicking.\n\nOpt-in, and only ever an addition: click, Enter and the arrow keys are what the\npattern promises, and a menu nobody can open without a steady hand is not one. Off\nfor touch, where there is no hovering to do and the first tap would open and pick\nin one gesture, and off inline, where the branches are stacked in the page and a\npointer crossing the stack would open every one it passed."
-            },
-            {
-              "kind": "field",
               "name": "button",
-              "description": "The `<button>` that opens the root list. Direct child, so a submenu's trigger -\nor a nested menu's button - is not mistaken for it.",
+              "description": "The `<button>` that toggles the region. Direct child, so a button inside the\nregion - or inside a nested disclosure - is not mistaken for the trigger.",
               "readonly": true
             },
             {
               "kind": "field",
-              "name": "menu",
-              "description": "The root list.",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "menus",
-              "description": "Every list in this menu, root first. A nested `<menu-elemental>` keeps its own.",
+              "name": "region",
+              "description": "The region the button shows and hides: what `for` names, else the button's\nnext sibling.",
               "readonly": true
             },
             {
               "kind": "field",
               "name": "open",
-              "description": "Whether the root list is showing. Reflected, so `[open]` is a styling hook too."
-            },
-            {
-              "kind": "field",
-              "name": "inline",
-              "description": "Whether this is currently the stack-of-disclosures rather than the flyout: a\n`media` that is not matching right now. No `media` at all means a menu that is\na menu at every width, which is what a menu button is when nothing says otherwise.",
-              "readonly": true
-            },
-            {
-              "kind": "method",
-              "name": "itemsOf",
-              "parameters": [
-                {
-                  "name": "menu"
-                }
-              ],
-              "description": "The items of one list: what its `<li>`s hold, and not what its submenus do."
-            },
-            {
-              "kind": "method",
-              "name": "menuOf",
-              "parameters": [
-                {
-                  "name": "item"
-                }
-              ],
-              "description": "The list an item belongs to."
-            },
-            {
-              "kind": "method",
-              "name": "submenuOf",
-              "parameters": [
-                {
-                  "name": "item"
-                }
-              ],
-              "description": "The list an item opens, if it opens one."
-            },
-            {
-              "kind": "method",
-              "name": "triggerOf",
-              "parameters": [
-                {
-                  "name": "menu"
-                }
-              ],
-              "description": "The item that opens a list. For a submenu that is the item beside it in the same\n`<li>`; for the root list the element's own button, which is the same query one\nlevel up."
-            },
-            {
-              "kind": "method",
-              "name": "isOpen",
-              "parameters": [
-                {
-                  "name": "menu"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "navigable",
-              "parameters": [
-                {
-                  "name": "menu"
-                }
-              ],
-              "description": "The items the arrows walk from here.\n\nA flyout is walked one list at a time - the submenu is a separate surface and\nLeft/Right are how you cross between them. Inline there are no surfaces: the\nopen submenus are on screen, in the flow, and stopping at the edge of a list the\nreader is looking straight through would be arbitrary."
-            },
-            {
-              "kind": "method",
-              "name": "visibleItems",
-              "parameters": [
-                {
-                  "name": "menu"
-                }
-              ],
-              "description": "Every item on screen from `menu` down, in the order they are rendered."
-            },
-            {
-              "kind": "method",
-              "name": "watchMedia"
-            },
-            {
-              "kind": "method",
-              "name": "onMediaChange"
-            },
-            {
-              "kind": "method",
-              "name": "wire",
-              "description": "Put the current mode's roles on the markup: a menu with items that are not in the\ntab order, or a set of nested disclosures that are nothing but an ordinary list.\n\n`aria-controls` and `aria-expanded` are the only two that survive the switch,\nbecause they are true of both - a button that shows and hides a thing, and which\nthing it is."
+              "description": "Whether the region is showing. Reflected, so `[open]` is a styling hook too."
             },
             {
               "kind": "method",
               "name": "apply",
-              "description": "Push the root list's state onto it and its button."
-            },
-            {
-              "kind": "method",
-              "name": "place",
               "parameters": [
                 {
-                  "name": "menu"
+                  "name": "animate",
+                  "default": "false",
+                  "optional": true,
+                  "type": {
+                    "text": "boolean"
+                  }
                 }
               ],
-              "description": "Point a list at whichever corner it fits in, and write that on it so the stylesheet\ncan put it there - the same trade as `data-mode`, and for the same reason: the\nmeasuring is the element's, the positioning is CSS's.\n\nMeasured from the preferred placement rather than from wherever the last flip left\nit, so a panel does not decide where to go from a position it only has because it\nwent there last time.\n\nThe carets read this back too: a submenu that opened to the left is announced by an\narrow that points left, which no `position-try` fallback can say."
-            },
-            {
-              "kind": "method",
-              "name": "placeOpen",
-              "description": "Re-place every open list. The viewport moved under them."
-            },
-            {
-              "kind": "method",
-              "name": "setSubmenu",
-              "parameters": [
-                {
-                  "name": "trigger"
-                },
-                {
-                  "name": "open"
-                }
-              ],
-              "description": "Show or hide one submenu.\n\nFloating, the branches overlap, so opening one closes its siblings - that is what\nmakes a flyout readable. Inline they are stacked in the flow and closing a branch\nthe reader opened on purpose only loses their place."
-            },
-            {
-              "kind": "method",
-              "name": "closeSubmenus",
-              "parameters": [
-                {
-                  "name": "menu"
-                }
-              ],
-              "description": "Close every open branch below a list, deepest first."
-            },
-            {
-              "kind": "method",
-              "name": "closeAll"
-            },
-            {
-              "kind": "method",
-              "name": "focusItem",
-              "parameters": [
-                {
-                  "name": "menu"
-                },
-                {
-                  "name": "index"
-                }
-              ],
-              "description": "Move focus to one item of a list, counting from the end for a negative index -\n`-1` is the last item, which is where Up on the closed button lands."
-            },
-            {
-              "kind": "method",
-              "name": "itemFor",
-              "parameters": [
-                {
-                  "name": "e"
-                }
-              ],
-              "description": "The item this event happened on, or null for anything outside this menu."
+              "description": "Push the current state onto the button and the region, sliding the region's height\non the way if asked to.\n\n`animate` is off by default, because most of what lands here is not a state change\nto animate: the state a page loads with is where the region starts, and one the\nbrowser has already put on screen for find-in-page is already there."
             },
             {
               "kind": "method",
@@ -570,69 +310,16 @@
             },
             {
               "kind": "method",
-              "name": "onPointerOver",
-              "parameters": [
-                {
-                  "name": "e"
-                }
-              ],
-              "description": "Point at it and it opens: the root list from the button, a branch from its own\nitem, and a branch closed again by pointing at any other item of the same list -\nwhich is the sibling rule `setSubmenu` already keeps for clicks.\n\n`pointerover` rather than `pointerenter` because it bubbles, so one listener covers\nevery item; mouse only, because a touch \"hover\" is the tap that was about to pick\nsomething."
-            },
-            {
-              "kind": "method",
-              "name": "onPointerLeave",
-              "parameters": [
-                {
-                  "name": "e"
-                }
-              ],
-              "description": "The pointer has left the whole element, so the menu closes - after a beat, because\nthe gap between a button and its panel, or between a panel and the one beside it,\nis a place the pointer passes through rather than a place it means to be."
-            },
-            {
-              "kind": "method",
-              "name": "onKeyDown",
-              "parameters": [
-                {
-                  "name": "e"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "closeBranch",
-              "parameters": [
-                {
-                  "name": "menu"
-                }
-              ],
-              "description": "Close the list focus is in and hand focus back to whatever opened it - a submenu\ngoes back to its trigger, the root list back to the button."
-            },
-            {
-              "kind": "method",
-              "name": "onFocusOut",
-              "parameters": [
-                {
-                  "name": "e"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "onDocumentClick",
-              "parameters": [
-                {
-                  "name": "e"
-                }
-              ]
+              "name": "onBeforeMatch"
             }
           ],
           "events": [
             {
-              "name": "menu-toggle",
+              "name": "disclosure-toggle",
               "type": {
                 "text": "CustomEvent"
               },
-              "description": "`detail.menu` is the list that opened or closed, `detail.open` which way it went."
+              "description": "`detail.region` is the element being shown or hidden, `detail.open` its new state."
             }
           ],
           "attributes": [
@@ -641,64 +328,48 @@
               "type": {
                 "text": "boolean"
               },
-              "description": "Whether the root list is showing. Reflected, so `[open]` is a styling hook.",
+              "description": "Whether the region is showing. Reflected - it tracks the live state.",
               "default": "false"
             },
             {
-              "name": "media",
               "type": {
                 "text": "string"
               },
-              "description": "The media query the flyout exists in. Outside it, nested disclosures. Unset means a menu at every width."
-            },
-            {
-              "type": {
-                "text": "boolean"
-              },
-              "description": "A mouse also opens it by pointing at it. Never on touch, never inline.",
-              "name": "hover",
-              "default": "false"
+              "description": "`id` of the region. Defaults to the button's next element sibling.",
+              "name": "for"
             }
           ],
           "superclass": {
             "name": "ElementBase",
             "module": "/src/core.js"
           },
-          "tagName": "menu-elemental",
+          "tagName": "disclosure-elemental",
           "customElement": true
         }
       ],
       "exports": [
         {
           "kind": "js",
-          "name": "typeAheadIndex",
+          "name": "disclosureState",
           "declaration": {
-            "name": "typeAheadIndex",
-            "module": "src/elementals/menu/index.js"
+            "name": "disclosureState",
+            "module": "src/elementals/disclosure/index.js"
           }
         },
         {
           "kind": "js",
-          "name": "placeFlyout",
+          "name": "slideFrom",
           "declaration": {
-            "name": "placeFlyout",
-            "module": "src/elementals/menu/index.js"
+            "name": "slideFrom",
+            "module": "src/elementals/disclosure/index.js"
           }
         },
         {
           "kind": "js",
-          "name": "placeSubmenu",
+          "name": "DisclosureElemental",
           "declaration": {
-            "name": "placeSubmenu",
-            "module": "src/elementals/menu/index.js"
-          }
-        },
-        {
-          "kind": "js",
-          "name": "MenuElemental",
-          "declaration": {
-            "name": "MenuElemental",
-            "module": "src/elementals/menu/index.js"
+            "name": "DisclosureElemental",
+            "module": "src/elementals/disclosure/index.js"
           }
         }
       ]
@@ -1232,189 +903,6 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/elementals/disclosure/index.js",
-      "declarations": [
-        {
-          "kind": "function",
-          "name": "disclosureState",
-          "parameters": [
-            {
-              "name": "open",
-              "type": {
-                "text": "boolean"
-              }
-            }
-          ],
-          "description": "The state a disclosure's button and region carry, for a given open state.\n\n`until-found` rather than a bare `hidden` because it is the platform's own answer\nto the oldest problem with hiding content: find-in-page and a link to a fragment\ninside the region still reveal it, and the reveal comes back as `beforematch`.\nBrowsers without it read any value at all as plain hidden, which is the same\ncontent, just not found.",
-          "return": {
-            "type": {
-              "text": "{expanded: string, hidden: string|null}"
-            }
-          }
-        },
-        {
-          "kind": "function",
-          "name": "slideFrom",
-          "parameters": [
-            {
-              "name": "open",
-              "description": "The state being moved to.",
-              "type": {
-                "text": "boolean"
-              }
-            },
-            {
-              "name": "hidden",
-              "description": "Whether the region is hidden right now.",
-              "type": {
-                "text": "boolean"
-              }
-            },
-            {
-              "name": "height",
-              "description": "Its rendered height right now.",
-              "type": {
-                "text": "number"
-              }
-            }
-          ],
-          "description": "The height, in pixels, a slide of the region starts from.\n\nZero only when opening a region that is currently hidden, because that is the one case\nwith no height to read: `hidden=\"until-found\"` sizes the box as if it were empty.\nEverything else is a region already on screen - one being closed, or one caught\nmid-slide and sent back the other way - and its rendered height is the honest start.\nWhich is also why the measurement has to happen *before* unhiding: after, the region\nis at full height and a slide that starts where it ends is not a slide.",
-          "return": {
-            "type": {
-              "text": "number"
-            }
-          }
-        },
-        {
-          "kind": "class",
-          "description": "`<disclosure-elemental>` custom element.\n\nA real `<button>` wired to a region it shows and hides, per the\n[APG Disclosure pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/).\n\nNative `<details>`/`<summary>` is a disclosure already, and where it fits it wins -\n`<accordion-elemental>` is built on it for exactly that reason. It fits when the\nregion can live *inside* the trigger's element. This element is for when it cannot:\na `<figcaption>`, which HTML requires to be a child of its `<figure>`; a table row;\na grid or flex item whose parent lays it out directly; a panel on the other side of\nthe page from the button that opens it. Wrapping any of those in a `<details>`\nmoves them out of the parent that gives them meaning.\n\nWhat it does, and nothing more: keeps `aria-expanded` on the button and `hidden` on\nthe region in step, points one at the other with `aria-controls`, re-opens on\n`beforematch` so find-in-page still finds what is inside, and slides the region's\nheight on the way in and out.\n\nLight DOM, no shadow root, and nothing is moved or wrapped - the region stays\nexactly where the markup put it, which is the whole point.",
-          "name": "DisclosureElemental",
-          "cssProperties": [
-            {
-              "type": {
-                "text": "<length>"
-              },
-              "description": "Caret size, on the caret look.",
-              "name": "--disclosure-elemental-caret-size",
-              "default": "1em"
-            }
-          ],
-          "slots": [
-            {
-              "description": "The `<button>` that toggles, and - unless `for` points elsewhere - the region right after it.",
-              "name": ""
-            }
-          ],
-          "members": [
-            {
-              "kind": "field",
-              "name": "button",
-              "description": "The `<button>` that toggles the region. Direct child, so a button inside the\nregion - or inside a nested disclosure - is not mistaken for the trigger.",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "region",
-              "description": "The region the button shows and hides: what `for` names, else the button's\nnext sibling.",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "open",
-              "description": "Whether the region is showing. Reflected, so `[open]` is a styling hook too."
-            },
-            {
-              "kind": "method",
-              "name": "apply",
-              "parameters": [
-                {
-                  "name": "animate",
-                  "default": "false",
-                  "optional": true,
-                  "type": {
-                    "text": "boolean"
-                  }
-                }
-              ],
-              "description": "Push the current state onto the button and the region, sliding the region's height\non the way if asked to.\n\n`animate` is off by default, because most of what lands here is not a state change\nto animate: the state a page loads with is where the region starts, and one the\nbrowser has already put on screen for find-in-page is already there."
-            },
-            {
-              "kind": "method",
-              "name": "onClick",
-              "parameters": [
-                {
-                  "name": "e"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "onBeforeMatch"
-            }
-          ],
-          "events": [
-            {
-              "name": "disclosure-toggle",
-              "type": {
-                "text": "CustomEvent"
-              },
-              "description": "`detail.region` is the element being shown or hidden, `detail.open` its new state."
-            }
-          ],
-          "attributes": [
-            {
-              "name": "open",
-              "type": {
-                "text": "boolean"
-              },
-              "description": "Whether the region is showing. Reflected - it tracks the live state.",
-              "default": "false"
-            },
-            {
-              "type": {
-                "text": "string"
-              },
-              "description": "`id` of the region. Defaults to the button's next element sibling.",
-              "name": "for"
-            }
-          ],
-          "superclass": {
-            "name": "ElementBase",
-            "module": "/src/core.js"
-          },
-          "tagName": "disclosure-elemental",
-          "customElement": true
-        }
-      ],
-      "exports": [
-        {
-          "kind": "js",
-          "name": "disclosureState",
-          "declaration": {
-            "name": "disclosureState",
-            "module": "src/elementals/disclosure/index.js"
-          }
-        },
-        {
-          "kind": "js",
-          "name": "slideFrom",
-          "declaration": {
-            "name": "slideFrom",
-            "module": "src/elementals/disclosure/index.js"
-          }
-        },
-        {
-          "kind": "js",
-          "name": "DisclosureElemental",
-          "declaration": {
-            "name": "DisclosureElemental",
-            "module": "src/elementals/disclosure/index.js"
-          }
-        }
-      ]
-    },
-    {
-      "kind": "javascript-module",
       "path": "src/elementals/switch/index.js",
       "declarations": [
         {
@@ -1803,6 +1291,839 @@
           "declaration": {
             "name": "SwitchElemental",
             "module": "src/elementals/switch/index.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/menu/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "typeAheadIndex",
+          "parameters": [
+            {
+              "name": "labels",
+              "description": "The items' text, in menu order.",
+              "type": {
+                "text": "string[]"
+              }
+            },
+            {
+              "name": "current",
+              "description": "Index of the focused item, `-1` for none.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "buffer",
+              "description": "What has been typed inside the type-ahead window.",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "description": "Where a type-ahead lands in a menu, given what has been typed so far.\n\nTwo rules that look like edge cases and are not. Holding or repeating one letter\ncycles the items starting with it - `aaa` is someone pressing `a` three times\nlooking for the next \"Archive\", not an item named \"aaa\". And a search that is one\ncharacter long starts *after* the focused item, so pressing that letter again moves\non, while a buffer still being typed starts *at* it, so the match narrows onto the\nitem the reader is already on instead of skipping past it.",
+          "return": {
+            "type": {
+              "text": "number|null"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "placeFlyout",
+          "parameters": [
+            {
+              "name": "trigger",
+              "description": "Rect of the button, in viewport coordinates.",
+              "type": {
+                "text": "DOMRect|object"
+              }
+            },
+            {
+              "name": "panel",
+              "description": "Size of the list.",
+              "type": {
+                "text": "{width: number, height: number}"
+              }
+            },
+            {
+              "name": "viewport",
+              "type": {
+                "text": "{width: number, height: number}"
+              }
+            },
+            {
+              "name": "rtl",
+              "description": "Whether the menu runs right to left.",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "Where the root list goes: under the button, or over it when there is no room under;\nand running from the button's inline start, or back the other way when that would take\nit off the edge.\n\nThe preferred placement wins ties and wins when neither fits, because a panel with\nnowhere good to go should at least land where the reader expects it.",
+          "return": {
+            "type": {
+              "text": "{side: string, align: string}"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "placeSubmenu",
+          "parameters": [
+            {
+              "name": "item",
+              "description": "Rect of the item that opens it.",
+              "type": {
+                "text": "DOMRect|object"
+              }
+            },
+            {
+              "name": "panel",
+              "type": {
+                "text": "{width: number, height: number}"
+              }
+            },
+            {
+              "name": "viewport",
+              "type": {
+                "text": "{width: number, height: number}"
+              }
+            },
+            {
+              "name": "rtl",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "Where a submenu goes: beside its own item, on the inline end unless the edge is there,\nand running down from the item unless the bottom is.\n\nWhich is how a menu near the bottom right corner ends up opening up and to the left,\none decision per axis rather than a list of corners.",
+          "return": {
+            "type": {
+              "text": "{side: string, align: string}"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<menu-elemental>` custom element.\n\nA button and the nested lists it opens, per the\n[APG Menu Button pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/) -\nwith one addition the APG has no opinion on, because it is a layout question:\nbelow a breakpoint the whole thing stops being a menu.\n\nThat is the `media` attribute, and it is the point of the element. A flyout is a\ndesktop object: it floats over the page, only one branch of it is open at a time,\narrows move between items because the items are not in the tab order. On a phone\nthe same markup wants to be a stack of nested disclosures inside a drawer - links\nyou tab through, submenus that stay open where you left them, no `role=\"menu\"` at\nall. Two widgets, one set of markup, and the viewport decides which one is on.\n\nWhich also means the ARIA changes with the mode, not just the CSS. `role=\"menu\"`\nis a promise that the arrow keys work and Tab does not, so making it while the\nitems are a plain tabbable list would be a lie told to exactly the readers who\ncannot see the layout that makes it obvious.\n\nponytail: not built on the Popover API. For a dropdown holding *links* it would be\nthe whole answer - Escape, light dismiss, focus return, tab order, all native, no\nscript - and `<disclosure-elemental>` plus `popover` is the better thing to reach\nfor there. A menu has to own focus anyway for the roving tabindex and the\ntype-ahead, so popover would save the small half of the work and cost the inline\nmode, which cannot be in the top layer.\n\nLight DOM, no shadow root, and nothing is moved or wrapped.",
+          "name": "MenuElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Corner radius of a flyout list.",
+              "name": "--menu-elemental-radius",
+              "default": "0.375rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Padding inside a list, and around each item.",
+              "name": "--menu-elemental-inset",
+              "default": "0.35rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "The caret on an item that opens a submenu.",
+              "name": "--menu-elemental-caret-size",
+              "default": "0.75em"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "The generated hamburger icon.",
+              "name": "--menu-elemental-hamburger-size",
+              "default": "1.25em"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "What a flyout list is painted on. The page's own background, so re-point it on a card.",
+              "name": "--menu-elemental-surface",
+              "default": "Canvas"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Item background under the pointer, and while focused.",
+              "name": "--menu-elemental-hover",
+              "default": "color-mix(in srgb, currentcolor 10%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The rim around a flyout list.",
+              "name": "--menu-elemental-border",
+              "default": "color-mix(in srgb, currentcolor 20%, transparent)"
+            }
+          ],
+          "slots": [
+            {
+              "description": "The `<button>` that opens it, and the `<ul>` it opens - submenus nested in their own `<li>`.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "hover",
+              "description": "Whether a mouse opens the menu by pointing at it rather than by clicking.\n\nOpt-in, and only ever an addition: click, Enter and the arrow keys are what the\npattern promises, and a menu nobody can open without a steady hand is not one. Off\nfor touch, where there is no hovering to do and the first tap would open and pick\nin one gesture, and off inline, where the branches are stacked in the page and a\npointer crossing the stack would open every one it passed."
+            },
+            {
+              "kind": "field",
+              "name": "button",
+              "description": "The `<button>` that opens the root list. Direct child, so a submenu's trigger -\nor a nested menu's button - is not mistaken for it.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "menu",
+              "description": "The root list.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "menus",
+              "description": "Every list in this menu, root first. A nested `<menu-elemental>` keeps its own.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "open",
+              "description": "Whether the root list is showing. Reflected, so `[open]` is a styling hook too."
+            },
+            {
+              "kind": "field",
+              "name": "inline",
+              "description": "Whether this is currently the stack-of-disclosures rather than the flyout: a\n`media` that is not matching right now. No `media` at all means a menu that is\na menu at every width, which is what a menu button is when nothing says otherwise.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "itemsOf",
+              "parameters": [
+                {
+                  "name": "menu"
+                }
+              ],
+              "description": "The items of one list: what its `<li>`s hold, and not what its submenus do."
+            },
+            {
+              "kind": "method",
+              "name": "menuOf",
+              "parameters": [
+                {
+                  "name": "item"
+                }
+              ],
+              "description": "The list an item belongs to."
+            },
+            {
+              "kind": "method",
+              "name": "submenuOf",
+              "parameters": [
+                {
+                  "name": "item"
+                }
+              ],
+              "description": "The list an item opens, if it opens one."
+            },
+            {
+              "kind": "method",
+              "name": "triggerOf",
+              "parameters": [
+                {
+                  "name": "menu"
+                }
+              ],
+              "description": "The item that opens a list. For a submenu that is the item beside it in the same\n`<li>`; for the root list the element's own button, which is the same query one\nlevel up."
+            },
+            {
+              "kind": "method",
+              "name": "isOpen",
+              "parameters": [
+                {
+                  "name": "menu"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "navigable",
+              "parameters": [
+                {
+                  "name": "menu"
+                }
+              ],
+              "description": "The items the arrows walk from here.\n\nA flyout is walked one list at a time - the submenu is a separate surface and\nLeft/Right are how you cross between them. Inline there are no surfaces: the\nopen submenus are on screen, in the flow, and stopping at the edge of a list the\nreader is looking straight through would be arbitrary."
+            },
+            {
+              "kind": "method",
+              "name": "visibleItems",
+              "parameters": [
+                {
+                  "name": "menu"
+                }
+              ],
+              "description": "Every item on screen from `menu` down, in the order they are rendered."
+            },
+            {
+              "kind": "method",
+              "name": "watchMedia"
+            },
+            {
+              "kind": "method",
+              "name": "onMediaChange"
+            },
+            {
+              "kind": "method",
+              "name": "wire",
+              "description": "Put the current mode's roles on the markup: a menu with items that are not in the\ntab order, or a set of nested disclosures that are nothing but an ordinary list.\n\n`aria-controls` and `aria-expanded` are the only two that survive the switch,\nbecause they are true of both - a button that shows and hides a thing, and which\nthing it is."
+            },
+            {
+              "kind": "method",
+              "name": "apply",
+              "description": "Push the root list's state onto it and its button."
+            },
+            {
+              "kind": "method",
+              "name": "place",
+              "parameters": [
+                {
+                  "name": "menu"
+                }
+              ],
+              "description": "Point a list at whichever corner it fits in, and write that on it so the stylesheet\ncan put it there - the same trade as `data-mode`, and for the same reason: the\nmeasuring is the element's, the positioning is CSS's.\n\nMeasured from the preferred placement rather than from wherever the last flip left\nit, so a panel does not decide where to go from a position it only has because it\nwent there last time.\n\nThe carets read this back too: a submenu that opened to the left is announced by an\narrow that points left, which no `position-try` fallback can say."
+            },
+            {
+              "kind": "method",
+              "name": "placeOpen",
+              "description": "Re-place every open list. The viewport moved under them."
+            },
+            {
+              "kind": "method",
+              "name": "setSubmenu",
+              "parameters": [
+                {
+                  "name": "trigger"
+                },
+                {
+                  "name": "open"
+                }
+              ],
+              "description": "Show or hide one submenu.\n\nFloating, the branches overlap, so opening one closes its siblings - that is what\nmakes a flyout readable. Inline they are stacked in the flow and closing a branch\nthe reader opened on purpose only loses their place."
+            },
+            {
+              "kind": "method",
+              "name": "closeSubmenus",
+              "parameters": [
+                {
+                  "name": "menu"
+                }
+              ],
+              "description": "Close every open branch below a list, deepest first."
+            },
+            {
+              "kind": "method",
+              "name": "closeAll"
+            },
+            {
+              "kind": "method",
+              "name": "focusItem",
+              "parameters": [
+                {
+                  "name": "menu"
+                },
+                {
+                  "name": "index"
+                }
+              ],
+              "description": "Move focus to one item of a list, counting from the end for a negative index -\n`-1` is the last item, which is where Up on the closed button lands."
+            },
+            {
+              "kind": "method",
+              "name": "itemFor",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "The item this event happened on, or null for anything outside this menu."
+            },
+            {
+              "kind": "method",
+              "name": "onClick",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onPointerOver",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "Point at it and it opens: the root list from the button, a branch from its own\nitem, and a branch closed again by pointing at any other item of the same list -\nwhich is the sibling rule `setSubmenu` already keeps for clicks.\n\n`pointerover` rather than `pointerenter` because it bubbles, so one listener covers\nevery item; mouse only, because a touch \"hover\" is the tap that was about to pick\nsomething."
+            },
+            {
+              "kind": "method",
+              "name": "onPointerLeave",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "The pointer has left the whole element, so the menu closes - after a beat, because\nthe gap between a button and its panel, or between a panel and the one beside it,\nis a place the pointer passes through rather than a place it means to be."
+            },
+            {
+              "kind": "method",
+              "name": "onKeyDown",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "closeBranch",
+              "parameters": [
+                {
+                  "name": "menu"
+                }
+              ],
+              "description": "Close the list focus is in and hand focus back to whatever opened it - a submenu\ngoes back to its trigger, the root list back to the button."
+            },
+            {
+              "kind": "method",
+              "name": "onFocusOut",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onDocumentClick",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            }
+          ],
+          "events": [
+            {
+              "name": "menu-toggle",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "`detail.menu` is the list that opened or closed, `detail.open` which way it went."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "open",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether the root list is showing. Reflected, so `[open]` is a styling hook.",
+              "default": "false"
+            },
+            {
+              "name": "media",
+              "type": {
+                "text": "string"
+              },
+              "description": "The media query the flyout exists in. Outside it, nested disclosures. Unset means a menu at every width."
+            },
+            {
+              "type": {
+                "text": "boolean"
+              },
+              "description": "A mouse also opens it by pointing at it. Never on touch, never inline.",
+              "name": "hover",
+              "default": "false"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "menu-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "typeAheadIndex",
+          "declaration": {
+            "name": "typeAheadIndex",
+            "module": "src/elementals/menu/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "placeFlyout",
+          "declaration": {
+            "name": "placeFlyout",
+            "module": "src/elementals/menu/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "placeSubmenu",
+          "declaration": {
+            "name": "placeSubmenu",
+            "module": "src/elementals/menu/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MenuElemental",
+          "declaration": {
+            "name": "MenuElemental",
+            "module": "src/elementals/menu/index.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/tabs/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "tabKey",
+          "parameters": [
+            {
+              "name": "key",
+              "description": "KeyboardEvent.key value.",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "vertical",
+              "description": "Whether the tablist runs down the page.",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "Which of `nextIndex`'s keys an arrow means on this tablist's axis.\n\nA tablist answers to one axis and ignores the other - Left/Right on a horizontal one,\nUp/Down on a vertical one - which is the whole of what `aria-orientation` promises. So\nrather than a second key map, the axis is translated into the vertical vocabulary\n`nextIndex` already speaks, and the wrapping and the ends stay in one place for every\npattern in the book.",
+          "return": {
+            "type": {
+              "text": "string|null"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "selectedIndex",
+          "parameters": [
+            {
+              "name": "value",
+              "description": "The attribute, as authored.",
+              "type": {
+                "text": "string|null"
+              }
+            },
+            {
+              "name": "length",
+              "description": "How many tabs there are.",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "description": "Which tab the `selected` attribute is naming, given how many there are.\n\nEverything that is not an index in range is the first tab, because a tab set with\nnothing selected is not a state this pattern has: one tab is always current, and a\ntypo, a missing attribute or an index left behind by a tab that has since been removed\nall mean the same thing here.",
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<tabs-elemental>` custom element.\n\nA list of tabs and the panels they show, per the\n[APG Tabs pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), in both\norientations.\n\nThe markup it is written on is the markup the page would have had anyway: a list of\nin-page links, and the sections they point at. With no script that is exactly what it\nstill is - every panel on screen, every link jumping to one - which is why the panels\nare not authored `hidden`. The element is what turns the list into a tablist, and it is\nthe only thing that ever hides a panel.\n\nponytail: no `<dialog>`-style platform primitive to build on here, and no sliding\nindicator either. An indicator that follows the selected tab has to be measured every\ntime the strip reflows; a border on the selected tab needs no script at all and says\nthe same thing.\n\nLight DOM, no shadow root. Nothing is moved and nothing is wrapped - the panels stay\nwhere the markup put them, which is what lets a page lay them out with the element's\nown grid or with one of its own.",
+          "name": "TabsElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between the tabs.",
+              "name": "--tabs-elemental-gap",
+              "default": "0.25rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Padding inside a tab.",
+              "name": "--tabs-elemental-inset",
+              "default": "0.5rem 0.75rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between the tablist and the panel.",
+              "name": "--tabs-elemental-panel-inset",
+              "default": "1rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Corner radius of a tab.",
+              "name": "--tabs-elemental-radius",
+              "default": "0.375rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Thickness of the rule under the strip, and of the mark on the selected tab.",
+              "name": "--tabs-elemental-indicator-size",
+              "default": "2px"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "What marks the selected tab.",
+              "name": "--tabs-elemental-indicator",
+              "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The rule the tabs sit on.",
+              "name": "--tabs-elemental-border",
+              "default": "color-mix(in srgb, currentcolor 20%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Tab background under the pointer.",
+              "name": "--tabs-elemental-hover",
+              "default": "color-mix(in srgb, currentcolor 10%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Text of a tab that is not selected.",
+              "name": "--tabs-elemental-muted",
+              "default": "color-mix(in srgb, currentcolor 65%, transparent)"
+            }
+          ],
+          "slots": [
+            {
+              "description": "The `<ul>` of tabs, and the panels - one per tab, in the same order.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "tablist",
+              "description": "The tablist: the first list in the element. A nested `<tabs-elemental>` keeps its own.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "tabs",
+              "description": "The tabs, in order. What the `<li>`s hold, so a link inside a panel is not one.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "panels",
+              "description": "The panels, in tab order. A tab with nothing to show keeps its place as `null`.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "panelOf",
+              "parameters": [
+                {
+                  "name": "tab"
+                }
+              ],
+              "description": "The panel a tab shows: what its `aria-controls` or its own `#fragment` names, and\nfailing both, the child sitting in the same position.\n\nThe fragment is the one worth writing markup for. A tab authored as a link to its own\npanel is a working in-page link before this element exists and after it fails to\nupgrade, and it means the relationship is stated once rather than in an `id` and an\n`aria-controls` that can drift apart."
+            },
+            {
+              "kind": "field",
+              "name": "selected",
+              "description": "Index of the selected tab. Reflected, so `[selected]` is a styling hook too."
+            },
+            {
+              "kind": "field",
+              "name": "vertical",
+              "description": "Whether the tablist runs down the page. The arrow keys go with it."
+            },
+            {
+              "kind": "field",
+              "name": "manual",
+              "description": "Whether moving focus along the tablist also selects.\n\nAutomatic is the default because it is what the APG recommends wherever showing a\npanel is instant, which it is when the panel is already in the page. `manual` is for\nthe case that is not: a panel whose content arrives over the network, where arrowing\npast four tabs would start four requests nobody asked for."
+            },
+            {
+              "kind": "method",
+              "name": "release",
+              "parameters": [
+                {
+                  "name": "panel"
+                }
+              ],
+              "description": "Take everything this element wrote back off a panel, and hand it to the page as it\nwas found."
+            },
+            {
+              "kind": "method",
+              "name": "wire",
+              "description": "Read the markup and put the pattern on it - the roles, the pairings, the ids either\nside of them - then push the current state through `apply`.\n\nPublic and idempotent, because the tabs are the page's to change: add one, remove one,\nswap the labels, and this is the one call that says so. Nothing observes the markup on\nthe element's behalf, which would be a `MutationObserver` running on every page that\nnever touches its tabs to save this one line on the pages that do."
+            },
+            {
+              "kind": "method",
+              "name": "apply",
+              "description": "Push the selection onto the tabs and their panels.\n\nThe roving tabindex is the half of this that is easy to miss: a tab strip is one stop\non the way through the page, not one stop per tab, so the selected tab is the only one\n`Tab` can land on and the arrows do the rest."
+            },
+            {
+              "kind": "method",
+              "name": "tabFor",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "The tab this event happened on, or null for anything else - a link inside a panel,\nor a nested tab set's."
+            },
+            {
+              "kind": "method",
+              "name": "onClick",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onKeyDown",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onHashChange"
+            },
+            {
+              "kind": "method",
+              "name": "onBeforeMatch",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "selectFromHash",
+              "description": "Select the tab whose panel holds the element the URL fragment points at, so a link\ninto a panel lands on it showing. Which is also the no-script story arriving: the tabs\nare in-page links, and following one before this element upgrades leaves exactly this\nfragment in the URL."
+            }
+          ],
+          "events": [
+            {
+              "name": "tabs-select",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "`detail.tab` is the tab now selected, `detail.panel` what it shows, `detail.index` where it is."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "selected",
+              "type": {
+                "text": "number"
+              },
+              "description": "Index of the selected tab. Reflected, so `[selected]` is a styling hook.",
+              "default": "0"
+            },
+            {
+              "name": "vertical",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "The tablist runs down the page rather than across it. Swaps the arrow keys with it.",
+              "default": "false"
+            },
+            {
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Arrows move focus without selecting; Enter or Space selects. Automatic otherwise.",
+              "name": "manual",
+              "default": "false"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "tabs-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "tabKey",
+          "declaration": {
+            "name": "tabKey",
+            "module": "src/elementals/tabs/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "selectedIndex",
+          "declaration": {
+            "name": "selectedIndex",
+            "module": "src/elementals/tabs/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "TabsElemental",
+          "declaration": {
+            "name": "TabsElemental",
+            "module": "src/elementals/tabs/index.js"
           }
         }
       ]

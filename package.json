@@ -42,6 +42,12 @@
     "./switch/style.css": "./dist/elementals/switch.css",
     "./switch/theme.scss": "./src/elementals/switch/theme.scss",
     "./switch/theme.css": "./dist/elementals/switch-theme.css",
+    "./tabs": "./src/elementals/tabs/index.js",
+    "./tabs/manifest": "./dist/elementals/tabs-manifest.json",
+    "./tabs/style.scss": "./src/elementals/tabs/index.scss",
+    "./tabs/style.css": "./dist/elementals/tabs.css",
+    "./tabs/theme.scss": "./src/elementals/tabs/theme.scss",
+    "./tabs/theme.css": "./dist/elementals/tabs-theme.css",
     "./styles/*": "./src/styles/*",
     "./dist/*": "./dist/*",
     "./package.json": "./package.json"
@@ -76,6 +82,8 @@
     "navigation",
     "switch",
     "toggle",
+    "tabs",
+    "tablist",
     "details",
     "javascript",
     "esm"

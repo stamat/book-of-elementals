@@ -1,0 +1,126 @@
+// Optional look for `<tabs-elemental>`. Not part of the element's own stylesheet and not in
+// its bundle: that one styles structure only, and a light-DOM element cannot scope a look
+// away from a page that did not ask for one. Import this when you want the look, skip it
+// when you do not.
+// Colors are mixed out of `currentcolor` rather than hard-coded, so the strip sits in
+// whatever palette the page already has - including a theme switch - with nothing to
+// configure.
+
+// The selected tab is marked with a border rather than with a bar that slides between them.
+// A sliding one has to be measured after every reflow - a webfont landing, a label
+// translated, the strip wrapping - and a border needs no script and never disagrees with
+// where the tab actually is.
+
+tabs-elemental {
+  --tabs-elemental-gap: 0.25rem;
+  --tabs-elemental-inset: 0.5rem 0.75rem;
+  --tabs-elemental-panel-inset: 1rem;
+  --tabs-elemental-radius: 0.375rem;
+  --tabs-elemental-indicator-size: 2px;
+  --tabs-elemental-indicator: currentcolor;
+  --tabs-elemental-border: color-mix(in srgb, currentcolor 20%, transparent);
+  --tabs-elemental-hover: color-mix(in srgb, currentcolor 10%, transparent);
+  --tabs-elemental-muted: color-mix(in srgb, currentcolor 65%, transparent);
+}
+
+// The strip, and the rule the tabs sit on. It wraps rather than scrolling, and that is not a
+// preference: the selected tab's mark is drawn in the strip's own border band, 2px outside
+// its padding box, and a scroll container clips exactly there. Scrolling the strip would put
+// the mark in the scrollable overflow instead of over the rule - a scrollbar down the side of
+// a tab strip, and a selected tab with nothing marking it.
+tabs-elemental > [data-tabs-list] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tabs-elemental-gap);
+  border-block-end: var(--tabs-elemental-indicator-size) solid var(--tabs-elemental-border);
+}
+
+tabs-elemental > [data-tabs-list] > li > a,
+tabs-elemental > [data-tabs-list] > li > button {
+  display: block;
+  padding: var(--tabs-elemental-inset);
+  font: inherit;
+  color: var(--tabs-elemental-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  background: none;
+  border: 0;
+
+  // The mark on the selected tab is this border filled in, and the strip's own rule is what
+  // it sits on - so the tab is pulled down over the rule by exactly its thickness, and the
+  // two are one line rather than two stacked ones.
+  border-block-end: var(--tabs-elemental-indicator-size) solid transparent;
+  border-start-start-radius: var(--tabs-elemental-radius);
+  border-start-end-radius: var(--tabs-elemental-radius);
+  margin-block-end: calc(-1 * var(--tabs-elemental-indicator-size));
+
+  &:hover {
+    background: var(--tabs-elemental-hover);
+  }
+}
+
+tabs-elemental > [data-tabs-list] > li > [aria-selected="true"] {
+  color: inherit;
+  border-block-end-color: var(--tabs-elemental-indicator);
+}
+
+// Forced colors repaints text and borders in system colors, and a selected tab whose mark is
+// the only thing telling it apart needs one that survives that.
+@media (forced-colors: active) {
+  tabs-elemental > [data-tabs-list] > li > [aria-selected="true"] {
+    border-block-end-color: Highlight;
+  }
+}
+
+tabs-elemental > [data-tabs-panel] {
+  padding-block-start: var(--tabs-elemental-panel-inset);
+}
+
+// A panel given a tab stop of its own - the element does that only when there is nothing
+// focusable inside it - is a panel that can take focus, and focus with no ring is focus
+// nowhere. `:focus-visible`, so a click on the panel does not draw one.
+tabs-elemental > [data-tabs-panel][tabindex]:focus-visible {
+  outline: 2px solid var(--tabs-elemental-indicator);
+  outline-offset: 2px;
+}
+
+// ---- Vertical ----
+// The same rule and the same mark turned a quarter turn: the strip's border runs down its
+// inline end, and the selected tab's mark sits on it.
+tabs-elemental[vertical] > [data-tabs-list] {
+  // `nowrap` because the strip stretches to the panel's height: wrapping down here would
+  // break a long set of tabs into a second column beside the first rather than letting it
+  // run past the panel.
+  flex-flow: column nowrap;
+  border-block-end: 0;
+  border-inline-end: var(--tabs-elemental-indicator-size) solid var(--tabs-elemental-border);
+}
+
+tabs-elemental[vertical] > [data-tabs-list] > li > a,
+tabs-elemental[vertical] > [data-tabs-list] > li > button {
+  border-block-end: 0;
+  border-inline-end: var(--tabs-elemental-indicator-size) solid transparent;
+
+  // The rounded corners move with the mark: away from the rule, which is now down the tab's
+  // inline end rather than under it. Logical, so RTL turns the whole strip around.
+  border-start-end-radius: 0;
+  border-end-start-radius: var(--tabs-elemental-radius);
+  margin-block-end: 0;
+  margin-inline-end: calc(-1 * var(--tabs-elemental-indicator-size));
+}
+
+tabs-elemental[vertical] > [data-tabs-list] > li > [aria-selected="true"] {
+  border-inline-end-color: var(--tabs-elemental-indicator);
+}
+
+@media (forced-colors: active) {
+  tabs-elemental[vertical] > [data-tabs-list] > li > [aria-selected="true"] {
+    border-inline-end-color: Highlight;
+  }
+}
+
+tabs-elemental[vertical] > [data-tabs-panel] {
+  padding-block-start: 0;
+  padding-inline-start: var(--tabs-elemental-panel-inset);
+}
