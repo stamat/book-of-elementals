@@ -915,721 +915,6 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/elementals/tabs/index.js",
-      "declarations": [
-        {
-          "kind": "function",
-          "name": "tabKey",
-          "parameters": [
-            {
-              "name": "key",
-              "description": "KeyboardEvent.key value.",
-              "type": {
-                "text": "string"
-              }
-            },
-            {
-              "name": "vertical",
-              "description": "Whether the tablist runs down the page.",
-              "type": {
-                "text": "boolean"
-              }
-            }
-          ],
-          "description": "Which of `nextIndex`'s keys an arrow means on this tablist's axis.\n\nA tablist answers to one axis and ignores the other - Left/Right on a horizontal one,\nUp/Down on a vertical one - which is the whole of what `aria-orientation` promises. So\nrather than a second key map, the axis is translated into the vertical vocabulary\n`nextIndex` already speaks, and the wrapping and the ends stay in one place for every\npattern in the book.",
-          "return": {
-            "type": {
-              "text": "string|null"
-            }
-          }
-        },
-        {
-          "kind": "function",
-          "name": "selectedIndex",
-          "parameters": [
-            {
-              "name": "value",
-              "description": "The attribute, as authored.",
-              "type": {
-                "text": "string|null"
-              }
-            },
-            {
-              "name": "length",
-              "description": "How many tabs there are.",
-              "type": {
-                "text": "number"
-              }
-            }
-          ],
-          "description": "Which tab the `selected` attribute is naming, given how many there are.\n\nEvery value is answered with a tab, because a tab set with nothing selected is not a\nstate this pattern has: one tab is always current. A missing attribute, a typo and a\nnegative index are the first tab - there is no earlier one to mean. An index past the\nend, which is what a tab removed from under a `selected` leaves behind, is clamped to\nthe last tab rather than sent back to the start: the reader was at the far end of the\nset, and that is the nearest tab still there.",
-          "return": {
-            "type": {
-              "text": "number"
-            }
-          }
-        },
-        {
-          "kind": "class",
-          "description": "`<tabs-elemental>` custom element.\n\nA list of tabs and the panels they show, per the\n[APG Tabs pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), in both\norientations.\n\nThe markup it is written on is the markup the page would have had anyway: a list of\nin-page links, and the sections they point at. With no script that is exactly what it\nstill is - every panel on screen, every link jumping to one - which is why the panels\nare not authored `hidden`. The element is what turns the list into a tablist, and it is\nthe only thing that ever hides a panel.\n\nponytail: no `<dialog>`-style platform primitive to build on here, and no sliding\nindicator either. An indicator that follows the selected tab has to be measured every\ntime the strip reflows; a border on the selected tab needs no script at all and says\nthe same thing.\n\nLight DOM, no shadow root. Nothing is moved and nothing is wrapped - the panels stay\nwhere the markup put them, which is what lets a page lay them out with the element's\nown grid or with one of its own.",
-          "name": "TabsElemental",
-          "cssProperties": [
-            {
-              "type": {
-                "text": "<length>"
-              },
-              "description": "Between the tabs.",
-              "name": "--tabs-elemental-gap",
-              "default": "0.25rem"
-            },
-            {
-              "type": {
-                "text": "<length>"
-              },
-              "description": "Padding inside a tab.",
-              "name": "--tabs-elemental-inset",
-              "default": "0.5rem 0.75rem"
-            },
-            {
-              "type": {
-                "text": "<length>"
-              },
-              "description": "Between the tablist and the panel.",
-              "name": "--tabs-elemental-panel-inset",
-              "default": "1rem"
-            },
-            {
-              "type": {
-                "text": "<length>"
-              },
-              "description": "Corner radius of a tab.",
-              "name": "--tabs-elemental-radius",
-              "default": "0.375rem"
-            },
-            {
-              "type": {
-                "text": "<length>"
-              },
-              "description": "Thickness of the rule under the strip, and of the mark on the selected tab.",
-              "name": "--tabs-elemental-indicator-size",
-              "default": "2px"
-            },
-            {
-              "type": {
-                "text": "<color>"
-              },
-              "description": "What marks the selected tab.",
-              "name": "--tabs-elemental-indicator",
-              "default": "currentcolor"
-            },
-            {
-              "type": {
-                "text": "<color>"
-              },
-              "description": "The rule the tabs sit on.",
-              "name": "--tabs-elemental-border",
-              "default": "color-mix(in srgb, currentcolor 20%, transparent)"
-            },
-            {
-              "type": {
-                "text": "<color>"
-              },
-              "description": "Tab background under the pointer.",
-              "name": "--tabs-elemental-hover",
-              "default": "color-mix(in srgb, currentcolor 10%, transparent)"
-            },
-            {
-              "type": {
-                "text": "<color>"
-              },
-              "description": "Text of a tab that is not selected.",
-              "name": "--tabs-elemental-muted",
-              "default": "color-mix(in srgb, currentcolor 65%, transparent)"
-            }
-          ],
-          "slots": [
-            {
-              "description": "The `<ul>` of tabs, and the panels - one per tab, in the same order.",
-              "name": ""
-            }
-          ],
-          "members": [
-            {
-              "kind": "field",
-              "name": "tablist",
-              "description": "The tablist: the first list in the element. A nested `<tabs-elemental>` keeps its own.",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "tabs",
-              "description": "The tabs, in order. What the `<li>`s hold, so a link inside a panel is not one.",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "panels",
-              "description": "The panels, in tab order. A tab with nothing to show keeps its place as `null`.",
-              "readonly": true
-            },
-            {
-              "kind": "method",
-              "name": "panelOf",
-              "parameters": [
-                {
-                  "name": "tab"
-                }
-              ],
-              "description": "The panel a tab shows: what its `aria-controls` or its own `#fragment` names, and\nfailing both, the child sitting in the same position.\n\nThe fragment is the one worth writing markup for. A tab authored as a link to its own\npanel is a working in-page link before this element exists and after it fails to\nupgrade, and it means the relationship is stated once rather than in an `id` and an\n`aria-controls` that can drift apart."
-            },
-            {
-              "kind": "field",
-              "name": "selected",
-              "description": "Index of the selected tab. Reflected, so `[selected]` is a styling hook too."
-            },
-            {
-              "kind": "field",
-              "name": "vertical",
-              "description": "Whether the tablist runs down the page. The arrow keys go with it."
-            },
-            {
-              "kind": "field",
-              "name": "manual",
-              "description": "Whether moving focus along the tablist also selects.\n\nAutomatic is the default because it is what the APG recommends wherever showing a\npanel is instant, which it is when the panel is already in the page. `manual` is for\nthe case that is not: a panel whose content arrives over the network, where arrowing\npast four tabs would start four requests nobody asked for."
-            },
-            {
-              "kind": "method",
-              "name": "release",
-              "parameters": [
-                {
-                  "name": "panel"
-                }
-              ],
-              "description": "Take everything this element wrote back off a panel, and hand it to the page as it\nwas found."
-            },
-            {
-              "kind": "method",
-              "name": "wire",
-              "description": "Read the markup and put the pattern on it - the roles, the pairings, the ids either\nside of them - then push the current state through `apply`.\n\nPublic and idempotent, because the tabs are the page's to change: add one, remove one,\nswap the labels, and this is the one call that says so. Nothing observes the markup on\nthe element's behalf, which would be a `MutationObserver` running on every page that\nnever touches its tabs to save this one line on the pages that do."
-            },
-            {
-              "kind": "method",
-              "name": "apply",
-              "description": "Push the selection onto the tabs and their panels.\n\nThe roving tabindex is the half of this that is easy to miss: a tab strip is one stop\non the way through the page, not one stop per tab, so the selected tab is the only one\n`Tab` can land on and the arrows do the rest."
-            },
-            {
-              "kind": "method",
-              "name": "tabFor",
-              "parameters": [
-                {
-                  "name": "e"
-                }
-              ],
-              "description": "The tab this event happened on, or null for anything else - a link inside a panel,\nor a nested tab set's."
-            },
-            {
-              "kind": "method",
-              "name": "onClick",
-              "parameters": [
-                {
-                  "name": "e"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "onKeyDown",
-              "parameters": [
-                {
-                  "name": "e"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "onHashChange"
-            },
-            {
-              "kind": "method",
-              "name": "onBeforeMatch",
-              "parameters": [
-                {
-                  "name": "e"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "selectFromHash",
-              "description": "Select the tab whose panel holds the element the URL fragment points at, so a link\ninto a panel lands on it showing. Which is also the no-script story arriving: the tabs\nare in-page links, and following one before this element upgrades leaves exactly this\nfragment in the URL."
-            }
-          ],
-          "events": [
-            {
-              "name": "tabs-select",
-              "type": {
-                "text": "CustomEvent"
-              },
-              "description": "`detail.tab` is the tab now selected, `detail.panel` what it shows, `detail.index` where it is."
-            }
-          ],
-          "attributes": [
-            {
-              "name": "selected",
-              "type": {
-                "text": "number"
-              },
-              "description": "Index of the selected tab. Reflected, so `[selected]` is a styling hook.",
-              "default": "0"
-            },
-            {
-              "name": "vertical",
-              "type": {
-                "text": "boolean"
-              },
-              "description": "The tablist runs down the page rather than across it. Swaps the arrow keys with it.",
-              "default": "false"
-            },
-            {
-              "type": {
-                "text": "boolean"
-              },
-              "description": "Arrows move focus without selecting; Enter or Space selects. Automatic otherwise.",
-              "name": "manual",
-              "default": "false"
-            }
-          ],
-          "superclass": {
-            "name": "ElementBase",
-            "module": "/src/core.js"
-          },
-          "tagName": "tabs-elemental",
-          "customElement": true
-        }
-      ],
-      "exports": [
-        {
-          "kind": "js",
-          "name": "tabKey",
-          "declaration": {
-            "name": "tabKey",
-            "module": "src/elementals/tabs/index.js"
-          }
-        },
-        {
-          "kind": "js",
-          "name": "selectedIndex",
-          "declaration": {
-            "name": "selectedIndex",
-            "module": "src/elementals/tabs/index.js"
-          }
-        },
-        {
-          "kind": "js",
-          "name": "TabsElemental",
-          "declaration": {
-            "name": "TabsElemental",
-            "module": "src/elementals/tabs/index.js"
-          }
-        }
-      ]
-    },
-    {
-      "kind": "javascript-module",
-      "path": "src/elementals/switch/index.js",
-      "declarations": [
-        {
-          "kind": "function",
-          "name": "formValue",
-          "parameters": [
-            {
-              "name": "checked"
-            },
-            {
-              "name": "disabled"
-            },
-            {
-              "name": "value"
-            }
-          ],
-          "description": "What a form takes from the switch: the value when it is on, and nothing at all when it\nis off or disabled. `null` rather than an empty string, because an unchecked checkbox\ndoes not submit an empty value - it does not appear in the form data at all, and that\nabsence is what every server-side \"was this box ticked\" check is already written\nagainst. A disabled control submits nothing either, which is the platform's rule for\nevery other form control and has to be honoured by hand here."
-        },
-        {
-          "kind": "function",
-          "name": "validityState",
-          "parameters": [
-            {
-              "name": "required"
-            },
-            {
-              "name": "checked"
-            },
-            {
-              "name": "customMessage"
-            },
-            {
-              "name": "missingMessage"
-            }
-          ],
-          "description": "The validity a switch can have, which is one thing: a required switch has to be on.\nA custom message wins, as it does on a native control - it is the author saying the\nvalue is wrong for a reason the browser cannot know."
-        },
-        {
-          "kind": "function",
-          "name": "borrowedValueMissingMessage",
-          "description": "What a required switch says while it is off, when nobody has said otherwise.\n\n`setValidity` throws on an empty message, and a form-associated custom element gets no\nplatform default to ask for - so the nearest true thing is borrowed: the browser's own\nmessage for a required checkbox, which arrives already translated into the reader's\nlanguage. It says \"box\" rather than \"switch\", and a reader given the right language\nwith the wrong noun is better served than one given English. Read once and kept."
-        },
-        {
-          "kind": "class",
-          "description": "A real `<button>` turned into an on/off switch, per the APG Switch pattern. Submits\nwith its form when given a `name`. The prose above is the whole story; these tags are\nthe same API in the form a machine can read - `custom-elements.json` is generated from\nthem, and the docs tables, editor autocomplete and the live options panel in the docs\nall come out of that one file rather than out of four hand-kept copies.\n\nCurated by omission: `--switch-elemental-inset`, `--switch-elemental-knob-size` and\n`--switch-elemental-travel` are `calc()`-derived from the four geometry properties and\nare deliberately not tagged. Setting them by hand is how a knob ends up overshooting\nits own track, and anything tagged here is something a reader is being invited to turn.",
-          "name": "SwitchElemental",
-          "cssProperties": [
-            {
-              "type": {
-                "text": "<length>"
-              },
-              "description": "Track width.",
-              "name": "--switch-elemental-width",
-              "default": "3.625rem"
-            },
-            {
-              "type": {
-                "text": "<length>"
-              },
-              "description": "Track height.",
-              "name": "--switch-elemental-height",
-              "default": "2rem"
-            },
-            {
-              "type": {
-                "text": "<length>"
-              },
-              "description": "Track corners. The height is a pill.",
-              "name": "--switch-elemental-radius",
-              "default": "var(--switch-elemental-height)"
-            },
-            {
-              "type": {
-                "text": "<length>"
-              },
-              "description": "Track border width.",
-              "name": "--switch-elemental-border-width",
-              "default": "2px"
-            },
-            {
-              "type": {
-                "text": "<color>"
-              },
-              "description": "Track border, off.",
-              "name": "--switch-elemental-border-color",
-              "default": "currentcolor"
-            },
-            {
-              "type": {
-                "text": "<color>"
-              },
-              "description": "Track border, on.",
-              "name": "--switch-elemental-border-color-checked",
-              "default": "var(--switch-elemental-border-color)"
-            },
-            {
-              "type": {
-                "text": "<length>"
-              },
-              "description": "Between the knob and the inside of the track.",
-              "name": "--switch-elemental-gap",
-              "default": "2px"
-            },
-            {
-              "type": {
-                "text": "<color>"
-              },
-              "description": "Track fill, off.",
-              "name": "--switch-elemental-track",
-              "default": "transparent"
-            },
-            {
-              "type": {
-                "text": "<color>"
-              },
-              "description": "Track fill, on.",
-              "name": "--switch-elemental-track-checked",
-              "default": "currentcolor"
-            },
-            {
-              "type": {
-                "text": "<color>"
-              },
-              "description": "Knob fill, off.",
-              "name": "--switch-elemental-knob",
-              "default": "currentcolor"
-            },
-            {
-              "type": {
-                "text": "<color>"
-              },
-              "description": "Knob fill, on. The page's own background, so re-point it on a card.",
-              "name": "--switch-elemental-knob-checked",
-              "default": "Canvas"
-            },
-            {
-              "type": {
-                "text": "<length-percentage>"
-              },
-              "description": "Knob shape. `50%` is a circle, `0` a square.",
-              "name": "--switch-elemental-knob-radius",
-              "default": "50%"
-            },
-            {
-              "type": {
-                "text": "<time>"
-              },
-              "description": "Slide and cross-fade.",
-              "name": "--switch-elemental-duration",
-              "default": "250ms"
-            },
-            {
-              "type": {
-                "text": "ease | ease-in | ease-out | ease-in-out | linear"
-              },
-              "description": "Slide and cross-fade.",
-              "name": "--switch-elemental-easing",
-              "default": "ease-in-out"
-            }
-          ],
-          "slots": [
-            {
-              "description": "The `<button>` that flips, and optionally a `.switch-elemental-on` and a `.switch-elemental-off` icon inside it.",
-              "name": ""
-            }
-          ],
-          "members": [
-            {
-              "kind": "field",
-              "name": "formAssociated",
-              "static": true,
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "requiredMessage",
-              "type": {
-                "text": "null"
-              },
-              "static": true,
-              "default": "null",
-              "description": "The page-wide default for what a required switch says while it is off. `null` means\nthe browser's own translated message is used, which is the right answer until a page\nhas a reason of its own - one line at boot changes every switch on it."
-            },
-            {
-              "kind": "field",
-              "name": "button",
-              "description": "The `<button>` that flips. Direct child, so a button in a label beside it - or\nin a second switch nested somewhere below - is not mistaken for the control.",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "checked",
-              "description": "Whether the switch is on. Reflected, so `[checked]` is a styling hook too."
-            },
-            {
-              "kind": "field",
-              "name": "disabled",
-              "description": "Disabled by its own attribute, or by a `<fieldset disabled>` somewhere above it -\nwhich the button already answers for, since `:disabled` matches a button inside a\ndisabled fieldset whether or not it carries the attribute itself."
-            },
-            {
-              "kind": "field",
-              "name": "required",
-              "description": "Whether the form refuses to submit while this is off."
-            },
-            {
-              "kind": "field",
-              "name": "requiredMessage",
-              "description": "What this switch says while it is required and off, in three steps: its own\n`required-message`, then whatever the page put on `SwitchElemental.requiredMessage`,\nthen the browser's own translated one. One switch, one page, or every language."
-            },
-            {
-              "kind": "field",
-              "name": "validity",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "validationMessage",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "willValidate",
-              "readonly": true
-            },
-            {
-              "kind": "method",
-              "name": "checkValidity"
-            },
-            {
-              "kind": "method",
-              "name": "reportValidity"
-            },
-            {
-              "kind": "method",
-              "name": "setCustomValidity",
-              "parameters": [
-                {
-                  "name": "message"
-                }
-              ],
-              "description": "Your own message, for the constraint the browser cannot know about. `''` clears it."
-            },
-            {
-              "kind": "method",
-              "name": "validate",
-              "description": "Push the current constraint onto the form. The button is the anchor, so the\nbrowser's own bubble points at the control the reader has to flip - and not at an\nelement that is `display: contents` and has no box to point at."
-            },
-            {
-              "kind": "field",
-              "name": "value",
-              "description": "What the form submits when the switch is on. `on`, as a checkbox's is."
-            },
-            {
-              "kind": "method",
-              "name": "apply",
-              "description": "Push the current state onto the button, and onto the form if there is one."
-            },
-            {
-              "kind": "method",
-              "name": "formDisabledCallback",
-              "parameters": [
-                {
-                  "name": "disabled"
-                }
-              ],
-              "description": "The element's own `disabled` attribute, or a `<fieldset disabled>` above it. The\nbutton is disabled with it, because a switch that takes focus and then does nothing\nis worse than one that is plainly out of reach - and the form value goes with it."
-            },
-            {
-              "kind": "method",
-              "name": "formResetCallback",
-              "description": "The form is putting its controls back to the state the markup arrived in."
-            },
-            {
-              "kind": "method",
-              "name": "formStateRestoreCallback",
-              "parameters": [
-                {
-                  "name": "state"
-                }
-              ],
-              "description": "The browser is restoring this control after a back-navigation or a session restore,\nwith whatever `setFormValue` last put in. Off submitted nothing, so nothing coming\nback is off."
-            },
-            {
-              "kind": "method",
-              "name": "onClick",
-              "parameters": [
-                {
-                  "name": "e"
-                }
-              ]
-            }
-          ],
-          "events": [
-            {
-              "name": "switch-toggle",
-              "type": {
-                "text": "CustomEvent"
-              },
-              "description": "`detail.checked` is the new state. Fires on flip, not on `value` or `required` changing."
-            }
-          ],
-          "attributes": [
-            {
-              "name": "checked",
-              "type": {
-                "text": "boolean"
-              },
-              "description": "Whether it is on. Reflected, so markup, script and CSS read the same thing.",
-              "default": "false"
-            },
-            {
-              "name": "value",
-              "type": {
-                "text": "string"
-              },
-              "description": "What it submits while on.",
-              "default": "on"
-            },
-            {
-              "name": "disabled",
-              "type": {
-                "text": "boolean"
-              },
-              "description": "Disables the button and submits nothing. A `<fieldset disabled>` does the same.",
-              "default": "false"
-            },
-            {
-              "name": "required",
-              "type": {
-                "text": "boolean"
-              },
-              "description": "The form will not submit while it is off.",
-              "default": "false"
-            },
-            {
-              "name": "required-message",
-              "type": {
-                "text": "string"
-              },
-              "description": "What this one says while it is required and off."
-            },
-            {
-              "type": {
-                "text": "string"
-              },
-              "description": "Submits under this name. No name, no form data.",
-              "name": "name"
-            }
-          ],
-          "superclass": {
-            "name": "ElementBase",
-            "module": "/src/core.js"
-          },
-          "tagName": "switch-elemental",
-          "customElement": true
-        }
-      ],
-      "exports": [
-        {
-          "kind": "js",
-          "name": "formValue",
-          "declaration": {
-            "name": "formValue",
-            "module": "src/elementals/switch/index.js"
-          }
-        },
-        {
-          "kind": "js",
-          "name": "validityState",
-          "declaration": {
-            "name": "validityState",
-            "module": "src/elementals/switch/index.js"
-          }
-        },
-        {
-          "kind": "js",
-          "name": "borrowedValueMissingMessage",
-          "declaration": {
-            "name": "borrowedValueMissingMessage",
-            "module": "src/elementals/switch/index.js"
-          }
-        },
-        {
-          "kind": "js",
-          "name": "SwitchElemental",
-          "declaration": {
-            "name": "SwitchElemental",
-            "module": "src/elementals/switch/index.js"
-          }
-        }
-      ]
-    },
-    {
-      "kind": "javascript-module",
       "path": "src/elementals/navbar/index.js",
       "declarations": [
         {
@@ -2151,6 +1436,721 @@
           "declaration": {
             "name": "NavbarElemental",
             "module": "src/elementals/navbar/index.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/switch/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "formValue",
+          "parameters": [
+            {
+              "name": "checked"
+            },
+            {
+              "name": "disabled"
+            },
+            {
+              "name": "value"
+            }
+          ],
+          "description": "What a form takes from the switch: the value when it is on, and nothing at all when it\nis off or disabled. `null` rather than an empty string, because an unchecked checkbox\ndoes not submit an empty value - it does not appear in the form data at all, and that\nabsence is what every server-side \"was this box ticked\" check is already written\nagainst. A disabled control submits nothing either, which is the platform's rule for\nevery other form control and has to be honoured by hand here."
+        },
+        {
+          "kind": "function",
+          "name": "validityState",
+          "parameters": [
+            {
+              "name": "required"
+            },
+            {
+              "name": "checked"
+            },
+            {
+              "name": "customMessage"
+            },
+            {
+              "name": "missingMessage"
+            }
+          ],
+          "description": "The validity a switch can have, which is one thing: a required switch has to be on.\nA custom message wins, as it does on a native control - it is the author saying the\nvalue is wrong for a reason the browser cannot know."
+        },
+        {
+          "kind": "function",
+          "name": "borrowedValueMissingMessage",
+          "description": "What a required switch says while it is off, when nobody has said otherwise.\n\n`setValidity` throws on an empty message, and a form-associated custom element gets no\nplatform default to ask for - so the nearest true thing is borrowed: the browser's own\nmessage for a required checkbox, which arrives already translated into the reader's\nlanguage. It says \"box\" rather than \"switch\", and a reader given the right language\nwith the wrong noun is better served than one given English. Read once and kept."
+        },
+        {
+          "kind": "class",
+          "description": "A real `<button>` turned into an on/off switch, per the APG Switch pattern. Submits\nwith its form when given a `name`. The prose above is the whole story; these tags are\nthe same API in the form a machine can read - `custom-elements.json` is generated from\nthem, and the docs tables, editor autocomplete and the live options panel in the docs\nall come out of that one file rather than out of four hand-kept copies.\n\nCurated by omission: `--switch-elemental-inset`, `--switch-elemental-knob-size` and\n`--switch-elemental-travel` are `calc()`-derived from the four geometry properties and\nare deliberately not tagged. Setting them by hand is how a knob ends up overshooting\nits own track, and anything tagged here is something a reader is being invited to turn.",
+          "name": "SwitchElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Track width.",
+              "name": "--switch-elemental-width",
+              "default": "3.625rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Track height.",
+              "name": "--switch-elemental-height",
+              "default": "2rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Track corners. The height is a pill.",
+              "name": "--switch-elemental-radius",
+              "default": "var(--switch-elemental-height)"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Track border width.",
+              "name": "--switch-elemental-border-width",
+              "default": "2px"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Track border, off.",
+              "name": "--switch-elemental-border-color",
+              "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Track border, on.",
+              "name": "--switch-elemental-border-color-checked",
+              "default": "var(--switch-elemental-border-color)"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between the knob and the inside of the track.",
+              "name": "--switch-elemental-gap",
+              "default": "2px"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Track fill, off.",
+              "name": "--switch-elemental-track",
+              "default": "transparent"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Track fill, on.",
+              "name": "--switch-elemental-track-checked",
+              "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Knob fill, off.",
+              "name": "--switch-elemental-knob",
+              "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Knob fill, on. The page's own background, so re-point it on a card.",
+              "name": "--switch-elemental-knob-checked",
+              "default": "Canvas"
+            },
+            {
+              "type": {
+                "text": "<length-percentage>"
+              },
+              "description": "Knob shape. `50%` is a circle, `0` a square.",
+              "name": "--switch-elemental-knob-radius",
+              "default": "50%"
+            },
+            {
+              "type": {
+                "text": "<time>"
+              },
+              "description": "Slide and cross-fade.",
+              "name": "--switch-elemental-duration",
+              "default": "250ms"
+            },
+            {
+              "type": {
+                "text": "ease | ease-in | ease-out | ease-in-out | linear"
+              },
+              "description": "Slide and cross-fade.",
+              "name": "--switch-elemental-easing",
+              "default": "ease-in-out"
+            }
+          ],
+          "slots": [
+            {
+              "description": "The `<button>` that flips, and optionally a `.switch-elemental-on` and a `.switch-elemental-off` icon inside it.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "formAssociated",
+              "static": true,
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "requiredMessage",
+              "type": {
+                "text": "null"
+              },
+              "static": true,
+              "default": "null",
+              "description": "The page-wide default for what a required switch says while it is off. `null` means\nthe browser's own translated message is used, which is the right answer until a page\nhas a reason of its own - one line at boot changes every switch on it."
+            },
+            {
+              "kind": "field",
+              "name": "button",
+              "description": "The `<button>` that flips. Direct child, so a button in a label beside it - or\nin a second switch nested somewhere below - is not mistaken for the control.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "checked",
+              "description": "Whether the switch is on. Reflected, so `[checked]` is a styling hook too."
+            },
+            {
+              "kind": "field",
+              "name": "disabled",
+              "description": "Disabled by its own attribute, or by a `<fieldset disabled>` somewhere above it -\nwhich the button already answers for, since `:disabled` matches a button inside a\ndisabled fieldset whether or not it carries the attribute itself."
+            },
+            {
+              "kind": "field",
+              "name": "required",
+              "description": "Whether the form refuses to submit while this is off."
+            },
+            {
+              "kind": "field",
+              "name": "requiredMessage",
+              "description": "What this switch says while it is required and off, in three steps: its own\n`required-message`, then whatever the page put on `SwitchElemental.requiredMessage`,\nthen the browser's own translated one. One switch, one page, or every language."
+            },
+            {
+              "kind": "field",
+              "name": "validity",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "validationMessage",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "willValidate",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "checkValidity"
+            },
+            {
+              "kind": "method",
+              "name": "reportValidity"
+            },
+            {
+              "kind": "method",
+              "name": "setCustomValidity",
+              "parameters": [
+                {
+                  "name": "message"
+                }
+              ],
+              "description": "Your own message, for the constraint the browser cannot know about. `''` clears it."
+            },
+            {
+              "kind": "method",
+              "name": "validate",
+              "description": "Push the current constraint onto the form. The button is the anchor, so the\nbrowser's own bubble points at the control the reader has to flip - and not at an\nelement that is `display: contents` and has no box to point at."
+            },
+            {
+              "kind": "field",
+              "name": "value",
+              "description": "What the form submits when the switch is on. `on`, as a checkbox's is."
+            },
+            {
+              "kind": "method",
+              "name": "apply",
+              "description": "Push the current state onto the button, and onto the form if there is one."
+            },
+            {
+              "kind": "method",
+              "name": "formDisabledCallback",
+              "parameters": [
+                {
+                  "name": "disabled"
+                }
+              ],
+              "description": "The element's own `disabled` attribute, or a `<fieldset disabled>` above it. The\nbutton is disabled with it, because a switch that takes focus and then does nothing\nis worse than one that is plainly out of reach - and the form value goes with it."
+            },
+            {
+              "kind": "method",
+              "name": "formResetCallback",
+              "description": "The form is putting its controls back to the state the markup arrived in."
+            },
+            {
+              "kind": "method",
+              "name": "formStateRestoreCallback",
+              "parameters": [
+                {
+                  "name": "state"
+                }
+              ],
+              "description": "The browser is restoring this control after a back-navigation or a session restore,\nwith whatever `setFormValue` last put in. Off submitted nothing, so nothing coming\nback is off."
+            },
+            {
+              "kind": "method",
+              "name": "onClick",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            }
+          ],
+          "events": [
+            {
+              "name": "switch-toggle",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "`detail.checked` is the new state. Fires on flip, not on `value` or `required` changing."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "checked",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether it is on. Reflected, so markup, script and CSS read the same thing.",
+              "default": "false"
+            },
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "description": "What it submits while on.",
+              "default": "on"
+            },
+            {
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Disables the button and submits nothing. A `<fieldset disabled>` does the same.",
+              "default": "false"
+            },
+            {
+              "name": "required",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "The form will not submit while it is off.",
+              "default": "false"
+            },
+            {
+              "name": "required-message",
+              "type": {
+                "text": "string"
+              },
+              "description": "What this one says while it is required and off."
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "Submits under this name. No name, no form data.",
+              "name": "name"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "switch-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "formValue",
+          "declaration": {
+            "name": "formValue",
+            "module": "src/elementals/switch/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "validityState",
+          "declaration": {
+            "name": "validityState",
+            "module": "src/elementals/switch/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "borrowedValueMissingMessage",
+          "declaration": {
+            "name": "borrowedValueMissingMessage",
+            "module": "src/elementals/switch/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "SwitchElemental",
+          "declaration": {
+            "name": "SwitchElemental",
+            "module": "src/elementals/switch/index.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/tabs/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "tabKey",
+          "parameters": [
+            {
+              "name": "key",
+              "description": "KeyboardEvent.key value.",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "vertical",
+              "description": "Whether the tablist runs down the page.",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "Which of `nextIndex`'s keys an arrow means on this tablist's axis.\n\nA tablist answers to one axis and ignores the other - Left/Right on a horizontal one,\nUp/Down on a vertical one - which is the whole of what `aria-orientation` promises. So\nrather than a second key map, the axis is translated into the vertical vocabulary\n`nextIndex` already speaks, and the wrapping and the ends stay in one place for every\npattern in the book.",
+          "return": {
+            "type": {
+              "text": "string|null"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "selectedIndex",
+          "parameters": [
+            {
+              "name": "value",
+              "description": "The attribute, as authored.",
+              "type": {
+                "text": "string|null"
+              }
+            },
+            {
+              "name": "length",
+              "description": "How many tabs there are.",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "description": "Which tab the `selected` attribute is naming, given how many there are.\n\nEvery value is answered with a tab, because a tab set with nothing selected is not a\nstate this pattern has: one tab is always current. A missing attribute, a typo and a\nnegative index are the first tab - there is no earlier one to mean. An index past the\nend, which is what a tab removed from under a `selected` leaves behind, is clamped to\nthe last tab rather than sent back to the start: the reader was at the far end of the\nset, and that is the nearest tab still there.",
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<tabs-elemental>` custom element.\n\nA list of tabs and the panels they show, per the\n[APG Tabs pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), in both\norientations.\n\nThe markup it is written on is the markup the page would have had anyway: a list of\nin-page links, and the sections they point at. With no script that is exactly what it\nstill is - every panel on screen, every link jumping to one - which is why the panels\nare not authored `hidden`. The element is what turns the list into a tablist, and it is\nthe only thing that ever hides a panel.\n\nponytail: no `<dialog>`-style platform primitive to build on here, and no sliding\nindicator either. An indicator that follows the selected tab has to be measured every\ntime the strip reflows; a border on the selected tab needs no script at all and says\nthe same thing.\n\nLight DOM, no shadow root. Nothing is moved and nothing is wrapped - the panels stay\nwhere the markup put them, which is what lets a page lay them out with the element's\nown grid or with one of its own.",
+          "name": "TabsElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between the tabs.",
+              "name": "--tabs-elemental-gap",
+              "default": "0.25rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Padding inside a tab.",
+              "name": "--tabs-elemental-inset",
+              "default": "0.5rem 0.75rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between the tablist and the panel.",
+              "name": "--tabs-elemental-panel-inset",
+              "default": "1rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Corner radius of a tab.",
+              "name": "--tabs-elemental-radius",
+              "default": "0.375rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Thickness of the rule under the strip, and of the mark on the selected tab.",
+              "name": "--tabs-elemental-indicator-size",
+              "default": "2px"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "What marks the selected tab.",
+              "name": "--tabs-elemental-indicator",
+              "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The rule the tabs sit on.",
+              "name": "--tabs-elemental-border",
+              "default": "color-mix(in srgb, currentcolor 20%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Tab background under the pointer.",
+              "name": "--tabs-elemental-hover",
+              "default": "color-mix(in srgb, currentcolor 10%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Text of a tab that is not selected.",
+              "name": "--tabs-elemental-muted",
+              "default": "color-mix(in srgb, currentcolor 65%, transparent)"
+            }
+          ],
+          "slots": [
+            {
+              "description": "The `<ul>` of tabs, and the panels - one per tab, in the same order.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "tablist",
+              "description": "The tablist: the first list in the element. A nested `<tabs-elemental>` keeps its own.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "tabs",
+              "description": "The tabs, in order. What the `<li>`s hold, so a link inside a panel is not one.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "panels",
+              "description": "The panels, in tab order. A tab with nothing to show keeps its place as `null`.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "panelOf",
+              "parameters": [
+                {
+                  "name": "tab"
+                }
+              ],
+              "description": "The panel a tab shows: what its `aria-controls` or its own `#fragment` names, and\nfailing both, the child sitting in the same position.\n\nThe fragment is the one worth writing markup for. A tab authored as a link to its own\npanel is a working in-page link before this element exists and after it fails to\nupgrade, and it means the relationship is stated once rather than in an `id` and an\n`aria-controls` that can drift apart."
+            },
+            {
+              "kind": "field",
+              "name": "selected",
+              "description": "Index of the selected tab. Reflected, so `[selected]` is a styling hook too."
+            },
+            {
+              "kind": "field",
+              "name": "vertical",
+              "description": "Whether the tablist runs down the page. The arrow keys go with it."
+            },
+            {
+              "kind": "field",
+              "name": "manual",
+              "description": "Whether moving focus along the tablist also selects.\n\nAutomatic is the default because it is what the APG recommends wherever showing a\npanel is instant, which it is when the panel is already in the page. `manual` is for\nthe case that is not: a panel whose content arrives over the network, where arrowing\npast four tabs would start four requests nobody asked for."
+            },
+            {
+              "kind": "method",
+              "name": "release",
+              "parameters": [
+                {
+                  "name": "panel"
+                }
+              ],
+              "description": "Take everything this element wrote back off a panel, and hand it to the page as it\nwas found."
+            },
+            {
+              "kind": "method",
+              "name": "wire",
+              "description": "Read the markup and put the pattern on it - the roles, the pairings, the ids either\nside of them - then push the current state through `apply`.\n\nPublic and idempotent, because the tabs are the page's to change: add one, remove one,\nswap the labels, and this is the one call that says so. Nothing observes the markup on\nthe element's behalf, which would be a `MutationObserver` running on every page that\nnever touches its tabs to save this one line on the pages that do."
+            },
+            {
+              "kind": "method",
+              "name": "apply",
+              "description": "Push the selection onto the tabs and their panels.\n\nThe roving tabindex is the half of this that is easy to miss: a tab strip is one stop\non the way through the page, not one stop per tab, so the selected tab is the only one\n`Tab` can land on and the arrows do the rest."
+            },
+            {
+              "kind": "method",
+              "name": "tabFor",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "The tab this event happened on, or null for anything else - a link inside a panel,\nor a nested tab set's."
+            },
+            {
+              "kind": "method",
+              "name": "onClick",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onKeyDown",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onHashChange"
+            },
+            {
+              "kind": "method",
+              "name": "onBeforeMatch",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "selectFromHash",
+              "description": "Select the tab whose panel holds the element the URL fragment points at, so a link\ninto a panel lands on it showing. Which is also the no-script story arriving: the tabs\nare in-page links, and following one before this element upgrades leaves exactly this\nfragment in the URL."
+            }
+          ],
+          "events": [
+            {
+              "name": "tabs-select",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "`detail.tab` is the tab now selected, `detail.panel` what it shows, `detail.index` where it is."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "selected",
+              "type": {
+                "text": "number"
+              },
+              "description": "Index of the selected tab. Reflected, so `[selected]` is a styling hook.",
+              "default": "0"
+            },
+            {
+              "name": "vertical",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "The tablist runs down the page rather than across it. Swaps the arrow keys with it.",
+              "default": "false"
+            },
+            {
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Arrows move focus without selecting; Enter or Space selects. Automatic otherwise.",
+              "name": "manual",
+              "default": "false"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "tabs-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "tabKey",
+          "declaration": {
+            "name": "tabKey",
+            "module": "src/elementals/tabs/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "selectedIndex",
+          "declaration": {
+            "name": "selectedIndex",
+            "module": "src/elementals/tabs/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "TabsElemental",
+          "declaration": {
+            "name": "TabsElemental",
+            "module": "src/elementals/tabs/index.js"
           }
         }
       ]
