@@ -6,8 +6,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 **How to use it:** land changes under `## [Unreleased]`, grouped under _Added_, _Changed_,
-_Deprecated_, _Removed_, _Fixed_ or _Security_. Releasing means renaming that heading to the
-version and date, running `npm version`, and starting a fresh `[Unreleased]`. Write entries for
+_Deprecated_, _Removed_, _Fixed_ or _Security_. Releasing is `script/publish`: it runs
+`script/changelog`, which renames that heading to the version and date, starts a fresh
+`[Unreleased]`, and hands the entry to the GitHub release as its body. Write entries for
 the person upgrading, not for the person who wrote the code — and because these are custom
 elements, call out anything that changes the **DOM the element produces** or the **CSS an author
 may already be targeting**, since neither shows up in a function signature.
@@ -15,6 +16,38 @@ may already be targeting**, since neither shows up in a function signature.
 ## [Unreleased]
 
 ### Added
+
+- **Sidebar drawer example.** A second page under _Examples_: the docs sidebar this site
+  runs on — a sticky rail on a wide screen, an off-canvas drawer on a phone — built from
+  `<disclosure-elemental>`, one media query and nine lines of script. Covers the parts that
+  are the page's rather than the element's: syncing `open` to the breakpoint, sliding on
+  `transform` instead of the region's height, and keeping the drawer out of the way of a
+  page whose script never loaded. Docs only.
+
+- **A demo can be more than one fence.** `script/demos.js` now wraps a group — the marked
+  html fence plus any fence under it that says `demo` in its own info string — in a single
+  preview, which `code-preview-element` v1.1 turns into a tab each:
+
+  ````markdown
+  <!-- demo disclosure viewport-widths="375 768 1024" -->
+
+  ```html
+  <aside class="sidebar" id="sidebar">…</aside>
+  ```
+
+  ```css demo
+  #sidebar { transition: transform 0.2s ease; }
+  ```
+  ````
+
+  `demo` there is poops' own fence syntax — a bare word in the info string becomes a class
+  on the `<code>`, `key=value` becomes a `data-*` — so this needs nothing from the markdown
+  that markdown did not already have. Joining is opt-in per fence and never positional,
+  because the fence under a demo is usually the install snippet.
+
+  The matcher no longer pins the exact string `class="hljs language-html"` either, which it
+  had to stop doing for the same reason: a fence that says anything in its info string is a
+  fence with more than that in its class list.
 
 - **Live samples in the docs.** Twelve of the code samples on the element pages are now
   editable previews rather than static fences — the element rendered in an iframe above the
@@ -24,11 +57,11 @@ may already be targeting**, since neither shows up in a function signature.
   rule to copy into your own stylesheet. Docs only — nothing about the package changes.
 
   A sample opts in with `<!-- demo switch -->` in the markdown, and `script/demos.js` does the
-  wrapping after the markup stage. The marker rather than the fence's info string, because a
-  demo has to carry its own settings (`tab="options"`, `viewport-widths="375 768"`) and the
-  info string cannot hold an `=`. The sample stays an ordinary fence in `docs/`, so it is
-  still one block of real HTML to read and copy, still highlighted at build time, and still
-  in `llms.txt` and the search index.
+  wrapping after the markup stage. The marker rather than the fence's info string, because it
+  introduces a *group* — the fences under it — and because a setting like
+  `viewport-widths="375 768"` has spaces in its value, which an info string cannot carry. The
+  sample stays an ordinary fence in `docs/`, so it is still one block of real HTML to read and
+  copy, still highlighted at build time, and still in `llms.txt` and the search index.
 
   The manifests are what make the panel worth having, and the curation shows: the switch
   offers twenty knobs and not the three `calc()`-derived properties, because those were never

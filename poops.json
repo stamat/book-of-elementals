@@ -127,7 +127,8 @@
   "livereload": true,
   "watch": [
     "src",
-    "docs"
+    "docs",
+    "dist"
   ],
   "includePaths": [
     "node_modules"

@@ -10,17 +10,29 @@
 // above the code that produced it, the code editable, and - because every element in the
 // book now ships a manifest - a second tab of controls generated from it.
 //
+// A sample that needs more than markup adds fences to the group, one per language, and
+// they become the preview's other tabs. Joining is opt-in per fence and never positional,
+// because the fence after a demo is usually the install snippet:
+//
+//     ```css demo
+//     .sidebar { transition: transform 0.2s ease; }
+//     ```
+//
+// `demo` there is the fence's info string, which poops turns into a class on the `<code>`
+// - a bare word becomes a class, `key=value` becomes `data-key` - so this needs nothing
+// from the markdown that markdown does not already have.
+//
 // Post-markup rather than in the markdown, which is the whole point of the marker. The
-// fence stays a fence in `docs/*.md`, so the sample is still one block of real html to
-// read, to copy, to highlight at build time, and to end up in `llms.txt` and the search
-// index. Writing `<code-preview>` by hand in the markdown would mean escaping every
-// sample into `&lt;switch-elemental&gt;` and losing all four.
+// fences stay fences in `docs/*.md`, so each one is still a block of real code to read, to
+// copy, to highlight at build time, and to end up in `llms.txt` and the search index.
+// Writing `<code-preview>` by hand in the markdown would mean escaping every sample into
+// `&lt;switch-elemental&gt;` and losing all four.
 //
 // Opting in per fence is deliberate: a docs page is full of html fences that are not
 // demos - install snippets, markup being described rather than shown - so wrapping every
 // one of them is the wrong default.
 //
-// The element and the fence are left *between* the marker and the code, so the pattern no
+// The element and the fences are left *between* the marker and the code, so the pattern no
 // longer matches and a second pass is a no-op. That matters in watch mode, where poops
 // recompiles the page that changed and this runs over all of them again.
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
@@ -28,9 +40,21 @@ import { join, relative, sep } from 'node:path';
 
 const SITE = '_site';
 
-// `<!-- demo switch tab="options" -->` followed by an html fence. The fence markup is
-// what poops' markdown stage emits, hljs classes and all.
-const MARKER = /<!-- demo([^>]*)-->\s*(<pre><code class="hljs language-html">[\s\S]*?<\/code><\/pre>)/g;
+// `<!-- demo switch tab="options" -->`, and the whitespace to the fence under it.
+const MARKER = /<!-- demo([^>]*)-->\s*/g;
+
+// One fence, as poops' markdown stage emits it. Sticky rather than searching: both of
+// these are asked "does a fence start exactly here", never "where is the next one".
+//
+// Matched loosely on purpose. The class list and the data attributes carry the fence's
+// own info string, so `class="hljs language-html"` is only what a fence with nothing to
+// say looks like - pinning that exact string is a matcher that breaks the first time a
+// demo needs a setting.
+const FENCE = /<pre><code class="hljs language-[\w-]+[^"]*"[^>]*>[\s\S]*?<\/code><\/pre>/y;
+
+// A fence that has said `demo` in its info string, and the whitespace above it. The
+// lookahead is what keeps `language-demo` from reading as one.
+const JOINED = /\s*<pre><code class="hljs language-[\w-]+[^"]*\sdemo(?=[\s"])[^"]*"[^>]*>[\s\S]*?<\/code><\/pre>/y;
 
 // Loaded once per page that has a demo on it, and not at all on the pages that do not.
 // The bundle with highlight.js inside it, because the fences here are highlighted at
@@ -116,18 +140,55 @@ function attributesFor(spec, prefix) {
   ].join(' ');
 }
 
+/**
+ * Wrap every marked group on one page.
+ *
+ * A scan rather than a `replace`, because a group is a marker plus a run of fences whose
+ * length is not known until the run stops - which a single pattern can express only by
+ * being greedy enough to swallow the install snippet under the sample.
+ *
+ * @param {string} html The built page.
+ * @param {string} prefix What this page prefixes a site-root-relative url with.
+ * @returns {{ html: string, count: number }}
+ */
+function wrapDemos(html, prefix) {
+  let out = '';
+  let at = 0;
+  let count = 0;
+  let marker;
+
+  MARKER.lastIndex = 0;
+  while ((marker = MARKER.exec(html))) {
+    FENCE.lastIndex = MARKER.lastIndex;
+    // A marker with no fence under it - or one whose fences this pass has already
+    // wrapped, which is what makes a second pass a no-op.
+    if (!FENCE.exec(html)) continue;
+
+    let end = FENCE.lastIndex;
+    for (;;) {
+      JOINED.lastIndex = end;
+      if (!JOINED.exec(html)) break;
+      end = JOINED.lastIndex;
+    }
+
+    out += html.slice(at, MARKER.lastIndex);
+    out += `<code-preview ${attributesFor(marker[1], prefix)}>${html.slice(MARKER.lastIndex, end)}</code-preview>`;
+    at = end;
+    count += 1;
+    // Past the group, so a fence inside it can never be read as the start of the next.
+    MARKER.lastIndex = end;
+  }
+
+  return { html: out + html.slice(at), count };
+}
+
 let wrapped = 0;
 let touched = 0;
 
 for (const path of pages(SITE)) {
-  const before = readFileSync(path, 'utf8');
   const prefix = prefixFor(path);
-  let count = 0;
-
-  let after = before.replace(MARKER, (whole, spec, fence) => {
-    count += 1;
-    return `<!-- demo${spec}--><code-preview ${attributesFor(spec, prefix)}>${fence}</code-preview>`;
-  });
+  const { html, count } = wrapDemos(readFileSync(path, 'utf8'), prefix);
+  let after = html;
 
   if (!count) continue;
   // Only the pages that ended up with a preview on them pay for the bundles.

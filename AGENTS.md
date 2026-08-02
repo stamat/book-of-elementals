@@ -123,3 +123,9 @@ posts are leads, not sources.
   in the changelog entry, described as DOM/CSS changes.
 - **Progressive enhancement.** Elements upgrade markup the author would have
   written anyway and the page must keep working if the script never loads.
+- **A demo loads the elemental's theme too.** A bare word in a `<!-- demo -->`
+  marker pulls in `<name>.css` *and* `<name>-theme.css`, so a sample that styles
+  the parts the theme already styles inherits its look — `disclosure-theme` puts
+  a caret `::before` on the trigger, which lands on top of an icon-only button
+  unless the sample says `content: none`. Look at a preview before shipping it:
+  `script/build`, serve `_site`, and open the page.
