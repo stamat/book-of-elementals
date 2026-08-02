@@ -17,10 +17,31 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Added
 
+- **`media` on `<disclosure-elemental>`.** A media query that owns `open`: the region is
+  held open while it matches and closed when it stops, so a navigation rail that becomes a
+  drawer — or a long description that is prose when there is room for it — is one attribute
+  rather than a `matchMedia` listener per page.
+
+  ```html
+  <disclosure-elemental for="sidebar" media="(min-width: 60rem)">
+  ```
+
+  Same spelling as `media` on `<navbar-elemental>` and `<menu-elemental>`. The query is
+  watched for as long as the element is connected and the attribute can be rewritten at
+  runtime. Crossing lands instantly rather than sliding — a breakpoint change is the layout
+  being rearranged, not the region being operated. Within one side of a breakpoint the
+  button still toggles normally; the query re-asserts itself at the next change, so a drawer
+  left open cannot survive into a layout that has no drawer.
+
+  No new DOM: it writes `open`, and `aria-expanded` and `hidden` follow it exactly as they
+  already did. An element with no `media` attribute is untouched. The alternative most pages
+  reach for — showing the panel in a media query and hiding the button — leaves
+  `aria-expanded="false"` on a panel that is visible, which is the bug this removes.
+
 - **Sidebar drawer example.** A second page under _Examples_: the docs sidebar this site
   runs on — a sticky rail on a wide screen, an off-canvas drawer on a phone — built from
-  `<disclosure-elemental>`, one media query and nine lines of script. Covers the parts that
-  are the page's rather than the element's: syncing `open` to the breakpoint, sliding on
+  `<disclosure-elemental>`, its `media` attribute and four lines of script. Covers the parts
+  that are the page's rather than the element's: sliding on
   `transform` instead of the region's height, capping the panel at the viewport so a long
   nav scrolls itself instead of overflowing into the article, deferring the
   `content-visibility` flip on the close only — an opening panel that defers it renders but

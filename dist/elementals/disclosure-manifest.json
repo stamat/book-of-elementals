@@ -58,6 +58,25 @@
           }
         },
         {
+          "kind": "function",
+          "name": "mediaOpen",
+          "parameters": [
+            {
+              "name": "query",
+              "description": "The watched query, or null for an element without one.",
+              "type": {
+                "text": "MediaQueryList|null"
+              }
+            }
+          ],
+          "description": "The open state a `media` query dictates, or `null` when it dictates nothing.\n\nThe null is the load-bearing case rather than a tidy default: every disclosure on a\npage runs this, and one without a `media` attribute has no opinion about its own\nstate at all. Returning `false` for \"no query\" would read as \"closed\", and every\nplain disclosure in the document would slam shut on a breakpoint it never asked\nabout.",
+          "return": {
+            "type": {
+              "text": "boolean|null"
+            }
+          }
+        },
+        {
           "kind": "class",
           "description": "`<disclosure-elemental>` custom element.\n\nA real `<button>` wired to a region it shows and hides, per the\n[APG Disclosure pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/).\n\nNative `<details>`/`<summary>` is a disclosure already, and where it fits it wins -\n`<accordion-elemental>` is built on it for exactly that reason. It fits when the\nregion can live *inside* the trigger's element. This element is for when it cannot:\na `<figcaption>`, which HTML requires to be a child of its `<figure>`; a table row;\na grid or flex item whose parent lays it out directly; a panel on the other side of\nthe page from the button that opens it. Wrapping any of those in a `<details>`\nmoves them out of the parent that gives them meaning.\n\nWhat it does, and nothing more: keeps `aria-expanded` on the button and `hidden` on\nthe region in step, points one at the other with `aria-controls`, re-opens on\n`beforematch` so find-in-page still finds what is inside, and slides the region's\nheight on the way in and out.\n\nLight DOM, no shadow root, and nothing is moved or wrapped - the region stays\nexactly where the markup put it, which is the whole point.",
           "name": "DisclosureElemental",
@@ -112,6 +131,16 @@
             },
             {
               "kind": "method",
+              "name": "watchMedia",
+              "description": "Start watching whatever `media` names now, and stop watching whatever it named\nbefore. Both halves matter: the attribute can be rewritten at runtime."
+            },
+            {
+              "kind": "method",
+              "name": "onMediaChange",
+              "description": "The breakpoint moved, so the state follows it.\n\nInstant, unlike a click. Crossing a breakpoint is the layout being rearranged around\nthe reader - a rotation, a window drag, a zoom - and animating the region through\nthat is animating something nobody asked to happen. It also keeps a resize from\nqueueing a slide per frame."
+            },
+            {
+              "kind": "method",
               "name": "onClick",
               "parameters": [
                 {
@@ -143,6 +172,13 @@
               "default": "false"
             },
             {
+              "name": "media",
+              "type": {
+                "text": "string"
+              },
+              "description": "A media query that owns `open`: held open while it matches, closed when it stops. Unset means the button is the only thing that opens it."
+            },
+            {
               "type": {
                 "text": "string"
               },
@@ -172,6 +208,14 @@
           "name": "slideFrom",
           "declaration": {
             "name": "slideFrom",
+            "module": "src/elementals/disclosure/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "mediaOpen",
+          "declaration": {
+            "name": "mediaOpen",
             "module": "src/elementals/disclosure/index.js"
           }
         },

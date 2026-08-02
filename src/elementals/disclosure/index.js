@@ -39,6 +39,22 @@ export function slideFrom(open, hidden, height) {
   return open && hidden ? 0 : height;
 }
 
+/**
+ * The open state a `media` query dictates, or `null` when it dictates nothing.
+ *
+ * The null is the load-bearing case rather than a tidy default: every disclosure on a
+ * page runs this, and one without a `media` attribute has no opinion about its own
+ * state at all. Returning `false` for "no query" would read as "closed", and every
+ * plain disclosure in the document would slam shut on a breakpoint it never asked
+ * about.
+ *
+ * @param {MediaQueryList|null} query - The watched query, or null for an element without one.
+ * @returns {boolean|null} Whether the region should be open, or null to leave it be.
+ */
+export function mediaOpen(query) {
+  return query ? query.matches : null;
+}
+
 /** Marks the controlled region, which may live anywhere in the document. */
 const REGION_CLASS = 'disclosure-elemental-region';
 
@@ -72,6 +88,7 @@ let regionCount = 0;
  * @tag disclosure-elemental
  * @attr {boolean} [open=false] - Whether the region is showing. Reflected - it tracks the live state.
  * @attr {string} for - `id` of the region. Defaults to the button's next element sibling.
+ * @attr {string} media - A media query that owns `open`: held open while it matches, closed when it stops. Unset means the button is the only thing that opens it.
  *
  * @cssprop {<length>} [--disclosure-elemental-caret-size=1em] - Caret size, on the caret look.
  *
@@ -81,7 +98,7 @@ let regionCount = 0;
  */
 export class DisclosureElemental extends ElementBase {
   static get observedAttributes() {
-    return ['open'];
+    return ['open', 'media'];
   }
 
   /** The `<button>` that toggles the region. Direct child, so a button inside the
@@ -116,6 +133,16 @@ export class DisclosureElemental extends ElementBase {
     const button = this.button;
     const region = this.region;
     if (!button || !region) return;
+
+    this.onMediaChange = this.onMediaChange.bind(this);
+    this.watchMedia();
+    // Before `initialized`, deliberately: this is the state the element loads in, not a
+    // toggle of it. `attributeChangedCallback` is still standing down, so nothing slides
+    // and no `disclosure-toggle` fires for a region that has not been on screen yet -
+    // the `apply()` at the end of this method is what puts it there.
+    const pinned = mediaOpen(this.query);
+    if (pinned !== null) this.open = pinned;
+
     this.initialized = true;
 
     // A button in a form submits it unless told otherwise, and a disclosure that
@@ -139,6 +166,9 @@ export class DisclosureElemental extends ElementBase {
   disconnectedCallback() {
     if (!this.initialized) return;
     this.removeEventListener('click', this.onClick);
+
+    if (this.query) this.query.removeEventListener('change', this.onMediaChange);
+    this.query = null;
 
     const region = this.region;
     if (region) {
@@ -194,12 +224,44 @@ export class DisclosureElemental extends ElementBase {
     });
   }
 
+  /** Start watching whatever `media` names now, and stop watching whatever it named
+   * before. Both halves matter: the attribute can be rewritten at runtime. */
+  watchMedia() {
+    if (this.query) this.query.removeEventListener('change', this.onMediaChange);
+    const media = this.getAttribute('media');
+    this.query = media && window.matchMedia ? window.matchMedia(media) : null;
+    if (this.query) this.query.addEventListener('change', this.onMediaChange);
+  }
+
+  /**
+   * The breakpoint moved, so the state follows it.
+   *
+   * Instant, unlike a click. Crossing a breakpoint is the layout being rearranged around
+   * the reader - a rotation, a window drag, a zoom - and animating the region through
+   * that is animating something nobody asked to happen. It also keeps a resize from
+   * queueing a slide per frame.
+   */
+  onMediaChange() {
+    const pinned = mediaOpen(this.query);
+    if (pinned === null) return;
+    this.instant = true;
+    this.open = pinned;
+    this.instant = false;
+  }
+
   /**
    * `open` is the single source of truth, so everything that changes it - a click,
    * a script, find-in-page - lands here and nowhere else.
    */
   attributeChangedCallback(name, previous, current) {
     if (!this.initialized || previous === current) return;
+
+    if (name === 'media') {
+      this.watchMedia();
+      this.onMediaChange();
+      return;
+    }
+
     this.apply(!this.instant);
     this.dispatchEvent(new CustomEvent('disclosure-toggle', {
       bubbles: true,

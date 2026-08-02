@@ -1,7 +1,7 @@
 ---
 layout: poops-docs-theme/docs
 title: Sidebar drawer
-description: The documentation sidebar this site is built on — a rail on a wide screen, a drawer on a phone — assembled from disclosure-elemental and one media query.
+description: The documentation sidebar this site is built on — a rail on a wide screen, a drawer on a phone — assembled from disclosure-elemental, its media attribute and one media query.
 order: 2
 ---
 
@@ -21,7 +21,7 @@ media query. Here is the assembly.
 
 ```html
 <header class="topbar">
-  <disclosure-elemental for="sidebar">
+  <disclosure-elemental for="sidebar" media="(min-width: 60rem)">
     <button class="nav-toggle" aria-label="Documentation navigation">
       <svg class="icon-expand" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
         <path d="m4.177 7.823 2.396-2.396A.25.25 0 0 1 7 5.604v4.792a.25.25 0 0 1-.427.177L4.177 8.177a.25.25 0 0 1 0-.354Z"/>
@@ -162,14 +162,10 @@ body { margin: 0; padding: 0; --line: color-mix(in srgb, currentcolor 15%, trans
 
 ```js demo
 const drawer = document.querySelector("disclosure-elemental");
-const wide = matchMedia("(min-width: 60rem)");
 
-// the breakpoint owns the state: a rail is a disclosure that is always open
-const sync = () => { drawer.open = wide.matches; };
-const close = () => { if (!wide.matches) drawer.open = false; };
+// the drawer is not modal, so light dismiss is the page's to add
+const close = () => { if (drawer.open) drawer.open = false; };
 
-sync();
-wide.addEventListener("change", sync);
 document.querySelector(".scrim").addEventListener("click", close);
 addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
 ```
@@ -231,44 +227,63 @@ icon that is already its own affordance. It comes off the way the
 .nav-toggle::before { content: none; }
 ```
 
-## The breakpoint is the page's, the state is the element's
+## The breakpoint is an attribute
 
-The element tracks one boolean and puts it everywhere it belongs: `aria-expanded` on the
-button, `hidden` on the panel, `aria-controls` between them. It does not know what a
-breakpoint is, and it should not — a rail is not a second mode to build, it is a
-disclosure that is always open:
+A rail is not a second mode to build. It is a disclosure that is always open, and which
+disclosures are always open is a question about the viewport — so the query goes on the
+element and the desktop story is over:
 
-```javascript
-const sync = () => { drawer.open = wide.matches; };
-
-sync();
-wide.addEventListener("change", sync);
+```html
+<disclosure-elemental for="sidebar" media="(min-width: 60rem)">
 ```
 
-That is the whole desktop story. On a wide screen the panel is open and the button that
-would close it is `display: none`; narrow the window and the same line shuts it again, so
-a drawer left open never survives a rotation into a layout that has no drawer.
+Above 60rem the panel is open and the button that would close it is `display: none`. Narrow
+the window and the same attribute shuts it again, so a drawer left open never survives a
+rotation into a layout that has no drawer. The element tracks one boolean and puts it
+everywhere it belongs — `aria-expanded` on the button, `hidden` on the panel,
+`aria-controls` between them — and now the breakpoint writes to that boolean like everything
+else does.
 
-`close()` is the same idea from the other end — the scrim and Escape only mean anything
-below the breakpoint, so it checks before it writes:
+Which is the point worth taking away, more than the attribute. The tempting version of a
+responsive drawer is pure CSS:
 
-```javascript
-const close = () => { if (!wide.matches) drawer.open = false; };
+```css
+/* the common bug, not a suggestion */
+@media (width >= 60rem) {
+  .sidebar { display: block; }
+  .nav-toggle { display: none; }
+}
 ```
 
-Everything writes to `open` and nothing writes to `hidden` or `aria-expanded` directly,
-which is what keeps the two from ever disagreeing.
+The panel appears, and every assistive technology on the page is still being told it is
+hidden and its button collapsed. `media` moves that decision to the one place already
+holding the state, so there is nothing to disagree with.
 
-One thing to carry across when you copy it. Those nine lines go in a
+What is left for the page is light dismiss, because
+[a disclosure is not a dialog](#a-disclosure-not-a-dialog) and neither Escape nor a click on
+the scrim is behaviour the pattern owes you:
+
+```javascript
+const close = () => { if (drawer.open) drawer.open = false; };
+
+document.querySelector(".scrim").addEventListener("click", close);
+addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+```
+
+No breakpoint test in there any more. Both only fire while the drawer is on screen, and
+above the breakpoint the attribute puts `open` straight back — so `close()` can just say
+what it means.
+
+One thing to carry across when you copy it. Those four lines go in a
 `<script type="module">`, and the `type` is not about the scoping — it is about when the
 script runs. A classic `<script>` in the body runs while the page is still parsing, before
-a deferred bundle has defined anything, and `drawer.open = true` against an element that
+a deferred bundle has defined anything, and `drawer.open = false` against an element that
 has not upgraded yet writes an ordinary property onto the instance. It shadows the accessor
-the class is about to bring, permanently: the first sync appears to work, and then nothing
+the class is about to bring, permanently: the first write appears to work, and then nothing
 else ever does, silently. A module is deferred, so it runs after the definition lands.
-`drawer.toggleAttribute("open", wide.matches)` is the other way out, and the one to reach
-for when the script genuinely has to run early — the attribute is the state, and it does
-not care whether the element is alive yet.
+`drawer.removeAttribute("open")` is the other way out, and the one to reach for when the
+script genuinely has to run early — the attribute is the state, and it does not care whether
+the element is alive yet.
 
 ## Sliding on transform, not on height
 
@@ -416,7 +431,9 @@ between the two at the breakpoint.
 Everything on this page that is not furniture:
 
 - **`aria-expanded`, `aria-controls` and `hidden` stay in step**, across a click, the
-  breakpoint sync, the scrim, Escape and find-in-page, because all five write one boolean.
+  breakpoint, the scrim, Escape and find-in-page, because all five write one boolean.
+- **The breakpoint is an attribute**, so the rail is not a mode with its own code path —
+  `media` holds the region open while the query matches and hands it back when it stops.
 - **The panel is not moved or wrapped**, so it stays the flex item its layout expects and
   `display: contents` keeps the header's row intact.
 - **Find-in-page reaches a link inside a closed drawer**, because closed is
@@ -425,5 +442,5 @@ Everything on this page that is not furniture:
 - **The button gets `type="button"`** whether or not you remembered, so a drawer inside a
   form does not submit it.
 
-What is left for the page is a flex row, a fixed panel, a scrim and nine lines of script —
-and none of those nine lines is about a disclosure.
+What is left for the page is a flex row, a fixed panel, a scrim and four lines of script —
+and none of those four lines is about a disclosure.

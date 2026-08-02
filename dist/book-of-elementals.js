@@ -360,11 +360,14 @@
   function slideFrom(open, hidden, height) {
     return open && hidden ? 0 : height;
   }
+  function mediaOpen(query) {
+    return query ? query.matches : null;
+  }
   var REGION_CLASS = "disclosure-elemental-region";
   var regionCount = 0;
   var DisclosureElemental = class extends ElementBase {
     static get observedAttributes() {
-      return ["open"];
+      return ["open", "media"];
     }
     /** The `<button>` that toggles the region. Direct child, so a button inside the
      * region - or inside a nested disclosure - is not mistaken for the trigger. */
@@ -391,6 +394,10 @@
       const button = this.button;
       const region = this.region;
       if (!button || !region) return;
+      this.onMediaChange = this.onMediaChange.bind(this);
+      this.watchMedia();
+      const pinned = mediaOpen(this.query);
+      if (pinned !== null) this.open = pinned;
       this.initialized = true;
       if (!button.hasAttribute("type")) button.type = "button";
       if (!region.id) region.id = "disclosure-elemental-" + ++regionCount;
@@ -405,6 +412,8 @@
     disconnectedCallback() {
       if (!this.initialized) return;
       this.removeEventListener("click", this.onClick);
+      if (this.query) this.query.removeEventListener("change", this.onMediaChange);
+      this.query = null;
       const region = this.region;
       if (region) {
         region.removeEventListener("beforematch", this.onBeforeMatch);
@@ -443,12 +452,40 @@
         if (this.initialized && !this.open) region.setAttribute("hidden", state.hidden);
       });
     }
+    /** Start watching whatever `media` names now, and stop watching whatever it named
+     * before. Both halves matter: the attribute can be rewritten at runtime. */
+    watchMedia() {
+      if (this.query) this.query.removeEventListener("change", this.onMediaChange);
+      const media = this.getAttribute("media");
+      this.query = media && window.matchMedia ? window.matchMedia(media) : null;
+      if (this.query) this.query.addEventListener("change", this.onMediaChange);
+    }
+    /**
+     * The breakpoint moved, so the state follows it.
+     *
+     * Instant, unlike a click. Crossing a breakpoint is the layout being rearranged around
+     * the reader - a rotation, a window drag, a zoom - and animating the region through
+     * that is animating something nobody asked to happen. It also keeps a resize from
+     * queueing a slide per frame.
+     */
+    onMediaChange() {
+      const pinned = mediaOpen(this.query);
+      if (pinned === null) return;
+      this.instant = true;
+      this.open = pinned;
+      this.instant = false;
+    }
     /**
      * `open` is the single source of truth, so everything that changes it - a click,
      * a script, find-in-page - lands here and nowhere else.
      */
     attributeChangedCallback(name, previous, current) {
       if (!this.initialized || previous === current) return;
+      if (name === "media") {
+        this.watchMedia();
+        this.onMediaChange();
+        return;
+      }
       this.apply(!this.instant);
       this.dispatchEvent(new CustomEvent("disclosure-toggle", {
         bubbles: true,

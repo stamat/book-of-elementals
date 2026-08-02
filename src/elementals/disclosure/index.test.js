@@ -1,4 +1,4 @@
-import { disclosureState, slideFrom } from './index.js';
+import { disclosureState, slideFrom, mediaOpen } from './index.js';
 
 test('an open disclosure is expanded and not hidden', () => {
   expect(disclosureState(true)).toEqual({ expanded: 'true', hidden: null });
@@ -19,4 +19,16 @@ test('opening a region caught mid-close resumes from where it is', () => {
 test('closing slides from the height the region is at', () => {
   expect(slideFrom(false, false, 300)).toBe(300);
   expect(slideFrom(false, true, 40)).toBe(40);
+});
+
+test('a disclosure without media is left alone, rather than being told to close', () => {
+  expect(mediaOpen(null)).toBe(null);
+});
+
+test('a matching media query holds the region open', () => {
+  expect(mediaOpen({ matches: true })).toBe(true);
+});
+
+test('a media query that stops matching hands the region back to the button, closed', () => {
+  expect(mediaOpen({ matches: false })).toBe(false);
 });

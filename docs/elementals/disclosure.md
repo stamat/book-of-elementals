@@ -90,6 +90,7 @@ instantiate, no init call to forget.
 | --------- | ------- | ------- | ------------------------------------------------------------------- |
 | `open`    | boolean | `false` | Whether the region is showing. Reflected — it tracks the live state. |
 | `for`     | string  | —       | `id` of the region. Defaults to the button's next element sibling.   |
+| `media`   | string  | —       | A media query that owns `open`: held open while it matches, closed when it stops. |
 
 `for` is also read as `data-for`. `open` is not — it is state, not configuration, so it has
 one spelling.
@@ -221,6 +222,54 @@ The `<figcaption>` is still a child of the `<figure>`, so it is still the figure
 
 The region is resolved once, at upgrade, so it has to be in the document by then. With the
 bundle deferred or at the end of the body, it is.
+
+## A breakpoint that owns it
+
+Some disclosures stop being disclosures at a width. A navigation rail is a drawer on a
+phone and simply _there_ on a desktop; a long description is a toggle in a narrow column
+and prose beside the figure when there is room. That is one widget whose state belongs to
+the viewport rather than to the reader, and `media` is how you say so:
+
+```html
+<disclosure-elemental for="sidebar" media="(min-width: 60rem)">
+  <button aria-label="Documentation navigation">…</button>
+</disclosure-elemental>
+```
+
+While the query matches the region is open; when it stops matching the region closes and
+the button has it back. The element watches the query for as long as it is connected, so a
+rotation, a window drag or a browser-zoom step all land the same way, and the attribute can
+be rewritten at runtime — it starts watching the new query and drops the old one.
+
+Without it this is nine lines of `matchMedia` in every page that wants it, and the version
+most pages write instead is CSS:
+
+```css
+/* the common bug, not a suggestion */
+@media (width >= 60rem) {
+  .sidebar { display: block; }
+  .nav-toggle { display: none; }
+}
+```
+
+That shows the panel without telling anyone. `aria-expanded` still says `false` and the
+region still says `hidden`, so a screen reader is told the thing it is reading does not
+exist — and hiding the button with `display: none` does not make its lie quieter, it just
+removes the only control that could have corrected it. Scott O'Hara's
+[responsive accessibility](https://www.scottohara.me/blog/2022/11/07/responsive-accessibility.html)
+walks through the CSS-only version of this and calls it "a little hacky", needing script
+anyway. `media` is that script, once, in the element that already owns the state.
+
+> [!NOTE]
+> The query owns the state at each _change_, not every moment in between. Within one side
+> of a breakpoint the button still toggles normally, which is what you want for a drawer
+> that opens and shuts all day — and crossing the breakpoint resets it, so a drawer left
+> open never survives into a layout that has no drawer. If the button would be meaningless
+> on the matching side, hide it there in your CSS: the element writes state, not layout.
+
+Crossing lands instantly rather than sliding. A breakpoint change is the page being
+rearranged around the reader, and animating the region through a window drag would be
+animating something nobody asked for.
 
 ## Find-in-page
 
