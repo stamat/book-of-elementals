@@ -21,8 +21,12 @@ may already be targeting**, since neither shows up in a function signature.
   runs on — a sticky rail on a wide screen, an off-canvas drawer on a phone — built from
   `<disclosure-elemental>`, one media query and nine lines of script. Covers the parts that
   are the page's rather than the element's: syncing `open` to the breakpoint, sliding on
-  `transform` instead of the region's height, and keeping the drawer out of the way of a
-  page whose script never loaded. Docs only.
+  `transform` instead of the region's height, capping the panel at the viewport so a long
+  nav scrolls itself instead of overflowing into the article, deferring the
+  `content-visibility` flip on the close only — an opening panel that defers it renders but
+  stays unreachable — swapping Octicons'
+  `sidebar-expand`/`sidebar-collapse` off `aria-expanded` in CSS, and keeping the drawer out
+  of the way of a page whose script never loaded. Docs only.
 
 - **A demo can be more than one fence.** `script/demos.js` now wraps a group — the marked
   html fence plus any fence under it that says `demo` in its own info string — in a single

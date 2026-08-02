@@ -23,8 +23,13 @@ media query. Here is the assembly.
 <header class="topbar">
   <disclosure-elemental for="sidebar">
     <button class="nav-toggle" aria-label="Documentation navigation">
-      <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
-        <path d="M1 2.75A.75.75 0 0 1 1.75 2h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 2.75Zm0 5A.75.75 0 0 1 1.75 7h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 7.75Zm.75 4.25h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5Z"/>
+      <svg class="icon-expand" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
+        <path d="m4.177 7.823 2.396-2.396A.25.25 0 0 1 7 5.604v4.792a.25.25 0 0 1-.427.177L4.177 8.177a.25.25 0 0 1 0-.354Z"/>
+        <path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25H9.5v-13Zm12.5 13a.25.25 0 0 0 .25-.25V1.75a.25.25 0 0 0-.25-.25H11v13Z"/>
+      </svg>
+      <svg class="icon-collapse" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
+        <path d="M6.823 7.823a.25.25 0 0 1 0 .354l-2.396 2.396A.25.25 0 0 1 4 10.396V5.604a.25.25 0 0 1 .427-.177Z"/>
+        <path d="M1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25V1.75C0 .784.784 0 1.75 0ZM1.5 1.75v12.5c0 .138.112.25.25.25H9.5v-13H1.75a.25.25 0 0 0-.25.25ZM11 14.5h3.25a.25.25 0 0 0 .25-.25V1.75a.25.25 0 0 0-.25-.25H11Z"/>
       </svg>
     </button>
   </disclosure-elemental>
@@ -41,12 +46,32 @@ media query. Here is the assembly.
           <li><a href="#">Configuration</a></li>
         </ul>
       </details>
-      <details>
+      <details open>
         <summary>Guides</summary>
         <ul>
           <li><a href="#">Layouts</a></li>
           <li><a href="#">Theming</a></li>
           <li><a href="#">Deploying</a></li>
+          <li><a href="#">Migrating</a></li>
+        </ul>
+      </details>
+      <details open>
+        <summary>Reference</summary>
+        <ul>
+          <li><a href="#">CLI</a></li>
+          <li><a href="#">Config file</a></li>
+          <li><a href="#">Filters</a></li>
+          <li><a href="#">Shortcodes</a></li>
+          <li><a href="#">Plugins</a></li>
+        </ul>
+      </details>
+      <details open>
+        <summary>Recipes</summary>
+        <ul>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Search</a></li>
+          <li><a href="#">Sitemap</a></li>
+          <li><a href="#">Feeds</a></li>
         </ul>
       </details>
     </nav>
@@ -66,7 +91,8 @@ media query. Here is the assembly.
 body { margin: 0; padding: 0; --line: color-mix(in srgb, currentcolor 15%, transparent); }
 
 .topbar {
-  position: sticky; top: 0; z-index: 2;
+  /* above the drawer, which slides under it rather than over its bottom edge */
+  position: sticky; top: 0; z-index: 3;
   display: flex; align-items: center; gap: 0.75rem;
   height: 3.25rem; padding: 0 1rem;
   background: Canvas; border-bottom: 1px solid var(--line);
@@ -77,21 +103,40 @@ body { margin: 0; padding: 0; --line: color-mix(in srgb, currentcolor 15%, trans
   width: 2.25rem; height: 2.25rem; padding: 0;
   border: 0; border-radius: 0.375rem; background: none; color: inherit; cursor: pointer;
 }
+/* the theme's chevron is for a trigger with a label; this one is its own icon */
+.nav-toggle::before { content: none; }
+.nav-toggle:hover { background: var(--line); }
+/* Octicons draws the pair for a rail on the right, and this drawer is on the left */
+.nav-toggle svg { scale: -1 1; }
+/* the state is already on the button, so the icon reads it rather than being told */
+.nav-toggle[aria-expanded="true"] .icon-expand,
+.nav-toggle:not([aria-expanded="true"]) .icon-collapse { display: none; }
 
 .layout { display: flex; align-items: flex-start; }
 .content { flex: 1 1 auto; min-width: 0; padding: 0 1.5rem; }
 .scrim { display: none; }
 
-.sidebar { flex: 0 0 14rem; position: sticky; top: 3.25rem; border-right: 1px solid var(--line); }
+.sidebar {
+  flex: 0 0 14rem; position: sticky; top: 3.25rem;
+  border-right: 1px solid var(--line);
+  /* as tall as its links, and its own scroller once they outgrow the viewport */
+  max-height: calc(100dvh - 3.25rem); overflow-y: auto; overscroll-behavior: contain;
+}
 /* the inset goes on a box inside the region, never on the region itself */
-.sidebar nav { padding: 1rem 0.75rem; }
+.sidebar nav { padding: 1rem 0.75rem 3rem; }
 .sidebar summary { padding: 0.35rem 0.6rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; cursor: pointer; }
 .sidebar ul { margin: 0; padding-left: 0.75rem; list-style: none; }
 .sidebar a { display: block; padding: 0.3rem 0.6rem; border-radius: 0.375rem; color: inherit; text-decoration: none; opacity: 0.75; }
 .sidebar a[aria-current] { background: var(--line); opacity: 1; font-weight: 600; }
 
-/* the drawer travels, it does not grow: transform instead of the element's height slide */
-#sidebar { transition: transform 0.2s ease, content-visibility 0.2s allow-discrete; }
+#sidebar {
+  /* the theme's gap belongs under a trigger, and this panel is not under one */
+  margin: 0;
+  /* the drawer travels, it does not grow: transform instead of the element's height slide */
+  transition: transform 0.2s ease;
+}
+/* only while closing — see below, an opening panel must not defer being reachable */
+#sidebar[hidden] { transition: transform 0.2s ease, content-visibility 0.2s allow-discrete; }
 @media (prefers-reduced-motion: reduce) { #sidebar { transition: none; } }
 
 @media (width < 60rem) {
@@ -100,6 +145,7 @@ body { margin: 0; padding: 0; --line: color-mix(in srgb, currentcolor 15%, trans
     .nav-toggle { display: inline-flex; }
 
     .sidebar {
+      /* the drawer is a panel against the edge, so it takes the whole edge */
       position: fixed; inset: 3.25rem auto 0 0; z-index: 2;
       width: 14rem; border: 0; background: Canvas;
       box-shadow: 0 0 2rem rgb(0 0 0 / 25%);
@@ -154,6 +200,36 @@ reachable in the order it appears on screen, without anything being moved. And i
 lives on the button rather than on the icon, because the icon is
 `aria-hidden` — an unlabelled button that says nothing is the most common way this pattern
 breaks.
+
+### Two icons, one name
+
+The icons are Octicons' [`sidebar-expand` and
+`sidebar-collapse`](https://primer.style/foundations/icons/sidebar-expand-16), the pair
+GitHub uses for exactly this button, mirrored because Octicons draws them for a rail on the
+right. Which of the two is showing is a CSS question, not a JavaScript one — the element
+has already written the state on the button:
+
+```css
+.nav-toggle[aria-expanded="true"] .icon-expand,
+.nav-toggle:not([aria-expanded="true"]) .icon-collapse { display: none; }
+```
+
+The `:not()` rather than `[aria-expanded="false"]` is what covers the moment before the
+element upgrades, when the attribute is not there yet: no state written is the closed
+state, and the button shows the icon for opening.
+
+The accessible name does not change with the icon. "Documentation navigation" describes the
+thing the button controls, and `aria-expanded` says whether it is open — a name that flips
+to "Close navigation" would be saying the same thing twice, and saying it a beat late.
+
+One thing to take out, though. `disclosure-elemental`'s optional theme puts a chevron
+`::before` on the trigger, which is right for a trigger with a label and lands on top of an
+icon that is already its own affordance. It comes off the way the
+[theme documents](../elementals/disclosure.html#the-look):
+
+```css
+.nav-toggle::before { content: none; }
+```
 
 ## The breakpoint is the page's, the state is the element's
 
@@ -217,17 +293,86 @@ lands at once — leaving the transform to do the moving. The rule sits outside 
 query on purpose: at the wide end there is no transform to animate either, and a rail that
 slid open on every page load would be a page load you can watch happening.
 
-`allow-discrete` is the other half. `hidden="until-found"` computes to `content-visibility:
-hidden`, which is what keeps the closed drawer's links out of the tab order and out of the
-accessibility tree — but applied on the first frame it would also empty the panel before it
-had finished leaving. Transitioning a discrete property defers the flip to the end of the
-close and brings it forward to the start of the open, which is exactly the timing this
-needs, and it is one keyword rather than a `transitionend` listener.
+`margin: 0` in the same rule is the other thing handed back. The element's optional theme
+puts half a rem above the region, which is the right gap between a trigger and the thing it
+opened directly beneath it — and here the trigger is up in the header and the panel is
+flush against it, so that gap is a seam under the topbar instead. It is zeroed here rather
+than in the media query because the rail has the same seam.
+
+`allow-discrete` is the other half, and it is on the closed state rather than on the panel:
+
+```css
+#sidebar { transition: transform 0.2s ease; }
+#sidebar[hidden] { transition: transform 0.2s ease, content-visibility 0.2s allow-discrete; }
+```
+
+`hidden="until-found"` computes to `content-visibility: hidden`, which is what keeps the
+closed drawer's links out of the tab order and out of the accessibility tree. Applied on the
+first frame of a close it would also empty the panel before it had finished leaving, and
+transitioning a discrete property is what defers that flip to the end — one keyword rather
+than a `transitionend` listener.
+
+Only that direction wants it. Put the same declaration on `#sidebar` unconditionally and the
+opening drawer inherits a `content-visibility` transition it cannot finish: the panel slides
+in and paints, and its links stay skipped behind it — not focusable, not scrollable, `Tab`
+straight past a drawer you can see. Keying it to `[hidden]` means the rule is gone by the
+time the attribute is, so opening flips at once and only the close is deferred.
+
+Worth a `Tab` through the open drawer whenever you touch this — a panel that renders is not
+the same as a panel that is there, and this is the failure that looks like it works.
 
 Note where the padding is: on the `<nav>` inside the panel, not on the panel. That is the
 element's [one rule about its region](../elementals/disclosure.html#animation) and it is
 worth keeping even here — the region is the animated box, and the shipped stylesheet strips its
 padding and borders while closed so a collapsed region cannot leave a strip behind.
+
+## The panel scrolls itself
+
+A sidebar is a list that grows: sections open, a table of contents nests under the page you
+are on, and sooner or later it is taller than the screen. Left alone the overflow goes to
+the page — the rail is `position: sticky`, so it stops at the bottom of the viewport and the
+links past it are unreachable without scrolling the article they were meant to navigate. A
+ceiling and an `overflow` make the panel a scroller of its own instead:
+
+```css
+.sidebar {
+  max-height: calc(100dvh - 3.25rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+```
+
+Three deliberate choices in four lines:
+
+- **`max-height` rather than `height`.** A rail is as tall as its links. Pinning it to the
+  viewport instead would run its border down a column that ran out of nav two sections ago,
+  and a scrollbar appears on a list that fits — the ceiling only has to be where the
+  scrolling starts, not where the panel ends.
+- **`dvh` rather than `vh`.** On a phone `100vh` is the viewport with the browser's toolbars
+  hidden, which is taller than what you can see while they are showing — the last links sit
+  under the address bar with nothing left to scroll. The [dynamic viewport
+  unit](https://developer.mozilla.org/en-US/docs/Web/CSS/length#vh) tracks the box that is
+  actually visible.
+- **`overscroll-behavior: contain`.** Reaching the end of the drawer's list should stop
+  there, not hand the rest of the gesture to the article underneath it. This is the
+  non-modal equivalent of the scroll lock a modal drawer would take out on the whole page,
+  and it costs one declaration instead of a `body { overflow: hidden }` you then have to
+  remember to undo.
+
+The drawer is the one that wants the whole edge — a panel on a background, floating to
+three-quarters of the screen because that is where its links stopped, is a panel that looks
+broken. It gets there without repeating the height, because a fixed box pinned top and
+bottom already fills what is between them:
+
+```css
+@media (width < 60rem) {
+  .sidebar { position: fixed; inset: 3.25rem auto 0 0; }
+}
+```
+
+The bottom padding is on the `<nav>`, with the rest of the inset — the last link wants room
+under it, and a scroller whose content ends flush with its edge always looks like it is
+still cut off.
 
 ## Without the script
 
