@@ -42,6 +42,20 @@ navbar-elemental {
   // in it would fit and nothing would ever overflow. Pinned to the rail's own width, the copy
   // overflows it, which is the measurement.
   grid-template-columns: minmax(0, 1fr);
+
+  // The copy hangs out of this box on purpose, and an overflow nothing clips is one the page
+  // inherits: without this the document scrolls sideways to reach a row that is not on screen
+  // and never will be.
+
+  // Two things have to hold for the clip to land on the copy alone, and both are stated
+  // elsewhere in this file. The panels are absolutely positioned with nothing positioned above
+  // them, so their containing block is the page and a clip here is not in their chain; the
+  // drawer is positioned against `navbar-elemental`, which is above this box rather than under
+  // it. An `overflow` clip only reaches a descendant whose containing block it holds.
+
+  // It cannot go on the copy itself: the observer is rooted there, and clipping its root stops
+  // Chrome re-measuring when the bar grows - the links fold away and never come back.
+  overflow: hidden;
 }
 
 [data-navbar-rail] > * {

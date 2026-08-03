@@ -40,6 +40,14 @@ switch-elemental {
   --switch-elemental-knob-checked: var(--bg);
 }
 
+// This bundle loads every elemental's optional theme so the demos on the pages wear the
+// shipped look. The layout's own sidebar toggle is a `<disclosure-elemental>` too, and it
+// is an icon-only button - so the theme's caret lands beside its icon, on a bar that has no
+// room to spare. The caret marks a label, and there is no label here.
+.nav-toggle::before {
+  content: none;
+}
+
 // Same re-pointing for the navbar's panels: the docs background is not quite `Canvas`, and a
 // panel that matches the browser rather than the page is a panel you can see the seam of.
 navbar-elemental {
@@ -350,7 +358,8 @@ switch-elemental:not([checked]) + .demo-state .on {
 
   .demo-sitenav-bar:has(#{$search}:focus-within) {
     > .demo-sitenav-rail,
-    .demo-sitenav-icon {
+    .demo-sitenav-icon,
+    switch-elemental {
       display: none;
     }
   }
@@ -380,6 +389,29 @@ switch-elemental:not([checked]) + .demo-state .on {
   &:hover {
     color: var(--fg);
     background: var(--bg-code);
+  }
+}
+
+// The theme switch, in the shipped small preset and otherwise left alone: the docs bundle
+// already re-points its knob at the page background, and everything else in its look is mixed
+// out of `currentcolor`, so one colour is the whole of it. The icons are the page's own SVGs
+// at the page's own size, which at this preset is smaller than the 16px they are drawn at.
+.demo-sitenav switch-elemental {
+  color: var(--fg-muted);
+
+  &:hover {
+    color: var(--fg);
+  }
+
+  // `display: contents`, so the button is the flex item in the bar and the shrink is the
+  // button's to refuse - the element cannot refuse it on the button's behalf.
+  > button {
+    flex: none;
+  }
+
+  svg {
+    width: 0.8rem;
+    height: 0.8rem;
   }
 }
 

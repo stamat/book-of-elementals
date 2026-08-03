@@ -15,6 +15,27 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`<navbar-elemental>` no longer gives the page a horizontal scrollbar.** The copy of the
+  row the element measures is deliberately wider than the box it sits in — that overhang
+  _is_ the measurement — but nothing clipped it, so it counted toward the document's
+  scrollable width like any other content. A header whose links did not fit therefore handed
+  the whole page a sideways scroll, to reach a row that is invisible and always will be. On a
+  phone, where the row rarely fits, this was every page: the prose scrolled off the right
+  edge with it.
+
+  **CSS:** the rail — whatever box you put the row in, which the element marks
+  `data-navbar-rail` — is now `overflow: hidden`. Nothing else is clipped by it: on a bar the
+  panels are absolutely positioned with nothing positioned above them, so the page is their
+  containing block and this clip is not in their chain; stacked, the drawer is positioned
+  against `<navbar-elemental>`, which is above the rail rather than under it. A page that was
+  painting something out of the rail's own box on purpose is the one case that changes.
+
+  The clip cannot go on the copy instead, which is the obvious place for it: the element
+  roots its `IntersectionObserver` there, and clipping an observer's root stops Chrome
+  re-measuring when the bar grows — the links fold away and never come back.
+
 ## [0.3.0] - 2026-08-03
 
 ### Fixed

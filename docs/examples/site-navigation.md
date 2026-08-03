@@ -1,7 +1,7 @@
 ---
 layout: poops-docs-theme/docs
 title: Site navigation
-description: A whole site header built around navbar-elemental — logo, search, icon links and two calls to action beside a row of links that folds itself away.
+description: A whole site header built around navbar-elemental — logo, search, icon links, a theme switch and two calls to action beside a row of links that folds itself away.
 order: 1
 ---
 
@@ -9,8 +9,8 @@ order: 1
 
 [`<navbar-elemental>`](../elementals/navbar.html) is the row of links and the two ways it
 gets out of the way. A header is that plus everything a header actually has in it: a logo,
-a search field, links to npm and GitHub, and two calls to action. None of those are the
-element's business — which is the point of this page. Here is the assembly.
+a search field, links to npm and GitHub, a theme switch, and two calls to action. None of
+those are the element's business — which is the point of this page. Here is the assembly.
 
 <nav class="demo-sitenav" aria-label="Kestrel">
   <navbar-elemental class="demo-sitenav-bar" media="(min-width: 40rem)" hover>
@@ -53,6 +53,12 @@ element's business — which is the point of this page. Here is the assembly.
     </div>
     <a class="demo-sitenav-icon" href="#site-navigation" aria-label="npm"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.464l.01-10.382h-3.456L12.04 19.17H5.113z"></path></svg></a>
     <a class="demo-sitenav-icon" href="#site-navigation" aria-label="GitHub"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg></a>
+    <switch-elemental class="switch-elemental-small">
+      <button aria-label="Dark mode">
+        <span class="switch-elemental-off" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 12a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-1.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM8 0a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V.75A.75.75 0 0 1 8 0Zm0 13a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 8 13Zm8-5a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 16 8ZM3 8a.75.75 0 0 1-.75.75H.75a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 3 8Zm10.657-5.657a.75.75 0 0 1 0 1.061l-1.061 1.06a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734l1.06-1.061a.75.75 0 0 1 1.06 0Zm-9.193 9.193a.75.75 0 0 1 0 1.06l-1.06 1.061a.75.75 0 1 1-1.061-1.06l1.06-1.061a.75.75 0 0 1 1.061 0Zm9.193 2.121a.75.75 0 0 1-1.06 0l-1.061-1.06a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l1.06 1.061a.75.75 0 0 1 0 1.06ZM4.464 4.464a.75.75 0 0 1-1.06 0L2.343 3.404a.75.75 0 0 1 1.06-1.06l1.061 1.06a.75.75 0 0 1 0 1.06Z"></path></svg></span>
+        <span class="switch-elemental-on" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M9.598 1.591a.749.749 0 0 1 .785-.175 7.001 7.001 0 1 1-8.967 8.967.75.75 0 0 1 .961-.96 5.5 5.5 0 0 0 7.046-7.046.75.75 0 0 1 .175-.786Zm1.616 1.945a7 7 0 0 1-7.678 7.678 5.499 5.499 0 1 0 7.678-7.678Z"></path></svg></span>
+      </button>
+    </switch-elemental>
     <div class="demo-sitenav-cta">
       <a class="demo-sitenav-btn" href="#site-navigation">Sign in</a>
       <a class="demo-sitenav-btn demo-sitenav-btn-primary" href="#site-navigation">Sign up</a>
@@ -106,6 +112,13 @@ icon.
 
     <a class="icon" href="https://npmjs.com/…" aria-label="npm"><svg …></svg></a>
     <a class="icon" href="https://github.com/…" aria-label="GitHub"><svg …></svg></a>
+
+    <switch-elemental class="switch-elemental-small">
+      <button aria-label="Dark mode">
+        <span class="switch-elemental-off" aria-hidden="true"><svg …><!-- sun --></svg></span>
+        <span class="switch-elemental-on" aria-hidden="true"><svg …><!-- moon --></svg></span>
+      </button>
+    </switch-elemental>
 
     <div class="cta">
       <a class="btn" href="/sign-in">Sign in</a>
@@ -197,7 +210,8 @@ The room it takes comes from hiding what is beside it, which is what `:has` is f
 .search:focus-within { flex: 1 1 auto; width: auto; }
 
 .bar:has(.search:focus-within) > .rail,
-.bar:has(.search:focus-within) .icon {
+.bar:has(.search:focus-within) .icon,
+.bar:has(.search:focus-within) switch-elemental {
   display: none;
 }
 ```
@@ -207,6 +221,12 @@ containing block for the element's panels, and their
 [`position-try-fallbacks` are judged against it](../elementals/navbar.html#staying-on-screen)
 — so a field that floated over the bar would quietly stop every dropdown in the header from
 flipping away from the window's edge.
+
+Floating it has a second cost this bar happens to show. The switch's button is
+`position: relative` — the knob is positioned against it — so a field floated over the row
+would be one `z-index: auto` element covered by another, and dom order would decide which
+won: the pill would paint on top of the open field. Hiding what is beside the field instead
+of covering it means there is nothing to stack.
 
 The same rules keyed to a class instead of the breakpoint give you the icon-button form at
 every width, for a bar that would rather spend its room on links:
@@ -233,8 +253,9 @@ Everything on this page that is not the furniture:
 - **Find-in-page** reaches a link inside a closed drawer, because a closed drawer is
   `hidden="until-found"` rather than `display: none`.
 
-What is left for the page is a flex row, a logo, a field, two icon links, two buttons and
-one media query — which is about the right amount of CSS for a header, and none of it is
-about how a navigation works.
+What is left for the page is a flex row, a logo, a field, two icon links, a switch, two
+buttons and one media query — which is about the right amount of CSS for a header, and none
+of it is about how a navigation works.
 
 <script src="{{ relativePathPrefix }}dist/elementals/navbar.js"></script>
+<script src="{{ relativePathPrefix }}dist/elementals/switch.js"></script>

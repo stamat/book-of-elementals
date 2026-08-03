@@ -127,6 +127,7 @@ navbar-elemental menu {
   align-items: center;
   min-width: 0;
   grid-template-columns: minmax(0, 1fr);
+  overflow: hidden;
 }
 
 [data-navbar-rail] > * {
