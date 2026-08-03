@@ -79,7 +79,15 @@ const HEAD = [
   ':root[data-theme=dark]{color-scheme:dark}',
   'body{margin:0;padding:1rem;background:Canvas;color:CanvasText;',
   'font:1rem/1.5 system-ui,sans-serif}',
-  '</style>'
+  '</style>',
+  // A placeholder `href="#"` is a link to nowhere on an ordinary page, and something else
+  // entirely in a srcdoc frame: srcdoc has no url of its own, so it borrows this page's as
+  // its base and `#` resolves to the docs page - clicking a nav item in a preview loads the
+  // whole site back inside it. The samples are full of them, because a nav demo is mostly
+  // links. Cheaper here than a fake `href` per sample: the fences stay the markup an author
+  // would write, and this stays frame furniture like the padding above it.
+  '<script>addEventListener("click",(e)=>{const a=e.target.closest?.("a");',
+  'if(a?.getAttribute("href")?.startsWith("#"))e.preventDefault()});</script>'
 ].join('');
 
 /** Every .html file under _site, at any depth. */
