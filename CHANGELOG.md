@@ -72,7 +72,7 @@ may already be targeting**, since neither shows up in a function signature.
 
 - **Sidebar drawer example.** A second page under _Examples_: the docs sidebar this site
   runs on — a sticky rail on a wide screen, an off-canvas drawer on a phone — built from
-  `<disclosure-elemental>`, its `media` attribute and four lines of script. Covers the parts
+  `<disclosure-elemental>`, its `media` attribute and a handful of lines of script. Covers the parts
   that are the page's rather than the element's: sliding on
   `transform` instead of the region's height, capping the panel at the viewport so a long
   nav scrolls itself instead of overflowing into the article, deferring the

@@ -176,7 +176,19 @@ disclosure-elemental[data-mode="free"] .nav-toggle { display: inline-flex; }
 const drawer = document.querySelector("disclosure-elemental");
 
 // the drawer is not modal, so light dismiss is the page's to add
-const close = () => { if (drawer.open) drawer.open = false; };
+const close = () => {
+  if (!drawer.open) return;
+  // focus first, while the panel is still rendered: closing hides it, and a link
+  // focused inside would drop focus to <body>
+  if (drawer.region.contains(document.activeElement)) drawer.button.focus();
+  drawer.open = false;
+};
+
+// the panel is far from its button in tab order, so opening hands focus over
+drawer.addEventListener("disclosure-toggle", (e) => {
+  if (!e.detail.open || drawer.dataset.mode !== "free") return;
+  drawer.region.querySelector("[aria-current], a").focus();
+});
 
 document.querySelector(".scrim").addEventListener("click", close);
 addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
@@ -292,17 +304,56 @@ What is left for the page is light dismiss, because
 the scrim is behaviour the pattern owes you:
 
 ```javascript
-const close = () => { if (drawer.open) drawer.open = false; };
-
 document.querySelector(".scrim").addEventListener("click", close);
 addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
 ```
 
-No breakpoint test in there any more. Both only fire while the drawer is on screen, and
-above the breakpoint the attribute puts `open` straight back — so `close()` can just say
-what it means.
+No breakpoint test in either. Both only fire while the drawer is on screen, and above the
+breakpoint the attribute puts `open` straight back — so `close()` can just say what it means.
 
-One thing to carry across when you copy it. Those four lines go in a
+## Focus, which is the page's too
+
+The pattern does not move focus, and for most disclosures that is right: the region is the
+next thing after the button, so `Tab` reaches it. This one is not next. The button is the
+first thing in the header and the panel is the last thing in the layout, so between them sit
+the brand, and in a real docs header the search field and every icon link as well. Opening a
+panel that then takes five tabs to reach is a panel that opened for the mouse only.
+
+So the page hands focus over, on the one mode where the panel is an overlay:
+
+```javascript
+drawer.addEventListener("disclosure-toggle", (e) => {
+  if (!e.detail.open || drawer.dataset.mode !== "free") return;
+  drawer.region.querySelector("[aria-current], a").focus();
+});
+```
+
+Three things in there worth reading twice. The `data-mode` test is not decoration: crossing
+the breakpoint opens the rail too, and a rail stealing focus because you widened the window
+is worse than the problem being fixed. `[aria-current]` first, so focus lands on the page you
+are actually on rather than the top of the list. And `region` and `button` are the element's
+own properties — the page never has to re-find by selector what the element already resolved.
+
+The other half is the close. Setting `hidden` on a panel with focus inside it drops focus to
+`<body>`, and the next `Tab` restarts from the top of the document — so `close()` takes focus
+back to the button first, while the panel is still rendered:
+
+```javascript
+const close = () => {
+  if (!drawer.open) return;
+  if (drawer.region.contains(document.activeElement)) drawer.button.focus();
+  drawer.open = false;
+};
+```
+
+That ordering is the whole trick, and it is easy to get backwards: move focus, then close.
+
+None of this makes the drawer modal. Focus is not trapped, the article is not `inert`, and
+tabbing past the last link leaves the panel and carries on into the page — which is still
+[the disclosure pattern](#a-disclosure-not-a-dialog). Handing focus to a panel is not the
+same promise as refusing to let it go.
+
+One thing to carry across when you copy it. Those lines go in a
 `<script type="module">`, and the `type` is not about the scoping — it is about when the
 script runs. A classic `<script>` in the body runs while the page is still parsing, before
 a deferred bundle has defined anything, and `drawer.open = false` against an element that
@@ -470,5 +521,6 @@ Everything on this page that is not furniture:
 - **The button gets `type="button"`** whether or not you remembered, so a drawer inside a
   form does not submit it.
 
-What is left for the page is a flex row, a fixed panel, a scrim and four lines of script —
-and none of those four lines is about a disclosure.
+What is left for the page is a flex row, a fixed panel, a scrim, light dismiss and one
+handover of focus — and none of it is about a disclosure. It is about where this page put
+the button.
