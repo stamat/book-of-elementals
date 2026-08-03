@@ -15,6 +15,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-03
+
 ### Fixed
 
 - **A closed region no longer paints a shadow into the page.** The element's stylesheet
