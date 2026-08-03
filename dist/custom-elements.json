@@ -293,6 +293,25 @@
           }
         },
         {
+          "kind": "function",
+          "name": "mediaMode",
+          "parameters": [
+            {
+              "name": "open",
+              "description": "What {@link mediaOpen}said.\n * ",
+              "type": {
+                "text": "boolean|null"
+              }
+            }
+          ],
+          "description": "The name for which side of a `media` query the element is on, for CSS to hold on to.\n\nWhich exists so a stylesheet does not have to repeat the breakpoint. A drawer's layout\nis a media query in every page that writes one by hand, and that query has to agree\nwith the one in the attribute for the panel and its state to describe the same thing -\ntwo declarations of one number, in two languages, that nothing checks. Reflected, the\nelement is the only thing that knows the breakpoint and the CSS keys off the answer,\nwhich is also what lets that CSS be shipped to a project whose breakpoint is different.\n\n`pinned` is the query holding the region open; `free` is the button having it back.\nNull for an element with no query, so nothing is written and nothing can match.",
+          "return": {
+            "type": {
+              "text": "\"pinned\"|\"free\"|null"
+            }
+          }
+        },
+        {
           "kind": "class",
           "description": "`<disclosure-elemental>` custom element.\n\nA real `<button>` wired to a region it shows and hides, per the\n[APG Disclosure pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/).\n\nNative `<details>`/`<summary>` is a disclosure already, and where it fits it wins -\n`<accordion-elemental>` is built on it for exactly that reason. It fits when the\nregion can live *inside* the trigger's element. This element is for when it cannot:\na `<figcaption>`, which HTML requires to be a child of its `<figure>`; a table row;\na grid or flex item whose parent lays it out directly; a panel on the other side of\nthe page from the button that opens it. Wrapping any of those in a `<details>`\nmoves them out of the parent that gives them meaning.\n\nWhat it does, and nothing more: keeps `aria-expanded` on the button and `hidden` on\nthe region in step, points one at the other with `aria-controls`, re-opens on\n`beforematch` so find-in-page still finds what is inside, and slides the region's\nheight on the way in and out.\n\nLight DOM, no shadow root, and nothing is moved or wrapped - the region stays\nexactly where the markup put it, which is the whole point.",
           "name": "DisclosureElemental",
@@ -354,6 +373,11 @@
               "kind": "method",
               "name": "onMediaChange",
               "description": "The breakpoint moved, so the state follows it.\n\nInstant, unlike a click. Crossing a breakpoint is the layout being rearranged around\nthe reader - a rotation, a window drag, a zoom - and animating the region through\nthat is animating something nobody asked to happen. It also keeps a resize from\nqueueing a slide per frame."
+            },
+            {
+              "kind": "method",
+              "name": "reflectMode",
+              "description": "Put the current mode on the element and on the region, or take it off both.\n\nOn the region as well as the element because `for` lets the two live at opposite ends\nof the document, and a panel that has to reach back up to its button through\n`:root:has(…)` for every rule is a stylesheet nobody wants to read. It is one more\nattribute on a box the element is already writing `hidden`, `id` and a class to."
             },
             {
               "kind": "method",
@@ -432,6 +456,14 @@
           "name": "mediaOpen",
           "declaration": {
             "name": "mediaOpen",
+            "module": "src/elementals/disclosure/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "mediaMode",
+          "declaration": {
+            "name": "mediaMode",
             "module": "src/elementals/disclosure/index.js"
           }
         },

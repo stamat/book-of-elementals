@@ -1,4 +1,4 @@
-import { disclosureState, slideFrom, mediaOpen } from './index.js';
+import { disclosureState, slideFrom, mediaOpen, mediaMode } from './index.js';
 
 test('an open disclosure is expanded and not hidden', () => {
   expect(disclosureState(true)).toEqual({ expanded: 'true', hidden: null });
@@ -31,4 +31,16 @@ test('a matching media query holds the region open', () => {
 
 test('a media query that stops matching hands the region back to the button, closed', () => {
   expect(mediaOpen({ matches: false })).toBe(false);
+});
+
+test('no media query writes no mode, so nothing styles off one that is not there', () => {
+  expect(mediaMode(null)).toBe(null);
+});
+
+test('a matching query is the pinned mode', () => {
+  expect(mediaMode(true)).toBe('pinned');
+});
+
+test('a query that does not match is the free mode, where the button is in charge', () => {
+  expect(mediaMode(false)).toBe('free');
 });

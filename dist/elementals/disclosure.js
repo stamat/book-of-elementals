@@ -113,6 +113,10 @@
   function mediaOpen(query) {
     return query ? query.matches : null;
   }
+  function mediaMode(open) {
+    if (open === null) return null;
+    return open ? "pinned" : "free";
+  }
   var REGION_CLASS = "disclosure-elemental-region";
   var regionCount = 0;
   var DisclosureElemental = class extends ElementBase {
@@ -153,6 +157,7 @@
       if (!region.id) region.id = "disclosure-elemental-" + ++regionCount;
       region.classList.add(REGION_CLASS);
       button.setAttribute("aria-controls", region.id);
+      this.reflectMode();
       this.onClick = this.onClick.bind(this);
       this.onBeforeMatch = this.onBeforeMatch.bind(this);
       this.addEventListener("click", this.onClick);
@@ -164,8 +169,10 @@
       this.removeEventListener("click", this.onClick);
       if (this.query) this.query.removeEventListener("change", this.onMediaChange);
       this.query = null;
+      delete this.dataset.mode;
       const region = this.region;
       if (region) {
+        delete region.dataset.mode;
         region.removeEventListener("beforematch", this.onBeforeMatch);
         if (!this.contains(region)) region.removeAttribute("hidden");
       }
@@ -219,11 +226,31 @@
      * queueing a slide per frame.
      */
     onMediaChange() {
+      this.reflectMode();
       const pinned = mediaOpen(this.query);
       if (pinned === null) return;
       this.instant = true;
       this.open = pinned;
       this.instant = false;
+    }
+    /**
+     * Put the current mode on the element and on the region, or take it off both.
+     *
+     * On the region as well as the element because `for` lets the two live at opposite ends
+     * of the document, and a panel that has to reach back up to its button through
+     * `:root:has(…)` for every rule is a stylesheet nobody wants to read. It is one more
+     * attribute on a box the element is already writing `hidden`, `id` and a class to.
+     */
+    reflectMode() {
+      const mode = mediaMode(mediaOpen(this.query));
+      const region = this.region;
+      if (mode === null) {
+        delete this.dataset.mode;
+        if (region) delete region.dataset.mode;
+        return;
+      }
+      this.dataset.mode = mode;
+      if (region) region.dataset.mode = mode;
     }
     /**
      * `open` is the single source of truth, so everything that changes it - a click,

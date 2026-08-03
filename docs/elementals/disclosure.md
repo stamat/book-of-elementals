@@ -141,6 +141,7 @@ document.querySelector("disclosure-elemental")
 | `type`          | the button | `button`, only if the markup did not set a type                                   |
 | `hidden`        | the region | `until-found` while closed, absent while open — set at the end of the close slide |
 | `class`         | the region | `disclosure-elemental-region` added, nothing removed                              |
+| `data-mode`     | both       | `pinned` / `free`, only while `media` is set — see [A breakpoint that owns it](#a-breakpoint-that-owns-it) |
 
 `type="button"` because a `<button>` in a form submits it unless told otherwise, and a
 disclosure that posts the page away on its first click is not a disclosure.
@@ -271,6 +272,42 @@ Crossing lands instantly rather than sliding. A breakpoint change is the page be
 rearranged around the reader, and animating the region through a window drag would be
 animating something nobody asked for.
 
+### The mode is on both ends
+
+Setting `media` also puts `data-mode` on the element **and on the region** — `pinned` while
+the query matches, `free` while it does not, and nothing at all on an element with no
+`media`:
+
+```html
+<disclosure-elemental for="sidebar" media="(min-width: 60rem)" data-mode="free">…</disclosure-elemental>
+
+<aside class="sidebar" id="sidebar" data-mode="free" hidden="until-found">…</aside>
+```
+
+Which is there so your stylesheet does not have to say the breakpoint a second time:
+
+```css
+/* no media query in here, and no `60rem` to keep in step with the attribute */
+.sidebar { /* the rail */ }
+.sidebar[data-mode="free"] { position: fixed; /* the drawer */ }
+```
+
+Written by hand, a responsive panel is a number in the HTML and the same number in the CSS,
+in two languages, with nothing checking that they still agree — move one and the panel and
+its state describe different layouts. Here only the element knows the breakpoint. Which is
+also what makes such a stylesheet worth shipping: it carries no breakpoint, so it lands in a
+project whose breakpoint is different and works.
+
+On the region as well as the element because `for` lets the two live at opposite ends of the
+document, and reaching back up to the button through `:root:has(…)` in every rule is a
+stylesheet nobody wants to read.
+
+> [!NOTE]
+> `data-mode` arrives at upgrade, so `[data-mode]` cannot match before the element is
+> defined — which makes it the progressive-enhancement guard as well. Layout that would
+> strand the page if the script never loaded (an off-canvas panel, say) goes behind
+> `[data-mode="free"]` and cannot apply until something is there to bring it back.
+
 ## Find-in-page
 
 A closed region is hidden with `hidden="until-found"`, not a bare `hidden`. Find-in-page
@@ -290,8 +327,27 @@ found.
 > [!NOTE]
 > `hidden="until-found"` skips the region's _contents_, not its box, so a padded or
 > bordered region would leave an empty strip behind while closed. The element's stylesheet
-> zeroes the region's own margin, padding and border while hidden, which is what the
-> `disclosure-elemental-region` class is for.
+> zeroes the region's own margin, padding, border and `box-shadow` while hidden, which is
+> what the `disclosure-elemental-region` class is for.
+
+`box-shadow` is in that list for a case the others do not have. A closed region is normally
+not painted at all, so its shadow is moot — but a region closed by being _moved_ rather than
+by being unpainted is a different thing. A drawer sits off-canvas under a `translate`, and a
+shadow reaches out of its box by its blur radius, so a panel you cannot see paints a smear
+down the edge of the viewport it just left. The same is true for the length of a close on a
+panel that defers `content-visibility` with `allow-discrete` so the slide can finish.
+
+Those zeroing rules are ordinary declarations at one class and one attribute, though, so a
+selector of equal weight later in the cascade beats them — `.drawer[data-mode="free"]` ties
+with `.disclosure-elemental-region[hidden]` and wins on order. If a shadow has to hold in
+every case, scope it to the open state rather than relying on the zeroing:
+
+```css
+.drawer:not([hidden]) { box-shadow: 0 0 2rem rgb(0 0 0 / 25%); }
+```
+
+`[hidden]` is on the region the whole time it is closed, so a shadow declared only for
+`:not([hidden])` cannot be painted by a panel that is not there.
 
 ## Animation
 

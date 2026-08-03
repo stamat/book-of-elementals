@@ -15,6 +15,20 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A closed region no longer paints a shadow into the page.** The element's stylesheet
+  already zeroed the region's margin, padding and border while `hidden`, so a collapsed
+  region could not leave a strip behind; `box-shadow` is now zeroed with them.
+
+  It matters for a region that is closed by being moved rather than by being unpainted — a
+  drawer parked off-canvas under a `translate` still paints, and a shadow reaches out of its
+  box by its blur radius, so an invisible panel smears down the edge of the viewport it just
+  left. **CSS:** `.disclosure-elemental-region[hidden]` now sets `box-shadow: none`. A page
+  that wants a shadow on an open panel and had been relying on it applying while closed
+  should scope it as `:not([hidden])`, which is also the form that survives a selector of
+  equal weight winning on cascade order.
+
 ### Added
 
 - **`media` on `<disclosure-elemental>`.** A media query that owns `open`: the region is
@@ -33,10 +47,28 @@ may already be targeting**, since neither shows up in a function signature.
   button still toggles normally; the query re-asserts itself at the next change, so a drawer
   left open cannot survive into a layout that has no drawer.
 
-  No new DOM: it writes `open`, and `aria-expanded` and `hidden` follow it exactly as they
-  already did. An element with no `media` attribute is untouched. The alternative most pages
-  reach for — showing the panel in a media query and hiding the button — leaves
-  `aria-expanded="false"` on a panel that is visible, which is the bug this removes.
+  The alternative most pages reach for — showing the panel in a media query and hiding the
+  button — leaves `aria-expanded="false"` on a panel that is visible, which is the bug this
+  removes. An element with no `media` attribute is untouched.
+
+  **DOM:** with `media` set, the element writes `data-mode="pinned"` while the query matches
+  and `data-mode="free"` while it does not, on **itself and on the region**, and removes it
+  from both on disconnect or when `media` is dropped. Nothing is written without `media`.
+  `open`, `aria-expanded` and `hidden` behave exactly as before.
+
+  `data-mode` is there so a stylesheet does not have to repeat the breakpoint — the query is
+  declared once, in the markup, and the CSS keys off the answer rather than restating the
+  number in a language that cannot check it:
+
+  ```css
+  .sidebar { /* the rail */ }
+  .sidebar[data-mode="free"] { position: fixed; /* the drawer */ }
+  ```
+
+  Which also makes such a stylesheet shippable, since it carries no breakpoint of its own.
+  And because the attribute only arrives at upgrade, `[data-mode]` doubles as the
+  progressive-enhancement guard: layout that would strand a page whose script never loaded
+  cannot apply before the element is alive.
 
 - **Sidebar drawer example.** A second page under _Examples_: the docs sidebar this site
   runs on — a sticky rail on a wide screen, an off-canvas drawer on a phone — built from

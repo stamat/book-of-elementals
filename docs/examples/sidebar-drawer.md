@@ -124,8 +124,22 @@ body { margin: 0; padding: 0; --line: color-mix(in srgb, currentcolor 15%, trans
 }
 /* the inset goes on a box inside the region, never on the region itself */
 .sidebar nav { padding: 1rem 0.75rem 3rem; }
-.sidebar summary { padding: 0.35rem 0.6rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; cursor: pointer; }
-.sidebar ul { margin: 0; padding-left: 0.75rem; list-style: none; }
+/* the sections are native `<details>`, whose marker is a filled triangle — swapped for the
+   chevron the element's theme draws, so the two carets on the page are one caret */
+.sidebar summary { display: flex; align-items: center; gap: 0.4rem; list-style: none; padding: 0.35rem 0.6rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; cursor: pointer; }
+.sidebar summary::before {
+  content: ""; flex: none; width: 1em; height: 1em;
+  rotate: -90deg; /* closed, it points at its own label; open, at the list it revealed */
+  background: currentcolor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.sidebar summary:dir(rtl)::before { rotate: 90deg; }
+.sidebar details[open] > summary::before { rotate: 0deg; }
+/* a masked icon is a background, and forced colors drops author backgrounds — the only
+   thing marking the section as openable would go with it */
+@media (forced-colors: active) { .sidebar summary::before { background: CanvasText; } }
+/* 1.2rem + the link's own 0.6rem inset lands the labels under the summary's, past its caret */
+.sidebar ul { margin: 0; padding-left: 1.2rem; list-style: none; }
 .sidebar a { display: block; padding: 0.3rem 0.6rem; border-radius: 0.375rem; color: inherit; text-decoration: none; opacity: 0.75; }
 .sidebar a[aria-current] { background: var(--line); opacity: 1; font-weight: 600; }
 
@@ -139,24 +153,22 @@ body { margin: 0; padding: 0; --line: color-mix(in srgb, currentcolor 15%, trans
 #sidebar[hidden] { transition: transform 0.2s ease, content-visibility 0.2s allow-discrete; }
 @media (prefers-reduced-motion: reduce) { #sidebar { transition: none; } }
 
-@media (width < 60rem) {
-  /* only once the element is there to open it — see below */
-  :root:has(disclosure-elemental:defined) {
-    .nav-toggle { display: inline-flex; }
+/* `free` is the element saying its query stopped matching — a drawer, not a rail. The
+   breakpoint itself is in the HTML, and only in the HTML. */
+disclosure-elemental[data-mode="free"] .nav-toggle { display: inline-flex; }
 
-    .sidebar {
-      /* the drawer is a panel against the edge, so it takes the whole edge */
-      position: fixed; inset: 3.25rem auto 0 0; z-index: 2;
-      width: 14rem; border: 0; background: Canvas;
-      box-shadow: 0 0 2rem rgb(0 0 0 / 25%);
-    }
-    #sidebar[hidden] { transform: translateX(-100%); }
+.sidebar[data-mode="free"] {
+  /* the drawer is a panel against the edge, so it takes the whole edge. The rail's own
+     border is what separates it from the scrim — a drop shadow over a scrim is two
+     things doing one job, and it smears across the dimmed page rather than lifting off it */
+  position: fixed; inset: 3.25rem auto 0 0; z-index: 2;
+  width: 14rem; background: Canvas;
+}
+.sidebar[data-mode="free"][hidden] { transform: translateX(-100%); }
 
-    #sidebar:not([hidden]) ~ .scrim {
-      display: block; position: fixed; inset: 3.25rem 0 0; z-index: 1;
-      background: rgb(0 0 0 / 35%);
-    }
-  }
+.sidebar[data-mode="free"]:not([hidden]) ~ .scrim {
+  display: block; position: fixed; inset: 3.25rem 0 0; z-index: 1;
+  background: rgb(0 0 0 / 35%);
 }
 ```
 
@@ -259,6 +271,22 @@ The panel appears, and every assistive technology on the page is still being tol
 hidden and its button collapsed. `media` moves that decision to the one place already
 holding the state, so there is nothing to disagree with.
 
+And it takes the number with it. The element reflects which side of its query it is on, as
+`data-mode="pinned"` or `data-mode="free"`, onto itself **and** onto the panel — so the rest
+of this page's CSS never says `60rem` at all:
+
+```css
+disclosure-elemental[data-mode="free"] .nav-toggle { display: inline-flex; }
+
+.sidebar[data-mode="free"] { position: fixed; /* … */ }
+```
+
+Written the usual way, that breakpoint would be in the stylesheet as well as in the markup —
+one number, twice, in two languages, with nothing to notice when they stop agreeing. Here
+the query is declared once and the CSS keys off the answer. Which is also what makes the
+layout portable: it carries no breakpoint, so it drops into a project whose breakpoint is
+somewhere else and works.
+
 What is left for the page is light dismiss, because
 [a disclosure is not a dialog](#a-disclosure-not-a-dialog) and neither Escape nor a click on
 the scrim is behaviour the pattern owes you:
@@ -293,26 +321,24 @@ arrives from off-screen — so the page takes the animation back:
 
 ```css
 #sidebar {
-  transition: transform 0.2s ease, content-visibility 0.2s allow-discrete;
+  transition: transform 0.2s ease;
 }
 
-@media (width < 60rem) {
-  #sidebar[hidden] { transform: translateX(-100%); }
-}
+.sidebar[data-mode="free"][hidden] { transform: translateX(-100%); }
 ```
 
 The height slide is not switched off with a flag. The element
 [reads the transition back out of the computed styles](../elementals/disclosure.html#animation)
 to time itself, so a region with no `height` transition has nothing to time and the state
-lands at once — leaving the transform to do the moving. The rule sits outside the media
-query on purpose: at the wide end there is no transform to animate either, and a rail that
+lands at once — leaving the transform to do the moving. The transition is not scoped to
+`free` on purpose: at the wide end there is no transform to animate either, and a rail that
 slid open on every page load would be a page load you can watch happening.
 
 `margin: 0` in the same rule is the other thing handed back. The element's optional theme
 puts half a rem above the region, which is the right gap between a trigger and the thing it
 opened directly beneath it — and here the trigger is up in the header and the panel is
-flush against it, so that gap is a seam under the topbar instead. It is zeroed here rather
-than in the media query because the rail has the same seam.
+flush against it, so that gap is a seam under the topbar instead. It is zeroed for both
+modes, because the rail has the same seam.
 
 `allow-discrete` is the other half, and it is on the closed state rather than on the panel:
 
@@ -380,9 +406,7 @@ broken. It gets there without repeating the height, because a fixed box pinned t
 bottom already fills what is between them:
 
 ```css
-@media (width < 60rem) {
-  .sidebar { position: fixed; inset: 3.25rem auto 0 0; }
-}
+.sidebar[data-mode="free"] { position: fixed; inset: 3.25rem auto 0 0; }
 ```
 
 The bottom padding is on the `<nav>`, with the rest of the inset — the last link wants room
@@ -396,19 +420,21 @@ just an `<aside>` full of links — visible, reachable, in the flow where the ma
 The button is already handled: the element's own stylesheet hides a trigger that would
 toggle nothing until the element is defined.
 
-The layout has to agree with that, which is what the `:has()` is doing:
+The layout has to agree with that, and here it does so by accident of how it is written.
+Every rule that makes this thing a drawer is behind `[data-mode="free"]`:
 
 ```css
-@media (width < 60rem) {
-  :root:has(disclosure-elemental:defined) {
-    .sidebar { position: fixed; /* … */ }
-  }
-}
+.sidebar[data-mode="free"] { position: fixed; /* … */ }
 ```
 
-Without it a narrow page with no script would pin the panel over the article with nothing
-able to move it. Guarded, the drawer is off-canvas only while something can bring it back,
-and every other state degrades to a page that scrolls.
+`data-mode` is written at upgrade, so that selector cannot match until the element is
+alive. A narrow page with no script never gets an off-canvas panel pinned over the article
+with nothing able to move it — it gets an `<aside>` in the flow, and a page that scrolls.
+
+Which is worth noticing as a habit rather than a trick here: layout that would strand the
+page without the script belongs behind a hook the script is what creates. This example used
+to spell that `:root:has(disclosure-elemental:defined)` around the whole block. Keying off
+the mode says the same thing and says it once.
 
 ## A disclosure, not a dialog
 
@@ -434,6 +460,8 @@ Everything on this page that is not furniture:
   breakpoint, the scrim, Escape and find-in-page, because all five write one boolean.
 - **The breakpoint is an attribute**, so the rail is not a mode with its own code path —
   `media` holds the region open while the query matches and hands it back when it stops.
+- **The layout never repeats the breakpoint**, because `data-mode` lands on the element and
+  the panel, which also means none of it can apply before the script does.
 - **The panel is not moved or wrapped**, so it stays the flex item its layout expects and
   `display: contents` keeps the header's row intact.
 - **Find-in-page reaches a link inside a closed drawer**, because closed is

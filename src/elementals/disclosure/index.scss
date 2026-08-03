@@ -41,10 +41,20 @@ disclosure-elemental {
 // otherwise leave an empty strip behind while closed. Browsers without
 // `until-found` read the attribute as plain hidden and never reach this rule's
 // subject at all, so it costs them nothing.
+// `box-shadow` is the same leftover, from further away. A closed region is usually
+// not painted at all, so a shadow on it is moot - but a region closed by being moved
+// rather than by being unpainted is not: a drawer sits off-canvas under a
+// `translate`, and a shadow reaches back out of its box by its blur radius, so an
+// invisible panel paints a smear down the edge of the viewport it just left. It is
+// visible for the length of the close too, on a panel that has deferred
+// `content-visibility` with `allow-discrete` so the slide can finish. Zeroed here
+// rather than left to the page, because "the panel is gone" and "its shadow is gone"
+// are not two decisions.
 .disclosure-elemental-region[hidden] {
   margin: 0;
   padding: 0;
   border: 0;
+  box-shadow: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

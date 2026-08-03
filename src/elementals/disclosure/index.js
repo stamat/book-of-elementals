@@ -55,6 +55,27 @@ export function mediaOpen(query) {
   return query ? query.matches : null;
 }
 
+/**
+ * The name for which side of a `media` query the element is on, for CSS to hold on to.
+ *
+ * Which exists so a stylesheet does not have to repeat the breakpoint. A drawer's layout
+ * is a media query in every page that writes one by hand, and that query has to agree
+ * with the one in the attribute for the panel and its state to describe the same thing -
+ * two declarations of one number, in two languages, that nothing checks. Reflected, the
+ * element is the only thing that knows the breakpoint and the CSS keys off the answer,
+ * which is also what lets that CSS be shipped to a project whose breakpoint is different.
+ *
+ * `pinned` is the query holding the region open; `free` is the button having it back.
+ * Null for an element with no query, so nothing is written and nothing can match.
+ *
+ * @param {boolean|null} open - What {@link mediaOpen} said.
+ * @returns {"pinned"|"free"|null}
+ */
+export function mediaMode(open) {
+  if (open === null) return null;
+  return open ? 'pinned' : 'free';
+}
+
 /** Marks the controlled region, which may live anywhere in the document. */
 const REGION_CLASS = 'disclosure-elemental-region';
 
@@ -152,6 +173,7 @@ export class DisclosureElemental extends ElementBase {
     if (!region.id) region.id = 'disclosure-elemental-' + (++regionCount);
     region.classList.add(REGION_CLASS);
     button.setAttribute('aria-controls', region.id);
+    this.reflectMode();
 
     this.onClick = this.onClick.bind(this);
     this.onBeforeMatch = this.onBeforeMatch.bind(this);
@@ -169,9 +191,11 @@ export class DisclosureElemental extends ElementBase {
 
     if (this.query) this.query.removeEventListener('change', this.onMediaChange);
     this.query = null;
+    delete this.dataset.mode;
 
     const region = this.region;
     if (region) {
+      delete region.dataset.mode;
       region.removeEventListener('beforematch', this.onBeforeMatch);
       // A region left behind by its button has nothing to open it again. One inside
       // the element leaves with it; one outside would be hidden for good.
@@ -242,11 +266,37 @@ export class DisclosureElemental extends ElementBase {
    * queueing a slide per frame.
    */
   onMediaChange() {
+    // Before the state, and outside the early return below: dropping the `media`
+    // attribute has no new state to write, and still has a stale mode to take off.
+    this.reflectMode();
+
     const pinned = mediaOpen(this.query);
     if (pinned === null) return;
     this.instant = true;
     this.open = pinned;
     this.instant = false;
+  }
+
+  /**
+   * Put the current mode on the element and on the region, or take it off both.
+   *
+   * On the region as well as the element because `for` lets the two live at opposite ends
+   * of the document, and a panel that has to reach back up to its button through
+   * `:root:has(…)` for every rule is a stylesheet nobody wants to read. It is one more
+   * attribute on a box the element is already writing `hidden`, `id` and a class to.
+   */
+  reflectMode() {
+    const mode = mediaMode(mediaOpen(this.query));
+    const region = this.region;
+
+    if (mode === null) {
+      delete this.dataset.mode;
+      if (region) delete region.dataset.mode;
+      return;
+    }
+
+    this.dataset.mode = mode;
+    if (region) region.dataset.mode = mode;
   }
 
   /**
