@@ -9,7 +9,7 @@
 // every element in the book. That cumulative file is what an editor and a converter
 // want - one file, every tag, and it is the one `package.json`'s `customElements` key
 // points at. A docs page wants the opposite: the switch's page loads the switch's
-// bundle and the switch's stylesheet, and a manifest carrying the other four elements
+// bundle and the switch's stylesheet, and a manifest carrying the other five elements
 // is the same waste again in a third file.
 //
 // So both ship, and the per-element ones are cut out of the cumulative one rather than

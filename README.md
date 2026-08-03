@@ -21,6 +21,7 @@ holds the JavaScript helpers, this one holds the elements.
 | `<accordion-elemental>`  | [APG Accordion](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/), over native `<details>`      |
 | `<disclosure-elemental>` | [APG Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), where `<details>` cannot go |
 | `<menu-elemental>`       | [APG Menu Button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/), nested, and not a menu below a breakpoint |
+| `<navbar-elemental>`     | [APG Disclosure Navigation](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/), folding itself away when the links stop fitting |
 | `<switch-elemental>`     | [APG Switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/), for a setting that takes effect at once |
 | `<tabs-elemental>`       | [APG Tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), horizontal or vertical, on a list of in-page links |
 
@@ -175,6 +176,18 @@ ARIA there is.
 | --------- | ------- | ------- | -------------------------------------------------------------------- |
 | `open`    | boolean | `false` | Whether the region is showing. Reflected — it tracks the live state. |
 | `for`     | string  | —       | `id` of the region. Defaults to the button's next element sibling.   |
+| `media`   | string  | —       | A media query that owns `open`: held open while it matches, closed when it stops. |
+
+`media` is for the disclosures that stop being disclosures at a width — a rail that is a
+drawer on a phone, a long description that is prose beside the figure when there is room.
+The state stays in the one place that already holds it, instead of a media query showing
+the panel while `aria-expanded` still says `false`. With it set, the element writes
+`data-mode="pinned"` or `data-mode="free"` on itself **and** on the region, so your
+stylesheet keys off which side of the query you are on rather than repeating the number —
+and, since the attribute only lands at upgrade, layout that would strand a scriptless page
+cannot apply before the element is alive. The
+[sidebar drawer example](https://stamat.github.io/book-of-elementals/examples/sidebar-drawer.html)
+is the whole arrangement on one page.
 
 A closed region is hidden with `hidden="until-found"`, so find-in-page still
 searches it and a link to a fragment inside it still lands there — either one
@@ -232,11 +245,77 @@ query.
 <kbd>Tab</kbd> is never trapped: nothing behind the menu is `inert`, and a
 keyboard visitor who cannot tab out of a dropdown is stuck on your page.
 
-For site navigation rather than commands, use `<disclosure-elemental>` with the
-native `popover` attribute instead — `role="menuitem"` costs the link semantics,
-and popover covers dismissal and focus return with no script. The
+For site navigation rather than commands, this is the wrong element and
+`<navbar-elemental>` is the right one — `role="menuitem"` costs the link
+semantics, and a page somebody might open in a new tab wants to stay a link. The
 [docs page](https://stamat.github.io/book-of-elementals/elementals/menu.html)
 lays out the trade.
+
+## `<navbar-elemental>`
+
+A site's navigation: a row of links, some of them opening a panel of more links,
+plus the two things such a row always ends up needing — somewhere for the ones
+that do not fit to go, and a way to be a drawer instead on a narrow screen.
+
+```html
+<navbar-elemental media="(min-width: 40rem)" hover>
+  <div class="rail">
+    <ul>
+      <li><a href="/overview">Overview</a></li>
+      <li>
+        <button>Products</button>
+        <ul>
+          <li><a href="/cloud">Kestrel Cloud</a></li>
+        </ul>
+      </li>
+
+      <!-- where the ones that do not fit go. The element fills it. -->
+      <li data-navbar-more>
+        <button>More</button>
+        <ul></ul>
+      </li>
+    </ul>
+  </div>
+
+  <button data-navbar-toggle aria-label="Navigation"></button>
+</navbar-elemental>
+```
+
+| Attribute | Type    | Default | Description                                                                  |
+| --------- | ------- | ------- | ----------------------------------------------------------------------------- |
+| `media`   | string  | —       | The query the bar exists in. Outside it, the drawer. Unset means a bar at every width. |
+| `open`    | boolean | `false` | Whether the drawer is showing. Reflected.                                     |
+| `hover`   | boolean | `false` | A mouse opens a panel by pointing at it too. Never on touch, never stacked.   |
+
+Three optional hooks name the parts structure cannot: `data-navbar-more` on the
+last `<li>` is the overflow item, `data-navbar-toggle` on a button opens the
+drawer, and `data-navbar-stack` marks an item as the drawer's alone — a sign-in
+link, a language picker — so it never sits on the bar and is never measured
+against it.
+
+**The breakpoint that folds the links away is measured, not declared.** How many
+links a site has, how long their labels are in the reader's font, whether that
+font has even arrived — none of it is knowable when the query is written, which
+is why a hand-picked width hides three short links on a tablet with room to
+spare. An `IntersectionObserver` watches a copy of the row instead: items that do
+not fit leave it one at a time and reappear under the overflow button. The copy
+and not the row, because an observer watching the box it is also changing is an
+infinite loop that eats a navigation one frame at a time. `media` is the separate
+question of when the whole bar becomes a drawer, and it is a query because
+nothing the element does can change the width of the window.
+
+`data-mode` is `bar` or `stack`, so your CSS reads the mode back off the element.
+The two are different widgets: on the bar the panels float over the page one at a
+time and a click outside closes them; in the drawer they are in the flow, stay
+where you left them, and are hidden with `hidden="until-found"` so find-in-page
+reaches a link inside a closed one.
+
+No `role` anywhere, which is the pattern rather than an omission — the APG's own
+[navigation menubar example](https://www.w3.org/WAI/ARIA/apg/patterns/menubar/examples/menubar-navigation/)
+opens by talking you out of itself, and links announced as menu items are links
+no longer. Panels stay on screen through CSS anchor positioning, with no script
+involved. Without JavaScript the whole thing is a nested list of visible links,
+which is what it was underneath all along.
 
 ## `<switch-elemental>`
 
@@ -368,14 +447,14 @@ file for the whole package, and that is the one `package.json`'s `customElements
 at — which is what VS Code and JetBrains read to autocomplete attributes, what Storybook
 builds its args table from, and what converters turn into `html-custom-data` and `web-types`.
 A page that loads one element's bundle and one element's stylesheet wants the matching
-manifest and not the other four elements' documentation:
+manifest and not the other five elements' documentation:
 
 ```js
 import manifest from 'book-of-elementals/switch/manifest' with { type: 'json' }
 ```
 
 Both come out of a single analyzer pass, so they cannot describe the same element
-differently. Regenerated by `npm run build` — `poops.json` runs
+differently. Regenerated by `script/build` — `poops.json` runs
 [`@custom-elements-manifest/analyzer`](https://custom-elements-manifest.open-wc.org/analyzer/getting-started/)
 and then `script/manifests.js` as an `exec.scripts` hook, so there is no second build
 command to remember.
@@ -394,10 +473,10 @@ element produces, or to CSS you may already be targeting, are called out there e
 
 ```bash
 npm install
-npm run dev    # docs site on :4040 with livereload
-npm test       # unit tests (jest), colocated as src/**/*.test.js
-npm run lint   # eslint + stylelint
-npm run build  # dist/ (package) and _site/ (docs) — both gitignored
+script/server  # docs site on :4040 with livereload
+script/test    # unit tests (jest), colocated as src/**/*.test.js
+script/lint    # eslint + stylelint
+script/build   # dist/ (package) and _site/ (docs) — both gitignored
 ```
 
 Land your change under `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md) as you go.

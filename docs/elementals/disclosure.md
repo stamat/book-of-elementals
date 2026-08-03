@@ -164,6 +164,7 @@ A closed region is out of the tab order and out of the accessibility tree, becau
 disclosure-elemental[open] { }                       /* the host, reflected state */
 disclosure-elemental > button[aria-expanded="true"] { } /* what the theme keys off */
 .disclosure-elemental-region { }                     /* the region, wherever it lives */
+[data-mode="free"] { }                               /* the element and the region, with `media` set */
 disclosure-elemental:not(:defined) { }               /* before upgrade */
 ```
 
@@ -307,6 +308,10 @@ stylesheet nobody wants to read.
 > defined — which makes it the progressive-enhancement guard as well. Layout that would
 > strand the page if the script never loaded (an off-canvas panel, say) goes behind
 > `[data-mode="free"]` and cannot apply until something is there to bring it back.
+
+[The sidebar drawer](../examples/sidebar-drawer.html) is all of this on one page — the rail
+this site's own navigation is at the wide end, the drawer it is on a phone, and a stylesheet
+that never says the breakpoint.
 
 ## Find-in-page
 

@@ -296,9 +296,21 @@ keyboard is still inside it.
 This element is for **commands** — things that act on the page or the app. Account
 menus, editor toolbars, "more actions" buttons, sort and filter pickers.
 
-For a site's own navigation, reach for
-[`<disclosure-elemental>`](disclosure.html) instead, and give it the native
-[popover attribute](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API):
+For a site's own navigation — a row of links to pages, with panels of more links under
+some of them — [`<navbar-elemental>`](navbar.html) is the element, and it writes no
+roles at all.
+
+The reason is `role="menuitem"`. It replaces the link semantics — a screen reader
+announces "menu item", not "link", and the promises that come with a link go with it.
+Which is the right trade for a command and the wrong one for a page you might want to
+open in a new tab. The APG says so itself: its
+[disclosure navigation](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/)
+example is the pattern for site navigation, and the navbar is that pattern.
+
+For a single panel of links rather than a bar of them, there is a smaller answer still —
+[`<disclosure-elemental>`](disclosure.html), or nothing but the native
+[popover attribute](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API), which
+covers dismissal, focus return and the tab order with no script at all:
 
 ```html
 <button popovertarget="site-nav">Menu</button>
@@ -306,14 +318,6 @@ For a site's own navigation, reach for
   <li><a href="/docs/">Docs</a></li>
 </ul>
 ```
-
-The reason is `role="menuitem"`. It replaces the link semantics — a screen reader
-announces "menu item", not "link", and the promises that come with a link go with it.
-Which is the right trade for a command and the wrong one for a page you might want to
-open in a new tab. The APG has a
-[disclosure navigation](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/) example
-for exactly this reason, and popover now covers dismissal, focus return and the tab
-order natively, with no script at all.
 
 If your nav is genuinely menu-shaped — an application's own menu bar, with commands in
 it — this element is the right one and the roles are the honest description.

@@ -121,9 +121,17 @@ against the list's parent would be pointing at the wrong element.
 | -------------------- | --------------------------------- | ------------------------------------------------ |
 | `data-navbar-more`   | the last `<li>` of the row        | The overflow item. Its `<button>` is yours to label; its `<ul>` is filled by the element. |
 | `data-navbar-toggle` | a `<button>` anywhere in the element | Opens the drawer while stacked. Hidden while it is a bar. |
+| `data-navbar-stack`  | any `<li>` of the row             | The drawer's alone. Hidden on the bar, and never measured against it. |
 
-Both are optional. Without an overflow item the links simply stop fitting; without a
-toggle the bar never becomes a drawer.
+All three are optional. Without an overflow item the links simply stop fitting; without a
+toggle the bar never becomes a drawer; without a stack item the drawer holds exactly what
+the bar does.
+
+`data-navbar-stack` is for what a header keeps outside its navigation until there is no
+outside left — a sign-in link, a language picker, the calls to action in
+[the example](../examples/site-navigation.html). Marked, an item is out of the measurement
+in both directions: it is not one of the links competing for room, and no copy of it
+reaches the box the row is measured in, so it cannot take width from a bar it is not on.
 
 ### Properties
 

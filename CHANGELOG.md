@@ -83,7 +83,7 @@ may already be targeting**, since neither shows up in a function signature.
 
 - **A demo can be more than one fence.** `script/demos.js` now wraps a group — the marked
   html fence plus any fence under it that says `demo` in its own info string — in a single
-  preview, which `code-preview-element` v1.1 turns into a tab each:
+  preview, which `code-preview-element` turns into a tab each:
 
   ````markdown
   <!-- demo disclosure viewport-widths="375 768 1024" -->
@@ -170,6 +170,97 @@ may already be targeting**, since neither shows up in a function signature.
   with a bar that slides, which needs no measuring and can never disagree with where the
   tab is.
 
+- `<navbar-elemental>` — the
+  [APG Disclosure Navigation pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/):
+  a site's row of links, the panels some of them open, and the two ways such a row gets out
+  of its own way.
+
+  ```html
+  <navbar-elemental media="(min-width: 40rem)" hover>
+    <div class="rail">
+      <ul>
+        <li><a href="/overview">Overview</a></li>
+        <li>
+          <button>Products</button>
+          <ul>
+            <li><a href="/cloud">Kestrel Cloud</a></li>
+          </ul>
+        </li>
+
+        <li data-navbar-more><button>More</button><ul></ul></li>
+      </ul>
+    </div>
+
+    <button data-navbar-toggle aria-label="Navigation"></button>
+  </navbar-elemental>
+  ```
+
+  **The breakpoint at which links fold away is measured rather than declared.** How many
+  links a site has, how long their labels are in the reader's font and whether that font has
+  arrived yet are none of them knowable when a query is written, which is why a hand-picked
+  width hides three short links on a tablet with room to spare. An `IntersectionObserver`
+  reports which items are not entirely inside the row; those leave it and reappear under the
+  overflow button, one at a time. What is observed is a copy of the row rather than the row,
+  because an observer watching the box it is also changing is an infinite loop that eats a
+  navigation one frame at a time — and because the row is then free to change, the overflow
+  button sits immediately after the last link that fits rather than off the end of the bar.
+  `media` is the separate question of when the whole bar becomes a drawer, and it stays a
+  query because nothing the element does can change the width of the window.
+
+  **Markup it asks for:** a box around the list — the `.rail` above — which is where the
+  measured copy goes. It could not be created for you: wrapping your list would leave every
+  selector written against the list's parent pointing at the wrong element. Three optional
+  hooks name what structure cannot: `data-navbar-more` on the last `<li>` is the overflow
+  item, `data-navbar-toggle` on a button opens the drawer, and `data-navbar-stack` marks an
+  item as the drawer's alone — out of the measurement in both directions, so it neither
+  competes for room on the bar nor reserves any.
+
+  **DOM it produces:** `data-mode="bar"` or `"stack"` on the element, `data-overflowing`
+  while some but not all of the links are behind the overflow button, `data-navbar-rail` on
+  the rail and `data-navbar-probe` on the copy inside it, `data-overflow` on an item that did
+  not fit, and `type`, `aria-controls` and `aria-expanded` on every trigger and on the
+  toggle. Lists without an `id` are given one; a closed panel carries `hidden` on the bar and
+  `hidden="until-found"` in the drawer, so find-in-page reaches a link inside a closed
+  drawer while a closed panel on the bar leaves no empty framed box parked under its button.
+  `open` is the drawer's state, reflected. Every panel opening or closing fires a bubbling
+  `navbar-toggle` carrying `{ panel, open }`. **No `role`, anywhere** — these are links to
+  pages, and `role="menuitem"` replaces link semantics; the APG's own navigation menubar
+  example opens by talking you out of itself. `<menu-elemental>` remains the one for
+  commands.
+
+  **Keyboard:** the APG's table including the rows it marks optional — `Tab` through the bar
+  and into an open panel, `Escape` back to the trigger, arrows between items and into an open
+  panel, `Home`/`End` to the ends. The arrows do not wrap, because off the end of the bar is
+  where the rest of the page is. Stacked, they walk everything on screen from the top of the
+  drawer down. `hover` adds the pointer to the ways a panel opens, never as a replacement,
+  never on touch, never in the drawer, and never over a panel the keyboard is inside.
+
+  **CSS:** the element's own stylesheet places the lists, decides which are on screen and
+  builds the rail — no colours, no borders, and nothing about the bar around the row, which
+  is what `data-mode` is for. Panels stay on screen through CSS anchor positioning rather
+  than script, so nothing above a panel may be `position: relative` (or a container, which
+  brings the same containing block) or none of the fallbacks can fire. The optional theme
+  adds panels, hover states, a caret that points down on the bar and turns like a
+  disclosure's in the drawer, and a hamburger on the toggle, out of `currentcolor` and
+  `Canvas` plus `--navbar-elemental-surface`, `-hover`, `-border`, `-shadow`, `-radius`,
+  `-inset`, `-gap`, `-caret-size` and `-hamburger-size`. One trap worth knowing: do not key
+  anything that changes the bar's own width off `data-mode`, or taking a button off the bar
+  gives the links room, which puts the button back, which takes it away again.
+
+  ```scss
+  @use "book-of-elementals/navbar/style.scss";
+  @use "book-of-elementals/navbar/theme.scss";
+  ```
+
+- **Site navigation example.** A page under _Examples_ building a whole header around
+  `<navbar-elemental>` — a logo, a search field that collapses to its icon, icon links and
+  two calls to action beside the row that folds itself away. All of that is the page's own
+  CSS, which is the point of the page: the element lays out the row, its panels and its
+  drawer, and has no opinion about the rest of a header. Covers the two things worth copying
+  — a call to action that lives in the markup twice, on the bar and as a
+  `data-navbar-stack` item in the drawer, and why those move on a media query while the
+  links do not. Docs only.
+
 - **A [Custom Elements Manifest](https://github.com/webcomponents/custom-elements-manifest)** —
   `dist/custom-elements.json`, generated from the JSDoc on each element by
   `@custom-elements-manifest/analyzer` and pointed at by the `customElements` key in
@@ -180,7 +271,7 @@ may already be targeting**, since neither shows up in a function signature.
   request for every element in the book, which is what an editor or a converter wants. Per
   element there is also `dist/elementals/<name>-manifest.json`, exported as
   `book-of-elementals/switch/manifest` — a page that loads one element's bundle and one
-  element's stylesheet has no use for the other four elements' documentation. Both come out of
+  element's stylesheet has no use for the other five elements' documentation. Both come out of
   a single analyzer pass, so they cannot end up describing the same element differently.
 
   The tags are a transcription of the tables already in `docs/elementals/*.md`, with one
