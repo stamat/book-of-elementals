@@ -297,7 +297,14 @@ export class SwitchElemental extends ElementBase {
   apply() {
     const button = this.button;
     if (button) button.setAttribute('aria-checked', this.checked ? 'true' : 'false');
-    if (this.internals) this.internals.setFormValue(formValue(this.checked, this.disabled, this.value));
+    // Same guard as `validate()` below, and for the same reason: `attachInternals` exists in
+    // environments where the form-associated half of `ElementInternals` does not. jsdom is
+    // the one that matters - it returns an internals object with no `setFormValue` on it, so
+    // an unguarded call throws inside `customElements.define` and takes down every test in a
+    // consumer's suite, form or no form.
+    if (this.internals && this.internals.setFormValue) {
+      this.internals.setFormValue(formValue(this.checked, this.disabled, this.value));
+    }
     this.validate();
   }
 

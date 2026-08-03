@@ -1626,7 +1626,9 @@
     apply() {
       const button = this.button;
       if (button) button.setAttribute("aria-checked", this.checked ? "true" : "false");
-      if (this.internals) this.internals.setFormValue(formValue(this.checked, this.disabled, this.value));
+      if (this.internals && this.internals.setFormValue) {
+        this.internals.setFormValue(formValue(this.checked, this.disabled, this.value));
+      }
       this.validate();
     }
     /**
