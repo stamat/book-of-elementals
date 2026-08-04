@@ -61,6 +61,17 @@ Elements published so far:
   diacritics both ways, so `cacak` finds Čačak. Filtering is the only gap it fills:
   `appearance: base-select` now styles a dropdown natively, and no browser lets you type
   your way down a long list.
+- `<copy-elemental>` — a real `<button>` that writes text to the clipboard and announces
+  it. No APG pattern, because there is no widget: the gap is the half after the click, where
+  every copy button swaps an icon and tells a screen reader nothing, leaving WCAG 2.2 SC
+  4.1.3 Status Messages unmet. It appends one `<span role="status">`, clipped out of sight,
+  and writes `data-state="copied"`/`"error"` for two seconds. Attributes: `for` (also read
+  as `data-for`), `value` (literal, wins over `for`), `copied-text`, `error-text`; a
+  bubbling `copy-done` with `detail.ok` and `detail.text`. A field is copied by its current
+  `.value`; anything else by the text it shows, with leading newlines and trailing
+  whitespace stripped so a code block does not paste a command that runs itself. No
+  clipboard API, or nothing named to copy, and the button is not offered at all —
+  `data-unavailable` says which.
 - `<disclosure-elemental>` — APG disclosure: a real `<button>` wired to a region
   with `aria-expanded`/`aria-controls`, for the places `<details>` cannot go (a
   `<figcaption>`, a table row, a grid item, a region across the page). Reflected

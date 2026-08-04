@@ -17,6 +17,34 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Added
 
+- **`<copy-elemental>`.** A real `<button>` that writes text to the clipboard and announces
+  it. There is no APG pattern behind this one, because there is no widget — it is a button,
+  and a button is already accessible. The gap is the half after the click: every copy button
+  swaps an icon or floats a "Copied!" tooltip, and neither reaches a screen reader, which
+  leaves [WCAG 2.2 SC 4.1.3 Status Messages](https://www.w3.org/WAI/WCAG22/Understanding/status-changes.html)
+  unmet. Closing that is the whole of the element.
+
+  `for` names the element to copy — a field by its current `.value`, anything else by the
+  text it shows, with leading newlines and trailing whitespace stripped so a code block does
+  not paste a command that runs itself. `value` is literal text, never trimmed, and wins over
+  `for`. `copied-text` and `error-text` are what gets announced. Naming nothing to copy, or
+  a `for` that points at nothing, is reported as the failure it is rather than quietly
+  writing an empty string over whatever the reader already had on their clipboard.
+
+  **DOM it produces:** one `<span role="status" class="copy-elemental-status">` appended to
+  the element at upgrade — a live region only announces text arriving in one already in the
+  document, so it cannot be built at the moment there is something to say. `style.scss`
+  clips it out of sight rather than hiding it, since `display: none` would take it back out
+  of the accessibility tree. On the element itself: `data-state="copied"` or `"error"` for
+  two seconds after a press, and `data-unavailable` when there is no clipboard API or
+  nothing named to copy. On the button: `type="button"` if it had no `type`, so a copy
+  button in a form does not submit it. A bubbling `copy-done` carries `detail.ok` and
+  `detail.text`.
+
+  **Degrading:** `style.scss` keeps the button out of reach until the element has upgraded
+  and found `navigator.clipboard` — which does not exist over plain `http`. No script, an
+  insecure page, or nothing named, and there is no button rather than a dead one.
+
 - **`<checkbox-group-elemental>`.** The "select all" over the checkboxes it stands for, per
   the [APG Checkbox (Mixed-State) pattern](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/):
   ticked when all of them are, empty when none are, showing the dash when it is some. The

@@ -21,6 +21,7 @@ holds the JavaScript helpers, this one holds the elements.
 | `<accordion-elemental>`  | [APG Accordion](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/), over native `<details>`      |
 | `<checkbox-group-elemental>` | [APG Checkbox (Mixed-State)](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/), a select-all that shows the dash when it is some of them |
 | `<combobox-elemental>`   | [APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/), a `<select>` you can type your way down, one value or many |
+| `<copy-elemental>`       | No APG pattern — a `<button>`, the clipboard write behind it, and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-changes.html) every copy button forgets |
 | `<disclosure-elemental>` | [APG Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), where `<details>` cannot go |
 | `<menu-elemental>`       | [APG Menu Button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/), nested, and not a menu below a breakpoint |
 | `<navbar-elemental>`     | [APG Disclosure Navigation](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/), folding itself away when the links stop fitting |
@@ -267,6 +268,52 @@ be aimed at something invisible, and keeps the message — `validationMessage`, 
 platform's own words in the reader's own language — in a `role="alert"` under the field,
 with focus moved onto the field itself. Without the script the `<select>` is a plain,
 working `<select>`; nothing is hidden until the field that replaces it exists.
+
+## `<copy-elemental>`
+
+A real `<button>` that puts text on the clipboard and says so, in both of the ways
+a reader might be listening:
+
+```html
+<code id="install">npm i book-of-elementals</code>
+
+<copy-elemental for="install">
+  <button type="button">Copy</button>
+</copy-elemental>
+```
+
+| Attribute     | Type   | Default       | Description                                                     |
+| ------------- | ------ | ------------- | ----------------------------------------------------------------- |
+| `for`         | string | —             | `id` of the element to copy. Also read as `data-for`.            |
+| `value`       | string | —             | Literal text, exactly as written. Wins over `for`.               |
+| `copied-text` | string | `Copied`      | What the live region announces on success.                       |
+| `error-text`  | string | `Copy failed` | What it announces when there was nothing to copy, or it refused. |
+
+**There is no APG pattern here, because there is no widget.** It is a button, and a
+button is already accessible; what is missing is the half after the click. Every copy
+button on the web swaps an icon or floats a "Copied!" tooltip, and neither of those is
+anything at all to a reader using a screen reader — they press it and are told exactly
+what they were told before pressing it. That is
+[WCAG 2.2 SC 4.1.3 Status Messages](https://www.w3.org/WAI/WCAG22/Understanding/status-changes.html)
+unmet, and closing it is why this element exists rather than a snippet copied off a blog.
+[`@github/clipboard-copy`](https://github.com/github/clipboard-copy-element) is the
+smaller install if you are drawing the feedback yourself.
+
+So one press does three things: the clipboard write, `data-state="copied"` or `"error"`
+on the element for two seconds, and the matching words in a `<span role="status">` the
+element appends to itself at upgrade — clipped out of sight, never `display: none`, which
+would take it back out of the accessibility tree and undo the point. A bubbling
+`copy-done` carries `detail.ok` and `detail.text`.
+
+A field is copied by its current `.value`, anything else by the text it shows, with
+leading newlines and trailing whitespace stripped — a code block's trailing newline pasted
+into a terminal runs the command the reader was still reading. A `value` is never trimmed.
+
+**A copy button that cannot copy is a button that lies**, so it is not offered at all until
+the element upgrades and finds a clipboard: no script, a page served over plain `http`
+where `navigator.clipboard` does not exist, or markup that named nothing to copy, and there
+is no button — `data-unavailable` says which. Keep the text selectable on the page; the
+button is a shortcut past selecting it, not the only way to it.
 
 ## `<disclosure-elemental>`
 

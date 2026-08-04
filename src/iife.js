@@ -6,6 +6,7 @@
 import './elementals/accordion/index.js';
 import './elementals/checkbox-group/index.js';
 import './elementals/combobox/index.js';
+import './elementals/copy/index.js';
 import './elementals/disclosure/index.js';
 import './elementals/menu/index.js';
 import './elementals/navbar/index.js';

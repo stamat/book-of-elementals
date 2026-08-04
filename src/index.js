@@ -4,6 +4,7 @@ export * from './core.js';
 export * from './elementals/accordion/index.js';
 export * from './elementals/checkbox-group/index.js';
 export * from './elementals/combobox/index.js';
+export * from './elementals/copy/index.js';
 export * from './elementals/disclosure/index.js';
 export * from './elementals/menu/index.js';
 export * from './elementals/navbar/index.js';

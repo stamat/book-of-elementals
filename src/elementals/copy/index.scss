@@ -1,0 +1,35 @@
+copy-elemental {
+  // A coordinator, not a box. The button is usually a flex or grid item - pinned in the
+  // corner of a code block, sitting at the end of a field - and an extra box in between is
+  // a box the parent lays out instead of the button. `contents` means dropping the element
+  // around an existing button changes no layout at all. Give it `display: block` in your
+  // own CSS if you want something to style.
+  display: contents;
+
+  // Until the element has upgraded there is no clipboard write behind the button, and a
+  // copy button that copies nothing is worse than no copy button at all - the reader
+  // presses it, sees no error, and walks away believing they have the text.
+  // `[data-unavailable]` is the same sentence after upgrade, and the element writes it for
+  // two reasons that share an answer: a page served over plain `http`, where
+  // `navigator.clipboard` is not there to be asked, and markup that named nothing to copy.
+  &:not(:defined) > button,
+  &[data-unavailable] > button {
+    display: none;
+  }
+
+  // The announcement. Off screen and never off the accessibility tree: the icon swap says
+  // "copied" to a reader who can see it, and this is that same sentence for the one who
+  // cannot. `display: none` or `visibility: hidden` here would take it out of the tree and
+  // announce nothing, which is the whole point undone - so it is clipped instead.
+  > .copy-elemental-status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+}

@@ -98,6 +98,7 @@ handling are not options.
 | [`<accordion-elemental>`](elementals/accordion.html)   | [APG Accordion](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/), over native `<details>`    |
 | [`<checkbox-group-elemental>`](elementals/checkbox-group.html) | [APG Checkbox (Mixed-State)](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/), a select-all that shows the dash when it is some of them |
 | [`<combobox-elemental>`](elementals/combobox.html)     | [APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/), a `<select>` you can type your way down, one value or many |
+| [`<copy-elemental>`](elementals/copy.html)             | No APG pattern — a `<button>`, the clipboard write behind it, and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-changes.html) every copy button forgets |
 | [`<disclosure-elemental>`](elementals/disclosure.html) | [APG Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), where `<details>` cannot go |
 | [`<menu-elemental>`](elementals/menu.html)             | [APG Menu Button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/), nested, and not a menu below a breakpoint |
 | [`<navbar-elemental>`](elementals/navbar.html)         | [APG Disclosure Navigation](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/), that folds itself away when the links stop fitting |
