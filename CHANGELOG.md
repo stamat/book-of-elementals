@@ -15,6 +15,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-04
+
 ### Added
 
 - **`<navbar-elemental>` takes `min-bar-items`.** A bar keeps being a bar until nothing at
