@@ -1,6 +1,6 @@
 /* book-of-elementals v0.4.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 (() => {
-  // src/core.js
+  // node_modules/book-of-spells/src/elements.mjs
   var ElementBase = typeof HTMLElement !== "undefined" ? HTMLElement : class {
   };
   function define(tag, ctor) {

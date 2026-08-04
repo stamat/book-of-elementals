@@ -119,6 +119,15 @@ Elements published so far:
   `selected`, and a bubbling `tabs-select`. Panels not showing are hidden with
   `hidden="until-found"`, so find-in-page reaches them and finding one selects its
   tab.
+- `<tooltip-elemental>` — a description shown on hover and on focus, wired with
+  `aria-describedby` and left on the page as plain text when the script never
+  arrives. Wraps a control and its words, or names one with `for` from elsewhere;
+  the element works out which by whether it contains something focusable. A `title`
+  is upgraded when there is nothing else to say — as a description, or as the
+  control's `aria-label` when that `title` was its only name. Escape dismisses and
+  the dismissal holds until the reader leaves; the bubble itself is hoverable, per
+  WCAG 2.2 SC 1.4.13; there is no timeout. **Touch pointers are ignored**, because
+  a tap is not a hover — nothing essential belongs in a tooltip.
 
 Sibling project: [book-of-spells](https://github.com/stamat/book-of-spells),
 which holds the plain JavaScript helpers. This book holds the elements.

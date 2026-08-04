@@ -116,7 +116,7 @@
     setTransitionTimer(element, "height", duration + TRANSITION_TIMER_GRACE, done);
   }
 
-  // src/core.js
+  // node_modules/book-of-spells/src/elements.mjs
   var ElementBase = typeof HTMLElement !== "undefined" ? HTMLElement : class {
   };
   function define(tag, ctor) {

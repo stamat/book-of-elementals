@@ -28,6 +28,7 @@ holds the JavaScript helpers, this one holds the elements.
 | `<segmented-elemental>`  | [APG Radio Group](https://www.w3.org/WAI/ARIA/apg/patterns/radio/) on native radios, drawn as a track with a knob that slides |
 | `<switch-elemental>`     | [APG Switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/), for a setting that takes effect at once |
 | `<tabs-elemental>`       | [APG Tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), horizontal or vertical, on a list of in-page links |
+| `<tooltip-elemental>`    | [APG Tooltip](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/) as far as it has consensus — a description on hover and focus, still on the page without script |
 
 ## Docs
 
@@ -601,6 +602,63 @@ hidden with `hidden="until-found"`.
 The element is a `grid` with every panel in the same cell, which is the one layout it
 insists on: panels laid out one after another mean a page that jumps by the height of the
 last one every time you change tabs. `vertical` puts the strip beside them instead of above.
+
+## `<tooltip-elemental>`
+
+A description shown on hover and on focus, and a sentence on the page when the script never
+arrives:
+
+```html
+<tooltip-elemental>
+  <button type="button">Save</button>
+  <span>Saves to your drafts, without publishing</span>
+</tooltip-elemental>
+
+<button type="button" id="save">Save</button>
+<tooltip-elemental for="save">Saves to your drafts, without publishing</tooltip-elemental>
+```
+
+| Attribute    | Type    | Default | Description                                                                       |
+| ------------ | ------- | ------- | --------------------------------------------------------------------------------- |
+| `for`        | string  | —       | `id` of the control this describes. Only read when the element does not wrap one. |
+| `horizontal` | boolean | `false` | Beside the control rather than over or under it. Which side is still measured.     |
+
+Nothing selects between the two shapes: the element contains something focusable or it does
+not. A `title` on the trigger is used when there is nothing else to say, and the attribute is
+removed so the native tooltip does not show underneath — as a **description** when the control
+had a name already, and as its **name** when the `title` was the only one it had, which is the
+icon-only button and the reason that is automatic rather than an option.
+
+**The [APG's pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/) says of itself that it
+"is work in progress; it does not yet have task force consensus"**, so this implements the half
+every source agrees on — `aria-describedby` to the words, <kbd>Escape</kbd> to dismiss, no
+timeout, and a bubble that can itself be hovered, which is
+[WCAG 2.2 SC 1.4.13](https://www.w3.org/WAI/WCAG22/Understanding/content-on-hover-or-focus.html) —
+and refuses the contested half: never the control's name, and **nothing on touch**. There is no
+hover on a touch screen and a tap is activation rather than focus, so touch pointers are ignored
+outright instead of half-handled. Nothing essential belongs in a tooltip.
+
+The bubble gets `role="tooltip"`, an `id` if it had none, and `hidden` between showings —
+`aria-describedby` reaches hidden content, so the description is on the control the whole time.
+It is placed with `position: fixed` against the viewport, since the trigger and the bubble are
+not always in the same offset parent, with `data-side` and `data-align` written back for a caret
+to read.
+
+**The axis is the author's and the side is the viewport's:** `horizontal` puts the bubble beside
+the control instead of under it, and which of the two sides that is gets measured. There is no
+`placement="e"`, because a fixed side is a tooltip off the edge of the screen on the one page
+where it did not fit. Along the other axis a control wider than its bubble is centred on, and a
+narrower one has its edges lined up — a short tooltip pinned to the corner of a long button
+looks like it belongs to something else, while a small button centred under a long sentence
+leaves most of that sentence beside the thing it describes.
+
+The middle of the trigger is handed to the stylesheet as `--tooltip-elemental-arrow-offset` so
+a caret can point at it rather than at the corner the bubble aligned to; the theme clamps it,
+since the corner radius is its number. That theme is GitHub's proportions with a rim and a
+caret of our own, fading in and out over `--tooltip-elemental-duration` — a fade that needs
+`@starting-style` and `transition-behavior`, both Baseline 2024, so on Safari 17.0–17.4 it
+appears and disappears instead. Its knobs are declared on `tooltip-elemental` itself, at one
+type selector's worth of specificity, so a page can win by writing the same selector later.
 
 ## Live samples in the docs
 

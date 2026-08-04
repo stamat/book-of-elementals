@@ -1,6 +1,6 @@
 /* book-of-elementals v0.4.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 (() => {
-  // src/core.js
+  // node_modules/book-of-spells/src/elements.mjs
   var ElementBase = typeof HTMLElement !== "undefined" ? HTMLElement : class {
   };
   function define(tag, ctor) {
@@ -9,7 +9,7 @@
   }
 
   // src/elementals/navbar/index.js
-  function stepIndex(current, key, length) {
+  function stepIndex2(current, key, length) {
     if (length === 0) return null;
     const to = key === "ArrowDown" || key === "ArrowRight" ? current + 1 : key === "ArrowUp" || key === "ArrowLeft" ? current - 1 : key === "Home" ? 0 : key === "End" ? length - 1 : null;
     if (to === null || to < 0 || to >= length) return null;
@@ -472,7 +472,7 @@
         }
       }
       const set = this.navigable(control);
-      const to = stepIndex(set.indexOf(control), e.key, set.length);
+      const to = stepIndex2(set.indexOf(control), e.key, set.length);
       if (to === null) {
         const list = control.closest("ul, menu");
         const inside = this.stacked || list && list !== this.row;

@@ -1,0 +1,169 @@
+// Optional look for `<tooltip-elemental>`. Not part of the element's own stylesheet and
+// not in its bundle: that one places the bubble and nothing else.
+// `CanvasText` on `Canvas` rather than a mixed colour: a tooltip is the one box on the page
+// that has to be legible over whatever it happens to be covering, so it takes the page's
+// own two extremes and swaps them - and it follows a theme switch with nothing to configure,
+// which a pair of hard-coded hexes would not.
+// The proportions are GitHub's, which are the ones most readers have already met: a 6px
+// radius, `0.5em 0.75em` of padding and small body text. Its bubble carries no border and no
+// caret at all; both here are ours.
+
+// Every knob on the element itself, at one type selector's worth of specificity, so a page
+// that wants a different one wins by writing `tooltip-elemental { … }` and being later in the
+// cascade. Declared on the bubble instead, they would sit behind `:defined` and an attribute
+// and quietly outrank the author trying to change them. They inherit down to a wrapped
+// bubble, and in the `for` shape the element *is* the bubble.
+tooltip-elemental {
+  --tooltip-elemental-gap: 6px;
+  --tooltip-elemental-padding-block: 0.5em;
+  --tooltip-elemental-padding-inline: 0.75em;
+  --tooltip-elemental-radius: 6px;
+  --tooltip-elemental-surface: CanvasText;
+  --tooltip-elemental-color: Canvas;
+
+  // A rim a shade off the fill rather than a contrasting line: on a bubble already painted
+  // in the page's opposite, an edge is depth, not a boundary anyone has to find.
+  --tooltip-elemental-border-width: 1px;
+  --tooltip-elemental-border-color: color-mix(in srgb, Canvas 28%, var(--tooltip-elemental-surface));
+
+  // Half the caret. It is drawn as a border, so the visible triangle is twice this across.
+  --tooltip-elemental-caret: 5px;
+  --tooltip-elemental-duration: 120ms;
+}
+
+tooltip-elemental:defined[role="tooltip"],
+tooltip-elemental:defined > [role="tooltip"] {
+  padding: var(--tooltip-elemental-padding-block) var(--tooltip-elemental-padding-inline);
+  border: var(--tooltip-elemental-border-width) solid var(--tooltip-elemental-border-color);
+  border-radius: var(--tooltip-elemental-radius);
+  background: var(--tooltip-elemental-surface);
+  color: var(--tooltip-elemental-color);
+  font-size: 0.75rem;
+  line-height: 1.5;
+
+  // The fade, and the two lines that make one possible at all. The element shows the bubble
+  // by taking `hidden` off it, and `display` does not tween - so `display` is named in the
+  // transition with `allow-discrete`, which flips it at the start of the way in and at the
+  // end of the way out, and `@starting-style` gives the browser the transparent frame to
+  // start from that an element arriving with `display` has never had.
+  // Both are Baseline 2024, which is after Safari 17.0 to 17.4 and the iOS of the same
+  // numbers - all inside this project's targets. There the tooltip appears and disappears
+  // without fading, which is the whole of the degradation.
+  opacity: 0;
+  transition:
+    opacity var(--tooltip-elemental-duration) ease,
+    display var(--tooltip-elemental-duration) allow-discrete;
+
+  &:not([hidden]) {
+    opacity: 1;
+
+    @starting-style {
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+
+  // Two triangles, because a CSS caret is a border and a border cannot have one of its own.
+  // `::before` is the rim: a size larger, its tip a border-width further out. `::after` is
+  // the fill, pulled a border-width back in so its base covers the bubble's own edge and the
+  // rim reads as one line running round both.
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    border: var(--tooltip-elemental-caret) solid transparent;
+  }
+
+  &::before {
+    border-width: calc(var(--tooltip-elemental-caret) + var(--tooltip-elemental-border-width));
+  }
+
+  // Where along the bubble they sit: the element measured the middle of the trigger and
+  // handed it over as one length, because a bubble aligned to a wide button's edge is
+  // pointing at a corner otherwise. The clamp is this file's half of that bargain - the
+  // corner radius and the caret's own size are numbers only the look knows, and a caret
+  // allowed past them is one hanging off a rounded corner. `50%` is the fallback for a
+  // bubble nothing has placed yet.
+  --tooltip-elemental-caret-end: calc(
+    100% - var(--tooltip-elemental-radius) - 2 * (var(--tooltip-elemental-caret) + var(--tooltip-elemental-border-width))
+  );
+  --tooltip-elemental-caret-at: clamp(
+    var(--tooltip-elemental-radius),
+    calc(var(--tooltip-elemental-arrow-offset, 50%) - var(--tooltip-elemental-caret)),
+    var(--tooltip-elemental-caret-end)
+  );
+  --tooltip-elemental-caret-at-rim: calc(var(--tooltip-elemental-caret-at) - var(--tooltip-elemental-border-width));
+
+  &[data-side="block-end"],
+  &[data-side="block-start"] {
+    &::before { inset-inline-start: var(--tooltip-elemental-caret-at-rim); }
+    &::after { inset-inline-start: var(--tooltip-elemental-caret-at); }
+  }
+
+  &[data-side="inline-end"],
+  &[data-side="inline-start"] {
+    &::before { inset-block-start: var(--tooltip-elemental-caret-at-rim); }
+    &::after { inset-block-start: var(--tooltip-elemental-caret-at); }
+  }
+
+  &[data-side="block-end"] {
+    &::before {
+      inset-block-end: 100%;
+      border-block-end-color: var(--tooltip-elemental-border-color);
+    }
+
+    &::after {
+      inset-block-end: calc(100% - var(--tooltip-elemental-border-width));
+      border-block-end-color: var(--tooltip-elemental-surface);
+    }
+  }
+
+  &[data-side="block-start"] {
+    &::before {
+      inset-block-start: 100%;
+      border-block-start-color: var(--tooltip-elemental-border-color);
+    }
+
+    &::after {
+      inset-block-start: calc(100% - var(--tooltip-elemental-border-width));
+      border-block-start-color: var(--tooltip-elemental-surface);
+    }
+  }
+
+  &[data-side="inline-end"] {
+    &::before {
+      inset-inline-end: 100%;
+      border-inline-end-color: var(--tooltip-elemental-border-color);
+    }
+
+    &::after {
+      inset-inline-end: calc(100% - var(--tooltip-elemental-border-width));
+      border-inline-end-color: var(--tooltip-elemental-surface);
+    }
+  }
+
+  &[data-side="inline-start"] {
+    &::before {
+      inset-inline-start: 100%;
+      border-inline-start-color: var(--tooltip-elemental-border-color);
+    }
+
+    &::after {
+      inset-inline-start: calc(100% - var(--tooltip-elemental-border-width));
+      border-inline-start-color: var(--tooltip-elemental-surface);
+    }
+  }
+
+  // Forced colours throw away author backgrounds, which would leave a filled bubble as a
+  // hole and both carets painted the same. Re-pointing the two colours at system keywords is
+  // the whole fix, since everything above is spent through them: an outlined bubble in the
+  // forced palette, with a caret whose fill still hides the edge it sits on.
+  @media (forced-colors: active) {
+    --tooltip-elemental-surface: Canvas;
+    --tooltip-elemental-color: CanvasText;
+    --tooltip-elemental-border-color: CanvasText;
+  }
+}

@@ -1413,115 +1413,6 @@
       "path": "src/elementals/menu/index.js",
       "declarations": [
         {
-          "kind": "function",
-          "name": "typeAheadIndex",
-          "parameters": [
-            {
-              "name": "labels",
-              "description": "The items' text, in menu order.",
-              "type": {
-                "text": "string[]"
-              }
-            },
-            {
-              "name": "current",
-              "description": "Index of the focused item, `-1` for none.",
-              "type": {
-                "text": "number"
-              }
-            },
-            {
-              "name": "buffer",
-              "description": "What has been typed inside the type-ahead window.",
-              "type": {
-                "text": "string"
-              }
-            }
-          ],
-          "description": "Where a type-ahead lands in a menu, given what has been typed so far.\n\nTwo rules that look like edge cases and are not. Holding or repeating one letter\ncycles the items starting with it - `aaa` is someone pressing `a` three times\nlooking for the next \"Archive\", not an item named \"aaa\". And a search that is one\ncharacter long starts *after* the focused item, so pressing that letter again moves\non, while a buffer still being typed starts *at* it, so the match narrows onto the\nitem the reader is already on instead of skipping past it.",
-          "return": {
-            "type": {
-              "text": "number|null"
-            }
-          }
-        },
-        {
-          "kind": "function",
-          "name": "placeFlyout",
-          "parameters": [
-            {
-              "name": "trigger",
-              "description": "Rect of the button, in viewport coordinates.",
-              "type": {
-                "text": "DOMRect|object"
-              }
-            },
-            {
-              "name": "panel",
-              "description": "Size of the list.",
-              "type": {
-                "text": "{width: number, height: number}"
-              }
-            },
-            {
-              "name": "viewport",
-              "type": {
-                "text": "{width: number, height: number}"
-              }
-            },
-            {
-              "name": "rtl",
-              "description": "Whether the menu runs right to left.",
-              "type": {
-                "text": "boolean"
-              }
-            }
-          ],
-          "description": "Where the root list goes: under the button, or over it when there is no room under;\nand running from the button's inline start, or back the other way when that would take\nit off the edge.\n\nThe preferred placement wins ties and wins when neither fits, because a panel with\nnowhere good to go should at least land where the reader expects it.",
-          "return": {
-            "type": {
-              "text": "{side: string, align: string}"
-            }
-          }
-        },
-        {
-          "kind": "function",
-          "name": "placeSubmenu",
-          "parameters": [
-            {
-              "name": "item",
-              "description": "Rect of the item that opens it.",
-              "type": {
-                "text": "DOMRect|object"
-              }
-            },
-            {
-              "name": "panel",
-              "type": {
-                "text": "{width: number, height: number}"
-              }
-            },
-            {
-              "name": "viewport",
-              "type": {
-                "text": "{width: number, height: number}"
-              }
-            },
-            {
-              "name": "rtl",
-              "type": {
-                "text": "boolean"
-              }
-            }
-          ],
-          "description": "Where a submenu goes: beside its own item, on the inline end unless the edge is there,\nand running down from the item unless the bottom is.\n\nWhich is how a menu near the bottom right corner ends up opening up and to the left,\none decision per axis rather than a list of corners.",
-          "return": {
-            "type": {
-              "text": "{side: string, align: string}"
-            }
-          }
-        },
-        {
           "kind": "class",
           "description": "`<menu-elemental>` custom element.\n\nA button and the nested lists it opens, per the\n[APG Menu Button pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/) -\nwith one addition the APG has no opinion on, because it is a layout question:\nbelow a breakpoint the whole thing stops being a menu.\n\nThat is the `media` attribute, and it is the point of the element. A flyout is a\ndesktop object: it floats over the page, only one branch of it is open at a time,\narrows move between items because the items are not in the tab order. On a phone\nthe same markup wants to be a stack of nested disclosures inside a drawer - links\nyou tab through, submenus that stay open where you left them, no `role=\"menu\"` at\nall. Two widgets, one set of markup, and the viewport decides which one is on.\n\nWhich also means the ARIA changes with the mode, not just the CSS. `role=\"menu\"`\nis a promise that the arrow keys work and Tab does not, so making it while the\nitems are a plain tabbable list would be a lie told to exactly the readers who\ncannot see the layout that makes it obvious.\n\nponytail: not built on the Popover API. For a dropdown holding *links* it would be\nthe whole answer - Escape, light dismiss, focus return, tab order, all native, no\nscript - and `<disclosure-elemental>` plus `popover` is the better thing to reach\nfor there. A menu has to own focus anyway for the roving tabindex and the\ntype-ahead, so popover would save the small half of the work and cost the inline\nmode, which cannot be in the top layer.\n\nLight DOM, no shadow root, and nothing is moved or wrapped.",
           "name": "MenuElemental",
@@ -1886,30 +1777,6 @@
         }
       ],
       "exports": [
-        {
-          "kind": "js",
-          "name": "typeAheadIndex",
-          "declaration": {
-            "name": "typeAheadIndex",
-            "module": "src/elementals/menu/index.js"
-          }
-        },
-        {
-          "kind": "js",
-          "name": "placeFlyout",
-          "declaration": {
-            "name": "placeFlyout",
-            "module": "src/elementals/menu/index.js"
-          }
-        },
-        {
-          "kind": "js",
-          "name": "placeSubmenu",
-          "declaration": {
-            "name": "placeSubmenu",
-            "module": "src/elementals/menu/index.js"
-          }
-        },
         {
           "kind": "js",
           "name": "MenuElemental",
@@ -3454,6 +3321,381 @@
           "declaration": {
             "name": "TabsElemental",
             "module": "src/elementals/tabs/index.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/tooltip/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "titleRole",
+          "parameters": [
+            {
+              "name": "trigger",
+              "type": {
+                "text": "{text: string, ariaLabel: ?string, ariaLabelledby: ?string}"
+              }
+            }
+          ],
+          "description": "Whether the words in a `title` are the trigger's *name* or a *description* of it.\n\nA `title` is the accessible name of a control that has no other one - an icon-only\nbutton is called \"Save\" by nothing else. Moving those words into a description and\ndropping the attribute would leave that button nameless, which is a worse page than the\none that started with a native tooltip. So the words go back where they were already\nworking: as a name when the trigger had none, as a description when it did.",
+          "return": {
+            "type": {
+              "text": "'name'|'description'"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "nextTooltipState",
+          "parameters": [
+            {
+              "name": "state",
+              "type": {
+                "text": "{hovering: boolean, focused: boolean, dismissed: boolean, open: boolean}"
+              }
+            },
+            {
+              "name": "event",
+              "type": {
+                "text": "'pointerenter'|'pointerleave'|'focus'|'blur'|'escape'"
+              }
+            }
+          ],
+          "description": "Where hover, focus and Escape leave a tooltip.\n\nA tooltip has no state to a screen reader - the description is on the trigger the whole\ntime, and this is only about what is drawn. Which is why it is a reducer over four\nfacts rather than an `open` flag: hover and focus can each hold it open, so neither\nleaving is on its own a reason to close.\n\nEscape is the part worth writing down. [WCAG 2.2 SC 1.4.13](https://www.w3.org/WAI/WCAG22/Understanding/content-on-hover-or-focus.html)\nasks for dismissible, and a dismissal that is undone by the next `pointermove` over the\nsame button is no dismissal at all - so `dismissed` outlives the press and is cleared\nonly once the reader has actually left, by pointer and by focus both.",
+          "return": {
+            "type": {
+              "text": "{hovering: boolean, focused: boolean, dismissed: boolean, open: boolean}"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "arrowOffset",
+          "parameters": [
+            {
+              "name": "trigger",
+              "description": "Rect of the trigger, in viewport coordinates",
+              "type": {
+                "text": "DOMRect|object"
+              }
+            },
+            {
+              "name": "bubble",
+              "description": "Where the bubble landed",
+              "type": {
+                "text": "{left: number, top: number, width: number, height: number}"
+              }
+            },
+            {
+              "name": "horizontal",
+              "description": "Whether the bubble sits beside the trigger rather than over or under it",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "rtl",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "How far along the bubble the caret has to sit to point at the middle of its trigger,\nmeasured from the bubble's own start edge on whichever axis the caret runs along.\n\nAligning the bubble to an edge of the trigger is not the same as pointing at it: a\nbutton wider than its tooltip is aligned at the left and centred nowhere near it. So the\ntrigger's middle is measured and handed over as one number, and where the caret may\nactually go - off the rounded corner, past the end - is the stylesheet's to clamp, since\nthe corner radius and the caret's own size are its numbers and not this file's.\n\nMeasured from the *inline start*, which in RTL is the right-hand edge - so a stylesheet\ncan spend it on `inset-inline-start` without knowing the direction.",
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "alignOnAxis",
+          "parameters": [
+            {
+              "name": "start",
+              "description": "Trigger's near edge on this axis, in viewport coordinates",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "end",
+              "description": "Trigger's far edge",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "size",
+              "description": "The bubble's extent on the same axis",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "limit",
+              "description": "The viewport's, on that axis",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "toStart",
+              "description": "Whether the placement asked for the near edge, in physical terms",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "Where the bubble starts on the axis it runs *along* - the one the caret slides on.\n\nTwo answers, because a control wider than its bubble and a control narrower than it want\nopposite things. Wider: centre the bubble on it, so the caret comes out of the middle of\nboth. Narrower: line the two up at the edge the placement chose, because a small button\ncentred under a long sentence puts most of that sentence to one side of the thing it\nbelongs to, and the caret already carries the pointing.\n\nCentring is then held inside the viewport, which is the one thing that outranks either\nrule - and it does not spoil the caret, since that is measured against wherever the\nbubble actually landed.",
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<tooltip-elemental>` custom element.\n\nA description that shows on hover and on focus, wired to the control it describes - and\nstill on the page when the script is not.\n\nThe [APG's tooltip pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/) says of\nitself that it \"is work in progress; it does not yet have task force consensus\", so this\nimplements the half every source does agree on - `aria-describedby` from the trigger to\nthe words, Escape to dismiss, hover and focus to show - and refuses the half they do\nnot. `role=\"tooltip\"` is set because the pattern says so, and\n[buys nothing on its own](https://sarahmhigley.com/writing/tooltips-in-wcag-21/):\n`aria-describedby` is what any screen reader actually reads.\n\nTwo ways to write it, and they are the same element:\n\n```html\n<tooltip-elemental>\n  <button type=\"button\">Save</button>\n  <span>Saves to your drafts, without publishing</span>\n</tooltip-elemental>\n\n<button type=\"button\" id=\"save\">Save</button>\n<tooltip-elemental for=\"save\">Saves to your drafts, without publishing</tooltip-elemental>\n```\n\nWrapping is the one to reach for. `for` exists because a bubble is sometimes written far\nfrom the button it belongs to - a table of controls, a template that emits its help text\nin one block - and it costs nothing at the markup level, since the element works out\nwhich shape it is in by whether it contains something focusable.\n\nA `title` on the trigger is read as the words when there is no other source for them,\nand the attribute is removed so the native tooltip does not double up. Where those words\nend up depends on what the trigger already had: see `titleRole`.\n\n**It is unreachable by touch, and that is not a bug to work around.** There is no hover\non a touch screen, and a tap is activation rather than focus, so pointer events from a\ntouch are ignored outright rather than half-handled. Nothing essential belongs in one.\nA control that needs its description read on every device wants visible text, and one\nthat reveals content on a press wants `<disclosure-elemental>`.\n\nLight DOM, no shadow root. Nothing is moved and nothing is wrapped: the bubble is the\nelement the author wrote, given a `role`, an `id` if it had none, and a `hidden` while\nit is not showing - which still leaves it readable, because\n[`aria-describedby` reaches hidden content](https://www.w3.org/TR/accname-1.2/).\n\nDegrades honestly: with no script the words are a sentence beside the control, which is\nwhat the markup says on its own. Nothing is hidden until there is something able to show\nit again.\n\nponytail: fixed positioning rather than the popover API, so a bubble is not clipped by a\nscrolling ancestor. Popover would put it in the top layer and take the Escape handling\nwith it; it is worth revisiting once CSS anchor positioning is in Firefox and Safari,\nwhich is the half that would then be missing.",
+          "name": "TooltipElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between the trigger and the bubble.",
+              "name": "--tooltip-elemental-gap",
+              "default": "6px"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Half the caret, since it is drawn as a border.",
+              "name": "--tooltip-elemental-caret",
+              "default": "5px"
+            },
+            {
+              "type": {
+                "text": "<time>"
+              },
+              "description": "The fade, in and out. `prefers-reduced-motion` turns it off.",
+              "name": "--tooltip-elemental-duration",
+              "default": "120ms"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Above and below the words.",
+              "name": "--tooltip-elemental-padding-block",
+              "default": "0.5em"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Either side of them.",
+              "name": "--tooltip-elemental-padding-inline",
+              "default": "0.75em"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "The bubble's corners.",
+              "name": "--tooltip-elemental-radius",
+              "default": "6px"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "The rim, which the caret takes too.",
+              "name": "--tooltip-elemental-border-width",
+              "default": "1px"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "That rim's colour.",
+              "name": "--tooltip-elemental-border-color",
+              "default": "Canvas 28% into the surface"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Where the words wrap. A tooltip is a sentence, not a paragraph.",
+              "name": "--tooltip-elemental-max-width",
+              "default": "250px"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "What the bubble is painted in.",
+              "name": "--tooltip-elemental-surface",
+              "default": "CanvasText"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The words on it.",
+              "name": "--tooltip-elemental-color",
+              "default": "Canvas"
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "trigger",
+              "description": "The control being described: what the element wraps, or what `for` names.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "bubble",
+              "description": "The words. A direct child that is not the trigger, or - when `for` named the trigger\nfrom somewhere else on the page - this element itself.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "onPointer",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onFocus"
+            },
+            {
+              "kind": "method",
+              "name": "onBlur"
+            },
+            {
+              "kind": "method",
+              "name": "onKeydown",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "apply",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ],
+              "description": "Runs one event through the state machine and draws whatever came out of it."
+            },
+            {
+              "kind": "method",
+              "name": "close",
+              "parameters": [
+                {
+                  "name": "delay"
+                }
+              ],
+              "description": "Leaving with a pointer waits, so the strip between the trigger and the bubble can be\ncrossed - the bubble has to be reachable to satisfy \"hoverable\"."
+            },
+            {
+              "kind": "method",
+              "name": "show"
+            },
+            {
+              "kind": "method",
+              "name": "hide"
+            },
+            {
+              "kind": "method",
+              "name": "stopWatching"
+            },
+            {
+              "kind": "method",
+              "name": "reposition"
+            },
+            {
+              "kind": "method",
+              "name": "place",
+              "description": "Puts the bubble beside the trigger, in viewport coordinates.\n\n`position: fixed` rather than an offset parent, because the two are not always in the\nsame one - and because a tooltip inside anything scrolling would otherwise be clipped\nby it. The side and the alignment are written out as attributes as well, since a caret\nhas to point back the way the bubble came from and nothing in CSS can read a number\nthis file computed.\n\nThe axis is the author's, the side is the viewport's: `horizontal` says beside rather\nthan over or under, and which of the two sides that turns out to be is measured. Which\nis the whole reason there is no `placement=\"e\"` here - a fixed side is a tooltip off\nthe edge of the screen on the one page where it did not fit."
+            }
+          ],
+          "attributes": [
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "`id` of the control this describes. Only read when the element does not wrap one.",
+              "name": "for"
+            },
+            {
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Beside the control rather than over or under it. Which of the two sides is still the viewport's call.",
+              "name": "horizontal",
+              "default": "false"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "tooltip-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "titleRole",
+          "declaration": {
+            "name": "titleRole",
+            "module": "src/elementals/tooltip/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "nextTooltipState",
+          "declaration": {
+            "name": "nextTooltipState",
+            "module": "src/elementals/tooltip/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "arrowOffset",
+          "declaration": {
+            "name": "arrowOffset",
+            "module": "src/elementals/tooltip/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "alignOnAxis",
+          "declaration": {
+            "name": "alignOnAxis",
+            "module": "src/elementals/tooltip/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "TooltipElemental",
+          "declaration": {
+            "name": "TooltipElemental",
+            "module": "src/elementals/tooltip/index.js"
           }
         }
       ]

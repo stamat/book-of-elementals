@@ -13,3 +13,4 @@ import './elementals/navbar/index.js';
 import './elementals/segmented/index.js';
 import './elementals/switch/index.js';
 import './elementals/tabs/index.js';
+import './elementals/tooltip/index.js';

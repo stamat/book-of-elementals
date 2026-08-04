@@ -74,6 +74,12 @@
     "./tabs/style.css": "./dist/elementals/tabs.css",
     "./tabs/theme.scss": "./src/elementals/tabs/theme.scss",
     "./tabs/theme.css": "./dist/elementals/tabs-theme.css",
+    "./tooltip": "./src/elementals/tooltip/index.js",
+    "./tooltip/manifest": "./dist/elementals/tooltip-manifest.json",
+    "./tooltip/style.scss": "./src/elementals/tooltip/index.scss",
+    "./tooltip/style.css": "./dist/elementals/tooltip.css",
+    "./tooltip/theme.scss": "./src/elementals/tooltip/theme.scss",
+    "./tooltip/theme.css": "./dist/elementals/tooltip-theme.css",
     "./styles/*": "./src/styles/*",
     "./dist/*": "./dist/*",
     "./package.json": "./package.json"
@@ -143,7 +149,7 @@
     "lint:es": "es-check es2020 \"dist/**/*.js\""
   },
   "dependencies": {
-    "book-of-spells": "^1.4.0"
+    "book-of-spells": "^1.5.0"
   },
   "devDependencies": {
     "@custom-elements-manifest/analyzer": "^0.11.0",

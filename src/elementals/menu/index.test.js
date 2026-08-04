@@ -1,4 +1,9 @@
-import { placeFlyout, placeSubmenu, typeAheadIndex } from './index.js';
+// The placement and type-ahead maths moved to book-of-spells `src/elements.mjs`, where a
+// second library wanted them. These cases stay because they are the menu's own reading of
+// what the answers should be - and because they run against `core.js`, they also prove the
+// re-export surface every elemental imports through is complete. The same assertions exist
+// upstream; if the two ever disagree, one of the two libraries has been changed alone.
+import { placeFlyout, placeSubmenu, typeAheadIndex } from '../../core.js';
 
 const VIEWPORT = { width: 1000, height: 800 };
 const PANEL = { width: 200, height: 300 };

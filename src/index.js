@@ -11,3 +11,4 @@ export * from './elementals/navbar/index.js';
 export * from './elementals/segmented/index.js';
 export * from './elementals/switch/index.js';
 export * from './elementals/tabs/index.js';
+export * from './elementals/tooltip/index.js';

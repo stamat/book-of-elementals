@@ -5,7 +5,7 @@
     return inputString.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/Œ/g, "OE").replace(/œ/g, "oe").replace(/Æ/g, "AE").replace(/æ/g, "ae").replace(/ß/g, "ss").normalize("NFC");
   }
 
-  // src/core.js
+  // node_modules/book-of-spells/src/elements.mjs
   var ElementBase = typeof HTMLElement !== "undefined" ? HTMLElement : class {
   };
   function define(tag, ctor) {

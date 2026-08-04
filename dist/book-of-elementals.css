@@ -401,4 +401,25 @@ tabs-elemental > [data-tabs-panel][hidden] {
   border: 0;
   box-shadow: none;
 }
+
+tooltip-elemental {
+  display: contents;
+}
+
+tooltip-elemental[hidden],
+tooltip-elemental > [hidden] {
+  display: none;
+}
+
+tooltip-elemental:defined[role=tooltip],
+tooltip-elemental:defined > [role=tooltip] {
+  position: fixed;
+  z-index: 10;
+  inline-size: max-content;
+  max-inline-size: var(--tooltip-elemental-max-width, 250px);
+}
+
+tooltip-elemental:defined[role=tooltip]:not([hidden]) {
+  display: block;
+}
 /*# sourceMappingURL=book-of-elementals.css.map */

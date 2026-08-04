@@ -105,6 +105,7 @@ handling are not options.
 | [`<segmented-elemental>`](elementals/segmented.html)   | [APG Radio Group](https://www.w3.org/WAI/ARIA/apg/patterns/radio/) on native radios, drawn as a track with a knob that slides |
 | [`<switch-elemental>`](elementals/switch.html)         | [APG Switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/), for a setting that takes effect at once |
 | [`<tabs-elemental>`](elementals/tabs.html)             | [APG Tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), horizontal or vertical, written on a list of in-page links |
+| [`<tooltip-elemental>`](elementals/tooltip.html)       | [APG Tooltip](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/) as far as it has consensus — a description on hover and focus, and a sentence on the page without script |
 
 More pages are being written. Elements published separately today —
 [compare-images-slider](https://github.com/stamat/compare-images-slider),

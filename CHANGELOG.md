@@ -190,6 +190,69 @@ may already be targeting**, since neither shows up in a function signature.
   because the radio it belongs to is a hidden pixel and a control whose focus cannot be
   seen is broken rather than unstyled.
 
+- **`<tooltip-elemental>`.** A description shown on hover and on focus, wired to the control
+  it belongs to — and still a plain sentence on the page when the script never arrives, which
+  is the part every other tooltip gives up. The
+  [APG's pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/) says of itself that it
+  "is work in progress; it does not yet have task force consensus", so this ships the half
+  every source agrees on and refuses the half they do not: `aria-describedby` to the words,
+  <kbd>Escape</kbd> to dismiss, no timeout, and a bubble the pointer can rest on, which is
+  [WCAG 2.2 SC 1.4.13](https://www.w3.org/WAI/WCAG22/Understanding/content-on-hover-or-focus.html);
+  never the control's name, and **nothing at all on touch**, since a tap is activation rather
+  than hover. Nothing essential belongs in one, and that is written on the docs page rather
+  than left for someone to discover.
+
+  Two shapes, and nothing selects between them: wrap a control and its words, or write the
+  words alone with `for` naming a control elsewhere. The element contains something focusable
+  or it does not. A `title` is read when there is nothing else to say and the attribute is
+  removed so the native tooltip does not double up — becoming the control's **description**
+  when it had a name already, and its **name** when that `title` was the only one it had.
+
+  `horizontal` puts the bubble beside the control rather than over or under it, and that is
+  the only placement knob there is: the axis is the author's, the side is the viewport's.
+  Every other library offers a fixed `n`/`e`/`s`/`w`, which is a tooltip off the edge of the
+  screen on the one page where it did not fit — and since the element measures anyway to know
+  whether a side fits, a preference that loses to the measurement is a knob that mostly does
+  nothing.
+
+  **DOM it produces:** on the bubble, `role="tooltip"`, an `id` if it had none, `hidden`
+  between showings, `data-side` (`block-end`/`block-start`, or `inline-end`/`inline-start`
+  with `horizontal`) and `data-align` (`start`/`end`), `top`/`left` in viewport pixels, and
+  `--tooltip-elemental-arrow-offset` — the middle of the trigger, measured from the bubble's
+  own start edge, so a caret points at the control rather than at whichever corner the bubble
+  aligned to. Clamping it belongs to the stylesheet, where the corner radius lives. On the trigger, `aria-describedby` appended to any it
+  already had, or `aria-label` in the `title`-was-the-name case, and its `title` removed when
+  those words became the bubble. The bubble is hidden rather than emptied because
+  `aria-describedby` reads hidden content: the description is on the control the whole time,
+  and there is no state for a screen reader to be told about.
+
+  Along the other axis it lines up two ways, because a wide control and a narrow one want
+  opposite things: a control **wider** than its bubble is centred on, so the caret leaves the
+  middle of both, and a **narrower** one has its edges lined up. Centring gives way to the
+  viewport and never the other way round.
+
+  **CSS you can target:** `tooltip-elemental [role="tooltip"]` with its `data-side` and
+  `data-align`, and ten `--tooltip-elemental-*` properties in the optional theme — declared on
+  `tooltip-elemental` itself, at one type selector's worth of specificity, so a page overrides
+  one by writing the same selector later rather than having to out-specify the theme. It is
+  placed `position: fixed` against the viewport rather than an offset parent, so a bubble is
+  not clipped by anything scrolling between it and its trigger.
+
+  The optional look takes GitHub's proportions — a 6px radius, `0.5em 0.75em` of padding,
+  small body text, a 250px cap — and adds a rim and a caret, neither of which Primer's tooltip
+  has. It fades in and out over `--tooltip-elemental-duration`, which needs `@starting-style`
+  and `transition-behavior: allow-discrete` to work at all against a `hidden` bubble; both are
+  Baseline 2024, so on Safari 17.0–17.4 and the iOS versions of those numbers it appears and
+  disappears without fading. `prefers-reduced-motion: reduce` turns it off everywhere else,
+  and under `forced-colors` the surface and rim are re-pointed at system keywords.
+
+### Changed
+
+- **The shared maths moved to [book-of-spells](https://github.com/stamat/book-of-spells) 1.5.0**,
+  which is now the minimum. `ElementBase`, `define`, `nextIndex`, `typeAheadIndex` and the
+  `placeFlyout`/`placeSubmenu` placement pair had been living here and were wanted by both
+  libraries; `src/core.js` re-exports them, so every import path in this package is unchanged.
+
 ### Fixed
 
 - **`<combobox-elemental>` no longer makes iOS zoom the page in on focus.** The input takes

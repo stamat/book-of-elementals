@@ -1,6 +1,6 @@
 /* book-of-elementals v0.4.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 (() => {
-  // src/core.js
+  // node_modules/book-of-spells/src/elements.mjs
   var ElementBase = typeof HTMLElement !== "undefined" ? HTMLElement : class {
   };
   function define(tag, ctor) {
@@ -22,8 +22,6 @@
         return null;
     }
   }
-
-  // src/elementals/menu/index.js
   function typeAheadIndex(labels, current, buffer) {
     if (!buffer) return null;
     const query = buffer.toLowerCase();
@@ -59,6 +57,8 @@
       align: down || !up ? "start" : "end"
     };
   }
+
+  // src/elementals/menu/index.js
   var TYPE_AHEAD_WINDOW = 500;
   var HOVER_CLOSE_DELAY = 250;
   var menuCount = 0;
