@@ -24,6 +24,7 @@ script/server    # build + serve docs with live reload, http://localhost:4040
 script/build     # compiles dist/ and the docs site into _site/
 script/test      # jest
 script/lint      # eslint + stylelint (the authority; CI runs it)
+script/a11y      # axe over the built demos in Chromium, light and dark; build first
 ```
 
 ## Layout
@@ -82,7 +83,10 @@ Rules:
 
 - **Always:** run `script/lint` and `script/test` before calling work done;
   pair every fix or feature with a test; note DOM/CSS output changes in the
-  changelog entry.
+  changelog entry. Anything touching roles, states or the theme also runs
+  `script/build` then `script/a11y`, which is where a rule the unit tests cannot
+  reach — contrast, a name that went missing, a region with nothing focusable in
+  it — shows up.
 - **Ask first:** changing the markup an element writes or the CSS hooks
   authors target (that's the public API); adding a dependency; starting a new
   elemental.

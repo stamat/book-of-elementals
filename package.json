@@ -126,6 +126,7 @@
     "build": "poops -b",
     "prepack": "poops -b",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "a11y": "node script/a11y.js",
     "lint": "eslint . && stylelint \"{src,docs}/**/*.scss\"",
     "lint:browsers": "stylelint --config stylelint.browsers.config.js --max-warnings 0 \"dist/**/*.css\" \"!dist/**/*.min.css\"",
     "lint:es": "es-check es2020 \"dist/**/*.js\""
@@ -136,10 +137,12 @@
   "devDependencies": {
     "@custom-elements-manifest/analyzer": "^0.11.0",
     "@eslint/js": "^10.0.1",
+    "axe-core": "^4.12.1",
     "code-preview-element": "^3.0.0",
     "es-check": "^9.6.4",
     "eslint": "^10.7.0",
     "jest": "^30.4.2",
+    "playwright-core": "^1.62.1",
     "poops": "^2.0.0",
     "poops-docs-theme": "^2.0.0",
     "stylelint": "^17.14.1",

@@ -22,6 +22,7 @@ script/server    # builds and serves the docs with live reload, http://localhost
 script/build     # compiles dist/ and the docs site into _site/
 script/test      # jest
 script/lint      # eslint + stylelint
+script/a11y      # axe over the built demos, in Chromium — run script/build first
 ```
 
 An elemental is a directory under `src/elementals/<name>/`: `index.js`,
@@ -44,6 +45,16 @@ which browser and assistive technology. A minimal page beats a description.
 - **Accessibility is the point.** Anything that changes roles, states, focus
   order or keyboard handling has to be checked against the APG pattern it claims
   to implement.
+- **Run `script/a11y`.** It builds nothing itself — `script/build` first — then
+  drives every live demo in Chromium and runs axe over it: as authored, then
+  again with everything that says it is closed opened, every tab selected and
+  every switch flipped. Twice over, light and dark — the themes mix their
+  colours out of `currentcolor` and the system palette, so `color-scheme` is
+  what a contrast bug hides behind. It audits the previews rather than the pages
+  around them, so a violation it prints is this project's and not the docs
+  theme's. A rule it cannot decide is listed as needing review rather than
+  failing the run; hover-only states and anything a click cannot reach are not
+  covered, which is what a browser and a screen reader are still for.
 - **Say what the DOM does.** The elements write into the light DOM, so the markup
   they produce and the CSS an author may already target are the public API —
   changes to either belong in the changelog entry, in those words.
