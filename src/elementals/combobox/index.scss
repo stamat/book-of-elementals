@@ -63,13 +63,11 @@ combobox-elemental {
     // viewport tag, which where it is honoured caps the zoom of the whole page for every
     // reader on it. `1em` is the inherited size, kept wherever it already clears the bar;
     // `16px` is absolute because the threshold is, and a page that re-points its root
-    // font-size would slide a `rem` straight under it. Behind `any-pointer: coarse` so a
-    // page whose text is smaller than 16px renders at its own size everywhere the zoom
-    // cannot happen - and `any-`, not `pointer:`, because an iPad with a trackpad reports
-    // a fine primary pointer and zooms on a tap all the same.
-    @media (any-pointer: coarse) {
-      font-size: max(16px, 1em);
-    }
+    // font-size would slide a `rem` straight under it. Unconditional, and not behind a
+    // pointer query: `any-pointer: coarse` would have to answer for an iPad on a trackpad
+    // and a touchscreen laptop both, and one rule that reads the same everywhere is worth
+    // more than the two type sizes a page under 16px would otherwise render at.
+    font-size: max(16px, 1em);
   }
 
   .combobox-elemental-field:has(> .combobox-elemental-input:focus-visible) {

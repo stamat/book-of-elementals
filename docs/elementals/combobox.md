@@ -445,16 +445,24 @@ pair it guarantees contrasts.
 > element, and a property set on an element always beats one inherited from an ancestor,
 > so `.form { --combobox-elemental-surface: … }` silently does nothing.
 
-**The typed text is never under 16px on a touch screen.** The input takes the page's font,
-and iOS Safari zooms the page in on any text field that computes smaller than that — then
-leaves it zoomed once the field is done with. So under `@media (any-pointer: coarse)` the
-input's `font-size` is `max(16px, 1em)`: your size wherever it already clears the bar, 16px
-where it does not. On a page set smaller than 16px the typed text is therefore a little
-bigger than the chips and the options beside it on a phone, which is the trade against a
-pinch on every open. The other cure, `maximum-scale=1` in your viewport tag, buys it by
-capping the zoom of the whole page wherever the browser honours it — one field fixed at the
-cost of [WCAG 1.4.4](https://www.w3.org/WAI/WCAG22/Understanding/resize-text.html) for every
-reader on it.
+**The typed text is never under 16px.** The input takes the page's font, and iOS Safari
+zooms the page in on any text field that computes smaller than that — then leaves it zoomed
+once the field is done with. So the input's `font-size` is `max(16px, 1em)`: your size
+wherever it already clears the bar, 16px where it does not. There is no pointer query in
+front of it, so a page set smaller than 16px renders the typed text a little bigger than
+the chips and options beside it on a desktop too — one rule that reads the same everywhere,
+against a pinch on every open. Take it back if you would rather have the page's size:
+
+```css
+combobox-elemental .combobox-elemental-input {
+  font-size: 1em;
+}
+```
+
+The other cure, `maximum-scale=1` in your viewport tag, buys it by capping the zoom of the
+whole page wherever the browser honours it — one field fixed at the cost of
+[WCAG 1.4.4](https://www.w3.org/WAI/WCAG22/Understanding/resize-text.html) for every reader
+on it.
 
 ## Where the popup goes
 

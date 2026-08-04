@@ -129,16 +129,16 @@ may already be targeting**, since neither shows up in a function signature.
   then leaves the page zoomed after the field is done with, so a page set in 14px cost the
   reader a pinch every time they opened the combobox.
 
-  **CSS this changes:** under `@media (any-pointer: coarse)`, the input's `font-size` is
-  `max(16px, 1em)` — the inherited size wherever it already clears the bar, 16px where it
-  does not. `16px` and not `1rem` because the threshold is absolute and a page that
-  re-points its root font-size would slide under it; `any-pointer` and not `pointer`
-  because an iPad with a trackpad reports a fine primary pointer and still zooms on a tap.
-  Nothing changes on a pointer device, and nothing changes on a page whose text is already
-  16px or larger. On a smaller page the typed text is now 16px while the chips and the
-  options beside it stay at the page's size. The other cure — `maximum-scale=1` in the
-  viewport tag — is not the element's to reach for and is worse where it is honoured: it
-  caps the zoom of the whole page for every reader on it.
+  **CSS this changes:** the input's `font-size` is `max(16px, 1em)` — the inherited size
+  wherever it already clears the bar, 16px where it does not. `16px` and not `1rem` because
+  the threshold is absolute and a page that re-points its root font-size would slide under
+  it. Nothing changes on a page whose text is already 16px or larger. On a smaller one the
+  typed text is now 16px everywhere, on a desktop as much as on a phone, while the chips and
+  the options beside it stay at the page's size: no pointer query, because one rule that
+  reads the same on every device is worth more than the second type size it saves. Override
+  it on `.combobox-elemental-input` if you would rather have the page's size and the zoom.
+  The other cure — `maximum-scale=1` in the viewport tag — is not the element's to reach for
+  and is worse where it is honoured: it caps the zoom of the whole page for every reader.
 
 - **`<disclosure-elemental>` no longer overshoots on opening.** A region whose first or
   last child carried a margin — a `<p>` in a `<figcaption>`, a `<table>` in a `<div>` —
