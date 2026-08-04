@@ -127,7 +127,8 @@ navbar-elemental menu {
   align-items: center;
   min-width: 0;
   grid-template-columns: minmax(0, 1fr);
-  overflow: hidden;
+  overflow: clip;
+  overflow-clip-margin: 0.5rem;
 }
 
 [data-navbar-rail] > * {

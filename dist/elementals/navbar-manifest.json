@@ -63,9 +63,18 @@
               "type": {
                 "text": "number"
               }
+            },
+            {
+              "name": "minimum",
+              "default": "1",
+              "description": "How many have to fit for this to still be a bar.",
+              "optional": true,
+              "type": {
+                "text": "number"
+              }
             }
           ],
-          "description": "Which of the two widgets the bar is right now.\n\nTwo inputs, because there are two ways to run out of room and only one of them is a\nwidth. `media` not matching is the author saying \"this is a phone\"; every item having\noverflowed is the bar saying \"there is nothing left on me\" - at which point the overflow\nbutton is not an overflow any more, it is the whole navigation, and a drawer is the\nhonest name for that.",
+          "description": "Which of the two widgets the bar is right now.\n\nTwo inputs, because there are two ways to run out of room and only one of them is a\nwidth. `media` not matching is the author saying \"this is a phone\"; too few items still\nfitting is the bar saying \"there is nothing left on me\" - at which point the overflow\nbutton is not an overflow any more, it is the whole navigation, and a drawer is the\nhonest name for that.\n\n`minimum` is where \"too few\" is. One is the default and the old behaviour: a bar stops\nbeing one when nothing at all is left on it. Two says a single link beside an overflow\nbutton is not a navigation bar either.",
           "return": {
             "type": {
               "text": "\"bar\"|\"stack\""
@@ -73,8 +82,53 @@
           }
         },
         {
+          "kind": "function",
+          "name": "probeState",
+          "parameters": [
+            {
+              "name": "hasPanel",
+              "description": "Whether the original opens a panel.",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "The state a copy of a control has to carry to be measured as its original.\n\n`wire()` writes `aria-expanded` on every trigger, and a theme is free to draw on that -\nthe shipped one puts a caret after it. The copy is built before any of that and with its\npanels taken out, so nothing marks its triggers as triggers: each one measures a caret\nnarrower than the button it stands for. The row is then told more fits than does, and the\nitems past the edge are not folded into the overflow - they are clipped by the rail,\nwhich is how the overflow button itself ends up half under the search field.",
+          "return": {
+            "type": {
+              "text": "{ 'aria-expanded': string }|null"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "hoverIntent",
+          "parameters": [
+            {
+              "name": "branch",
+              "description": "The row item the pointer is in, or null.",
+              "type": {
+                "text": "*"
+              }
+            },
+            {
+              "name": "trigger",
+              "description": "The control under the pointer, if it opens a panel.",
+              "type": {
+                "text": "*"
+              }
+            }
+          ],
+          "description": "What a pointer arriving somewhere means for the panels that are open.\n\n`branch` is the row's own item the pointer is inside, however deep - not the control under\nit. A link inside an open panel opens nothing, so reading the control alone says \"close\neverything\", which closes the panel the pointer just walked into.\n\nNothing of the row's under the pointer is not an instruction either: between a trigger and\nthe panel hanging under it lies the bar's own padding, and closing there would shut every\npanel the moment anyone reached for one. Leaving the bar is what closes them, and\n`onPointerLeave` owns that.",
+          "return": {
+            "type": {
+              "text": "{ except: *, open: * }|null"
+            }
+          }
+        },
+        {
           "kind": "class",
-          "description": "`<navbar-elemental>` custom element.\n\nA site's navigation bar: a row of links, some of them opening a panel of more links, and\ntwo things a row of links always ends up needing - somewhere for the ones that do not fit\nto go, and a way to be a drawer instead on a narrow screen.\n\nIt is the APG's\n[Disclosure Navigation Menu](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/)\nand not a menubar. `role=\"menuitem\"` replaces link semantics, and the APG's own menubar\nexample opens by recommending this pattern instead for exactly that reason. So there are\nno roles here at all: the items are links in a list, `Tab` reaches every one of them, and\nthe buttons are buttons with `aria-expanded`. The optional arrow keys from that example\nare implemented, because they cost twenty lines and a bar of eight items wants them.\n\nWhat it adds to the pattern is the thing CSS cannot do: noticing that the links have run\nout of room. A breakpoint cannot know how many links a site has, how long their labels\nare, or what the reader's font does to them - so the row is measured instead, and the\nitems that do not fit move into the overflow panel one at a time. When none of them fit\nthe whole bar becomes a drawer.\n\nThe measuring is an `IntersectionObserver` on a copy of the row rather than on the row\nitself, which is the one idea in here worth stealing. Hiding an overflowing item shrinks\nthe row, which makes the next item fit, which hides that one instead - an observer\nwatching the box it is also changing is an infinite loop. So the copy is what is watched\nand the row is what changes, and nothing ever invalidates its own measurement. It also\nmeans late-arriving webfonts are free: they change the copy's geometry, the observer says\nso, and the row settles again. A cached set of widths would simply be wrong from then on.\n\nLight DOM, no shadow root. Two things are generated - the copy being measured, and the\ncopies of the items inside the overflow panel - and nothing the page wrote is moved or\nwrapped.",
+          "description": "`<navbar-elemental>` custom element.\n\nA site's navigation bar: a row of links, some of them opening a panel of more links, and\ntwo things a row of links always ends up needing - somewhere for the ones that do not fit\nto go, and a way to be a drawer instead on a narrow screen.\n\nIt is the APG's\n[Disclosure Navigation Menu](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/)\nand not a menubar. `role=\"menuitem\"` replaces link semantics, and the APG's own menubar\nexample opens by recommending this pattern instead for exactly that reason. So there are\nno roles here at all: the items are links in a list, `Tab` reaches every one of them, and\nthe buttons are buttons with `aria-expanded`. The optional arrow keys from that example\nare implemented, because they cost twenty lines and a bar of eight items wants them.\n\nWhat it adds to the pattern is the thing CSS cannot do: noticing that the links have run\nout of room. A breakpoint cannot know how many links a site has, how long their labels\nare, or what the reader's font does to them - so the row is measured instead, and the\nitems that do not fit move into the overflow panel one at a time. When none of them fit\nthe whole bar becomes a drawer.\n\nThe measuring is an `IntersectionObserver` on a copy of the row rather than on the row\nitself, which is the one idea in here worth stealing. Hiding an overflowing item shrinks\nthe row, which makes the next item fit, which hides that one instead - an observer\nwatching the box it is also changing is an infinite loop. So the copy is what is watched\nand the row is what changes, and nothing ever invalidates its own measurement. It also\nmeans late-arriving webfonts are free: they change the copy's geometry, the observer says\nso, and the row settles again. A cached set of widths would simply be wrong from then on.\n\nLight DOM, no shadow root. Three things are generated - the copy being measured, the copies\nof the items inside the overflow panel, and the bars inside the drawer's button - and\nnothing the page wrote is moved or wrapped.",
           "name": "NavbarElemental",
           "cssProperties": [
             {
@@ -113,9 +167,25 @@
               "type": {
                 "text": "<length>"
               },
-              "description": "The generated hamburger icon.",
+              "description": "Width of the generated hamburger icon.",
               "name": "--navbar-elemental-hamburger-size",
               "default": "1.25em"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "How thick each of its three bars is.",
+              "name": "--navbar-elemental-bar-thickness",
+              "default": "2px"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "How far the outer two sit from the middle one.",
+              "name": "--navbar-elemental-bar-gap",
+              "default": "0.35em"
             },
             {
               "type": {
@@ -201,6 +271,12 @@
             },
             {
               "kind": "field",
+              "name": "minBarItems",
+              "description": "How many links have to fit for this to still be a bar. One - a bar that keeps going until\nnothing at all is left on it - unless the page says otherwise.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
               "name": "stacked",
               "description": "Whether the bar is currently the drawer rather than the row.",
               "readonly": true
@@ -214,6 +290,11 @@
               "kind": "field",
               "name": "hover",
               "description": "Whether a mouse opens a panel by pointing at it rather than by clicking.\n\nOpt-in, and only ever an addition. Off while stacked, where the panels are in the flow\nand a pointer crossing the drawer on its way somewhere would open every one it passed."
+            },
+            {
+              "kind": "method",
+              "name": "fillToggle",
+              "description": "The bars inside the drawer's button.\n\nA hamburger that crosses into an X is three lines, and a button has two pseudo-elements -\nso one of the three has to be an element. It is written here rather than asked of the\npage: every toggle already out there is an empty `<button>`, and a look that only works\nfor markup written after it shipped is a look nobody sees. `aria-hidden`, because the\nbutton's label is its name and this is a picture of what the button does.\n\nNothing is drawn without the optional theme; the attribute is a hook for whoever wants\nto draw their own."
             },
             {
               "kind": "method",
@@ -234,6 +315,16 @@
                 }
               ],
               "description": "The items of one list: what its `<li>`s hold, and not what its panels do."
+            },
+            {
+              "kind": "method",
+              "name": "branchOf",
+              "parameters": [
+                {
+                  "name": "node"
+                }
+              ],
+              "description": "The row's own control whose branch this node sits in, however deep inside a panel it is.\nA pointer over a link three levels down is still pointing at the item on the bar that\nopened the panels above it."
             },
             {
               "kind": "method",
@@ -478,6 +569,14 @@
               "description": "The media query the bar exists in. Outside it, the drawer. Unset means a bar at every width, until the links stop fitting."
             },
             {
+              "name": "min-bar-items",
+              "type": {
+                "text": "number"
+              },
+              "description": "How many links have to fit for this to still be a bar. `2` says one link beside an overflow button is a drawer.",
+              "default": "1"
+            },
+            {
               "name": "open",
               "type": {
                 "text": "boolean"
@@ -516,6 +615,22 @@
           "name": "navbarMode",
           "declaration": {
             "name": "navbarMode",
+            "module": "src/elementals/navbar/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "probeState",
+          "declaration": {
+            "name": "probeState",
+            "module": "src/elementals/navbar/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "hoverIntent",
+          "declaration": {
+            "name": "hoverIntent",
             "module": "src/elementals/navbar/index.js"
           }
         },

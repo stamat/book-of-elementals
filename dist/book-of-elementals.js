@@ -1006,9 +1006,17 @@
     if (to === null || to < 0 || to >= length) return null;
     return to;
   }
-  function navbarMode(matches, overflowed, total) {
+  function navbarMode(matches, overflowed, total, minimum = 1) {
     if (!matches) return "stack";
-    return total > 0 && overflowed >= total ? "stack" : "bar";
+    const floor = Number.isFinite(minimum) && minimum >= 1 ? minimum : 1;
+    return total > 0 && total - overflowed < floor ? "stack" : "bar";
+  }
+  function probeState(hasPanel) {
+    return hasPanel ? { "aria-expanded": "false" } : null;
+  }
+  function hoverIntent(branch, trigger) {
+    if (!branch) return null;
+    return { except: branch, open: trigger || null };
   }
   var OVERFLOW_TOLERANCE = 0.99;
   var VERTICAL = ["ArrowUp", "ArrowDown", "Home", "End"];
@@ -1016,7 +1024,7 @@
   var navbarCount = 0;
   var NavbarElemental = class extends ElementBase {
     static get observedAttributes() {
-      return ["media", "open"];
+      return ["media", "min-bar-items", "open"];
     }
     /**
      * The row: the first list in the element. A nested `<navbar-elemental>` keeps its own.
@@ -1062,6 +1070,13 @@
       const row = this.row;
       if (!row) return [];
       return [row].concat(Array.from(row.querySelectorAll("ul, menu")));
+    }
+    /**
+     * How many links have to fit for this to still be a bar. One - a bar that keeps going until
+     * nothing at all is left on it - unless the page says otherwise.
+     */
+    get minBarItems() {
+      return Number.parseInt(this.getAttribute("min-bar-items"), 10);
     }
     /** Whether the bar is currently the drawer rather than the row. */
     get stacked() {
@@ -1115,6 +1130,7 @@
       this.addEventListener("pointerleave", this.onPointerLeave);
       document.addEventListener("click", this.onDocumentClick);
       this.watchMedia();
+      this.fillToggle();
       this.wire();
       this.observe();
       this.apply();
@@ -1131,6 +1147,8 @@
       if (this.observer) this.observer.disconnect();
       if (this.query) this.query.removeEventListener("change", this.onMediaChange);
       if (this.probe) this.probe.remove();
+      const bars = this.toggle && this.toggle.querySelector(":scope > [data-navbar-bars]");
+      if (bars) bars.remove();
       for (const copy of this.copies || []) copy.remove();
       for (const list of this.lists) list.removeAttribute("hidden");
       for (const item of this.items) item.removeAttribute("data-overflow");
@@ -1140,6 +1158,26 @@
       this.initialized = false;
     }
     // ---- generated markup ----
+    /**
+     * The bars inside the drawer's button.
+     *
+     * A hamburger that crosses into an X is three lines, and a button has two pseudo-elements -
+     * so one of the three has to be an element. It is written here rather than asked of the
+     * page: every toggle already out there is an empty `<button>`, and a look that only works
+     * for markup written after it shipped is a look nobody sees. `aria-hidden`, because the
+     * button's label is its name and this is a picture of what the button does.
+     *
+     * Nothing is drawn without the optional theme; the attribute is a hook for whoever wants
+     * to draw their own.
+     */
+    fillToggle() {
+      const toggle = this.toggle;
+      if (!toggle || toggle.querySelector(":scope > [data-navbar-bars]")) return;
+      const bars = document.createElement("span");
+      bars.setAttribute("data-navbar-bars", "");
+      bars.setAttribute("aria-hidden", "true");
+      toggle.prepend(bars);
+    }
     /**
      * Put a copy of every item inside the overflow panel, and hand back the copies in the
      * order their originals are in.
@@ -1173,6 +1211,10 @@
       probe.setAttribute("data-navbar-probe", "");
       probe.inert = true;
       probe.setAttribute("aria-hidden", "true");
+      for (const button of probe.querySelectorAll("li > button")) {
+        const state = probeState(!!button.parentElement.querySelector(":scope > ul, :scope > menu"));
+        for (const [name, value] of Object.entries(state || {})) button.setAttribute(name, value);
+      }
       for (const panel of probe.querySelectorAll("ul, menu")) panel.remove();
       for (const one of probe.querySelectorAll("[data-navbar-stack]")) one.remove();
       for (const one of probe.querySelectorAll("[id]")) one.removeAttribute("id");
@@ -1185,6 +1227,20 @@
     /** The items of one list: what its `<li>`s hold, and not what its panels do. */
     itemsOf(list) {
       return list ? Array.from(list.querySelectorAll(":scope > li > a, :scope > li > button")) : [];
+    }
+    /**
+     * The row's own control whose branch this node sits in, however deep inside a panel it is.
+     * A pointer over a link three levels down is still pointing at the item on the bar that
+     * opened the panels above it.
+     */
+    branchOf(node) {
+      const row = this.row;
+      if (!row || !node || !node.closest) return null;
+      let item = node.closest("li");
+      while (item && item.parentElement !== row) {
+        item = item.parentElement ? item.parentElement.closest("li") : null;
+      }
+      return item ? item.querySelector(":scope > a, :scope > button") : null;
     }
     /** The list a trigger opens, if it opens one. */
     panelOf(trigger) {
@@ -1276,7 +1332,7 @@
     apply() {
       const items = this.items;
       const overflowed = items.filter((item) => item.hasAttribute("data-overflow")).length;
-      const mode = navbarMode(!this.query || this.query.matches, overflowed, items.length);
+      const mode = navbarMode(!this.query || this.query.matches, overflowed, items.length, this.minBarItems);
       const changed = this.dataset.mode !== mode;
       this.dataset.mode = mode;
       this.toggleAttribute("data-overflowing", mode === "bar" && overflowed > 0 && overflowed < items.length);
@@ -1351,6 +1407,10 @@
       if (!this.initialized || previous === current) return;
       if (name === "media") {
         this.watchMedia();
+        this.apply();
+        return;
+      }
+      if (name === "min-bar-items") {
         this.apply();
         return;
       }
@@ -1440,9 +1500,10 @@
       if (!this.hover || e.pointerType !== "mouse") return;
       clearTimeout(this.hoverTimer);
       const control = this.controlFor(e);
-      const trigger = control && this.panelOf(control) ? control : null;
-      this.closeBar(trigger);
-      if (trigger) this.setPanel(trigger, true);
+      const intent = hoverIntent(this.branchOf(e.target), control && this.panelOf(control) ? control : null);
+      if (!intent) return;
+      this.closeBar(intent.except);
+      if (intent.open) this.setPanel(intent.open, true);
     }
     /**
      * The pointer has left the whole bar, so the panels close - after a beat, because the gap

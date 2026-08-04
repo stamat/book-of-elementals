@@ -12,18 +12,28 @@ navbar-elemental {
   --navbar-elemental-gap: 0.15rem;
   --navbar-elemental-caret-size: 0.75em;
   --navbar-elemental-hamburger-size: 1.25em;
+  --navbar-elemental-bar-thickness: 2px;
+  --navbar-elemental-bar-gap: 0.35em;
 
   // A panel has to be opaque or the page reads straight through it. `Canvas` is the page's own
   // background in both themes and in forced-colors, which no fixed color manages in even one
   // of them.
   --navbar-elemental-surface: Canvas;
-  --navbar-elemental-hover: color-mix(in srgb, currentcolor 10%, transparent);
+  --navbar-elemental-hover: color-mix(in srgb, currentcolor 4%, transparent);
   --navbar-elemental-border: color-mix(in srgb, currentcolor 20%, transparent);
   --navbar-elemental-shadow: 0 4px 20px rgb(0 0 0 / 15%);
 
   li > a,
   li > button {
     display: block;
+
+    // `width: 100%` is what makes a `<button>` fill its row in the drawer - a block-level
+    // button is still shrink-to-fit without it. Which means this look sizes a box by
+    // percentage and then pads it, and on a page with no global reset that is the item's own
+    // width *plus* a rem of padding: every row overhangs the one after it, the focus ring
+    // lands on the next label, and the copy being measured overhangs too, so the row is
+    // measured wider than it is. Stated here rather than assumed of the page.
+    box-sizing: border-box;
     width: 100%;
     padding: 0.35rem 0.5rem;
     font: inherit;
@@ -116,12 +126,59 @@ navbar-elemental[data-mode="bar"] {
 // ---- The drawer ----
 navbar-elemental[data-mode="stack"] {
   // One surface, so the nested lists keep only their indent and the row carries the frame.
+  // The drawer hangs off the bar rather than floating under it: no top edge and no top
+  // corners, because a seam and two curves between a bar and the panel it opened is a gap
+  // that is not there. The other three sides keep theirs.
+  // It scrolls itself once it is taller than what is left of the screen. The percentage is
+  // this box's containing block - `<navbar-elemental>`, so the bar's own height - which makes
+  // the ceiling "the viewport, less the header". True while the header is at the top of the
+  // screen, which is where a header that opens a drawer is; scrolled halfway down a page, the
+  // drawer is that much shorter than it could be.
   [data-navbar-rail] > :is(ul, menu):not([data-navbar-probe]) {
+    max-block-size: calc(100dvh - 100%);
+    overflow-y: auto;
+
+    // Reaching the end of the drawer stops there rather than handing the rest of the gesture
+    // to the page under it.
+    overscroll-behavior: contain;
     padding: var(--navbar-elemental-inset);
     background: var(--navbar-elemental-surface);
     border: 1px solid var(--navbar-elemental-border);
-    border-radius: var(--navbar-elemental-radius);
+    border-block-start: 0;
+    border-end-end-radius: var(--navbar-elemental-radius);
+    border-end-start-radius: var(--navbar-elemental-radius);
     box-shadow: var(--navbar-elemental-shadow);
+
+    // Nothing of this panel paints above its own top edge, and the shadow is why: a drop
+    // shadow spreads in every direction, so an unclipped one lands *on the bar* - a smear
+    // along the header that gets darker the moment the drawer opens. The other three sides
+    // are left open, which is what the negative insets are for.
+    // It is also the animation. Opening walks the bottom inset from 100% to 0, so the drawer
+    // is uncovered from under the bar rather than travelling: a panel that moved would spend
+    // the whole animation painted over the header, and it cannot be clipped by anything else
+    // - its containing block is `<navbar-elemental>` itself, so the rail's `overflow` is not
+    // in its chain.
+    // `hidden` is what the element writes, so the closed state is what carries the animation,
+    // and `content-visibility` is discrete - `allow-discrete` is what holds it off until the
+    // reveal has finished instead of emptying the panel on the first frame.
+    clip-path: inset(0 -100vmax -100vmax);
+    transition: clip-path 200ms ease, opacity 200ms ease;
+
+    &[hidden] {
+      // The frame, again. The element takes it off a hidden drawer so that no theme leaves an
+      // empty framed strip under the bar - and a panel that loses its surface on the first
+      // frame of a close is a list of links fading over the page. It is given back here, for
+      // the length of the animation, and what keeps the strip from coming back is the
+      // `opacity: 0` this state ends at.
+      padding: var(--navbar-elemental-inset);
+      background: var(--navbar-elemental-surface);
+      border: 1px solid var(--navbar-elemental-border);
+      border-block-start: 0;
+      box-shadow: var(--navbar-elemental-shadow);
+      clip-path: inset(0 -100vmax 100%);
+      opacity: 0;
+      transition: clip-path 200ms ease, opacity 200ms ease, content-visibility 200ms allow-discrete;
+    }
   }
 
   li > :is(ul, menu) {
@@ -172,11 +229,8 @@ navbar-elemental[data-mode="stack"] {
   }
 }
 
-// The drawer's own button. An
-// [Octicon three-bars](https://primer.style/foundations/icons/three-bars-16/), masked rather
-// than painted for the same reason the carets are: it takes the button's colour and follows a
-// theme switch. Leave the button's text out and it is the icon alone - give it an `aria-label`
-// then, since the name cannot come from a label that is not there.
+// The drawer's own button. Leave its text out and it is the icon alone - give it an
+// `aria-label` then, since the name cannot come from a label that is not there.
 navbar-elemental [data-navbar-toggle] {
   display: inline-flex;
   gap: 0.4rem;
@@ -192,17 +246,116 @@ navbar-elemental [data-navbar-toggle] {
   &:hover {
     background: var(--navbar-elemental-hover);
   }
+}
+
+// A toggle with nothing but the icon in it is a square, and `:only-child` is what says it is
+// one: with a label beside the bars this is a pill and stays a pill. Without this it is the
+// icon's own box plus padding, and the icon is two pixels tall - a hover backdrop the shape
+// of a hyphen, and a tap target to match.
+// The side is a row's height, so the backdrop under the hamburger is the backdrop under a
+// link: one line, plus the same 0.35rem above and below that every item in the list gets.
+// `1lh` is that line exactly; the `em` above it is the same sum for a browser without the
+// unit, which is right whenever the page's line-height is the usual 1.5 and near enough
+// otherwise. Both are stated because a declaration with an unknown unit is dropped whole.
+navbar-elemental [data-navbar-toggle]:has(> [data-navbar-bars]:only-child) {
+  justify-content: center;
+  width: calc(1.5em + 0.7rem);
+  width: calc(1lh + 0.7rem);
+  height: calc(1.5em + 0.7rem);
+  height: calc(1lh + 0.7rem);
+  padding: 0;
+}
+
+// The hamburger, and the X it becomes. Three painted bars rather than one icon, because the
+// three have to move independently: the outer two meet in the middle, the middle one goes,
+// and then the whole icon turns on the spot. The element writes the middle bar into the
+// button - a button has two pseudo-elements, and this needs a third box.
+// Two beats, and each direction gets its own order. Opening: the bars converge while the
+// middle one loses its colour, and only then does the icon spin and the two cross. Closing
+// undoes that - it unwinds first and separates after - rather than running one sequence
+// backwards through a shape that is neither a hamburger nor an X.
+// The turn is on the box that holds all three, so the axis is the icon's own centre. Which
+// is also why the bars travel to the centre first: a stack that spun before it converged
+// would sweep its ends through the corners of the button.
+navbar-elemental [data-navbar-bars] {
+  position: relative;
+  flex: none;
+  width: var(--navbar-elemental-hamburger-size);
+  height: var(--navbar-elemental-bar-thickness);
+  background: currentcolor;
+  border-radius: var(--navbar-elemental-bar-thickness);
+
+  // The middle bar leaves by losing its colour and not by fading: `opacity` on this box takes
+  // the two pseudo-elements inside it with it, and they are the other two bars.
+  // A closing transition, this one: a transition is read off the state being moved *to*, so
+  // these are the times for going back to a hamburger. The spin unwinds at once and the
+  // middle bar comes back at the end, once there is a line for it to come back to.
+  transition: background-color 150ms ease 150ms, rotate 150ms ease;
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    height: var(--navbar-elemental-bar-thickness);
+    background: currentcolor;
+    border-radius: inherit;
+
+    // Closing again: uncross on the spot, then separate.
+    transition: translate 150ms ease 150ms, rotate 150ms ease;
+  }
 
   &::before {
-    content: "";
-    flex: none;
-    width: var(--navbar-elemental-hamburger-size);
-    height: var(--navbar-elemental-hamburger-size);
-    background: currentcolor;
-    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M1 2.75A.75.75 0 0 1 1.75 2h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 2.75Zm0 5A.75.75 0 0 1 1.75 7h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 7.75ZM1.75 12h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5Z'/%3E%3C/svg%3E") center / contain no-repeat;
+    inset-block-start: calc(var(--navbar-elemental-bar-gap) * -1);
+  }
 
-    @media (forced-colors: active) {
+  &::after {
+    inset-block-start: var(--navbar-elemental-bar-gap);
+  }
+
+  // A painted background is what forced-colors mode overrides, and these bars are the whole
+  // icon - without this the button is empty in that mode.
+  @media (forced-colors: active) {
+    &,
+    &::before,
+    &::after {
       background: CanvasText;
     }
+  }
+}
+
+navbar-elemental [aria-expanded="true"] > [data-navbar-bars] {
+  background: transparent;
+
+  // The spin, and it waits for the other two to arrive. Half of the quarter turn an X needs:
+  // the other half is the bar that crosses below.
+  rotate: 45deg;
+  transition: background-color 150ms ease, rotate 150ms ease 150ms;
+
+  &::before,
+  &::after {
+    // Both onto the centre line, which is where the middle bar was.
+    translate: 0 var(--navbar-elemental-bar-gap);
+    transition: translate 150ms ease, rotate 150ms ease 150ms;
+  }
+
+  // A right angle to its neighbour, turned with it: 45 degrees from the box's spin plus 90 is
+  // the second stroke of the X, and the two arrive as one movement.
+  &::before {
+    rotate: 90deg;
+  }
+
+  &::after {
+    translate: 0 calc(var(--navbar-elemental-bar-gap) * -1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  navbar-elemental [data-navbar-bars],
+  navbar-elemental [data-navbar-bars]::before,
+  navbar-elemental [data-navbar-bars]::after,
+  navbar-elemental[data-mode="stack"] [data-navbar-rail] > :is(ul, menu):not([data-navbar-probe]),
+  navbar-elemental[data-mode="stack"] [data-navbar-rail] > :is(ul, menu):not([data-navbar-probe])[hidden] {
+    transition: none;
   }
 }

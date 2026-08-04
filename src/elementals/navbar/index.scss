@@ -55,7 +55,20 @@ navbar-elemental {
 
   // It cannot go on the copy itself: the observer is rooted there, and clipping its root stops
   // Chrome re-measuring when the bar grows - the links fold away and never come back.
-  overflow: hidden;
+
+  // `clip` and not `hidden`, and the margin is the point of it. `hidden` makes a scroll
+  // container, and a scroll container cuts the focus ring off every link in the row: an
+  // outline is painted outside an item's box, these items are exactly as tall as this one, and
+  // the first of them starts exactly at its left edge - so the ring loses its top, its bottom
+  // and its left. `clip` takes an `overflow-clip-margin`, and that is the ring's room.
+  // Both axes, because Chrome honours the margin only when both are clipped: `clip` sideways
+  // with `visible` down leaves the margin ignored and the ring still cut. Clipping downward
+  // costs nothing, since the copy is only ever too wide.
+  // The half rem this lets through is half a rem of a `visibility: hidden` copy, which paints
+  // nothing - against the hundreds of pixels it would otherwise hand the page as scrollable
+  // width.
+  overflow: clip;
+  overflow-clip-margin: 0.5rem;
 }
 
 [data-navbar-rail] > * {

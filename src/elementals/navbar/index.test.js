@@ -1,4 +1,4 @@
-import { navbarMode, stepIndex } from './index.js';
+import { hoverIntent, navbarMode, probeState, stepIndex } from './index.js';
 
 test('arrows step one way or the other, whichever axis they are on', () => {
   expect(stepIndex(0, 'ArrowRight', 4)).toBe(1);
@@ -49,4 +49,46 @@ test('an empty bar is not a drawer', () => {
   // Nothing overflowed out of nothing: a navbar with no items at all has no reason to grow a
   // hamburger.
   expect(navbarMode(true, 0, 0)).toBe('bar');
+});
+
+test('a bar asked to keep two links is a drawer once only one of them fits', () => {
+  // One link and an overflow button is a worse drawer than the drawer.
+  expect(navbarMode(true, 3, 4, 2)).toBe('stack');
+  expect(navbarMode(true, 2, 4, 2)).toBe('bar');
+});
+
+test('a threshold taller than the bar has links makes it a drawer at every width', () => {
+  expect(navbarMode(true, 0, 2, 3)).toBe('stack');
+});
+
+test('a nonsense threshold is one, which is what the element has always done', () => {
+  expect(navbarMode(true, 3, 4, 0)).toBe('bar');
+  expect(navbarMode(true, 4, 4, Number.NaN)).toBe('stack');
+});
+
+test('a copy of a trigger is measured as a trigger, caret and all', () => {
+  // The bug this exists for: the copy is built with its panels removed, so without this its
+  // buttons are not triggers, the theme draws no caret on them, and every one measures a
+  // caret narrower than the button it stands for.
+  expect(probeState(true)).toEqual({ 'aria-expanded': 'false' });
+});
+
+test('a copy of a plain link carries nothing, because nothing is drawn on one', () => {
+  expect(probeState(false)).toBeNull();
+});
+
+test('pointing at a trigger opens it, and closes every branch but its own', () => {
+  expect(hoverIntent('products', 'products')).toEqual({ except: 'products', open: 'products' });
+});
+
+test('the pointer moving into an open panel is not an instruction to close it', () => {
+  // The whole of the hover bug: a link inside a panel opens nothing, and closing "everything
+  // with no panel under the cursor" is closing the panel the cursor is in.
+  expect(hoverIntent('more', null)).toEqual({ except: 'more', open: null });
+});
+
+test('the bar around the items closes nothing, because the gap is a place to pass through', () => {
+  // Between a button and the panel under it lies the bar's own padding. Closing there is
+  // closing every panel the moment anyone reaches for one.
+  expect(hoverIntent(null, null)).toBeNull();
 });

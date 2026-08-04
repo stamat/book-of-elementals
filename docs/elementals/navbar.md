@@ -58,10 +58,10 @@ Edit the sample and the preview above it follows as you type. Narrow it with the
 buttons to watch the links move behind **More** one at a time, and then the whole row
 become a drawer — the element is measuring, not guessing, so it answers a real viewport:
 
-<!-- demo navbar viewport-widths="375 768 1024" -->
+<!-- demo navbar viewport-widths="375 768 1024" style="--code-preview-height:22rem" -->
 
 ```html
-<navbar-elemental media="(min-width: 40rem)" hover>
+<navbar-elemental class="bar" media="(min-width: 40rem)" hover>
   <div class="rail">
     <ul>
       <li><a href="/overview">Overview</a></li>
@@ -84,6 +84,24 @@ become a drawer — the element is measuring, not guessing, so it answers a real
 
   <button data-navbar-toggle aria-label="Navigation"></button>
 </navbar-elemental>
+
+<main>
+  <p>A page under the header, so an open panel has something to hang over.</p>
+</main>
+```
+
+```css demo
+body { margin: 0; padding: 0; font: 1rem/1.5 system-ui, sans-serif; }
+
+/* the preview is as tall as the sample, so the page under the header is what gives an open
+   panel — and the drawer — somewhere to hang */
+main { padding: 1rem; min-block-size: 11rem; }
+
+/* The element lays out the row, its panels and its drawer. The bar around them is the page's
+   — and on this one it is two rules. Without them the element is a block and its children
+   stack: the row on one line and the drawer's button under it. */
+.bar { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.9rem; }
+.rail { flex: 1 1 0; }
 ```
 
 ```javascript
@@ -112,6 +130,7 @@ against the list's parent would be pointing at the wrong element.
 | Attribute | Type    | Default | Description                                                                     |
 | --------- | ------- | ------- | ------------------------------------------------------------------------------- |
 | `media`   | string  | none    | The media query the bar exists in. Outside it, the drawer. Unset means a bar at every width — until the links stop fitting. |
+| `min-bar-items` | number | `1` | How many links have to fit for this to still be a bar. [`2`](#how-few-links-is-not-a-bar) says one link beside an overflow button is a drawer instead. |
 | `open`    | boolean | `false` | Whether the drawer is showing. Reflected, so `[open]` is a styling hook.          |
 | `hover`   | boolean | `false` | A mouse also opens a panel by [pointing at it](#opening-on-hover). Never on touch, never stacked. |
 
@@ -180,10 +199,17 @@ On the markup:
 | an item that did not fit   | `data-overflow`      | Present                                |
 | the row's own box          | `data-navbar-rail`   | Present                                |
 | the copy being measured    | `data-navbar-probe`  | Present                                |
+| a `<span>` put inside the toggle | `data-navbar-bars` | Present, `aria-hidden` — the middle bar of the hamburger |
 
 No `role`, anywhere. That is the pattern, not an omission — see
 [below](#why-not-a-menubar). A closed panel carries `hidden`, and lists without an `id`
 are given one.
+
+The `<span>` is the one piece of markup the element adds to what you wrote, and it is there
+because a hamburger that crosses into an X is three lines while a button has two
+pseudo-elements. It is first in the button, so a toggle with a label reads icon-then-label;
+it is `aria-hidden`, because the button's own name already says what the button does; and
+nothing is drawn on it without [the optional theme](#the-look).
 
 ### Keyboard
 
@@ -290,7 +316,8 @@ hidden with `until-found`, so find-in-page reaches a link inside a closed drawer
 and scrolls to it. A panel on the bar is hidden with a plain `hidden`, because
 `until-found` hides a box's *contents* and keeps the *box* — and a box with a border, a
 background and a shadow on it and nothing inside is a small empty smudge parked under the
-button. The drawer can have both because a drawer has no frame to leave behind.
+button. The drawer can have both because the element takes the frame off a hidden drawer,
+whatever the theme put there, so there is nothing left to leave behind.
 
 Crossing between the modes closes whatever was open, because what was open belonged to the
 other widget.
@@ -402,9 +429,28 @@ business, which is what `data-mode` is for.
 ```
 
 The optional theme adds a look: panels, hover states, a caret that points down on the bar
-and turns like a disclosure's in the drawer, and a hamburger on the toggle. It is built out
-of `currentcolor` and `Canvas`, so it follows a page's palette and its theme switch without
-configuration.
+and turns like a disclosure's in the drawer, and a hamburger on the toggle that crosses into
+an X while the drawer is open. It is built out of `currentcolor` and `Canvas`, so it follows
+a page's palette and its theme switch without configuration.
+
+The drawer it draws hangs off the bar rather than floating under it — no top edge, no top
+corners, and a slide-and-fade on the way in and out. It scrolls itself once it is taller
+than what is left of the screen (`max-block-size: calc(100dvh - 100%)`, the percentage being
+the bar's own height), so a long navigation on a phone ends in a scrollbar rather than
+somewhere below the fold. That ceiling is right while the header is at the top of the
+viewport, which is where a header that opens a drawer is; halfway down a scrolled page the
+drawer is shorter than it needed to be.
+
+Two things a page around it may want back. A toggle holding nothing but the icon is a square
+sized off the icon; one with a label beside it stays a pill. And if your bar draws its own
+bottom border, the drawer covers it — the drawer is positioned against the element's padding
+box, which is inside that border, so hand the pixel back:
+
+```css
+navbar-elemental[data-mode="stack"] .rail > ul:not([data-navbar-probe]) {
+  margin-block-start: 1px;
+}
+```
 
 ```scss
 @use "book-of-elementals/navbar/theme.scss";
@@ -417,6 +463,8 @@ configuration.
 | `--navbar-elemental-gap`            | `0.15rem`             |
 | `--navbar-elemental-caret-size`     | `0.75em`              |
 | `--navbar-elemental-hamburger-size` | `1.25em`              |
+| `--navbar-elemental-bar-thickness`  | `2px`                 |
+| `--navbar-elemental-bar-gap`        | `0.35em`              |
 | `--navbar-elemental-surface`        | `Canvas`              |
 | `--navbar-elemental-hover`          | `currentcolor` at 10% |
 | `--navbar-elemental-border`         | `currentcolor` at 20% |
@@ -426,10 +474,10 @@ configuration.
 quite `Canvas` wants its panels to match the page rather than the browser. Turn it in the
 **Options** tab and copy the rule out of the bottom of the panel:
 
-<!-- demo navbar tab="options" -->
+<!-- demo navbar tab="options" viewport-widths="375 768 1024" -->
 
 ```html
-<navbar-elemental>
+<navbar-elemental class="bar">
   <div class="rail">
     <ul>
       <li><a href="/overview">Overview</a></li>
@@ -443,7 +491,24 @@ quite `Canvas` wants its panels to match the page rather than the browser. Turn 
       <li><a href="/pricing">Pricing</a></li>
     </ul>
   </div>
+
+  <button data-navbar-toggle aria-label="Navigation"></button>
 </navbar-elemental>
+
+<main>
+  <p>Turn the knobs above and the header answers.</p>
+</main>
+```
+
+```css demo
+body { margin: 0; padding: 0; font: 1rem/1.5 system-ui, sans-serif; }
+
+/* the page under the header, which is what an open panel hangs over */
+main { padding: 1rem; min-block-size: 11rem; }
+
+/* the bar is the page's two rules, as everywhere else on this page */
+.bar { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.9rem; }
+.rail { flex: 1 1 0; }
 ```
 
 ## What is deliberately not here

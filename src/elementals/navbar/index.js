@@ -28,19 +28,63 @@ export function stepIndex(current, key, length) {
  * Which of the two widgets the bar is right now.
  *
  * Two inputs, because there are two ways to run out of room and only one of them is a
- * width. `media` not matching is the author saying "this is a phone"; every item having
- * overflowed is the bar saying "there is nothing left on me" - at which point the overflow
+ * width. `media` not matching is the author saying "this is a phone"; too few items still
+ * fitting is the bar saying "there is nothing left on me" - at which point the overflow
  * button is not an overflow any more, it is the whole navigation, and a drawer is the
  * honest name for that.
+ *
+ * `minimum` is where "too few" is. One is the default and the old behaviour: a bar stops
+ * being one when nothing at all is left on it. Two says a single link beside an overflow
+ * button is not a navigation bar either.
  *
  * @param {boolean} matches - Whether the `media` query matches, or there is no query.
  * @param {number} overflowed - How many items did not fit.
  * @param {number} total - How many items there are.
+ * @param {number} [minimum=1] - How many have to fit for this to still be a bar.
  * @returns {"bar"|"stack"}
  */
-export function navbarMode(matches, overflowed, total) {
+export function navbarMode(matches, overflowed, total, minimum = 1) {
   if (!matches) return 'stack';
-  return total > 0 && overflowed >= total ? 'stack' : 'bar';
+  const floor = Number.isFinite(minimum) && minimum >= 1 ? minimum : 1;
+  return total > 0 && total - overflowed < floor ? 'stack' : 'bar';
+}
+
+/**
+ * The state a copy of a control has to carry to be measured as its original.
+ *
+ * `wire()` writes `aria-expanded` on every trigger, and a theme is free to draw on that -
+ * the shipped one puts a caret after it. The copy is built before any of that and with its
+ * panels taken out, so nothing marks its triggers as triggers: each one measures a caret
+ * narrower than the button it stands for. The row is then told more fits than does, and the
+ * items past the edge are not folded into the overflow - they are clipped by the rail,
+ * which is how the overflow button itself ends up half under the search field.
+ *
+ * @param {boolean} hasPanel - Whether the original opens a panel.
+ * @returns {{ 'aria-expanded': string }|null} Attributes for the copy, or null for none.
+ */
+export function probeState(hasPanel) {
+  return hasPanel ? { 'aria-expanded': 'false' } : null;
+}
+
+/**
+ * What a pointer arriving somewhere means for the panels that are open.
+ *
+ * `branch` is the row's own item the pointer is inside, however deep - not the control under
+ * it. A link inside an open panel opens nothing, so reading the control alone says "close
+ * everything", which closes the panel the pointer just walked into.
+ *
+ * Nothing of the row's under the pointer is not an instruction either: between a trigger and
+ * the panel hanging under it lies the bar's own padding, and closing there would shut every
+ * panel the moment anyone reached for one. Leaving the bar is what closes them, and
+ * `onPointerLeave` owns that.
+ *
+ * @param {*} branch - The row item the pointer is in, or null.
+ * @param {*} trigger - The control under the pointer, if it opens a panel.
+ * @returns {{ except: *, open: * }|null} What to keep open and what to open, or null for "leave it".
+ */
+export function hoverIntent(branch, trigger) {
+  if (!branch) return null;
+  return { except: branch, open: trigger || null };
 }
 
 // An item is overflowing when it is not *entirely* inside the row. Not `< 1`: a fully
@@ -88,14 +132,15 @@ let navbarCount = 0;
  * means late-arriving webfonts are free: they change the copy's geometry, the observer says
  * so, and the row settles again. A cached set of widths would simply be wrong from then on.
  *
- * Light DOM, no shadow root. Two things are generated - the copy being measured, and the
- * copies of the items inside the overflow panel - and nothing the page wrote is moved or
- * wrapped.
+ * Light DOM, no shadow root. Three things are generated - the copy being measured, the copies
+ * of the items inside the overflow panel, and the bars inside the drawer's button - and
+ * nothing the page wrote is moved or wrapped.
  *
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/
  *
  * @tag navbar-elemental
  * @attr {string} media - The media query the bar exists in. Outside it, the drawer. Unset means a bar at every width, until the links stop fitting.
+ * @attr {number} [min-bar-items=1] - How many links have to fit for this to still be a bar. `2` says one link beside an overflow button is a drawer.
  * @attr {boolean} [open=false] - Whether the drawer is showing. Reflected, so `[open]` is a styling hook.
  * @attr {boolean} [hover=false] - A mouse also opens a panel by pointing at it. Never on touch, never stacked.
  *
@@ -103,7 +148,9 @@ let navbarCount = 0;
  * @cssprop {<length>} [--navbar-elemental-inset=0.35rem] - Padding inside a panel, and around each item.
  * @cssprop {<length>} [--navbar-elemental-gap=0.15rem] - Between the items of the row.
  * @cssprop {<length>} [--navbar-elemental-caret-size=0.75em] - The caret on a trigger that opens a panel.
- * @cssprop {<length>} [--navbar-elemental-hamburger-size=1.25em] - The generated hamburger icon.
+ * @cssprop {<length>} [--navbar-elemental-hamburger-size=1.25em] - Width of the generated hamburger icon.
+ * @cssprop {<length>} [--navbar-elemental-bar-thickness=2px] - How thick each of its three bars is.
+ * @cssprop {<length>} [--navbar-elemental-bar-gap=0.35em] - How far the outer two sit from the middle one.
  * @cssprop {<color>} [--navbar-elemental-surface=Canvas] - What a floating panel is painted on. The page's own background, so re-point it on a card.
  * @cssprop {<color>} [--navbar-elemental-hover=color-mix(in srgb, currentcolor 10%, transparent)] - Item background under the pointer, and while focused.
  * @cssprop {<color>} [--navbar-elemental-border=color-mix(in srgb, currentcolor 20%, transparent)] - The rim around a floating panel.
@@ -115,7 +162,7 @@ let navbarCount = 0;
  */
 export class NavbarElemental extends ElementBase {
   static get observedAttributes() {
-    return ['media', 'open'];
+    return ['media', 'min-bar-items', 'open'];
   }
 
   /**
@@ -168,6 +215,14 @@ export class NavbarElemental extends ElementBase {
     const row = this.row;
     if (!row) return [];
     return [row].concat(Array.from(row.querySelectorAll('ul, menu')));
+  }
+
+  /**
+   * How many links have to fit for this to still be a bar. One - a bar that keeps going until
+   * nothing at all is left on it - unless the page says otherwise.
+   */
+  get minBarItems() {
+    return Number.parseInt(this.getAttribute('min-bar-items'), 10);
   }
 
   /** Whether the bar is currently the drawer rather than the row. */
@@ -248,6 +303,7 @@ export class NavbarElemental extends ElementBase {
     document.addEventListener('click', this.onDocumentClick);
 
     this.watchMedia();
+    this.fillToggle();
     this.wire();
     this.observe();
     this.apply();
@@ -269,6 +325,8 @@ export class NavbarElemental extends ElementBase {
     // an element that is no longer here has nothing to open it again, and a copy of a row
     // nobody is measuring is a second copy of the navigation in the page.
     if (this.probe) this.probe.remove();
+    const bars = this.toggle && this.toggle.querySelector(':scope > [data-navbar-bars]');
+    if (bars) bars.remove();
     for (const copy of this.copies || []) copy.remove();
     for (const list of this.lists) list.removeAttribute('hidden');
     for (const item of this.items) item.removeAttribute('data-overflow');
@@ -280,6 +338,27 @@ export class NavbarElemental extends ElementBase {
   }
 
   // ---- generated markup ----
+
+  /**
+   * The bars inside the drawer's button.
+   *
+   * A hamburger that crosses into an X is three lines, and a button has two pseudo-elements -
+   * so one of the three has to be an element. It is written here rather than asked of the
+   * page: every toggle already out there is an empty `<button>`, and a look that only works
+   * for markup written after it shipped is a look nobody sees. `aria-hidden`, because the
+   * button's label is its name and this is a picture of what the button does.
+   *
+   * Nothing is drawn without the optional theme; the attribute is a hook for whoever wants
+   * to draw their own.
+   */
+  fillToggle() {
+    const toggle = this.toggle;
+    if (!toggle || toggle.querySelector(':scope > [data-navbar-bars]')) return;
+    const bars = document.createElement('span');
+    bars.setAttribute('data-navbar-bars', '');
+    bars.setAttribute('aria-hidden', 'true');
+    toggle.prepend(bars);
+  }
 
   /**
    * Put a copy of every item inside the overflow panel, and hand back the copies in the
@@ -315,6 +394,11 @@ export class NavbarElemental extends ElementBase {
     probe.setAttribute('data-navbar-probe', '');
     probe.inert = true;
     probe.setAttribute('aria-hidden', 'true');
+    // Before the panels come out, while there is still something to ask about them.
+    for (const button of probe.querySelectorAll('li > button')) {
+      const state = probeState(!!button.parentElement.querySelector(':scope > ul, :scope > menu'));
+      for (const [name, value] of Object.entries(state || {})) button.setAttribute(name, value);
+    }
     for (const panel of probe.querySelectorAll('ul, menu')) panel.remove();
     // Items that only exist in the drawer are not on the bar, so they must not reserve any of
     // the bar's room either.
@@ -331,6 +415,21 @@ export class NavbarElemental extends ElementBase {
   /** The items of one list: what its `<li>`s hold, and not what its panels do. */
   itemsOf(list) {
     return list ? Array.from(list.querySelectorAll(':scope > li > a, :scope > li > button')) : [];
+  }
+
+  /**
+   * The row's own control whose branch this node sits in, however deep inside a panel it is.
+   * A pointer over a link three levels down is still pointing at the item on the bar that
+   * opened the panels above it.
+   */
+  branchOf(node) {
+    const row = this.row;
+    if (!row || !node || !node.closest) return null;
+    let item = node.closest('li');
+    while (item && item.parentElement !== row) {
+      item = item.parentElement ? item.parentElement.closest('li') : null;
+    }
+    return item ? item.querySelector(':scope > a, :scope > button') : null;
   }
 
   /** The list a trigger opens, if it opens one. */
@@ -439,7 +538,7 @@ export class NavbarElemental extends ElementBase {
   apply() {
     const items = this.items;
     const overflowed = items.filter((item) => item.hasAttribute('data-overflow')).length;
-    const mode = navbarMode(!this.query || this.query.matches, overflowed, items.length);
+    const mode = navbarMode(!this.query || this.query.matches, overflowed, items.length, this.minBarItems);
     const changed = this.dataset.mode !== mode;
 
     this.dataset.mode = mode;
@@ -540,6 +639,10 @@ export class NavbarElemental extends ElementBase {
     if (!this.initialized || previous === current) return;
     if (name === 'media') {
       this.watchMedia();
+      this.apply();
+      return;
+    }
+    if (name === 'min-bar-items') {
       this.apply();
       return;
     }
@@ -655,11 +758,13 @@ export class NavbarElemental extends ElementBase {
     clearTimeout(this.hoverTimer);
 
     const control = this.controlFor(e);
-    const trigger = control && this.panelOf(control) ? control : null;
-    this.closeBar(trigger);
+    const intent = hoverIntent(this.branchOf(e.target), control && this.panelOf(control) ? control : null);
+    if (!intent) return;
+
+    this.closeBar(intent.except);
     // Focus does not follow the pointer: the reader's caret stays where they put it, and the
     // arrow keys carry on from there.
-    if (trigger) this.setPanel(trigger, true);
+    if (intent.open) this.setPanel(intent.open, true);
   }
 
   /**

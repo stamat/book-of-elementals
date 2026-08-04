@@ -15,7 +15,108 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Added
+
+- **`<navbar-elemental>` takes `min-bar-items`.** A bar keeps being a bar until nothing at
+  all fits on it, and the stop before that is a header showing one link beside a **More**
+  button — a drawer wearing a bar's clothes. `min-bar-items="2"` says two links have to fit
+  or this is a drawer. The default is `1`, which is what the element has always done, so
+  nothing changes for markup that does not ask.
+
+### Changed
+
+- **The hamburger turns into an X while the drawer is open.** It used to be one masked
+  Octicon that did not move. Two beats: the three bars converge onto one line as the middle
+  one loses its colour, and then the icon spins about its own centre while the remaining two
+  cross. Closing unwinds it in the other order — spin back, then separate — rather than
+  running one sequence backwards through a shape that is neither.
+
+  **DOM:** the element now writes `<span data-navbar-bars aria-hidden="true">` as the first
+  child of `[data-navbar-toggle]`, and removes it again when the element leaves the
+  document. Three bars need three boxes and a button brings two pseudo-elements, so the
+  middle one has to be an element. A toggle you have styled yourself is unaffected unless it
+  styles `:first-child`; the span carries no look of its own without the optional theme.
+
+  **CSS:** `--navbar-elemental-bar-thickness` (`2px`) and `--navbar-elemental-bar-gap`
+  (`0.35em`) are new, and `--navbar-elemental-hamburger-size` is now the icon's width rather
+  than a square. The animation is off under `prefers-reduced-motion`.
+
+  A toggle holding nothing but the icon is also a square now
+  (`:has(> [data-navbar-bars]:only-child)`), where before it was the icon's own box plus
+  padding — and the icon is two pixels tall, so the hover backdrop was the shape of a hyphen
+  and the tap target with it. The side is a row's height, `calc(1lh + 0.7rem)`, so the
+  backdrop under the hamburger is the backdrop under a link; browsers without the `lh` unit
+  get the same sum in `em`. A toggle with a label beside the icon is unchanged.
+
+- **One hover backdrop, everywhere.** `--navbar-elemental-hover` was `currentcolor` at 10%,
+  which is a shade heavier than the icon buttons a header usually has beside the navigation —
+  so a page that styled its own furniture ended up with two tints in one bar. It is 4% now.
+  A page that had re-pointed the property is unaffected; one that had matched the old value
+  by hand is the case to look at.
+
+- **The drawer hangs off the bar instead of floating under it.** In the optional theme only:
+  no top border and no top corners, so there is no seam between a bar and the panel it
+  opened, and `max-block-size: calc(100dvh - 100%)` with `overflow-y: auto`, so a navigation
+  taller than the screen ends in a scrollbar rather than below the fold. The ceiling is right
+  while the header is at the top of the viewport, which is where a header that opens a drawer
+  is — scrolled halfway down a page, the drawer is shorter than it needed to be.
+
+  **CSS:** the drawer is clipped along its own top edge (`clip-path: inset(0 -100vmax
+  -100vmax)`). A drop shadow spreads in every direction, and this one was landing *on the
+  bar* — a smear along the header that appeared the moment the drawer opened. The same
+  property is the open and close animation: the bottom inset walks from `100%` to `0`, so the
+  drawer is uncovered from under the bar rather than travelling over it. If you were painting
+  something out of the drawer's own box on purpose, that is the one case that changes.
+
+  A page whose bar draws its own bottom border needs one pixel back — the drawer is
+  positioned against the element's padding box, which is inside that border:
+
+  ```css
+  navbar-elemental[data-mode="stack"] .rail > ul:not([data-navbar-probe]) {
+    margin-block-start: 1px;
+  }
+  ```
+
 ### Fixed
+
+- **On a page with no global `box-sizing` reset, every row item overhung the next one.** The
+  optional theme sizes an item with `width: 100%` — which is what makes a `<button>` fill its
+  row in the drawer — and then pads it. Under the default `content-box` that is the item's
+  own width *plus* a rem of padding, so each label ran a rem into the one after it: the focus
+  ring landed on the next label, and the copy being measured overhung too, so the row was
+  measured wider than it renders and folded links away early.
+
+  **CSS:** `li > a` and `li > button` now say `box-sizing: border-box` themselves rather than
+  assuming the page has said it. A page that already resets it sees no change.
+
+- **The overflow button could end up half under whatever sat beside the bar.** A row with
+  two or three dropdown triggers in it measured short, so the element kept links on a bar
+  that had no room for them: the last of them — usually **More** itself — hung past the rail
+  and was clipped by it, sliding under the search field. It got worse the more triggers a
+  navigation had, and it needed no resize to happen; it was wrong at that width from the
+  start.
+
+  The copy of the row that gets measured is built with its panels removed, and
+  `aria-expanded` is written later, on the row. So nothing in the copy said "this button
+  opens something", the optional theme draws its caret on `li > button[aria-expanded]`, and
+  every trigger in the copy measured a caret narrower than the button it stood for — three
+  triggers, about fifty pixels of room that was not there. The copy's triggers now carry
+  `aria-expanded="false"` from the moment they are made, so what is measured is the width
+  that will be rendered.
+
+  Worth knowing if you theme this yourself: **anything you draw on a trigger has to be drawn
+  on the copy too**, or it is width the measurement cannot see.
+
+- **`<navbar-elemental>` with `hover` closed the panel you were pointing into.** Moving the
+  mouse from a trigger onto its own panel shut it, which made every hover panel unreachable
+  by pointer: you could open one and never reach a link in it.
+
+  The rule read the control under the cursor, and a link inside a panel opens nothing — so
+  "close everything with no panel under the cursor" closed the panel the cursor had just
+  walked into. It now reads the row item the pointer is inside, however deep, and the bar's
+  own chrome — the padding between a trigger and the panel hanging under it — is no longer
+  an instruction to close anything. Leaving the element still closes them, after the same
+  beat it always did.
 
 - **`<navbar-elemental>` no longer gives the page a horizontal scrollbar.** The copy of the
   row the element measures is deliberately wider than the box it sits in — that overhang
@@ -26,7 +127,13 @@ may already be targeting**, since neither shows up in a function signature.
   edge with it.
 
   **CSS:** the rail — whatever box you put the row in, which the element marks
-  `data-navbar-rail` — is now `overflow: hidden`. Nothing else is clipped by it: on a bar the
+  `data-navbar-rail` — is now `overflow: clip` with an `overflow-clip-margin` of half a rem.
+  `clip` rather than `hidden` because `hidden` makes a scroll container, and a scroll
+  container cuts the focus ring off every link in the row: an outline is painted outside an
+  item's box, the items are exactly as tall as the rail, and the first of them starts exactly
+  at its edge. The clip margin is the ring's room, and it has to be both axes — Chrome
+  honours the margin only when both are clipped. Half a rem of a `visibility: hidden` copy
+  paints nothing. Nothing else is clipped by it: on a bar the
   panels are absolutely positioned with nothing positioned above them, so the page is their
   containing block and this clip is not in their chain; stacked, the drawer is positioned
   against `<navbar-elemental>`, which is above the rail rather than under it. A page that was
