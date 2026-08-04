@@ -1,0 +1,118 @@
+// Optional look for `<checkbox-group-elemental>`. Not part of the element's own stylesheet
+// and not in its bundle: that one styles structure only, and a light-DOM element cannot
+// scope a look away from a page that did not ask for one. Import this when you want the
+// look, skip it when you do not.
+// Colors are mixed out of `currentcolor` and `Canvas` rather than hard-coded, so the boxes
+// sit in whatever palette the page already has - including a theme switch - with nothing to
+// configure.
+
+// This is a drawn checkbox rather than `accent-color`, and only because of the third state:
+// `accent-color` recolours the browser's own box and can do nothing about the *size* of it,
+// its corners, or the weight of the dash the mixed state is announced by. Everything here is
+// scoped inside the element, so a page's other checkboxes are left exactly as the browser
+// drew them - copy the rule out if you want them to match.
+
+checkbox-group-elemental {
+  --checkbox-group-elemental-size: 1.15em;
+  --checkbox-group-elemental-radius: 0.25em;
+  --checkbox-group-elemental-border-width: 1.5px;
+  --checkbox-group-elemental-border-color: color-mix(in srgb, currentcolor 45%, transparent);
+  --checkbox-group-elemental-fill: currentcolor;
+
+  // `Canvas` is the page's own background, which is what a mark cut out of a filled box is.
+  // Re-point it on a card, and on a page that themes in custom properties without declaring
+  // `color-scheme`, where a dark page keeps a white `Canvas` and the tick disappears.
+  --checkbox-group-elemental-mark: Canvas;
+  --checkbox-group-elemental-gap: 0.6em;
+  --checkbox-group-elemental-indent: 1.75em;
+
+  label:has(> input[type="checkbox"]) {
+    display: flex;
+    gap: var(--checkbox-group-elemental-gap);
+    align-items: center;
+    cursor: pointer;
+  }
+
+  input[type="checkbox"] {
+    // The control stays the control - this replaces what the browser draws, not what it
+    // does. Focus, `Space`, the label association, `disabled` and submission are untouched,
+    // which is the whole reason not to build a checkbox out of a `<div>`.
+    appearance: none;
+    flex: none;
+    inline-size: var(--checkbox-group-elemental-size);
+    block-size: var(--checkbox-group-elemental-size);
+    margin: 0;
+    cursor: pointer;
+    border: var(--checkbox-group-elemental-border-width) solid var(--checkbox-group-elemental-border-color);
+    border-radius: var(--checkbox-group-elemental-radius);
+
+    // The mark, drawn as a mask over the box's own fill so it takes
+    // `--checkbox-group-elemental-mark` in one place for both shapes. `contain` on a box
+    // this small keeps the tick's stroke even at any size.
+    &::before {
+      content: "";
+      display: block;
+      inline-size: 100%;
+      block-size: 100%;
+      background: var(--checkbox-group-elemental-mark);
+      scale: 0;
+      transition: scale 120ms ease-out;
+    }
+
+    &:checked,
+    &:indeterminate {
+      background: var(--checkbox-group-elemental-fill);
+      border-color: var(--checkbox-group-elemental-fill);
+
+      &::before {
+        scale: 1;
+      }
+    }
+
+    &:checked::before {
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z'/%3E%3C/svg%3E") center / contain no-repeat;
+    }
+
+    // The dash, and the reason this element exists. `:indeterminate` is the browser's own
+    // selector for it, so the state the script sets is the state the stylesheet reads -
+    // there is no class in between to fall out of step.
+    &:indeterminate::before {
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 7.25h12a.75.75 0 0 1 0 1.5H2a.75.75 0 0 1 0-1.5Z'/%3E%3C/svg%3E") center / contain no-repeat;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+
+  // The children sit in from the parent, which is what says they belong to it - and it is
+  // set on the element rather than on a `<ul>`, because the markup may not have one.
+  > *:not(:first-child) {
+    margin-inline-start: var(--checkbox-group-elemental-indent);
+  }
+
+  // A list is the usual way to write the children, and its bullets are furniture next to a
+  // column of boxes that are already the list markers.
+  ul,
+  ol {
+    margin-block: 0;
+    padding-inline-start: 0;
+    list-style: none;
+  }
+
+  @media (forced-colors: active) {
+    // Author backgrounds are dropped in this mode, so a filled box would be told from an
+    // empty one by nothing at all. `Highlight`/`HighlightText` is the one pair the mode
+    // guarantees contrasts, and it is what the mode paints a set control with anyway.
+    --checkbox-group-elemental-border-color: CanvasText;
+    --checkbox-group-elemental-fill: Highlight;
+    --checkbox-group-elemental-mark: HighlightText;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    input[type="checkbox"]::before {
+      transition: none;
+    }
+  }
+}

@@ -17,6 +17,39 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Added
 
+- **`<checkbox-group-elemental>`.** The "select all" over the checkboxes it stands for, per
+  the [APG Checkbox (Mixed-State) pattern](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/):
+  ticked when all of them are, empty when none are, showing the dash when it is some. The
+  dash is `HTMLInputElement.indeterminate`, which has **no HTML attribute behind it** and can
+  only be set from script — that is the whole of the gap. It is also purely visual, since a
+  checkbox submits on `checked` alone, so give the parent no `name`.
+
+  Pressing the parent cycles the APG's way: mixed → all on → all off → **back to the
+  combination the children were last mixed in**, so a partial selection survives a press
+  instead of being destroyed by it. That third step is skipped when there is nothing partial
+  to restore — no memory, or one taken when the group was a different size. A disabled
+  checkbox is never moved and still counts towards what the parent says. Every child that
+  does move fires `input` and then `change`, exactly as clicking it would, so nothing
+  listening downstream is left holding stale state. One level, not a tree: a group nested
+  inside another is a separate group.
+
+  **DOM it produces:** nothing is moved, wrapped or given an attribute it did not have. On
+  the parent checkbox it sets the `checked` and `indeterminate` properties; on itself it
+  writes `data-state="all"`, `"some"` or `"none"`. No `role` and no `aria-checked` anywhere,
+  because a native checkbox with `indeterminate` set is already announced as mixed — which
+  is where this parts company with the APG's own example, deliberately: that one builds the
+  parent as a `<div role="checkbox">` and pays for it with the label association, the focus
+  ring, `Space`, `disabled` and submission.
+
+  **CSS you can target:** `checkbox-group-elemental[data-state]`, the native
+  `input:indeterminate` selector, and the eight `--checkbox-group-elemental-*` properties in
+  the optional theme — which draws the checkbox itself (`appearance: none` on a real
+  `<input type="checkbox">`), because `accent-color` recolours the browser's box and can say
+  nothing about its size, its corners, or the weight of the dash. Everything is scoped inside
+  the element, so the rest of the page's checkboxes are left as the browser drew them.
+  `style.scss` hides the parent and its label until `:defined`, since a select-all that
+  selects nothing is worse than none at all.
+
 - **`<combobox-elemental>`.** A native `<select>` given a text field to search it with, per
   the [APG Combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/). The
   `<select>` stays the control — it holds the value and submits under its own `name`, and

@@ -4,6 +4,7 @@
 // `as *` only because every one of these is called `theme` and would otherwise
 // collide on namespace. They export nothing - the CSS is the whole of them.
 @use "../elementals/accordion/theme" as *;
+@use "../elementals/checkbox-group/theme" as *;
 @use "../elementals/combobox/theme" as *;
 @use "../elementals/disclosure/theme" as *;
 @use "../elementals/menu/theme" as *;

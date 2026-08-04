@@ -4,6 +4,7 @@
 //
 // For one element, include its own bundle instead: dist/elementals/accordion.min.js
 import './elementals/accordion/index.js';
+import './elementals/checkbox-group/index.js';
 import './elementals/combobox/index.js';
 import './elementals/disclosure/index.js';
 import './elementals/menu/index.js';

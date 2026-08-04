@@ -4,6 +4,7 @@
 @use "poops-docs-theme/scss/docs";
 @use "../src/styles/index";
 @use "../src/elementals/accordion/theme" as *;
+@use "../src/elementals/checkbox-group/theme" as *;
 @use "../src/elementals/combobox/theme" as *;
 @use "../src/elementals/disclosure/theme" as *;
 @use "../src/elementals/menu/theme" as *;
@@ -160,6 +161,14 @@ navbar-elemental {
   display: flex;
   gap: 0.75rem;
   align-items: center;
+}
+
+// Demo-only: the same job as `.demo-row` for a sample that is a block rather than a control
+// on a line. A `<div>` and not a `<p>`, which is not a choice - a `<p>` holding a `<ul>` is
+// closed by the parser the moment the list opens, and every element still open inside it
+// goes with it, so the sample arrives on the page in pieces.
+.demo-block {
+  margin-block: 1rem;
 }
 
 // Demo-only: state text beside the switch, the Carbon arrangement - the accessible name

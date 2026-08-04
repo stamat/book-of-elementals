@@ -23,6 +23,13 @@ accordion-elemental > details > .accordion-elemental-content-wrapper {
   }
 }
 
+checkbox-group-elemental {
+  display: contents;
+}
+checkbox-group-elemental:not(:defined) > label:first-of-type, checkbox-group-elemental:not(:defined) > input[type=checkbox]:first-of-type {
+  display: none;
+}
+
 combobox-elemental {
   position: relative;
   display: block;
@@ -122,10 +129,13 @@ disclosure-elemental:not(:defined) > button {
 }
 
 .disclosure-elemental-region[hidden] {
-  margin: 0;
   padding: 0;
   border: 0;
   box-shadow: none;
+}
+
+.disclosure-elemental-region[data-state=closed] {
+  margin: 0;
 }
 
 .disclosure-elemental-region:not(:where(tr, td, th, thead, tbody, tfoot, caption)) {

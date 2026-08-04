@@ -1,0 +1,212 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/checkbox-group/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "classify",
+          "parameters": [
+            {
+              "name": "states"
+            }
+          ],
+          "description": "What the parent checkbox has to say about its children: all of them, none of them, or\nsome of them.\n\nAn empty group is `none` rather than a third answer. There is nothing to be mixed\nabout, and the element does not upgrade without children anyway."
+        },
+        {
+          "kind": "function",
+          "name": "cycle",
+          "parameters": [
+            {
+              "name": "states",
+              "description": "What the children are now.",
+              "type": {
+                "text": "boolean[]"
+              }
+            },
+            {
+              "name": "memory",
+              "description": "The combination they were in when the group was last mixed.",
+              "type": {
+                "text": "boolean[]|null"
+              }
+            }
+          ],
+          "description": "Where one press of the parent takes the children:\nmixed → all on → all off → back to the mixed combination they were last in.\n\nThat last step is the [APG's\ncycle](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/examples/checkbox-mixed/) and\nthe reason to have a tri-state parent at all: two ticks out of twenty are not destroyed\nby one press, they are one more press away from coming back.\n\nThe memory is skipped when there is nothing in it worth stopping at - absent, all on,\nall off, or taken when the group was a different size, which happens when options have\nbeen added or removed since. Restoring a stale combination would put ticks against\nwhatever now sits at those positions, and a cycle whose third step is\nindistinguishable from its second is a step the reader presses through for nothing. So\nthe cycle is three steps while there is something to go back to and two while there is\nnot.",
+          "return": {
+            "type": {
+              "text": "boolean[]"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<checkbox-group-elemental>` custom element.\n\nA \"select all\" checkbox over the checkboxes it stands for, per the\n[APG Checkbox (Mixed-State) pattern](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/):\nticked when all of them are, empty when none are, and showing the dash when it is some\nof them.\n\nThe dash is the whole reason this exists. It is `HTMLInputElement.indeterminate`, a\nproperty with **no HTML attribute behind it** - no server, template or static page can\nrender a checkbox in that state, so the one line of markup that would have said it has\nto be script, in every project, every time. It is also purely visual: what a checkbox\nsubmits is decided by `checked` alone, indeterminate or not, which is why the parent is\na control the form should not be given a `name` for.\n\nEvery checkbox here is a real `<input type=\"checkbox\">` and stays one, so the label\nassociation, the focus ring, `Space`, `disabled`, submission under each child's own\n`name`, reset and restore are the browser's. A native checkbox with `indeterminate` set\nis already announced as mixed, so there is no `role=\"checkbox\"` and no `aria-checked`\nwritten anywhere - which is where this parts company with the APG's own example, and\ndeliberately: that one builds the parent as a `<div role=\"checkbox\">` to demonstrate the\nrole, and pays for it with everything in this paragraph.\n\nWhat the element writes is two properties on the parent and `data-state` on itself.\nNothing is moved, wrapped, or given an attribute it did not have.\n\n**One level, not a tree.** The pattern is a parent over a flat set of checkboxes, and\nthat is all this is: a group nested inside another is a separate group, keeps its own\ncheckboxes, and neither reads nor is read by the one around it. A tree of them is a\ndifferent control - the cycle alone stops being answerable, since restoring a branch's\nlast mixed combination and its parent's are two different restores of the same boxes.\nWrite the checkboxes flat, one group per parent.\n\nponytail: no `aria-controls` on the parent listing the children. The APG's example has\nit; support for it is thin, and it would mean generating an `id` for every checkbox in\nthe author's markup. Add it if a screen reader turns out to want it.\n\nDegrades by not being offered: with no script the parent would be a checkbox that ticks\nitself and commands nothing, so the stylesheet hides it until the element upgrades. What\nis left is the plain list of checkboxes it was standing in front of, all of them working.",
+          "name": "CheckboxGroupElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Box size, both axes.",
+              "name": "--checkbox-group-elemental-size",
+              "default": "1.15em"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Box corners.",
+              "name": "--checkbox-group-elemental-radius",
+              "default": "0.25em"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Box border.",
+              "name": "--checkbox-group-elemental-border-width",
+              "default": "1.5px"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Box border, unticked.",
+              "name": "--checkbox-group-elemental-border-color",
+              "default": "color-mix(in srgb, currentcolor 45%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Box fill once it is ticked or mixed.",
+              "name": "--checkbox-group-elemental-fill",
+              "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The tick and the dash. The page's own background, so re-point it on a card.",
+              "name": "--checkbox-group-elemental-mark",
+              "default": "Canvas"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between a box and its label text.",
+              "name": "--checkbox-group-elemental-gap",
+              "default": "0.6em"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "How far the children sit in from the parent.",
+              "name": "--checkbox-group-elemental-indent",
+              "default": "1.75em"
+            }
+          ],
+          "slots": [
+            {
+              "description": "The parent `<input type=\"checkbox\">` in its `<label>`, and the children's checkboxes under it.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "parent",
+              "description": "The \"select all\". The first checkbox in the element, in document order, which is where\nit has to be for the reader too - a heading for a list comes before the list.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "checkboxes",
+              "description": "The checkboxes the parent stands for: every one below it, minus a nested group's own.\n\nNot `children`, which is `Element`'s own and means every child node that is an\nelement. Shadowing it would leave this element lying to any code that walks the DOM\ngenerically - including the browser's own devtools.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "boxes",
+              "description": "Every checkbox this element owns. A nested group keeps its own, parent included."
+            },
+            {
+              "kind": "field",
+              "name": "state",
+              "description": "`all`, `some` or `none` - the same word the element writes onto itself.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "apply",
+              "description": "Read the children and put what they say onto the parent. Public because that is the\none thing no event announces: add or remove a checkbox and this is the call that\ncatches up.\n\nThe memory is taken here rather than at the click, so a combination the reader built\nby hand - ticking two of twenty themselves - is the one that comes back. Any way of\narriving at mixed is the group being mixed."
+            },
+            {
+              "kind": "method",
+              "name": "onClick",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "A press of the parent. `click` and not `keydown`, because `Space` on a checkbox *is* a\nclick - there is no keyboard here that the platform has not already written.\n\nThe children are the source of truth, so the cycle is read off them and not off the\nparent, whose `checked` the browser has already flipped and whose `indeterminate` it\nhas already cleared by the time this runs. `apply` puts both back."
+            },
+            {
+              "kind": "method",
+              "name": "onChange",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "A child was ticked, so the parent has something new to say."
+            },
+            {
+              "kind": "method",
+              "name": "onReset",
+              "description": "A form is only put back to its defaults once the `reset` event has been dispatched,\nso the checkboxes are read on the next task rather than in the handler."
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "checkbox-group-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "classify",
+          "declaration": {
+            "name": "classify",
+            "module": "src/elementals/checkbox-group/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "cycle",
+          "declaration": {
+            "name": "cycle",
+            "module": "src/elementals/checkbox-group/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "CheckboxGroupElemental",
+          "declaration": {
+            "name": "CheckboxGroupElemental",
+            "module": "src/elementals/checkbox-group/index.js"
+          }
+        }
+      ]
+    }
+  ]
+}

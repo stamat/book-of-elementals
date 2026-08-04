@@ -34,6 +34,17 @@ Elements published so far:
 - `<accordion-elemental>` — APG accordion over native `<details>`; `exclusive`
   and `name` attributes, arrow-key header navigation, fragment deep links, and a
   bubbling `accordion-toggle` event.
+- `<checkbox-group-elemental>` — APG mixed-state checkbox: a "select all" over a flat set
+  of native checkboxes, ticked when all are, empty when none are, and showing the dash when
+  it is some. The dash is `HTMLInputElement.indeterminate`, which has no HTML attribute and
+  can only be set from script — that is the entire gap it fills. No attributes, no roles
+  and no `aria-checked`, because a native checkbox with `indeterminate` set is already
+  announced as mixed; it writes that property, `checked`, and `data-state="all|some|none"`
+  on itself. Pressing the parent cycles mixed → all on → all off → back to the combination
+  the children were last mixed in, skipping that third step when there is nothing partial to
+  restore. Disabled checkboxes are never moved and still count; every child that moves fires
+  `input` and `change`. One level, not a tree — a nested group is a separate group. With no
+  script the parent is hidden rather than offered dead.
 - `<combobox-elemental>` — APG combobox over a native `<select>`: a `role="combobox"`
   text field that filters the options, a `role="listbox"` popup, and the cursor kept in
   `aria-activedescendant` so focus never leaves the field. `multiple` on the `<select>`

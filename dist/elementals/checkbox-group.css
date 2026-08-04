@@ -1,0 +1,8 @@
+/* book-of-elementals v0.4.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
+checkbox-group-elemental {
+  display: contents;
+}
+checkbox-group-elemental:not(:defined) > label:first-of-type, checkbox-group-elemental:not(:defined) > input[type=checkbox]:first-of-type {
+  display: none;
+}
+/*# sourceMappingURL=checkbox-group.css.map */

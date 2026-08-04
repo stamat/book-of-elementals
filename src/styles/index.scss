@@ -1,6 +1,7 @@
 // Every element's styles. Import one component's stylesheet directly
 // (`book-of-elementals/accordion/style.scss`) to avoid paying for the rest.
 @use "../elementals/accordion";
+@use "../elementals/checkbox-group";
 @use "../elementals/combobox";
 @use "../elementals/disclosure";
 @use "../elementals/menu";

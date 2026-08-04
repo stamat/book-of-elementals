@@ -19,6 +19,7 @@ holds the JavaScript helpers, this one holds the elements.
 | Element                  | Pattern                                                                                            |
 | ------------------------ | -------------------------------------------------------------------------------------------------- |
 | `<accordion-elemental>`  | [APG Accordion](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/), over native `<details>`      |
+| `<checkbox-group-elemental>` | [APG Checkbox (Mixed-State)](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/), a select-all that shows the dash when it is some of them |
 | `<combobox-elemental>`   | [APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/), a `<select>` you can type your way down, one value or many |
 | `<disclosure-elemental>` | [APG Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), where `<details>` cannot go |
 | `<menu-elemental>`       | [APG Menu Button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/), nested, and not a menu below a breakpoint |
@@ -149,6 +150,42 @@ accordion-elemental {
 
 `prefers-reduced-motion: reduce` switches it off, and without JavaScript there is
 no wrapper and no animation — native instant toggling, which is still correct.
+
+## `<checkbox-group-elemental>`
+
+The "select all" over the checkboxes it stands for: ticked when all of them are, empty
+when none are, and showing the dash when it is some of them.
+
+```html
+<checkbox-group-elemental>
+  <label><input type="checkbox" /> All notifications</label>
+  <ul>
+    <li><label><input type="checkbox" name="n" value="mentions" checked /> Mentions</label></li>
+    <li><label><input type="checkbox" name="n" value="replies" /> Replies</label></li>
+  </ul>
+</checkbox-group-elemental>
+```
+
+No attributes. The first checkbox in the element is the parent, everything after it is a
+child, and the element writes two properties on the parent plus `data-state` on itself —
+no `role`, no `aria-checked`, because a native checkbox with `indeterminate` set is
+already announced as mixed.
+
+**The dash is the whole reason it exists.** `HTMLInputElement.indeterminate` has
+[no HTML attribute behind it](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input/checkbox#indeterminate_state)
+— it can only be set from script, so no server or template can render that state, and every
+project writes the same twenty lines. It is also purely visual: submission is decided by
+`checked` alone, which is why the parent should have no `name`.
+
+Pressing it cycles the [APG's way](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/):
+mixed → all on → all off → **back to the combination they were last mixed in**, so two
+ticks out of twenty survive a press instead of being destroyed by it. That last step is
+skipped when there is nothing worth going back to. A disabled checkbox is never moved, and
+still counts. Every child that does move fires `input` and `change`, so nothing listening
+downstream is left holding stale state.
+
+One level, not a tree: a nested group is a separate group. Without the script the parent is
+hidden rather than offered dead, and the children are ordinary working checkboxes.
 
 ## `<combobox-elemental>`
 

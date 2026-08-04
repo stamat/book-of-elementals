@@ -96,6 +96,7 @@ handling are not options.
 | Element                                                | Pattern                                                                                          |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
 | [`<accordion-elemental>`](elementals/accordion.html)   | [APG Accordion](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/), over native `<details>`    |
+| [`<checkbox-group-elemental>`](elementals/checkbox-group.html) | [APG Checkbox (Mixed-State)](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/), a select-all that shows the dash when it is some of them |
 | [`<combobox-elemental>`](elementals/combobox.html)     | [APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/), a `<select>` you can type your way down, one value or many |
 | [`<disclosure-elemental>`](elementals/disclosure.html) | [APG Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), where `<details>` cannot go |
 | [`<menu-elemental>`](elementals/menu.html)             | [APG Menu Button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/), nested, and not a menu below a breakpoint |
