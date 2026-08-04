@@ -23,8 +23,9 @@
 // - the pages' own markup, per above, and the inline (non-preview) samples that sit in it.
 
 // The callbacks handed to `evaluate` and `waitForFunction` are serialised and run in the
-// page, not here - which is the one place in this repo where a Node script writes browser code.
-/* global window, document, customElements */
+// page, not here - which is the one place in this repo where a Node script writes browser
+// code, and why this file has a block of its own in `eslint.config.js` giving it both sets
+// of globals.
 import { readdirSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
