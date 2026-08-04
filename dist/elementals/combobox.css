@@ -29,6 +29,7 @@ combobox-elemental .combobox-elemental-input {
   background: none;
   border: 0;
   outline: none;
+  font-size: max(16px, 1em);
 }
 combobox-elemental .combobox-elemental-field:has(> .combobox-elemental-input:focus-visible) {
   outline: 2px solid currentcolor;

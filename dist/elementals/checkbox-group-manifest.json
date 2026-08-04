@@ -44,15 +44,15 @@
         },
         {
           "kind": "class",
-          "description": "`<checkbox-group-elemental>` custom element.\n\nA \"select all\" checkbox over the checkboxes it stands for, per the\n[APG Checkbox (Mixed-State) pattern](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/):\nticked when all of them are, empty when none are, and showing the dash when it is some\nof them.\n\nThe dash is the whole reason this exists. It is `HTMLInputElement.indeterminate`, a\nproperty with **no HTML attribute behind it** - no server, template or static page can\nrender a checkbox in that state, so the one line of markup that would have said it has\nto be script, in every project, every time. It is also purely visual: what a checkbox\nsubmits is decided by `checked` alone, indeterminate or not, which is why the parent is\na control the form should not be given a `name` for.\n\nEvery checkbox here is a real `<input type=\"checkbox\">` and stays one, so the label\nassociation, the focus ring, `Space`, `disabled`, submission under each child's own\n`name`, reset and restore are the browser's. A native checkbox with `indeterminate` set\nis already announced as mixed, so there is no `role=\"checkbox\"` and no `aria-checked`\nwritten anywhere - which is where this parts company with the APG's own example, and\ndeliberately: that one builds the parent as a `<div role=\"checkbox\">` to demonstrate the\nrole, and pays for it with everything in this paragraph.\n\nWhat the element writes is two properties on the parent and `data-state` on itself.\nNothing is moved, wrapped, or given an attribute it did not have.\n\n**One level, not a tree.** The pattern is a parent over a flat set of checkboxes, and\nthat is all this is: a group nested inside another is a separate group, keeps its own\ncheckboxes, and neither reads nor is read by the one around it. A tree of them is a\ndifferent control - the cycle alone stops being answerable, since restoring a branch's\nlast mixed combination and its parent's are two different restores of the same boxes.\nWrite the checkboxes flat, one group per parent.\n\nponytail: no `aria-controls` on the parent listing the children. The APG's example has\nit; support for it is thin, and it would mean generating an `id` for every checkbox in\nthe author's markup. Add it if a screen reader turns out to want it.\n\nDegrades by not being offered: with no script the parent would be a checkbox that ticks\nitself and commands nothing, so the stylesheet hides it until the element upgrades. What\nis left is the plain list of checkboxes it was standing in front of, all of them working.",
+          "description": "`<checkbox-group-elemental>` custom element.\n\nA \"select all\" checkbox over the checkboxes it stands for, per the\n[APG Checkbox (Mixed-State) pattern](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/):\nticked when all of them are, empty when none are, and showing the dash when it is some\nof them.\n\nThe dash is the whole reason this exists. It is `HTMLInputElement.indeterminate`, a\nproperty with **no HTML attribute behind it** - no server, template or static page can\nrender a checkbox in that state, so the one line of markup that would have said it has\nto be script, in every project, every time. It is also purely visual: what a checkbox\nsubmits is decided by `checked` alone, indeterminate or not, which is why the parent is\na control the form should not be given a `name` for.\n\nEvery checkbox here is a real `<input type=\"checkbox\">` and stays one, so the label\nassociation, the focus ring, `Space`, `disabled`, submission under each child's own\n`name`, reset and restore are the browser's. A native checkbox with `indeterminate` set\nis already announced as mixed, so there is no `role=\"checkbox\"` and no `aria-checked`\nwritten anywhere - which is where this parts company with the APG's own example, and\ndeliberately: that one builds the parent as a `<div role=\"checkbox\">` to demonstrate the\nrole, and pays for it with everything in this paragraph.\n\nWhat the element writes is two properties on the parent and `data-state` on itself.\nNothing is moved, wrapped, or given an attribute it did not have.\n\n**One level, not a tree.** The pattern is a parent over a flat set of checkboxes, and\nthat is all this is: a group nested inside another is a separate group, keeps its own\ncheckboxes, and neither reads nor is read by the one around it. A tree of them is a\ndifferent control - the cycle alone stops being answerable, since restoring a branch's\nlast mixed combination and its parent's are two different restores of the same boxes.\nWrite the checkboxes flat, one group per parent.\n\nponytail: no `aria-controls` on the parent listing the children. The APG's example has\nit; support for it is thin, and it would mean generating an `id` for every checkbox in\nthe author's markup. Add it if a screen reader turns out to want it.\n\nDegrades by not being offered: with no script the parent would be a checkbox that ticks\nitself and commands nothing. The stylesheet hides it until the element upgrades where it\nis a direct child, and `hidden` in the markup does the same at any depth - a select-all\nin a table header, which is where most of them are, has no selector that can reach it,\nbecause CSS cannot say \"the first checkbox anywhere below me\". Either way what is left is\nthe plain list of checkboxes it was standing in front of, all of them working.",
           "name": "CheckboxGroupElemental",
           "cssProperties": [
             {
               "type": {
                 "text": "<length>"
               },
-              "description": "Box size, both axes.",
-              "name": "--checkbox-group-elemental-size",
+              "description": "Box size, both axes. Shared with any `.checkbox-elemental` on the page.",
+              "name": "--checkbox-elemental-size",
               "default": "1.15em"
             },
             {
@@ -60,7 +60,7 @@
                 "text": "<length>"
               },
               "description": "Box corners.",
-              "name": "--checkbox-group-elemental-radius",
+              "name": "--checkbox-elemental-radius",
               "default": "0.25em"
             },
             {
@@ -68,7 +68,7 @@
                 "text": "<length>"
               },
               "description": "Box border.",
-              "name": "--checkbox-group-elemental-border-width",
+              "name": "--checkbox-elemental-border-width",
               "default": "1.5px"
             },
             {
@@ -76,7 +76,7 @@
                 "text": "<color>"
               },
               "description": "Box border, unticked.",
-              "name": "--checkbox-group-elemental-border-color",
+              "name": "--checkbox-elemental-border-color",
               "default": "color-mix(in srgb, currentcolor 45%, transparent)"
             },
             {
@@ -84,7 +84,7 @@
                 "text": "<color>"
               },
               "description": "Box fill once it is ticked or mixed.",
-              "name": "--checkbox-group-elemental-fill",
+              "name": "--checkbox-elemental-fill",
               "default": "currentcolor"
             },
             {
@@ -92,7 +92,7 @@
                 "text": "<color>"
               },
               "description": "The tick and the dash. The page's own background, so re-point it on a card.",
-              "name": "--checkbox-group-elemental-mark",
+              "name": "--checkbox-elemental-mark",
               "default": "Canvas"
             },
             {
@@ -100,14 +100,14 @@
                 "text": "<length>"
               },
               "description": "Between a box and its label text.",
-              "name": "--checkbox-group-elemental-gap",
+              "name": "--checkbox-elemental-gap",
               "default": "0.6em"
             },
             {
               "type": {
                 "text": "<length>"
               },
-              "description": "How far the children sit in from the parent.",
+              "description": "How far the children sit in from the parent. This one is the group's alone.",
               "name": "--checkbox-group-elemental-indent",
               "default": "1.75em"
             }
@@ -135,6 +135,11 @@
               "kind": "method",
               "name": "boxes",
               "description": "Every checkbox this element owns. A nested group keeps its own, parent included."
+            },
+            {
+              "kind": "method",
+              "name": "movable",
+              "description": "The checkboxes the parent can actually move, which is the set it speaks for.\n\nA disabled one is not in it, and that decides both halves at once. It cannot be\ncounted, because a group holding one disabled and unticked box could never reach \"all\"\n- every press would compute \"some\", set everything it is allowed to, change nothing,\nand the cycle would be stuck on the step it was already on. And it cannot be moved,\nbecause a checkbox the reader could not have clicked is not one the parent gets to\nclick for them. So the parent's tick means \"everything selectable is selected\", which\nis the only reading under which pressing it does what it says."
             },
             {
               "kind": "field",

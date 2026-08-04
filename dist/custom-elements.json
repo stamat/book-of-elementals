@@ -260,15 +260,15 @@
         },
         {
           "kind": "class",
-          "description": "`<checkbox-group-elemental>` custom element.\n\nA \"select all\" checkbox over the checkboxes it stands for, per the\n[APG Checkbox (Mixed-State) pattern](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/):\nticked when all of them are, empty when none are, and showing the dash when it is some\nof them.\n\nThe dash is the whole reason this exists. It is `HTMLInputElement.indeterminate`, a\nproperty with **no HTML attribute behind it** - no server, template or static page can\nrender a checkbox in that state, so the one line of markup that would have said it has\nto be script, in every project, every time. It is also purely visual: what a checkbox\nsubmits is decided by `checked` alone, indeterminate or not, which is why the parent is\na control the form should not be given a `name` for.\n\nEvery checkbox here is a real `<input type=\"checkbox\">` and stays one, so the label\nassociation, the focus ring, `Space`, `disabled`, submission under each child's own\n`name`, reset and restore are the browser's. A native checkbox with `indeterminate` set\nis already announced as mixed, so there is no `role=\"checkbox\"` and no `aria-checked`\nwritten anywhere - which is where this parts company with the APG's own example, and\ndeliberately: that one builds the parent as a `<div role=\"checkbox\">` to demonstrate the\nrole, and pays for it with everything in this paragraph.\n\nWhat the element writes is two properties on the parent and `data-state` on itself.\nNothing is moved, wrapped, or given an attribute it did not have.\n\n**One level, not a tree.** The pattern is a parent over a flat set of checkboxes, and\nthat is all this is: a group nested inside another is a separate group, keeps its own\ncheckboxes, and neither reads nor is read by the one around it. A tree of them is a\ndifferent control - the cycle alone stops being answerable, since restoring a branch's\nlast mixed combination and its parent's are two different restores of the same boxes.\nWrite the checkboxes flat, one group per parent.\n\nponytail: no `aria-controls` on the parent listing the children. The APG's example has\nit; support for it is thin, and it would mean generating an `id` for every checkbox in\nthe author's markup. Add it if a screen reader turns out to want it.\n\nDegrades by not being offered: with no script the parent would be a checkbox that ticks\nitself and commands nothing, so the stylesheet hides it until the element upgrades. What\nis left is the plain list of checkboxes it was standing in front of, all of them working.",
+          "description": "`<checkbox-group-elemental>` custom element.\n\nA \"select all\" checkbox over the checkboxes it stands for, per the\n[APG Checkbox (Mixed-State) pattern](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/):\nticked when all of them are, empty when none are, and showing the dash when it is some\nof them.\n\nThe dash is the whole reason this exists. It is `HTMLInputElement.indeterminate`, a\nproperty with **no HTML attribute behind it** - no server, template or static page can\nrender a checkbox in that state, so the one line of markup that would have said it has\nto be script, in every project, every time. It is also purely visual: what a checkbox\nsubmits is decided by `checked` alone, indeterminate or not, which is why the parent is\na control the form should not be given a `name` for.\n\nEvery checkbox here is a real `<input type=\"checkbox\">` and stays one, so the label\nassociation, the focus ring, `Space`, `disabled`, submission under each child's own\n`name`, reset and restore are the browser's. A native checkbox with `indeterminate` set\nis already announced as mixed, so there is no `role=\"checkbox\"` and no `aria-checked`\nwritten anywhere - which is where this parts company with the APG's own example, and\ndeliberately: that one builds the parent as a `<div role=\"checkbox\">` to demonstrate the\nrole, and pays for it with everything in this paragraph.\n\nWhat the element writes is two properties on the parent and `data-state` on itself.\nNothing is moved, wrapped, or given an attribute it did not have.\n\n**One level, not a tree.** The pattern is a parent over a flat set of checkboxes, and\nthat is all this is: a group nested inside another is a separate group, keeps its own\ncheckboxes, and neither reads nor is read by the one around it. A tree of them is a\ndifferent control - the cycle alone stops being answerable, since restoring a branch's\nlast mixed combination and its parent's are two different restores of the same boxes.\nWrite the checkboxes flat, one group per parent.\n\nponytail: no `aria-controls` on the parent listing the children. The APG's example has\nit; support for it is thin, and it would mean generating an `id` for every checkbox in\nthe author's markup. Add it if a screen reader turns out to want it.\n\nDegrades by not being offered: with no script the parent would be a checkbox that ticks\nitself and commands nothing. The stylesheet hides it until the element upgrades where it\nis a direct child, and `hidden` in the markup does the same at any depth - a select-all\nin a table header, which is where most of them are, has no selector that can reach it,\nbecause CSS cannot say \"the first checkbox anywhere below me\". Either way what is left is\nthe plain list of checkboxes it was standing in front of, all of them working.",
           "name": "CheckboxGroupElemental",
           "cssProperties": [
             {
               "type": {
                 "text": "<length>"
               },
-              "description": "Box size, both axes.",
-              "name": "--checkbox-group-elemental-size",
+              "description": "Box size, both axes. Shared with any `.checkbox-elemental` on the page.",
+              "name": "--checkbox-elemental-size",
               "default": "1.15em"
             },
             {
@@ -276,7 +276,7 @@
                 "text": "<length>"
               },
               "description": "Box corners.",
-              "name": "--checkbox-group-elemental-radius",
+              "name": "--checkbox-elemental-radius",
               "default": "0.25em"
             },
             {
@@ -284,7 +284,7 @@
                 "text": "<length>"
               },
               "description": "Box border.",
-              "name": "--checkbox-group-elemental-border-width",
+              "name": "--checkbox-elemental-border-width",
               "default": "1.5px"
             },
             {
@@ -292,7 +292,7 @@
                 "text": "<color>"
               },
               "description": "Box border, unticked.",
-              "name": "--checkbox-group-elemental-border-color",
+              "name": "--checkbox-elemental-border-color",
               "default": "color-mix(in srgb, currentcolor 45%, transparent)"
             },
             {
@@ -300,7 +300,7 @@
                 "text": "<color>"
               },
               "description": "Box fill once it is ticked or mixed.",
-              "name": "--checkbox-group-elemental-fill",
+              "name": "--checkbox-elemental-fill",
               "default": "currentcolor"
             },
             {
@@ -308,7 +308,7 @@
                 "text": "<color>"
               },
               "description": "The tick and the dash. The page's own background, so re-point it on a card.",
-              "name": "--checkbox-group-elemental-mark",
+              "name": "--checkbox-elemental-mark",
               "default": "Canvas"
             },
             {
@@ -316,14 +316,14 @@
                 "text": "<length>"
               },
               "description": "Between a box and its label text.",
-              "name": "--checkbox-group-elemental-gap",
+              "name": "--checkbox-elemental-gap",
               "default": "0.6em"
             },
             {
               "type": {
                 "text": "<length>"
               },
-              "description": "How far the children sit in from the parent.",
+              "description": "How far the children sit in from the parent. This one is the group's alone.",
               "name": "--checkbox-group-elemental-indent",
               "default": "1.75em"
             }
@@ -351,6 +351,11 @@
               "kind": "method",
               "name": "boxes",
               "description": "Every checkbox this element owns. A nested group keeps its own, parent included."
+            },
+            {
+              "kind": "method",
+              "name": "movable",
+              "description": "The checkboxes the parent can actually move, which is the set it speaks for.\n\nA disabled one is not in it, and that decides both halves at once. It cannot be\ncounted, because a group holding one disabled and unticked box could never reach \"all\"\n- every press would compute \"some\", set everything it is allowed to, change nothing,\nand the cycle would be stuck on the step it was already on. And it cannot be moved,\nbecause a checkbox the reader could not have clicked is not one the parent gets to\nclick for them. So the parent's tick means \"everything selectable is selected\", which\nis the only reading under which pressing it does what it says."
             },
             {
               "kind": "field",
@@ -880,6 +885,266 @@
           "declaration": {
             "name": "ComboboxElemental",
             "module": "src/elementals/combobox/index.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/copy/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "sourceText",
+          "parameters": [
+            {
+              "name": "target"
+            },
+            {
+              "name": "value"
+            }
+          ],
+          "description": "What goes on the clipboard: the `value` attribute when there is one, otherwise the text\nof the element `for` names.\n\nA field is what is in it - `.value`, not the markup between its tags, which for an\n`<input>` is nothing at all and for a `<textarea>` is only what it loaded with.\n\nThe trimming is one-sided on purpose. A code block written in markdown carries a newline\nbefore its first line and after its last, neither of which is code - and the trailing one\npasted into a terminal runs the command the reader was still reading. Indentation at the\nstart of a line is code, in Python and YAML especially, so nothing there is touched.\n\n`value` is taken exactly as written, empty string included: an author who set it to\nnothing has said there is nothing to copy, and the element reports that as the failure it\nis rather than quietly copying something else instead."
+        },
+        {
+          "kind": "class",
+          "description": "`<copy-elemental>` custom element.\n\nA real `<button>` that puts text on the clipboard and says so - out loud as well as on\nscreen.\n\nThere is no APG pattern for this, because there is no widget: it is a button, and a\nbutton is already accessible. What is missing is the half after the click. Every copy\nbutton swaps an icon or shows a tick, and a swapped icon is not an announcement - a\nscreen reader user presses it and is told nothing at all, which is\n[WCAG 2.2 4.1.3 Status Messages](https://www.w3.org/WAI/WCAG22/Understanding/status-changes.html)\nunmet. That gap is this element and the whole of it: the clipboard write, a\n`data-state` for CSS to read, and a live region that says the same thing to the reader\nwho cannot see the icon change.\n\nWhat it does, and nothing more. The button, its label, its focus ring and Enter and\nSpace are the button's - which is the point of using one. There is no tooltip, no\ntimer to configure and no icon: what the button looks like before and after is CSS on\n`[data-state=\"copied\"]`, and the text it announces is two attributes.\n\nLight DOM, no shadow root. One node is added - the live region - because a live region\nhas to be in the document *before* the text lands in it, so it cannot be created at the\nmoment there is something to say.\n\nDegrades honestly: `navigator.clipboard` is absent over plain `http`, and a copy button\nthat cannot copy is a button that lies. The stylesheet keeps it out of reach until the\nelement has upgraded and found the API - so with no script, an insecure page, or nothing\nnamed to copy, there is no button rather than a dead one. Put the text somewhere\nselectable and the reader still has it.\n\nponytail: no `<a href>` special case, no `from=\"el[attr]\"` micro-syntax. Copying\nsomething that is not text on the page is what `value` is for, and one attribute beats a\nselector dialect nobody remembers.",
+          "name": "CopyElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "The icon the theme draws, both axes.",
+              "name": "--copy-elemental-icon-size",
+              "default": "1em"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between the icon and the label beside it.",
+              "name": "--copy-elemental-gap",
+              "default": "0.4em"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Above and below the label.",
+              "name": "--copy-elemental-padding-block",
+              "default": "0.4em"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Either side of it.",
+              "name": "--copy-elemental-padding-inline",
+              "default": "0.6em"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Button corners.",
+              "name": "--copy-elemental-radius",
+              "default": "0.35rem"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "What the button is painted on. The page's own background, so re-point it on a card.",
+              "name": "--copy-elemental-surface",
+              "default": "Canvas"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The rim around it.",
+              "name": "--copy-elemental-border-color",
+              "default": "currentcolor at 30%"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Fill under the pointer.",
+              "name": "--copy-elemental-hover",
+              "default": "currentcolor at 8% over the surface"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Icon, label and rim once it landed.",
+              "name": "--copy-elemental-copied-color",
+              "default": "currentcolor mixed towards green"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The same three when it did not.",
+              "name": "--copy-elemental-error-color",
+              "default": "currentcolor mixed towards red"
+            },
+            {
+              "type": {
+                "text": "<time>"
+              },
+              "description": "The cross-fade between those states.",
+              "name": "--copy-elemental-duration",
+              "default": "150ms"
+            }
+          ],
+          "slots": [
+            {
+              "description": "The `<button>` that copies, with whatever label or icon you give it.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "button",
+              "description": "The `<button>` that copies. Direct child, so a button inside the block being\ncopied - or in a second copy button below - is not mistaken for the trigger.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "target",
+              "description": "The element being copied: what `for` names, or nothing. Resolved on every press\nrather than held, so a block that was re-rendered since the last one still copies.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "text",
+              "description": "What a press would put on the clipboard, right now.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "value",
+              "description": "The literal text to copy, or `null` for whatever `for` names. Reflected, so setting it\nis how a page copies something it computed - a link's `href`, a formatted number."
+            },
+            {
+              "kind": "field",
+              "name": "copiedText",
+              "description": "What the live region says on success.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "errorText",
+              "description": "What it says when there was nothing to copy, or the clipboard refused.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "status",
+              "description": "The live region. Added at upgrade, because a live region only announces text that\nlands in one already in the document.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "announce",
+              "parameters": [
+                {
+                  "name": "message"
+                }
+              ],
+              "description": "Say something in the live region.\n\nA live region announces a *change*, so the same message set twice in a row is silent -\nwhich would make every copy after the first one say nothing. Cleared first and set back\nin a later task, so the two writes cannot coalesce into no change at all."
+            },
+            {
+              "kind": "method",
+              "name": "feedback",
+              "parameters": [
+                {
+                  "name": "ok"
+                },
+                {
+                  "name": "text"
+                }
+              ],
+              "description": "Show and say how it went, then go quiet again."
+            },
+            {
+              "kind": "method",
+              "name": "onClick",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            }
+          ],
+          "events": [
+            {
+              "name": "copy-done",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "`detail.ok` is whether it landed, `detail.text` what went on the clipboard."
+            }
+          ],
+          "attributes": [
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "`id` of the element to copy. Also read as `data-for`.",
+              "name": "for"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "Literal text to copy, exactly as written. Wins over `for`.",
+              "name": "value"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "What the live region announces on success.",
+              "name": "copied-text",
+              "default": "Copied"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "What it announces when there was nothing to copy, or the clipboard refused.",
+              "name": "error-text",
+              "default": "Copy failed"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "copy-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "sourceText",
+          "declaration": {
+            "name": "sourceText",
+            "module": "src/elementals/copy/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "CopyElemental",
+          "declaration": {
+            "name": "CopyElemental",
+            "module": "src/elementals/copy/index.js"
           }
         }
       ]

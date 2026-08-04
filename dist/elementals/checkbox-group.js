@@ -42,9 +42,23 @@
     boxes() {
       return Array.from(this.querySelectorAll('input[type="checkbox"]')).filter((box) => box.closest("checkbox-group-elemental") === this);
     }
+    /**
+     * The checkboxes the parent can actually move, which is the set it speaks for.
+     *
+     * A disabled one is not in it, and that decides both halves at once. It cannot be
+     * counted, because a group holding one disabled and unticked box could never reach "all"
+     * - every press would compute "some", set everything it is allowed to, change nothing,
+     * and the cycle would be stuck on the step it was already on. And it cannot be moved,
+     * because a checkbox the reader could not have clicked is not one the parent gets to
+     * click for them. So the parent's tick means "everything selectable is selected", which
+     * is the only reading under which pressing it does what it says.
+     */
+    movable() {
+      return this.checkboxes.filter((box) => !box.disabled);
+    }
     /** `all`, `some` or `none` - the same word the element writes onto itself. */
     get state() {
-      return classify(this.checkboxes.map((box) => box.checked));
+      return classify(this.movable().map((box) => box.checked));
     }
     connectedCallback() {
       if (this.initialized) return;
@@ -54,6 +68,8 @@
       this.onChange = this.onChange.bind(this);
       this.onReset = this.onReset.bind(this);
       this.apply = this.apply.bind(this);
+      this.parentWasHidden = this.parent.hasAttribute("hidden");
+      if (this.parentWasHidden) this.parent.hidden = false;
       this.addEventListener("click", this.onClick);
       this.addEventListener("change", this.onChange);
       this.form = this.parent && this.parent.form;
@@ -68,7 +84,10 @@
       if (this.form) this.form.removeEventListener("reset", this.onReset);
       if (typeof window !== "undefined") window.removeEventListener("pageshow", this.apply);
       const parent = this.parent;
-      if (parent) parent.indeterminate = false;
+      if (parent) {
+        parent.indeterminate = false;
+        if (this.parentWasHidden) parent.hidden = true;
+      }
       delete this.dataset.state;
       this.form = null;
       this.initialized = false;
@@ -86,7 +105,7 @@
       const parent = this.parent;
       if (!parent) return;
       const state = this.state;
-      if (state === "some") this.memory = this.checkboxes.map((box) => box.checked);
+      if (state === "some") this.memory = this.movable().map((box) => box.checked);
       parent.checked = state === "all";
       parent.indeterminate = state === "some";
       this.dataset.state = state;
@@ -102,12 +121,12 @@
     onClick(e) {
       const parent = this.parent;
       if (!parent || e.target !== parent || parent.disabled) return;
-      const children = this.checkboxes;
+      const children = this.movable();
       const next = cycle(children.map((box) => box.checked), this.memory);
       this.applying = true;
       for (let i = 0; i < children.length; i++) {
         const box = children[i];
-        if (box.disabled || box.checked === next[i]) continue;
+        if (box.checked === next[i]) continue;
         box.checked = next[i];
         box.dispatchEvent(new Event("input", { bubbles: true }));
         box.dispatchEvent(new Event("change", { bubbles: true }));

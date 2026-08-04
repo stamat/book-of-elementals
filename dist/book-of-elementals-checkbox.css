@@ -68,17 +68,4 @@ checkbox-group-elemental input[type=checkbox]:disabled {
     transition: none;
   }
 }
-
-checkbox-group-elemental {
-  --checkbox-group-elemental-indent: 1.75em;
-}
-checkbox-group-elemental > *:not(:first-child) {
-  margin-inline-start: var(--checkbox-group-elemental-indent);
-}
-checkbox-group-elemental ul,
-checkbox-group-elemental ol {
-  margin-block: 0;
-  padding-inline-start: 0;
-  list-style: none;
-}
-/*# sourceMappingURL=checkbox-group-theme.css.map */
+/*# sourceMappingURL=book-of-elementals-checkbox.css.map */
