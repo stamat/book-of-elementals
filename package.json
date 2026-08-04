@@ -132,7 +132,7 @@
     "eslint": "^10.7.0",
     "jest": "^30.4.2",
     "poops": "^2.0.0",
-    "poops-docs-theme": "^1.1.2",
+    "poops-docs-theme": "^2.0.0",
     "stylelint": "^17.14.1",
     "stylelint-config-standard-scss": "^17.0.0",
     "stylelint-no-unsupported-browser-features": "^8.1.1"

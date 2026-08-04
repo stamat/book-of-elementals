@@ -34,15 +34,6 @@ code-preview.demo-tall {
   }
 }
 
-// The theme's copy-button script wraps every `.prose pre` in a `.code-wrap` - the block
-// inside a preview too - and `.prose :is(figure, .code-wrap)` outranks the package's own
-// `code-preview > :is(pre, .code-wrap)`, so its 1.75rem comes back as a gap between the
-// frame and the code under it. `code-preview` owns the spacing around itself; the block
-// inside it gets none. The selector is the one the package documents for exactly this.
-.prose code-preview > :is(pre, .code-wrap) {
-  margin: 0;
-}
-
 // The demos wear the shipped optional theme rather than a skin of their own, so
 // what the pages show is what the import gives you. Its two custom properties are
 // re-pointed at the docs palette, so the panels sit in the same greys and corners

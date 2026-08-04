@@ -94,8 +94,8 @@
         "url": "https://stamat.github.io/book-of-elementals",
         "repo": "https://github.com/stamat/book-of-elementals",
         "branch": "main",
-        "links": [
-          { "title": "npm", "url": "https://www.npmjs.com/package/book-of-elementals" }
+        "iconLinks": [
+          { "title": "npm", "url": "https://www.npmjs.com/package/book-of-elementals", "icon": "npm" }
         ]
       }
     }
