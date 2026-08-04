@@ -60,6 +60,22 @@ and 375px is the width where it stops being a menu:
     <li><a href="/sign-out/">Sign out</a></li>
   </ul>
 </menu-elemental>
+
+<main></main>
+```
+
+```css demo
+body { margin: 0; padding: 1rem; font: 1rem/1.5 system-ui, sans-serif; }
+
+/* the preview is as tall as the sample, and a menu opens over the page rather than pushing
+   it - so the page under the button is what an open panel has to hang over */
+main { min-block-size: 11rem; }
+
+/* a rim, so the trigger reads as something you press. The theme leaves it flat on purpose:
+   a menu button is a word in a menubar - File, Edit - as often as it is a button */
+menu-elemental > button {
+  border: 1px solid color-mix(in srgb, currentcolor 25%, transparent);
+}
 ```
 
 ```javascript
@@ -238,6 +254,52 @@ menu-elemental > ul[data-side="block-start"] {
 }
 ```
 
+Here is the corner case, live. The button is against the right edge, so the panel runs back
+from it and the submenu opens on the side there is room for — open **Preferences** and watch
+which way it goes:
+
+<!-- demo menu -->
+
+```html
+<div class="bar">
+  <menu-elemental>
+    <button>Account</button>
+    <ul>
+      <li><a href="/profile/">Profile</a></li>
+      <li>
+        <button>Preferences</button>
+        <ul>
+          <li><a href="/preferences/theme/">Theme</a></li>
+          <li><a href="/preferences/language/">Language</a></li>
+        </ul>
+      </li>
+      <li><a href="/sign-out/">Sign out</a></li>
+    </ul>
+  </menu-elemental>
+</div>
+
+<main></main>
+```
+
+```css demo
+body { margin: 0; padding: 1rem; font: 1rem/1.5 system-ui, sans-serif; }
+main { min-block-size: 11rem; }
+
+/* the whole of the setup: the button is where a header keeps its account menu, and there is
+   no room to its right for either panel to run into */
+.bar { display: flex; justify-content: flex-end; }
+
+menu-elemental > button {
+  border: 1px solid color-mix(in srgb, currentcolor 25%, transparent);
+}
+```
+
+Nothing in the markup says "open leftward". The element measured the button against the
+viewport, wrote `data-align="end"` on the root list and `data-side="inline-start"` on the
+submenu, and the stylesheet did the rest — which is also why the submenu's caret points the
+way it opened.
+
+
 The theme reads them too: a submenu that had to open on the inline start says so with a
 caret pointing that way, which is the reason this is measured in the element rather than
 left to CSS `position-try-fallbacks` — nothing in CSS can select the fallback that won.
@@ -374,7 +436,24 @@ the page's own background, and it is what to re-point when the menu opens over a
     <li><a href="/sign-out/">Sign out</a></li>
   </ul>
 </menu-elemental>
+
+<main></main>
 ```
+
+```css demo
+body { margin: 0; padding: 1rem; font: 1rem/1.5 system-ui, sans-serif; }
+
+/* the preview is as tall as the sample, and a menu opens over the page rather than pushing
+   it - so the page under the button is what an open panel has to hang over */
+main { min-block-size: 11rem; }
+
+/* a rim, so the trigger reads as something you press. The theme leaves it flat on purpose:
+   a menu button is a word in a menubar - File, Edit - as often as it is a button */
+menu-elemental > button {
+  border: 1px solid color-mix(in srgb, currentcolor 25%, transparent);
+}
+```
+
 
 ### The hamburger
 

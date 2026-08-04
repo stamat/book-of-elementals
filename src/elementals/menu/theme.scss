@@ -74,6 +74,13 @@ menu-elemental {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+
+    // `width: 100%` is what makes a `<button>` fill the row a link already fills. Which means
+    // this look sizes a box by percentage and then pads it, and on a page with no global reset
+    // that is the row's own width *plus* a rem: every item hangs a rem out of the panel, and
+    // the hover backdrop with it - a tinted bar sticking out of a rounded frame. Stated here
+    // rather than assumed of the page.
+    box-sizing: border-box;
     width: 100%;
     padding: 0.35rem 0.5rem;
     font: inherit;

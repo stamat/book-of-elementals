@@ -79,12 +79,14 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Fixed
 
-- **On a page with no global `box-sizing` reset, every row item overhung the next one.** The
-  optional theme sizes an item with `width: 100%` — which is what makes a `<button>` fill its
-  row in the drawer — and then pads it. Under the default `content-box` that is the item's
-  own width *plus* a rem of padding, so each label ran a rem into the one after it: the focus
-  ring landed on the next label, and the copy being measured overhung too, so the row was
-  measured wider than it renders and folded links away early.
+- **On a page with no global `box-sizing` reset, `<navbar-elemental>` and `<menu-elemental>`
+  items overhung the box they sit in.** Both optional themes size an item with `width: 100%`
+  — which is what makes a `<button>` fill the row a link already fills — and then pad it.
+  Under the default `content-box` that is the row's own width *plus* a rem, so in the navbar
+  each label ran a rem into the one after it, and in the menu every item hung out of the
+  panel with its hover backdrop: a tinted bar sticking out of a rounded frame. The navbar had
+  it worse than it looked, too — the copy being measured overhung as well, so the row was
+  measured wider than it renders and links folded away early.
 
   **CSS:** `li > a` and `li > button` now say `box-sizing: border-box` themselves rather than
   assuming the page has said it. A page that already resets it sees no change.
