@@ -388,6 +388,14 @@ goes on a box inside the region:
 Margin is fine — it is outside the height, and it transitions too, so zeroing it while
 closed reads as the gap closing rather than as a jump.
 
+Margin _inside_ the region stays inside it: the region is `display: flow-root`, because the
+slide measures it under an `overflow: hidden` that makes it a block formatting context, and
+a first or last child whose margin collapsed back out at rest would leave the region shorter
+than it was measured to be — it would open past its resting height and snap back. The rule
+skips `tr`, `td`, `th`, `thead`, `tbody`, `tfoot` and `caption`, where `display` is the
+table's structure, and it is one class's worth of specificity, so a `display` of your own
+still wins.
+
 ## The look
 
 `style.scss` is structure and motion; `theme.scss` is the look and is optional — a

@@ -22,6 +22,10 @@ disclosure-elemental:not(:defined) > button {
   box-shadow: none;
 }
 
+.disclosure-elemental-region:not(:where(tr, td, th, thead, tbody, tfoot, caption)) {
+  display: flow-root;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .disclosure-elemental-region {
     transition: none;

@@ -89,6 +89,23 @@ may already be targeting**, since neither shows up in a function signature.
   because the radio it belongs to is a hidden pixel and a control whose focus cannot be
   seen is broken rather than unstyled.
 
+### Fixed
+
+- **`<disclosure-elemental>` no longer overshoots on opening.** A region whose first or
+  last child carried a margin — a `<p>` in a `<figcaption>`, a `<table>` in a `<div>` —
+  slid open past where it was going to sit and snapped back at the end. The slide measures
+  the region under an `overflow: hidden` it sets itself, which makes the region a block
+  formatting context, so those margins counted inside the measurement; at rest the overflow
+  is gone and they collapse back out through the region's edges, leaving it shorter than it
+  was measured to be.
+
+  **CSS this changes:** `.disclosure-elemental-region` is now `display: flow-root`, so the
+  measured height is the resting one. Margins on the region's own children no longer
+  collapse through it into the page — put the gap on the region if you were relying on
+  that. The rule skips `tr`, `td`, `th`, `thead`, `tbody`, `tfoot` and `caption`, where
+  `display` is the table's structure, and it carries a single class's specificity, so a
+  region you give a `display` of your own still wins.
+
 ## [0.4.0] - 2026-08-04
 
 ### Added

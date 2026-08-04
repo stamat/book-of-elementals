@@ -57,6 +57,20 @@ disclosure-elemental {
   box-shadow: none;
 }
 
+// The slide measures the region under an `overflow: hidden` it sets itself, which makes
+// the region a block formatting context - so the margins of its first and last children
+// count inside the measurement. At rest that overflow is gone and those same margins
+// collapse back out through the region's edges, leaving it shorter than it was measured
+// to be: the region opens past its resting height and snaps back at the end. `flow-root`
+// is that formatting context kept for good, and without the clipping, so the height the
+// slide measures is the height the region keeps.
+// Not on the table boxes: there `display` is the structure, and a row or a cell is one of
+// the regions this element exists to reach. A height transition cannot move them anyway,
+// which is why the page sets `--disclosure-elemental-duration: 0s` for one.
+.disclosure-elemental-region:not(:where(tr, td, th, thead, tbody, tfoot, caption)) {
+  display: flow-root;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .disclosure-elemental-region {
     transition: none;
