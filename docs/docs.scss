@@ -47,6 +47,11 @@ accordion-elemental {
 // side of the theme switch - so the knob the switch drops out to is re-pointed at it,
 // which is the override the page itself documents. Everything else in the theme is
 // `currentcolor` and needs nothing.
+// The docs theme sets this same property on `switch-elemental` for its own topbar
+// switcher, and it cannot be left to do the job: this file loads that theme first and the
+// element's own theme after, so the shipped `Canvas` default is re-declared at equal
+// specificity further down the sheet and wins. This line is what puts `--bg` back, and it
+// has to stay below both.
 switch-elemental {
   --switch-elemental-knob-checked: var(--bg);
 }
