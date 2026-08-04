@@ -105,7 +105,11 @@ th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; opaci
 .num { text-align: end; font-variant-numeric: tabular-nums; }
 .note { font-size: 0.75rem; opacity: 0.6; }
 /* the checkbox column is as wide as a checkbox and no wider */
-.pick { width: 1px; padding-inline-end: 0; }
+.pick { width: 1px; padding-inline-end: 0; vertical-align: middle; }
+/* an `<input>` is inline, so its bottom edge lands on the text's baseline and the box rides
+   a few pixels above the words beside it — a block box in a middle-aligned cell is centred
+   on the row instead */
+.pick input { display: block; }
 
 /* the row the reader has picked, marked by more than the tick in it */
 tr:has(td input:checked) { background: color-mix(in srgb, currentcolor 5%, transparent); }
