@@ -1,0 +1,466 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/combobox/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "fold",
+          "parameters": [
+            {
+              "name": "text"
+            }
+          ],
+          "description": "Text flattened to what a reader can type on any keyboard: lower case, with the\ndiacritics taken off.\n\n`removeAccents` is the sibling's, and does the part that is the same everywhere -\nNFKD, the combining marks dropped, and the ligatures that are two letters wearing one\nglyph (`œ`, `æ`, `ß`) spelled out. What it leaves is the stroked letters, which are\nsingle code points with no mark to strip: `đ` comes out of decomposition exactly as it\nwent in, so a search for `dordevic` would miss `Đorđević` without the second pass.\n\nNot `slugify`, which is next door in the same file and looks like the same job. It is\nfor URLs, so it drops everything outside `[\\w0-9-]` - `Београд` comes out empty, `北京`\ncomes out empty, `Đorđe` comes out as `ore`. A search box that cannot find a Cyrillic\ncity on a Serbian site is not a smaller bug than one that cannot fold an accent."
+        },
+        {
+          "kind": "function",
+          "name": "matchesQuery",
+          "parameters": [
+            {
+              "name": "label"
+            },
+            {
+              "name": "query"
+            }
+          ],
+          "description": "Whether an option's label answers what has been typed.\n\n\"Contains\" and not \"starts with\": the reader looking through a list of cities for\n`york` knows New York is not spelled that way and is asking for the one word they\nremember. Both sides fold, so a query typed with diacritics and one typed without both\nland on the same options.\n\nAn empty query matches everything, which is what makes the unfiltered list the same\ncode path as the filtered one."
+        },
+        {
+          "kind": "function",
+          "name": "flipsUp",
+          "parameters": [
+            {
+              "name": "field",
+              "description": "Rect of the field, in viewport coordinates.",
+              "type": {
+                "text": "DOMRect|object"
+              }
+            },
+            {
+              "name": "panelHeight",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "viewportHeight",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "description": "Whether the popup opens upwards: only when it does not fit below and there is more\nroom above.\n\nBelow wins ties and wins when neither side fits, because the list scrolls - \"nowhere\nit fits\" is a choice between two cramped corners rather than a failure, and the corner\nthe reader expects is the one under the field."
+        },
+        {
+          "kind": "function",
+          "name": "focusAfterRemoval",
+          "parameters": [
+            {
+              "name": "count"
+            },
+            {
+              "name": "index"
+            }
+          ],
+          "description": "Which chip takes focus after the one at `index` is removed, or `-1` for the input.\n\n`count` is how many there were before the removal, so every index below the last one\nhands focus to whatever slid into its place, and removing the last one has nothing to\nslide - focus goes back to the input rather than to the document body, which is where\na keyboard reader loses the control entirely."
+        },
+        {
+          "kind": "class",
+          "description": "`<combobox-elemental>` custom element.\n\nA `<select>` given a text field to search it with, per the\n[APG Combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) - the\nsearchable, tag-holding select every application ends up needing and the platform\nstill has no answer for.\n\nThe gap is narrow and worth naming, because most of what these libraries do is now\nnative. `appearance: base-select` styles the button, the picker and every `<option>`\nwith ordinary CSS, which is the half people used to reach for select2 to get. What it\ndoes not do is **filter**: there is no typing your way down a list of four hundred\ncities, in any browser, with or without the new styling. That is what this element is,\nand it is why it is not simply a stylesheet.\n\nThe `<select>` stays, and stays the control. It holds the value, submits under its own\n`name`, resets, restores, honours `required` and `disabled`, and goes down with a\n`<fieldset disabled>` - none of which is written here, because a second element\nmirroring the state is a second element that can disagree with it. The field, the\nlistbox and the chips are a view of it; every pick sets `option.selected` and lets the\n`<select>` fire the `change` that was going to be listened for anyway.\n\n`multiple` on the `<select>` is what makes it multi-select. The chips, the\nremove buttons and `Backspace` on an empty field come with it - and the caret goes,\nsince a caret is the mark of a control holding one value out of a list and a field full\nof tags has already said what this one holds. It is the one part of\nthis element with no APG example behind it - the pattern's six are all single-select.\nWhat is written here follows the pattern where it speaks (`aria-multiselectable`,\n`aria-selected` on every option rather than only the chosen one, a listbox that stays\nopen across picks) and is plain buttons where it does not.\n\nLight DOM, no shadow root. This one *does* build markup - a field, a listbox and a\nchip per selection - which the elements wrapping native widgets do not have to. That\nmarkup is the public API and is documented as such.\n\nDegrades honestly: with no script the `<select>` is a `<select>`, which is the whole\ncontrol minus the searching. Nothing is hidden until there is something to hide it\nbehind.\n\nponytail: the option list is built once, at upgrade, and filtered by hiding. Replace\nthe `<option>`s at runtime and call `apply()`; wire a `MutationObserver` if that stops\nbeing rare.",
+          "name": "ComboboxElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Corners of the field and the popup.",
+              "name": "--combobox-elemental-radius",
+              "default": "0.375rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "The one padding unit: inside the field, before the caret, and down the side of every option - and nowhere else, so the field's text and the popup's line up.",
+              "name": "--combobox-elemental-inset",
+              "default": "0.5rem"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "What the field and the popup are painted on. The page's own background, so re-point it on a card.",
+              "name": "--combobox-elemental-surface",
+              "default": "Canvas"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The rim around the field and the popup.",
+              "name": "--combobox-elemental-border",
+              "default": "color-mix(in srgb, currentcolor 30%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The option the cursor is on - where Enter would land, and what the pointer moves.",
+              "name": "--combobox-elemental-active",
+              "default": "color-mix(in srgb, currentcolor 12%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The options already chosen, which is a different question from where the cursor is.",
+              "name": "--combobox-elemental-selected",
+              "default": "color-mix(in srgb, currentcolor 5%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Chip fill.",
+              "name": "--combobox-elemental-chip",
+              "default": "color-mix(in srgb, currentcolor 12%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The field's rim and the message under it once the browser has refused to submit.",
+              "name": "--combobox-elemental-invalid",
+              "default": "color-mix(in srgb, currentcolor 35%, #e5484d)"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "How tall the popup gets before it scrolls.",
+              "name": "--combobox-elemental-max-height",
+              "default": "15rem"
+            }
+          ],
+          "slots": [
+            {
+              "description": "One `<select>`, with the `<option>`s and `<optgroup>`s you would have written anyway.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "select",
+              "description": "The control. Direct child, so a `<select>` inside a popover of your own is not\nmistaken for it.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "open",
+              "description": "Whether the popup is showing. Reflected, so `[open]` is a styling hook too."
+            },
+            {
+              "kind": "field",
+              "name": "multiple",
+              "description": "Whether this holds more than one value, which is the `<select>`'s own `multiple`.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "disabled",
+              "description": "Disabled by its own attribute or by a `<fieldset disabled>` above it, which\n`:disabled` answers for in one selector.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "placeholder",
+              "description": "What the empty field says. A single select usually has the answer in its own markup\nalready - the `<option value=\"\">Choose a fruit</option>` at the top is a placeholder\nthat has been written down as an option since forms had options."
+            },
+            {
+              "kind": "field",
+              "name": "emptyText",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "removeText",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "value",
+              "description": "The `<select>`'s value, so a single select reads as one string and a multiple one\nas the first of its selections - exactly as the native property does."
+            },
+            {
+              "kind": "field",
+              "name": "values",
+              "description": "Every selected value, in document order. The one a multiple select has no property\nfor.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "description": "Build the view: a field holding the chips, the text input and the popup indicator,\nand the listbox under it.\n\nInserted **before** the `<select>` rather than after, because a `<label>` wrapping\nthis element names the first labelable thing inside it, and the `<select>` staying\nfirst would leave the visible field anonymous while the hidden control wore the name."
+            },
+            {
+              "kind": "method",
+              "name": "teardown",
+              "description": "Put the markup back the way it arrived: the view goes, the `<select>` returns to\nbeing an ordinary, focusable, announced control. An element that is no longer here\nleaves nothing behind that only it knew how to drive."
+            },
+            {
+              "kind": "method",
+              "name": "apply",
+              "description": "Read the `<select>` again: rebuild the options and redraw everything from them.\nPublic because that is the one thing no event announces - replace the `<option>`s\nfrom script and this is the call that catches up."
+            },
+            {
+              "kind": "method",
+              "name": "addOption",
+              "parameters": [
+                {
+                  "name": "option"
+                },
+                {
+                  "name": "parent"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "sync",
+              "description": "Push the `<select>` onto the view: the chips, the selected states, the field's text\nand whether any of it can be touched.\n\nThe field's text is the selection and nothing else, so a query typed and abandoned -\nby tabbing away, by Escape, by picking something - never survives as a label for a\nvalue it does not name."
+            },
+            {
+              "kind": "method",
+              "name": "onInvalid",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "The browser has refused to submit. Its own bubble is dropped and the message kept,\nbecause the bubble would be pointing at the `<select>` - which is transparent,\n`aria-hidden`, and about to take focus away from the field the reader has to fill in.\n\nThe text is the browser's own `validationMessage`, so it arrives already translated\ninto the reader's language and says what the platform would have said."
+            },
+            {
+              "kind": "method",
+              "name": "clearError"
+            },
+            {
+              "kind": "method",
+              "name": "filter",
+              "description": "Hide the options the query does not answer, and the groups that are left holding\nnone of them."
+            },
+            {
+              "kind": "method",
+              "name": "navigable",
+              "description": "The options an arrow key can reach: on screen, and not disabled."
+            },
+            {
+              "kind": "method",
+              "name": "activeIndex",
+              "description": "Where the popup's own cursor is - `aria-activedescendant`, read back as an index\ninto the list the arrows walk."
+            },
+            {
+              "kind": "method",
+              "name": "setActive",
+              "parameters": [
+                {
+                  "name": "index"
+                }
+              ],
+              "description": "Move the popup's cursor. Focus itself never moves - it stays in the field, which is\nwhat `aria-activedescendant` is for and what lets typing carry on narrowing the list\nwhile an option is \"focused\"."
+            },
+            {
+              "kind": "method",
+              "name": "place",
+              "description": "Point the popup at whichever side of the field it fits on, and write that on it for\nthe stylesheet to act on - the measuring is the element's, the positioning is CSS's."
+            },
+            {
+              "kind": "method",
+              "name": "applyOpen",
+              "description": "Show or hide the popup, and put the cursor somewhere sensible inside it."
+            },
+            {
+              "kind": "method",
+              "name": "pick",
+              "parameters": [
+                {
+                  "name": "pair"
+                }
+              ],
+              "description": "Choose, or in a multiple select un-choose, one option."
+            },
+            {
+              "kind": "method",
+              "name": "removeAt",
+              "parameters": [
+                {
+                  "name": "index"
+                }
+              ],
+              "description": "Drop the `index`th selection, and put focus somewhere that still exists."
+            },
+            {
+              "kind": "method",
+              "name": "emit",
+              "description": "Tell the page, in the events it is already listening for. The `<select>` is the\ncontrol, so `input` and `change` fire on it and in that order, exactly as they do\nwhen a reader uses a native one - which is why this element has no event of its own."
+            },
+            {
+              "kind": "method",
+              "name": "onSelectChange"
+            },
+            {
+              "kind": "method",
+              "name": "onReset",
+              "description": "A form is only put back to its defaults after the `reset` event has been\ndispatched, so the options are read on the next task rather than in the handler."
+            },
+            {
+              "kind": "method",
+              "name": "onInput"
+            },
+            {
+              "kind": "method",
+              "name": "onPointerDown",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "A pointer press inside the popup would blur the field before the click landed, and a\ncombobox whose field loses focus is one whose popup has just closed. The press is\ncancelled instead; the click that follows still arrives."
+            },
+            {
+              "kind": "method",
+              "name": "onPointerOver",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "Pointing at an option moves the popup's cursor onto it, so the mouse and the arrow\nkeys drive the same one thing. Without this the pointer lights up one option while\n`aria-activedescendant` sits on another, and two options look chosen at once - with\nEnter belonging to the one the reader is not pointing at."
+            },
+            {
+              "kind": "method",
+              "name": "onClick",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onKeyDown",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onFocusOut",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onDocumentClick",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            }
+          ],
+          "attributes": [
+            {
+              "name": "open",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether the popup is showing. Reflected, so `[open]` is a styling hook.",
+              "default": "false"
+            },
+            {
+              "name": "placeholder",
+              "type": {
+                "text": "string"
+              },
+              "description": "The field's placeholder. Single select falls back to the label of the option whose value is empty."
+            },
+            {
+              "name": "empty-text",
+              "type": {
+                "text": "string"
+              },
+              "description": "What the popup says when the query matches nothing.",
+              "default": "No matches"
+            },
+            {
+              "name": "remove-text",
+              "type": {
+                "text": "string"
+              },
+              "description": "The verb in a chip's remove button, in front of the option's label.",
+              "default": "Remove"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "combobox-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "fold",
+          "declaration": {
+            "name": "fold",
+            "module": "src/elementals/combobox/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "matchesQuery",
+          "declaration": {
+            "name": "matchesQuery",
+            "module": "src/elementals/combobox/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "flipsUp",
+          "declaration": {
+            "name": "flipsUp",
+            "module": "src/elementals/combobox/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "focusAfterRemoval",
+          "declaration": {
+            "name": "focusAfterRemoval",
+            "module": "src/elementals/combobox/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ComboboxElemental",
+          "declaration": {
+            "name": "ComboboxElemental",
+            "module": "src/elementals/combobox/index.js"
+          }
+        }
+      ]
+    }
+  ]
+}

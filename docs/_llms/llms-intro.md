@@ -34,6 +34,17 @@ Elements published so far:
 - `<accordion-elemental>` — APG accordion over native `<details>`; `exclusive`
   and `name` attributes, arrow-key header navigation, fragment deep links, and a
   bubbling `accordion-toggle` event.
+- `<combobox-elemental>` — APG combobox over a native `<select>`: a `role="combobox"`
+  text field that filters the options, a `role="listbox"` popup, and the cursor kept in
+  `aria-activedescendant` so focus never leaves the field. `multiple` on the `<select>`
+  adds a chip per selection with a remove button, and `Backspace` on an empty field. The
+  `<select>` stays the control — value, `name`, submission, `required`, reset, restore and
+  `<fieldset disabled>` are all the browser's, and the element has no event of its own
+  because the `<select>` fires `input` and `change`. Attributes: reflected `open`,
+  `placeholder`, `empty-text`, `remove-text`. Search matches anywhere in a label and folds
+  diacritics both ways, so `cacak` finds Čačak. Filtering is the only gap it fills:
+  `appearance: base-select` now styles a dropdown natively, and no browser lets you type
+  your way down a long list.
 - `<disclosure-elemental>` — APG disclosure: a real `<button>` wired to a region
   with `aria-expanded`/`aria-controls`, for the places `<details>` cannot go (a
   `<figcaption>`, a table row, a grid item, a region across the page). Reflected

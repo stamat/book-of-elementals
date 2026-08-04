@@ -19,6 +19,7 @@ holds the JavaScript helpers, this one holds the elements.
 | Element                  | Pattern                                                                                            |
 | ------------------------ | -------------------------------------------------------------------------------------------------- |
 | `<accordion-elemental>`  | [APG Accordion](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/), over native `<details>`      |
+| `<combobox-elemental>`   | [APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/), a `<select>` you can type your way down, one value or many |
 | `<disclosure-elemental>` | [APG Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), where `<details>` cannot go |
 | `<menu-elemental>`       | [APG Menu Button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/), nested, and not a menu below a breakpoint |
 | `<navbar-elemental>`     | [APG Disclosure Navigation](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/), folding itself away when the links stop fitting |
@@ -148,6 +149,59 @@ accordion-elemental {
 
 `prefers-reduced-motion: reduce` switches it off, and without JavaScript there is
 no wrapper and no animation — native instant toggling, which is still correct.
+
+## `<combobox-elemental>`
+
+A `<select>` with a text field to search it with — one value, or many with a chip
+each. Wrap the `<select>` you would have written anyway; nothing else is read:
+
+```html
+<label for="city">City</label>
+<combobox-elemental>
+  <select id="city" name="city">
+    <option value="">Choose a city</option>
+    <option value="bg">Beograd</option>
+    <option value="ns">Novi Sad</option>
+  </select>
+</combobox-elemental>
+```
+
+| Attribute     | Type    | Default      | Description                                                        |
+| ------------- | ------- | ------------ | ------------------------------------------------------------------ |
+| `open`        | boolean | `false`      | Whether the popup is showing. Reflected — it tracks the live state. |
+| `placeholder` | string  | —            | The field's placeholder. Single select falls back to the label of the option whose value is empty. |
+| `empty-text`  | string  | `No matches` | What the popup says when the query matches nothing.                |
+| `remove-text` | string  | `Remove`     | The verb in a chip's remove button, before the option's label.     |
+
+Everything else is the `<select>`'s — `multiple`, `required`, `disabled`, `name`, and
+the options — because the `<select>` is still the control. It holds the value, submits,
+resets, restores and goes down with a `<fieldset disabled>`, so this element has no
+event of its own: every pick sets `option.selected` and lets the `<select>` fire the
+`input` and `change` that were going to be listened for anyway.
+
+**Filtering is the whole of the gap.** A dropdown that is merely styled is now native —
+[`appearance: base-select`](https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Customizable_select)
+takes the button, the picker and every `<option>` in plain CSS with no script at all. What
+no browser does is let you type your way down four hundred cities. If you are not
+filtering, you do not need this element.
+
+The field is a `role="combobox"` input and the popup a `role="listbox"`, with the cursor
+kept in `aria-activedescendant` so focus never leaves the field and typing keeps narrowing
+the list. The query matches anywhere in a label, and both sides fold first — `cacak` finds
+Čačak, `dordevic` finds Đorđević, and `бео` still finds Београд, because the folding is
+`removeAccents` and not `slugify`, which would have left that label an empty string.
+`multiple` adds the chips and drops the caret, `Backspace` on an empty field removes the
+last chip, and that half is the one with no APG example behind it: the pattern's six are
+all single-select.
+
+The `<select>` is hidden by being made transparent and un-clickable rather than by
+`display: none`, which is not a detail — a `display: none` control that is `required`
+blocks its own form, because the browser refuses to submit and then cannot focus what it
+cannot draw. Rendered, it validates; the element cancels the browser's bubble, which would
+be aimed at something invisible, and keeps the message — `validationMessage`, the
+platform's own words in the reader's own language — in a `role="alert"` under the field,
+with focus moved onto the field itself. Without the script the `<select>` is a plain,
+working `<select>`; nothing is hidden until the field that replaces it exists.
 
 ## `<disclosure-elemental>`
 

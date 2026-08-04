@@ -3,6 +3,7 @@ import js from '@eslint/js';
 const browserGlobals = {
   window: 'readonly',
   document: 'readonly',
+  Event: 'readonly',
   CustomEvent: 'readonly',
   HTMLElement: 'readonly',
   customElements: 'readonly',

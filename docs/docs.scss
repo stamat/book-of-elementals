@@ -4,6 +4,7 @@
 @use "poops-docs-theme/scss/docs";
 @use "../src/styles/index";
 @use "../src/elementals/accordion/theme" as *;
+@use "../src/elementals/combobox/theme" as *;
 @use "../src/elementals/disclosure/theme" as *;
 @use "../src/elementals/menu/theme" as *;
 @use "../src/elementals/navbar/theme" as *;
@@ -14,6 +15,24 @@
 // The live previews on these pages. Plain css from the package, loaded here because the
 // docs layout links exactly one stylesheet and this is it.
 @use "code-preview-element/src/code-preview.css";
+
+// Room for a demo whose sample opens something over itself. `<code-preview>` measures the
+// frame's content and writes that height onto it, which is right for every sample that is
+// what it looks like - and wrong for a dropdown, a flyout or a drawer, because an
+// absolutely positioned box adds nothing to the document it is drawn out of. So the frame
+// measures the field, and the popup under it is clipped by the frame's own edge.
+
+// `min-height` rather than a bigger `--code-preview-height`: the variable is the
+// reservation made before the element upgrades, and the measured height is written inline
+// afterwards - only a stylesheet minimum survives that. The variable is set with it so the
+// box does not resize the moment the element arrives.
+code-preview.demo-tall {
+  --code-preview-height: 22rem;
+
+  .code-preview-frame {
+    min-height: 22rem;
+  }
+}
 
 // The theme's copy-button script wraps every `.prose pre` in a `.code-wrap` - the block
 // inside a preview too - and `.prose :is(figure, .code-wrap)` outranks the package's own

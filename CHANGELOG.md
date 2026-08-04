@@ -17,6 +17,56 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Added
 
+- **`<combobox-elemental>`.** A native `<select>` given a text field to search it with, per
+  the [APG Combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/). The
+  `<select>` stays the control — it holds the value and submits under its own `name`, and
+  `required`, `disabled`, reset, restore and `<fieldset disabled>` are the browser's — so
+  the element has no event of its own: a pick sets `option.selected` and the `<select>`
+  fires `input` and then `change`. `multiple` on the `<select>` is what adds a chip per
+  selection, a remove button on each, and `Backspace` on an empty field — and no caret,
+  since a caret is the mark of a control holding one value and the chips have already said
+  otherwise. Attributes: reflected `open`, `placeholder`, `empty-text`, `remove-text`. The
+  search matches anywhere in a label and folds on both sides — `removeAccents` from
+  book-of-spells plus a pass for the stroked letters it cannot reach — so `cacak` finds
+  Čačak, `dordevic` finds Đorđević, `strasse` finds Straße, and `бео` still finds Београд,
+  which `slugify` would have reduced to an empty string.
+
+  **Validation:** the browser's `invalid` bubble is cancelled and its message kept, because
+  the bubble would be aimed at a control the reader cannot see. The text goes into a
+  `role="alert"` under the field — `select.validationMessage`, so it is the platform's own
+  words in the reader's own language — the field takes `aria-invalid` and an
+  `aria-describedby` pointing at it, and focus lands on the field, for the first invalid
+  control in the form only. Choosing a value clears all of it.
+
+  **DOM it produces:** this one builds markup, unlike the elements that wrap a native
+  widget. Inserted before the `<select>` — so a `<label>` around the element names the
+  field rather than the hidden control — it writes a
+  `<div class="combobox-elemental-field">` holding the chips, an
+  `<input role="combobox">` and — on a single select only — an `aria-hidden` indicator
+  button, plus a `<ul role="listbox" class="combobox-elemental-list">` of
+  `<li role="option">`, with `<optgroup>`s becoming a nested `<ul role="group">`, and a
+  `<p class="combobox-elemental-error" role="alert">` for the validation message. On the
+  `<select>` itself: `class="combobox-elemental-native"`, `tabindex="-1"` and
+  `aria-hidden="true"`. An explicit `<label for>` is re-pointed at the field. All of it is
+  undone when the element leaves the page.
+
+  **CSS you can target:** `combobox-elemental[open]`, the `combobox-elemental-*` classes
+  above, `[data-active]` for where the cursor is, `[aria-selected]` for what is chosen —
+  drawn differently on purpose, since they are two facts about one row, and the pointer
+  moves the cursor rather than lighting a second row — `[aria-invalid]` on the field,
+  `[data-side]` for which way the popup opened, and the nine `--combobox-elemental-*`
+  properties in the optional theme. `--combobox-elemental-inset` is spent three times — the
+  field, the gap before the caret, the side of every option — and nowhere else, so the
+  popup's text lines up under the field's. While it is open the popup is joined to the
+  field: the corners they meet at square off, their borders pull onto each other, and the
+  focus ring turns inwards (`outline-offset: 2px` to `-2px`) rather than being drawn across
+  the seam. The `<select>` is hidden by
+  being made transparent and un-clickable rather than by `display: none`, deliberately: a
+  `display: none` control that is `required` blocks its own form, because the browser
+  refuses to submit and cannot focus what it cannot draw. Restyle that rule and keep it
+  rendered. The focus ring is in `style.scss` rather than the theme, since a control whose
+  focus cannot be seen is broken rather than unstyled.
+
 - **`<segmented-elemental>`.** One choice out of a few, drawn as a track with a knob that
   slides under the checked segment — the N-state answer to `<switch-elemental>`. The
   segments are native `<input type="radio">` inside `<label>`s, so arrow keys, `Tab` in

@@ -79,6 +79,11 @@ const HEAD = [
   ':root[data-theme=dark]{color-scheme:dark}',
   'body{margin:0;padding:1rem;background:Canvas;color:CanvasText;',
   'font:1rem/1.5 system-ui,sans-serif}',
+  // A field's own label, which several samples open with. `body >` and not `label`: a
+  // label *inside* an elemental is part of that elemental - the segmented control is a row
+  // of them - and giving those a block display and a margin would take the sample apart to
+  // fix the line above it.
+  'body>label{display:block;margin-block-end:0.35rem}',
   '</style>',
   // A placeholder `href="#"` is a link to nowhere on an ordinary page, and something else
   // entirely in a srcdoc frame: srcdoc has no url of its own, so it borrows this page's as

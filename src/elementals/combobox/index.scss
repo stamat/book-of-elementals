@@ -1,0 +1,139 @@
+combobox-elemental {
+  // The popup and the `<select>` are both positioned against this, so the element has to
+  // be the containing block. Structure and not theme: a popup positioned against the page
+  // instead is not a smaller bug.
+  position: relative;
+  display: block;
+
+  // The control, laid over the field it is now driven by: transparent, un-clickable, out
+  // of the tab order and out of the accessibility tree - but *rendered*. Not
+  // `display: none`, which would look tidier and break the form: a `required` control
+  // with no box blocks submission and the browser reports it to nobody, because it
+  // cannot focus what it cannot draw. Rendered here, and under the field, the validation
+  // bubble points at the thing the reader has to fill in.
+
+  // The class is written by the element, so before it upgrades - and if the script never
+  // arrives - this rule does not match and the `<select>` is an ordinary `<select>`.
+  > select.combobox-elemental-native {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .combobox-elemental-field {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+
+    // The field is a text box the width of the element, so the pointer says so
+    // everywhere on it and not only over the input.
+    cursor: text;
+  }
+
+  // No box of its own: the chips are flex items of the field, so they wrap into rows with
+  // the input rather than fighting it for a column.
+  .combobox-elemental-chips {
+    display: contents;
+  }
+
+  .combobox-elemental-input {
+    flex: 1 1 4em;
+    min-inline-size: 0;
+
+    // None of its own: the space to the left of the text is the field's padding and the
+    // space to its right is the field's gap, so the caret can never be underlaid and the
+    // two edges are the same distance from the border by construction.
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+
+    // Moved onto the field, which is the box the reader sees - the ring is drawn there
+    // instead, in this file rather than in the theme, because a control whose focus
+    // cannot be seen is broken rather than unstyled.
+    outline: none;
+  }
+
+  .combobox-elemental-field:has(> .combobox-elemental-input:focus-visible) {
+    outline: 2px solid currentcolor;
+    outline-offset: 2px;
+  }
+
+  // Turned inwards while the popup is open, because the popup is drawn against the field's
+  // own edge: a ring 2px outside that edge is a ring drawn across the join, and on the side
+  // the popup is on, on top of the popup. Nothing is given up - it is the same 2px of
+  // `currentcolor` around the same focused box, on the inside of the border rather than the
+  // outside - and it is here rather than in the theme because the popup sits against the
+  // field in the structure, with or without a look.
+  &[open] .combobox-elemental-field:has(> .combobox-elemental-input:focus-visible) {
+    outline-offset: -2px;
+  }
+
+  .combobox-elemental-indicator {
+    flex: none;
+    padding: 0;
+    color: inherit;
+    cursor: pointer;
+    background: none;
+    border: 0;
+  }
+
+  .combobox-elemental-chip-remove {
+    cursor: pointer;
+  }
+
+  .combobox-elemental-list {
+    position: absolute;
+    z-index: 2;
+    inset-inline: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    // A four-hundred-option list is otherwise a popup taller than the page, with its
+    // bottom out of reach - the flip only chooses which end of the screen it starts from.
+    max-block-size: var(--combobox-elemental-max-height, 15rem);
+    overflow-y: auto;
+
+    ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+  }
+
+  // Which side the element measured room on. Both are written by script, so a popup with
+  // neither attribute is one that has not been opened yet.
+  .combobox-elemental-list[data-side="block-end"] {
+    inset-block-start: 100%;
+  }
+
+  .combobox-elemental-list[data-side="block-start"] {
+    inset-block-end: 100%;
+  }
+
+  // `hidden` is how the filter takes an option off the screen, and the UA sheet's
+  // `[hidden] { display: none }` loses to any author `display` at all, whatever its
+  // specificity - the theme gives every option a `display: flex`. So it is said again
+  // here, and said specifically enough to beat a stylesheet loaded after this one:
+  // without it the popup shows every option while the element believes it is filtering.
+  .combobox-elemental-list[hidden],
+  .combobox-elemental-list [hidden] {
+    display: none;
+  }
+
+  .combobox-elemental-option {
+    cursor: pointer;
+  }
+
+  // Neither is a choice: one is out of reach, the other is the popup saying there is
+  // nothing to choose.
+  .combobox-elemental-option[aria-disabled="true"],
+  .combobox-elemental-empty {
+    cursor: default;
+  }
+}
