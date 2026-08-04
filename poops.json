@@ -47,6 +47,15 @@
     }
   },
   {
+    "in": "src/styles/checkbox.scss",
+    "out": "dist/book-of-elementals-checkbox.css",
+    "options": {
+      "sourcemap": true,
+      "minify": true,
+      "justMinified": false
+    }
+  },
+  {
     "in": "src/elementals/*/index.scss",
     "out": "dist/elementals/",
     "options": {

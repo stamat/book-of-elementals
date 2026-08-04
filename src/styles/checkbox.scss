@@ -1,0 +1,121 @@
+// A drawn checkbox, for the places a native one cannot go far enough.
+
+// The only look in this package that is not an element's. It is here because
+// `<checkbox-group-elemental>` could not be drawn without it: the mixed state's dash is the
+// one part of a checkbox `accent-color` says nothing about - that property recolours the
+// browser's own box and cannot touch its size, its corners, or the weight of the dash. Once
+// a book of elements has drawn a checkbox, scoping it to the one element that forced it is
+// arbitrary, and it leaves a mismatched box beside every group.
+
+// Where the line is, and it is a refusal rather than a gap: a control gets a look here only
+// when an element in the book cannot be drawn without it. That is the checkbox and nothing
+// else - no text input, no `<select>`, no button.
+
+// Opt in. The class marks a container, and a `<label>` is a container:
+//   `<form class="checkbox-elemental">` styles every checkbox inside it,
+//   `<label class="checkbox-elemental">` styles the one it wraps.
+// A stylesheet that restyled `input[type="checkbox"]` outright would mean importing this
+// book's theme for an accordion and silently getting every checkbox on the page redrawn,
+// which is the toll this package exists not to charge. The custom properties go on whatever
+// carries the class, exactly as `<switch-elemental>`'s go on the element.
+
+// The defaults are the `var()` fallbacks below and are declared on nothing, which is the one
+// place this file departs from how the elements' themes are written. Those set their defaults
+// on the element, and a property set on an element always beats one inherited from an
+// ancestor - so a `<checkbox-group-elemental>` inside a `<form class="checkbox-elemental">`
+// would keep the shipped size while every checkbox beside it took the form's, which is the
+// mismatch this file exists to remove. With nothing declared, a value on any ancestor reaches
+// every box under it, and one set on the element still wins over that.
+
+@media (forced-colors: active) {
+  // Author backgrounds are dropped in this mode, so a filled box would be told from an empty
+  // one by nothing at all. `Highlight`/`HighlightText` is the one pair the mode guarantees
+  // contrasts, and it is what it paints a set control with anyway. Declared, unlike the
+  // defaults, because in this mode the point is to overrule what the page asked for.
+  .checkbox-elemental,
+  checkbox-group-elemental {
+    --checkbox-elemental-border-color: CanvasText;
+    --checkbox-elemental-fill: Highlight;
+    --checkbox-elemental-mark: HighlightText;
+  }
+}
+
+// The label laid out beside the box. Both forms: the class on a container holding labels,
+// and the class on the label itself, which is the single-checkbox case.
+.checkbox-elemental label:has(> input[type="checkbox"]),
+label.checkbox-elemental:has(> input[type="checkbox"]),
+checkbox-group-elemental label:has(> input[type="checkbox"]) {
+  display: flex;
+  gap: var(--checkbox-elemental-gap, 0.6em);
+  align-items: center;
+  cursor: pointer;
+}
+
+.checkbox-elemental input[type="checkbox"],
+checkbox-group-elemental input[type="checkbox"] {
+  // The control stays the control - this replaces what the browser draws, not what it does.
+  // Focus, `Space`, the label association, `disabled` and submission are untouched, which is
+  // the whole reason not to build a checkbox out of a `<div>`.
+  appearance: none;
+  flex: none;
+
+  // Load-bearing, not tidiness: a form control does not inherit the page's font, and the UA
+  // gives an `<input>` a 13.3px Arial of its own. Every `em` here would otherwise be a
+  // fraction of a font nobody chose - the box would come out smaller than the text beside
+  // it, and an author setting `--checkbox-elemental-size: 1.5em` would get 20px where they
+  // asked for 24. With this, `em` means what it means everywhere else on the page.
+  font: inherit;
+  inline-size: var(--checkbox-elemental-size, 1.15em);
+  block-size: var(--checkbox-elemental-size, 1.15em);
+  margin: 0;
+  cursor: pointer;
+  border:
+    var(--checkbox-elemental-border-width, 1.5px) solid
+    var(--checkbox-elemental-border-color, color-mix(in srgb, currentcolor 45%, transparent));
+  border-radius: var(--checkbox-elemental-radius, 0.25em);
+
+  // The mark, drawn as a mask over the box's own fill so it takes `--checkbox-elemental-mark`
+  // in one place for both shapes. `contain` on a box this small keeps the tick's stroke even
+  // at any size.
+  &::before {
+    content: "";
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    background: var(--checkbox-elemental-mark, Canvas);
+    scale: 0;
+    transition: scale 120ms ease-out;
+  }
+
+  &:checked,
+  &:indeterminate {
+    background: var(--checkbox-elemental-fill, currentcolor);
+    border-color: var(--checkbox-elemental-fill, currentcolor);
+
+    &::before {
+      scale: 1;
+    }
+  }
+
+  &:checked::before {
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+
+  // The dash, and the reason any of this is drawn at all. `:indeterminate` is the browser's
+  // own selector for it, so the state the script sets is the state the stylesheet reads -
+  // there is no class in between to fall out of step.
+  &:indeterminate::before {
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 7.25h12a.75.75 0 0 1 0 1.5H2a.75.75 0 0 1 0-1.5Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::before {
+      transition: none;
+    }
+  }
+}

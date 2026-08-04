@@ -180,12 +180,40 @@ project writes the same twenty lines. It is also purely visual: submission is de
 Pressing it cycles the [APG's way](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/):
 mixed → all on → all off → **back to the combination they were last mixed in**, so two
 ticks out of twenty survive a press instead of being destroyed by it. That last step is
-skipped when there is nothing worth going back to. A disabled checkbox is never moved, and
-still counts. Every child that does move fires `input` and `change`, so nothing listening
-downstream is left holding stale state.
+skipped when there is nothing worth going back to. A disabled checkbox is outside the set
+the parent speaks for — never moved and never counted, because counting one that is unticked
+would put "all" out of reach and freeze the cycle. Every child that does move fires `input`
+and `change`, so nothing listening downstream is left holding stale state.
 
 One level, not a tree: a nested group is a separate group. Without the script the parent is
-hidden rather than offered dead, and the children are ordinary working checkboxes.
+hidden rather than offered dead, and the children are ordinary working checkboxes — the
+stylesheet does that for a direct child, and `hidden` in the markup does it at any depth,
+which is what a select-all in a table header needs. The
+[bulk actions example](https://stamat.github.io/book-of-elementals/examples/bulk-actions.html)
+is that arrangement end to end: the header checkbox, a toolbar that wakes up, and a count
+kept honest by the per-row `change`.
+
+The boxes are drawn rather than left to `accent-color`, which recolours the browser's box
+and can say nothing about the weight of a dash — and since a page cannot have one drawn
+checkbox and a browserful of default ones, that drawing is a stylesheet of its own that any
+checkbox can wear. **Opt in with a class, on a container or on a `<label>`:**
+
+```html
+<form class="checkbox-elemental">…</form>
+<label class="checkbox-elemental"><input type="checkbox" /> Remember me</label>
+```
+
+```scss
+@use "book-of-elementals/checkbox.scss"; // or dist/book-of-elementals-checkbox.min.css
+```
+
+Eight `--checkbox-elemental-*` properties, set on whatever carries the class exactly as the
+switch's go on the element. It arrives with `checkbox-group/theme.scss` already. Never a
+bare `input[type="checkbox"]` selector: importing a theme for an accordion must not
+silently redraw every checkbox on the page. This is the only look in the package that is
+not an element's, and the line is stated in
+[CONTRIBUTING.md](CONTRIBUTING.md) — a control gets one only when an element cannot be
+drawn without it.
 
 ## `<combobox-elemental>`
 

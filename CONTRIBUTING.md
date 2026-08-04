@@ -9,6 +9,22 @@ keyboard behaviour the [APG pattern](https://www.w3.org/WAI/ARIA/apg/patterns/)
 asks for, and leaves the page working if the script never loads. An element that
 needs its own markup vocabulary to be useful is a different project.
 
+## What this is not
+
+Not a design system. Each element ships an optional look for **itself**, and nothing here
+styles the page around it — that is the difference between a book of elements and a
+framework you have to fight.
+
+There is one stylesheet that is not an element's, `styles/checkbox.scss`, and the line it
+sits on is the rule: **a control gets a look here only when an element in the book cannot be
+drawn without one.** `<checkbox-group-elemental>`'s mixed state is a dash that
+`accent-color` cannot draw, so the checkbox had to be drawn by hand; having drawn it,
+scoping it to that one element would leave a mismatched box beside every group. A text
+input, a `<select>`, a button — nothing has forced one, so there is none, and a PR adding
+one is a PR for a different project. It is also opt-in through a class, never a bare
+`input[type="checkbox"]` selector: importing a theme for an accordion must not silently
+redraw a page that did not ask.
+
 ## Getting set up
 
 ```bash

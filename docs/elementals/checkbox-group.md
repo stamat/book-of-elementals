@@ -94,10 +94,15 @@ there is not, rather than having a third step that lands where the second one di
 </checkbox-group-elemental>
 ```
 
-A disabled checkbox is one the reader could not have clicked, so the parent does not click
-it for them — it keeps its state through every press, and still counts towards what the
-parent says. A group whose only ticked box is a disabled one stays mixed however often you
-press it, which is the truth about that group.
+A disabled checkbox is **outside the set the parent speaks for**: it is never moved, and it
+is never counted. So the tick means "everything selectable is selected", and the group above
+shows one the moment Read, Write and Delete are ticked — Transfer ownership stays exactly as
+it was.
+
+Counting it instead is the obvious reading and it is a trap. A group holding one disabled
+and unticked box could never reach "all", so every press would compute "some", set
+everything it was allowed to, change nothing, and leave the cycle stuck on the step it was
+already on. A control whose state invites a press that does nothing is the worse lie.
 
 ## Usage
 
@@ -233,6 +238,12 @@ control lying about what it does — so it is not offered at all until the eleme
 `style.scss` hides the first checkbox and its label until `:defined`, and what is left is
 the plain list of checkboxes it was standing in front of, every one of them working.
 
+That rule reaches a **direct child** and no further, because CSS cannot say "the first
+checkbox anywhere below me". Where the parent is deeper — a `<th>` in a table header, which
+is where most select-alls live — write `hidden` on it instead and the element removes the
+attribute when it upgrades, at any depth. The
+[bulk actions example](../examples/bulk-actions.html) is that arrangement end to end.
+
 | Missing                   | What you get                                                    |
 | -------------------------- | ---------------------------------------------------------------- |
 | The script never loads    | The children, all working. No select-all, rather than a dead one |
@@ -240,26 +251,27 @@ the plain list of checkboxes it was standing in front of, every one of them work
 
 ## The look
 
-`style.scss` is structure only; `theme.scss` is the look and is optional. It draws the
-checkbox itself — `appearance: none` on a real `<input type="checkbox">`, so focus,
+`style.scss` is structure only; `theme.scss` is the look and is optional. The boxes
+themselves are drawn — `appearance: none` on a real `<input type="checkbox">`, so focus,
 <kbd>Space</kbd>, the label association, `disabled` and submission are all still the
 browser's — because the third state is the one thing `accent-color` cannot help with: it
 recolours the browser's box and can say nothing about its size, its corners, or the weight
 of the dash.
 
-Everything is scoped inside the element, so the rest of your page's checkboxes are left
-exactly as the browser drew them. Copy the rule out if you want them to match.
+That drawing is **not this element's**. It lives in `styles/checkbox.scss`, comes in with
+the theme automatically, and is the one look in this package that any checkbox can wear —
+see [any checkbox, the same look](#any-checkbox-the-same-look) below.
 
 | Property                                      | Default                | Description                        |
 | ---------------------------------------------- | ---------------------- | ----------------------------------- |
-| `--checkbox-group-elemental-size`             | `1.15em`               | Box size, both axes                |
-| `--checkbox-group-elemental-radius`           | `0.25em`               | Box corners                        |
-| `--checkbox-group-elemental-border-width`     | `1.5px`                | Box border                         |
-| `--checkbox-group-elemental-border-color`     | `currentcolor` at 45%  | Box border, unticked               |
-| `--checkbox-group-elemental-fill`             | `currentcolor`         | Box fill once ticked or mixed      |
-| `--checkbox-group-elemental-mark`             | `Canvas`               | The tick and the dash              |
-| `--checkbox-group-elemental-gap`              | `0.6em`                | Between a box and its label text   |
-| `--checkbox-group-elemental-indent`           | `1.75em`               | How far the children sit in        |
+| `--checkbox-elemental-size`                   | `1.15em`               | Box size, both axes                |
+| `--checkbox-elemental-radius`                 | `0.25em`               | Box corners                        |
+| `--checkbox-elemental-border-width`           | `1.5px`                | Box border                         |
+| `--checkbox-elemental-border-color`           | `currentcolor` at 45%  | Box border, unticked               |
+| `--checkbox-elemental-fill`                   | `currentcolor`         | Box fill once ticked or mixed      |
+| `--checkbox-elemental-mark`                   | `Canvas`               | The tick and the dash              |
+| `--checkbox-elemental-gap`                    | `0.6em`                | Between a box and its label text   |
+| `--checkbox-group-elemental-indent`           | `1.75em`               | How far the children sit in. The group's alone |
 
 That is the table above, live. Turn the knobs in the **Options** tab until it looks the way
 you want, then copy the rule out of the bottom of the panel:
@@ -281,10 +293,59 @@ pair that mode guarantees contrasts — and the mark is a shape rather than a co
 so a ticked box and a mixed one are still told apart with no colour at all.
 
 > [!NOTE]
-> `--checkbox-group-elemental-mark` defaults to `Canvas`, the page's own background, because
-> that is what a tick cut out of a filled box is. Re-point it on a card, and on a page that
-> themes in custom properties **without declaring `color-scheme`** — there `Canvas` stays
-> white in dark mode and the tick disappears into the fill.
+> `--checkbox-elemental-mark` defaults to `Canvas`, the page's own background, because that
+> is what a tick cut out of a filled box is. Re-point it on a card, and on a page that themes
+> in custom properties **without declaring `color-scheme`** — there `Canvas` stays white in
+> dark mode and the tick disappears into the fill.
+
+### Any checkbox, the same look
+
+A page with this element on it has one drawn checkbox and a browserful of default ones,
+which is a mismatch the element caused. So the drawing is a stylesheet of its own, and you
+point it at whatever you like — **the class marks a container, and a `<label>` counts as
+one**:
+
+```html
+<form class="checkbox-elemental">…</form>
+<!-- every checkbox inside it -->
+<label class="checkbox-elemental"><input type="checkbox" /> Remember me</label>
+<!-- just this one -->
+```
+
+```scss
+@use "book-of-elementals/checkbox.scss";
+```
+
+```html
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/book-of-elementals/dist/book-of-elementals-checkbox.min.css"
+/>
+```
+
+It comes in with `checkbox-group/theme.scss` already, so a page using the group only needs
+the class where it wants the rest to match. The custom properties are the same ones, set on
+whatever carries the class — a `<checkbox-group-elemental>` inside a tuned container takes
+the container's values too, so one form is one look:
+
+```css
+form.checkbox-elemental {
+  --checkbox-elemental-size: 1.4em;
+  --checkbox-elemental-radius: 50%;
+  --checkbox-elemental-fill: #0a7;
+  --checkbox-elemental-mark: white;
+}
+```
+
+It is opt-in and always will be. A stylesheet that restyled `input[type="checkbox"]`
+outright would mean importing this book's theme for an accordion and silently getting every
+checkbox on the page redrawn, which is the toll this package exists not to charge.
+
+> [!NOTE]
+> This is the only look here that is not an element's, and the line is drawn where it is for
+> a reason: **a control gets a look in this package only when an element in it cannot be
+> drawn without one.** The checkbox qualifies because the dash cannot be drawn any other way.
+> A text input, a `<select>` or a button does not, and will not.
 
 ## Select-all, or something else?
 

@@ -44,7 +44,12 @@ Elements published so far:
   the children were last mixed in, skipping that third step when there is nothing partial to
   restore. Disabled checkboxes are never moved and still count; every child that moves fires
   `input` and `change`. One level, not a tree — a nested group is a separate group. With no
-  script the parent is hidden rather than offered dead.
+  script the parent is hidden rather than offered dead. Its boxes are drawn by
+  `styles/checkbox.scss` (`book-of-elementals/checkbox.scss`,
+  `dist/book-of-elementals-checkbox.css`), the one look in the package that is not an
+  element's: opt in with `class="checkbox-elemental"` on a container or a `<label>` to give
+  any other checkbox the same look, and set the eight `--checkbox-elemental-*` properties on
+  whatever carries the class. Never a bare `input[type="checkbox"]` selector.
 - `<combobox-elemental>` — APG combobox over a native `<select>`: a `role="combobox"`
   text field that filters the options, a `role="listbox"` popup, and the cursor kept in
   `aria-activedescendant` so focus never leaves the field. `multiple` on the `<select>`

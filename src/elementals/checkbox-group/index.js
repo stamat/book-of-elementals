@@ -79,21 +79,24 @@ export function cycle(states, memory) {
  * the author's markup. Add it if a screen reader turns out to want it.
  *
  * Degrades by not being offered: with no script the parent would be a checkbox that ticks
- * itself and commands nothing, so the stylesheet hides it until the element upgrades. What
- * is left is the plain list of checkboxes it was standing in front of, all of them working.
+ * itself and commands nothing. The stylesheet hides it until the element upgrades where it
+ * is a direct child, and `hidden` in the markup does the same at any depth - a select-all
+ * in a table header, which is where most of them are, has no selector that can reach it,
+ * because CSS cannot say "the first checkbox anywhere below me". Either way what is left is
+ * the plain list of checkboxes it was standing in front of, all of them working.
  *
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/
  *
  * @tag checkbox-group-elemental
  *
- * @cssprop {<length>} [--checkbox-group-elemental-size=1.15em] - Box size, both axes.
- * @cssprop {<length>} [--checkbox-group-elemental-radius=0.25em] - Box corners.
- * @cssprop {<length>} [--checkbox-group-elemental-border-width=1.5px] - Box border.
- * @cssprop {<color>} [--checkbox-group-elemental-border-color=color-mix(in srgb, currentcolor 45%, transparent)] - Box border, unticked.
- * @cssprop {<color>} [--checkbox-group-elemental-fill=currentcolor] - Box fill once it is ticked or mixed.
- * @cssprop {<color>} [--checkbox-group-elemental-mark=Canvas] - The tick and the dash. The page's own background, so re-point it on a card.
- * @cssprop {<length>} [--checkbox-group-elemental-gap=0.6em] - Between a box and its label text.
- * @cssprop {<length>} [--checkbox-group-elemental-indent=1.75em] - How far the children sit in from the parent.
+ * @cssprop {<length>} [--checkbox-elemental-size=1.15em] - Box size, both axes. Shared with any `.checkbox-elemental` on the page.
+ * @cssprop {<length>} [--checkbox-elemental-radius=0.25em] - Box corners.
+ * @cssprop {<length>} [--checkbox-elemental-border-width=1.5px] - Box border.
+ * @cssprop {<color>} [--checkbox-elemental-border-color=color-mix(in srgb, currentcolor 45%, transparent)] - Box border, unticked.
+ * @cssprop {<color>} [--checkbox-elemental-fill=currentcolor] - Box fill once it is ticked or mixed.
+ * @cssprop {<color>} [--checkbox-elemental-mark=Canvas] - The tick and the dash. The page's own background, so re-point it on a card.
+ * @cssprop {<length>} [--checkbox-elemental-gap=0.6em] - Between a box and its label text.
+ * @cssprop {<length>} [--checkbox-group-elemental-indent=1.75em] - How far the children sit in from the parent. This one is the group's alone.
  *
  * @slot - The parent `<input type="checkbox">` in its `<label>`, and the children's checkboxes under it.
  */
@@ -123,9 +126,24 @@ export class CheckboxGroupElemental extends ElementBase {
       .filter((box) => box.closest('checkbox-group-elemental') === this);
   }
 
+  /**
+   * The checkboxes the parent can actually move, which is the set it speaks for.
+   *
+   * A disabled one is not in it, and that decides both halves at once. It cannot be
+   * counted, because a group holding one disabled and unticked box could never reach "all"
+   * - every press would compute "some", set everything it is allowed to, change nothing,
+   * and the cycle would be stuck on the step it was already on. And it cannot be moved,
+   * because a checkbox the reader could not have clicked is not one the parent gets to
+   * click for them. So the parent's tick means "everything selectable is selected", which
+   * is the only reading under which pressing it does what it says.
+   */
+  movable() {
+    return this.checkboxes.filter((box) => !box.disabled);
+  }
+
   /** `all`, `some` or `none` - the same word the element writes onto itself. */
   get state() {
-    return classify(this.checkboxes.map((box) => box.checked));
+    return classify(this.movable().map((box) => box.checked));
   }
 
   connectedCallback() {
@@ -141,6 +159,16 @@ export class CheckboxGroupElemental extends ElementBase {
     this.onChange = this.onChange.bind(this);
     this.onReset = this.onReset.bind(this);
     this.apply = this.apply.bind(this);
+
+    // A parent authored `hidden` is one the page has kept back until there is something
+    // driving it, and this is that moment. The stylesheet does the same job for the markup
+    // in the docs, but only there: `:not(:defined) > label` can reach a direct child and
+    // CSS has no way to say "the first checkbox anywhere below me", so a select-all in a
+    // table header - which is where most of them are - has no rule that can find it.
+    // Writing `hidden` on it is the answer that works at any depth, and it is put back if
+    // this element ever leaves.
+    this.parentWasHidden = this.parent.hasAttribute('hidden');
+    if (this.parentWasHidden) this.parent.hidden = false;
 
     this.addEventListener('click', this.onClick);
     this.addEventListener('change', this.onChange);
@@ -165,7 +193,10 @@ export class CheckboxGroupElemental extends ElementBase {
     // element knows how to leave, and one left behind is a checkbox stuck looking mixed
     // with nothing driving it.
     const parent = this.parent;
-    if (parent) parent.indeterminate = false;
+    if (parent) {
+      parent.indeterminate = false;
+      if (this.parentWasHidden) parent.hidden = true;
+    }
     delete this.dataset.state;
     this.form = null;
     this.initialized = false;
@@ -184,7 +215,7 @@ export class CheckboxGroupElemental extends ElementBase {
     const parent = this.parent;
     if (!parent) return;
     const state = this.state;
-    if (state === 'some') this.memory = this.checkboxes.map((box) => box.checked);
+    if (state === 'some') this.memory = this.movable().map((box) => box.checked);
     parent.checked = state === 'all';
     parent.indeterminate = state === 'some';
     this.dataset.state = state;
@@ -201,16 +232,15 @@ export class CheckboxGroupElemental extends ElementBase {
   onClick(e) {
     const parent = this.parent;
     if (!parent || e.target !== parent || parent.disabled) return;
-    const children = this.checkboxes;
+    // The movable ones, so the cycle is computed over exactly the set it can write to -
+    // count a box the press cannot move and the press stops being able to finish.
+    const children = this.movable();
     const next = cycle(children.map((box) => box.checked), this.memory);
 
     this.applying = true;
     for (let i = 0; i < children.length; i++) {
       const box = children[i];
-      // A disabled checkbox is one the reader could not have clicked either, so the parent
-      // does not get to click it for them. It still counts towards what the parent says,
-      // which is why a group of one disabled tick stays mixed however often it is pressed.
-      if (box.disabled || box.checked === next[i]) continue;
+      if (box.checked === next[i]) continue;
       box.checked = next[i];
       // What a real click on that checkbox would have fired, in the order it fires it. A
       // page listening for `change` on the form is listening for exactly this, and a

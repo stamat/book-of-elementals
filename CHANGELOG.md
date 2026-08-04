@@ -28,10 +28,17 @@ may already be targeting**, since neither shows up in a function signature.
   combination the children were last mixed in**, so a partial selection survives a press
   instead of being destroyed by it. That third step is skipped when there is nothing partial
   to restore — no memory, or one taken when the group was a different size. A disabled
-  checkbox is never moved and still counts towards what the parent says. Every child that
-  does move fires `input` and then `change`, exactly as clicking it would, so nothing
-  listening downstream is left holding stale state. One level, not a tree: a group nested
-  inside another is a separate group.
+  checkbox is outside the set the parent speaks for: never moved, and never counted, since
+  counting an unticked one would put "all" out of reach and leave every press computing
+  "some" and changing nothing. Every child that does move fires `input` and then `change`,
+  exactly as clicking it would, so nothing listening downstream is left holding stale state.
+  One level, not a tree: a group nested inside another is a separate group.
+
+  **Degrading at any depth:** the stylesheet hides the parent until `:defined`, which reaches
+  a direct child and no further — CSS cannot say "the first checkbox anywhere below me", and
+  a select-all in a table header is three elements deep. Writing `hidden` on the parent does
+  the same job anywhere: the element removes the attribute on upgrade and puts it back if it
+  ever leaves the page.
 
   **DOM it produces:** nothing is moved, wrapped or given an attribute it did not have. On
   the parent checkbox it sets the `checked` and `indeterminate` properties; on itself it
@@ -49,6 +56,39 @@ may already be targeting**, since neither shows up in a function signature.
   the element, so the rest of the page's checkboxes are left as the browser drew them.
   `style.scss` hides the parent and its label until `:defined`, since a select-all that
   selects nothing is worse than none at all.
+
+- **`styles/checkbox.scss` — the drawn checkbox, for any checkbox.** The look
+  `<checkbox-group-elemental>` needed, on its own, because a page cannot have one drawn
+  checkbox and a browserful of default ones. **Opt in with a class**, which marks a
+  container — and a `<label>` is a container:
+
+  ```html
+  <form class="checkbox-elemental">…</form>
+  <label class="checkbox-elemental"><input type="checkbox" /> Remember me</label>
+  ```
+
+  ```scss
+  @use "book-of-elementals/checkbox.scss";
+  ```
+
+  Never a bare `input[type="checkbox"]` selector: importing this book's theme for an
+  accordion must not silently redraw every checkbox on the page. New exports
+  `book-of-elementals/checkbox.scss` and `/checkbox.css`, plus
+  `dist/book-of-elementals-checkbox.css` for the CDN; it comes in with
+  `checkbox-group/theme.scss` already, so a page using the group only needs the class where
+  it wants the rest to match.
+
+  **CSS you can target:** the eight `--checkbox-elemental-*` properties, set on whatever
+  carries the class. Unlike every element theme here they are declared on nothing and live
+  in the `var()` fallbacks, deliberately: a property set on an element beats one inherited
+  from an ancestor, so declaring them on `checkbox-group-elemental` would leave a group
+  inside a tuned form wearing the shipped size while every checkbox beside it took the
+  form's. The input also takes `font: inherit`, without which every `em` here is a fraction
+  of the UA's 13.3px control font rather than of the text beside it.
+
+  This is the only look in the package that is not an element's, and the line it sits on is
+  now stated in CONTRIBUTING.md: a control gets a look here only when an element cannot be
+  drawn without one.
 
 - **`<combobox-elemental>`.** A native `<select>` given a text field to search it with, per
   the [APG Combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/). The
