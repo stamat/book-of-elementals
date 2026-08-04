@@ -9,6 +9,7 @@ const browserGlobals = {
   customElements: 'readonly',
   navigator: 'readonly',
   IntersectionObserver: 'readonly',
+  MutationObserver: 'readonly',
   decodeURIComponent: 'readonly',
   setTimeout: 'readonly',
   clearTimeout: 'readonly'

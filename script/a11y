@@ -176,6 +176,19 @@ async function auditFrame(frame, report) {
     }
   }
 
+  // Opened through the element rather than by clicking what opens it, which is the one
+  // exception to the rule above and the nesting is why: the trigger for a modal inside
+  // another modal only exists while its parent is open, and the parent is inert to a click
+  // the moment the child arrives. Closed again through the dialog, which is instant - the
+  // element's own close waits for an animation this sweep has no reason to sit through.
+  const modals = await frame.evaluate(() =>
+    [...document.querySelectorAll('modal-elemental > dialog')].map((dialog) => dialog.id));
+  for (const [i, id] of modals.entries()) {
+    await frame.evaluate((dialogId) => document.getElementById(dialogId).parentElement.show(), id);
+    states.push([`modal ${i + 1} of ${modals.length} open`, await runAxe(frame)]);
+    await frame.evaluate((dialogId) => document.getElementById(dialogId).close(), id);
+  }
+
   report.states += states.length;
   report.skipped.push(...skipped);
   return states;

@@ -24,6 +24,7 @@ holds the JavaScript helpers, this one holds the elements.
 | `<copy-elemental>`       | No APG pattern — a `<button>`, the clipboard write behind it, and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-changes.html) every copy button forgets |
 | `<disclosure-elemental>` | [APG Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), where `<details>` cannot go |
 | `<menu-elemental>`       | [APG Menu Button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/), nested, and not a menu below a breakpoint |
+| `<modal-elemental>`      | [APG Modal Dialog](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) on native `<dialog>` — nested, animated out, and dismissed the way the platform says |
 | `<navbar-elemental>`     | [APG Disclosure Navigation](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/), folding itself away when the links stop fitting |
 | `<segmented-elemental>`  | [APG Radio Group](https://www.w3.org/WAI/ARIA/apg/patterns/radio/) on native radios, drawn as a track with a knob that slides |
 | `<switch-elemental>`     | [APG Switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/), for a setting that takes effect at once |
@@ -418,6 +419,60 @@ For site navigation rather than commands, this is the wrong element and
 semantics, and a page somebody might open in a new tab wants to stay a link. The
 [docs page](https://stamat.github.io/book-of-elementals/elementals/menu.html)
 lays out the trade.
+
+## `<modal-elemental>`
+
+A `<dialog>` opened as a modal — and opened by the browser, which is the whole
+argument for the element. `showModal()` already puts it in the top layer, makes
+the rest of the page `inert`, moves focus in, brings it back on close and closes
+on <kbd>Escape</kbd>. **Nesting comes with that**: a second modal is a second
+entry in the top layer, and the browser computes inertness from the topmost one,
+so nothing here tracks parents or arbitrates `z-index`.
+
+```html
+<button type="button" command="show-modal" commandfor="confirm">Sign out</button>
+
+<modal-elemental closedby="any">
+  <dialog id="confirm">
+    <h2>Sign out everywhere?</h2>
+    <form method="dialog">
+      <button type="submit" value="cancel">Cancel</button>
+      <button type="submit" value="ok">Sign out</button>
+    </form>
+  </dialog>
+</modal-elemental>
+```
+
+| Attribute       | Type    | Default        | Description                                                              |
+| --------------- | ------- | -------------- | -------------------------------------------------------------------------- |
+| `closedby`      | enum    | `closerequest` | `any`, `closerequest` or `none` — HTML's own three values. Moved up from the `<dialog>` if written there |
+| `close-others`  | boolean | —              | Opening this one closes every modal already open, instead of stacking      |
+
+What the platform leaves behind is the whole of the element: an **exit
+animation**, which otherwise needs the [`overlay`](https://developer.mozilla.org/en-US/docs/Web/CSS/overlay)
+property that [Firefox and Safari do not have](https://caniuse.com/mdn-css_properties_overlay);
+a **click on the backdrop**, which needs `closedby` support
+[Safari does not have either](https://caniuse.com/mdn-html_elements_dialog_closedby);
+the page behind **not scrolling**; the pile of backdrops a stack of modals would
+paint on top of each other, of which only the bottom one dims; and an
+`aria-labelledby` pointed at the first heading, since a `<dialog>` takes no name
+from its contents.
+
+Triggers are HTML's own invoker commands — `command="show-modal"` and
+`commandfor` — handled by the element rather than left to the browser, which is
+what animates the close and what makes them work where invoker commands have not
+landed yet. A `<a href="#id">` opens one too, which is what deep links, the back
+button and a page with no script all ride on.
+
+Closing stops what the modal was playing: `<video>` and `<audio>` are paused, and
+an `<iframe>` is reloaded, since a cross-origin player takes no instructions from
+here. That is all the lightbox and the YouTube embed on the
+[docs page](https://stamat.github.io/book-of-elementals/elementals/modal.html)
+are — markup in a dialog, with nothing switched on.
+
+It replaces [modally](https://github.com/stamat/modally), which is deprecated:
+nesting, `closeOthers` and hash-driven opening are all here, and the width and
+alignment options are custom properties, which is what they always were.
 
 ## `<navbar-elemental>`
 

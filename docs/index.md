@@ -101,6 +101,7 @@ handling are not options.
 | [`<copy-elemental>`](elementals/copy.html)             | No APG pattern — a `<button>`, the clipboard write behind it, and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-changes.html) every copy button forgets |
 | [`<disclosure-elemental>`](elementals/disclosure.html) | [APG Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), where `<details>` cannot go |
 | [`<menu-elemental>`](elementals/menu.html)             | [APG Menu Button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/), nested, and not a menu below a breakpoint |
+| [`<modal-elemental>`](elementals/modal.html)           | [APG Modal Dialog](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) on native `<dialog>` — nested, animated out, and dismissed the way the platform says |
 | [`<navbar-elemental>`](elementals/navbar.html)         | [APG Disclosure Navigation](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/), that folds itself away when the links stop fitting |
 | [`<segmented-elemental>`](elementals/segmented.html)   | [APG Radio Group](https://www.w3.org/WAI/ARIA/apg/patterns/radio/) on native radios, drawn as a track with a knob that slides |
 | [`<switch-elemental>`](elementals/switch.html)         | [APG Switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/), for a setting that takes effect at once |

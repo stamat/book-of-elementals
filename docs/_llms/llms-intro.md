@@ -104,6 +104,19 @@ Elements published so far:
   width the flyout exists in; outside it the roles come off and the same markup is
   a stack of nested disclosures, which is what `data-mode` says. For commands —
   account menus, toolbars, "more actions" — not for site navigation.
+- `<modal-elemental>` — APG modal dialog, wrapping a native `<dialog>` and opening
+  it with `showModal()`, so the top layer, the `inert` page behind, the focus that
+  goes in and comes back, `Escape` and **nesting** are the browser's rather than a
+  focus trap's. What it adds: an animated close, since deferring the top-layer
+  removal needs the `overlay` property Firefox and Safari lack; a click on the
+  backdrop under `closedby="any"`, which Safari has no support for; scroll lock on
+  the page behind; `data-depth`, so a stack of modals paints one sheet of dim
+  rather than one each; and `aria-labelledby` pointed at the first heading. Opened
+  by `command="show-modal"`/`commandfor`, by a link to its `id`, or by `show()`;
+  the fragment in the URL opens it, and the back button closes it. `close-others`
+  replaces the stack instead of adding to it. Closing pauses `<video>`/`<audio>`
+  inside and reloads any `<iframe>`, which is what a lightbox and a YouTube embed
+  need and all either of them is.
 - `<navbar-elemental>` — APG disclosure navigation: a site's row of links and the
   panels some of them open, writing no roles at all, because a link announced as a
   menu item is a link no longer. Links that stop fitting move behind an overflow

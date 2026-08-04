@@ -9,6 +9,7 @@ import './elementals/combobox/index.js';
 import './elementals/copy/index.js';
 import './elementals/disclosure/index.js';
 import './elementals/menu/index.js';
+import './elementals/modal/index.js';
 import './elementals/navbar/index.js';
 import './elementals/segmented/index.js';
 import './elementals/switch/index.js';

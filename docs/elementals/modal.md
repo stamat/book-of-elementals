@@ -1,0 +1,531 @@
+---
+layout: poops-docs-theme/docs
+title: Modal
+description: A native dialog opened as a modal — nested, animated, and dismissed the way the platform says.
+order: 12
+---
+
+# `<modal-elemental>`
+
+A `<dialog>` opened as a modal, per the
+[APG Modal Dialog pattern](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) — and
+mostly by the browser, which is the point. Light DOM, no shadow root, nothing moved: the
+dialog stays where your markup put it and every attribute on it is still the platform's own.
+
+<div class="demo-block">
+  <button type="button" command="show-modal" commandfor="intro-dialog">Open a modal</button>
+  <modal-elemental closedby="any">
+    <dialog id="intro-dialog">
+      <h2>Nothing up my sleeve</h2>
+      <p>Escape closes it. So does a click outside, because this one says <code>closedby="any"</code>.</p>
+      <form method="dialog"><button type="submit">Close</button></form>
+    </dialog>
+  </modal-elemental>
+</div>
+
+```html
+<button type="button" command="show-modal" commandfor="hello">Open a modal</button>
+
+<modal-elemental closedby="any">
+  <dialog id="hello">
+    <h2>Nothing up my sleeve</h2>
+    <form method="dialog"><button type="submit">Close</button></form>
+  </dialog>
+</modal-elemental>
+```
+
+## What the browser already does
+
+Nearly all of it, and better than script can. `showModal()` puts the dialog in the
+[top layer](https://developer.mozilla.org/en-US/docs/Glossary/Top_layer) — above every
+`z-index`, out of every `overflow: hidden` ancestor — makes the rest of the page `inert`,
+moves focus in, brings it back on close, and closes on <kbd>Esc</kbd>. **Nesting is part of
+that**: a second modal is a second entry in the top layer, and the browser computes
+inertness from the topmost one, so the dialog underneath goes quiet on its own. No focus
+trap, no `z-index` arithmetic, no two libraries arguing over who owns the page.
+
+What is left over is this element:
+
+| The gap                     | Why the platform leaves it                                                                                                                                                                                     | What this does                                                    |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| **an exit animation**       | a closing dialog leaves the top layer in the same frame, so it vanishes mid-fade. Deferring that is the [`overlay`](https://developer.mozilla.org/en-US/docs/Web/CSS/overlay) property — Chromium only, [no Firefox, no Safari](https://caniuse.com/mdn-css_properties_overlay) | holds the dialog open until its animation ends, then closes it    |
+| **a click on the backdrop** | [`closedby="any"`](https://caniuse.com/mdn-html_elements_dialog_closedby) is Chrome 134, Firefox 141, and not in Safari or iOS at all                                                                            | the same three values, implemented here, in every browser         |
+| **the page not scrolling**  | `inert` stops a click and a <kbd>Tab</kbd>. It never stopped a wheel                                                                                                                                             | `overflow: hidden` on the root while any modal is open            |
+| **stacked backdrops**       | every modal paints its own, so three open is three sheets of dim                                                                                                                                                | numbers them, and only the bottom one dims                        |
+| **a name on the dialog**    | a `<dialog>` takes no name from its contents, so an unlabelled one is announced as "dialog" and nothing more                                                                                                     | points `aria-labelledby` at the first heading inside              |
+
+Everything else is the browser's, unchanged and unwrapped.
+
+### Prior art
+
+| | How it nests | Who contains focus |
+| --- | --- | --- |
+| [a11y-dialog](https://a11y-dialog.netlify.app/advanced/nested-dialogs) | supported, and called "a questionable design pattern" — the dialogs have to be nested in the DOM as well, or VoiceOver on Safari loses the inner one | the library |
+| [modally](https://github.com/stamat/modally) | supported, with its own parent-child detection | the library, through a focus trap it writes |
+| this | supported, in the DOM or not, because the top layer is not the DOM | the browser, through `inert` |
+
+Containing focus is the line worth drawing. A focus trap in script is a `keydown` handler
+racing everything else on the page; `showModal()` makes the rest of the document `inert`,
+which takes it out of the tab order **and** out of the accessibility tree, so a screen
+reader's own cursor cannot wander out either.
+
+> [!NOTE]
+> This element replaces [modally](https://github.com/stamat/modally), which is now
+> deprecated. Nesting, `closeOthers` and hash-driven opening are all here; the width and
+> alignment options are CSS custom properties, since that is what they always were. The
+> YouTube and Vimeo helpers are not — an embed is markup you write once, and
+> [the examples below](#video-and-lightboxes) are that markup.
+
+## Usage
+
+```javascript
+import "book-of-elementals/modal";
+```
+
+```scss
+@use "book-of-elementals/modal/style.scss"; // structure, motion, and the sheet of dim
+@use "book-of-elementals/modal/theme.scss"; // the look, optional
+```
+
+Or the single-element bundle — no build step, no script to write:
+
+```html
+<script src="https://unpkg.com/book-of-elementals/dist/elementals/modal.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/book-of-elementals/dist/elementals/modal.min.css" />
+<link rel="stylesheet" href="https://unpkg.com/book-of-elementals/dist/elementals/modal-theme.min.css" />
+```
+
+The `<dialog>` is **the element's own direct child**, and it needs an `id` — that is what a
+trigger points at. Without one, the element writes a generated `id`, and the modal can only
+be opened from script.
+
+### Opening and closing it
+
+The vocabulary is HTML's own: [invoker commands](https://developer.mozilla.org/en-US/docs/Web/API/Invoker_Commands_API),
+`command` on the button and `commandfor` naming the dialog.
+
+| Markup                                    | What it does                                          |
+| ----------------------------------------- | ----------------------------------------------------- |
+| `command="show-modal" commandfor="id"`    | opens it                                              |
+| `command="request-close" commandfor="id"` | closes it                                             |
+| `command="close" commandfor="id"`         | the same here — both are animated                     |
+| `<form method="dialog">`                  | closes it on submit, and the button's `value` lands in `returnValue` |
+| `<a href="#id">`                          | opens it too, and is the one that still works with no script |
+| `dialog.showModal()`, `dialog.show()`     | from your own script, on the `<dialog>` — the element picks it up |
+
+The element handles those clicks itself rather than leaving them to the browser, which is
+what makes the close animated — and what makes the markup work in browsers with no invoker
+commands of their own. Write it the same way either side of that line.
+
+Every one of them is remote: the trigger is matched by `id` on the document, so it can sit
+anywhere — a toolbar at the top of the page, a row in a table, another modal. Nothing has to
+be inside the `<modal-elemental>` except the `<dialog>` itself.
+
+That last row is the one worth knowing about. `document.getElementById("feedback")` hands you
+the **dialog**, not the element around it, so `showModal()` on it is the call most people
+reach for — and it works: the element notices, animates it in, counts its backdrop with the
+rest and locks the page's scroll, exactly as though a button had opened it. A `show()` gets
+the visible state and nothing else, because a non-modal dialog sits *in* the page rather than
+over it. `el.show()` on the `<modal-elemental>` is the same open with `close-others` honoured.
+
+<!-- demo modal -->
+
+```html
+<button type="button" command="show-modal" commandfor="feedback">Send feedback</button>
+
+<modal-elemental closedby="any">
+  <dialog id="feedback">
+    <h2>Send feedback</h2>
+    <form method="dialog">
+      <p><label>What happened? <input name="what" /></label></p>
+      <button type="submit" value="cancel">Cancel</button>
+      <button type="submit" value="send">Send</button>
+    </form>
+  </dialog>
+</modal-elemental>
+```
+
+```css demo
+/* room for the dialog: the preview frame is measured from the sample, and the sample is a button */
+body { min-block-size: 20rem; }
+```
+
+### What closes it
+
+`closedby` is the platform's attribute, with the platform's three values and the platform's
+default. Write it on the `<modal-elemental>`; written on the `<dialog>` it is moved up on
+upgrade, because a browser that supports it natively would light-dismiss the modal itself —
+instantly, with the fade cut off, and with a `cancel` event that
+[cannot be prevented](https://html.spec.whatwg.org/multipage/interactive-elements.html#light-dismiss-open-dialogs).
+
+| Value                     | <kbd>Esc</kbd> | Click outside | For                                        |
+| ------------------------- | -------------- | ------------- | ------------------------------------------ |
+| `closerequest` _(default)_ | closes         | no            | a form, anything with unsaved input        |
+| `any`                     | closes         | closes        | a lightbox, a menu, anything glanced at    |
+| `none`                    | no             | no            | a decision that has to be made             |
+
+`none` is not a lock. A close watcher only argues once, so a second <kbd>Esc</kbd> closes the
+dialog anyway — that is the platform refusing to trap a reader, and it is not something this
+element should undo. Use it to catch a stray press, not to hold someone hostage.
+
+## Nesting
+
+Open a modal from inside a modal. There is nothing to turn on: the second `showModal()`
+stacks, the first goes inert underneath it, <kbd>Esc</kbd> closes the innermost, and focus
+walks back out the way it came in.
+
+<!-- demo modal -->
+
+```html
+<button type="button" command="show-modal" commandfor="settings">Settings</button>
+
+<modal-elemental closedby="any">
+  <dialog id="settings">
+    <h2>Settings</h2>
+    <p>Two devices are signed in.</p>
+    <button type="button" command="show-modal" commandfor="confirm">Sign out everywhere</button>
+    <form method="dialog"><button type="submit">Done</button></form>
+  </dialog>
+</modal-elemental>
+
+<modal-elemental>
+  <dialog id="confirm">
+    <h2>Sign out everywhere?</h2>
+    <p>You will have to sign in again on both devices.</p>
+    <form method="dialog">
+      <button type="submit" value="cancel">Cancel</button>
+      <button type="submit" value="ok">Sign out</button>
+    </form>
+  </dialog>
+</modal-elemental>
+```
+
+```css demo
+/* room for the dialog: the preview frame is measured from the sample, and the sample is a button */
+body { min-block-size: 20rem; }
+```
+
+The confirmation is a **sibling**, not a child. Either works — the browser does not care
+where in the document a dialog sits, since the top layer is not the DOM — but a modal that
+lives outside the one that opens it can be opened from anywhere else too, and it keeps the
+markup of each one to the thing it says.
+
+Only the bottom modal dims the page. Each dialog carries `data-depth`, and the stylesheet
+paints the backdrop of `data-depth="1"` alone, so a stack of three is one sheet of dim with
+three boxes on it rather than a page that gets darker the deeper you go.
+
+Opening one **instead** of the others, rather than on top of them, is `close-others`:
+
+```html
+<modal-elemental close-others>
+  <dialog id="terms">…</dialog>
+</modal-elemental>
+```
+
+## Deep links and the back button
+
+A modal whose `id` is the fragment of the URL opens itself. That is one mechanism doing three
+jobs — an `<a href="#id">` that opens it, a link someone else can paste, and the **back
+button closing it**, which is what a reader on a phone will press whether or not anyone told
+them to.
+
+```html
+<a href="#pricing-details">What is included?</a>
+
+<modal-elemental closedby="any">
+  <dialog id="pricing-details">…</dialog>
+</modal-elemental>
+```
+
+Closing it takes the fragment back off: the entry the link pushed is spent with
+`history.back()`, so the next press does not reopen what was just closed. A modal opened by
+a button does not touch the URL at all — the link is the thing that puts it there.
+
+## Video and lightboxes
+
+There is no video option, no lightbox mode and no player integration. A modal holds markup,
+and markup is what an image or an embed already is. The one thing the element does for them
+is the thing a modal has to: **when it closes, what was playing stops.** A closed dialog is
+`display: none`, which pauses nothing — the sound would carry on over a page the reader has
+already gone back to.
+
+| Inside the dialog | On close                                                          |
+| ----------------- | ----------------------------------------------------------------- |
+| `<video>`, `<audio>` | paused where it was                                            |
+| `<iframe>`        | reloaded, since a cross-origin player cannot be paused from here — so it reopens at the start |
+
+### A lightbox
+
+<!-- demo modal -->
+
+```html
+<button type="button" class="thumb" command="show-modal" commandfor="lightbox">
+  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'%3E%3Crect width='160' height='100' fill='%23244'/%3E%3Ccircle cx='120' cy='28' r='14' fill='%23fc7'/%3E%3Cpolygon points='0,100 60,40 110,100' fill='%23576'/%3E%3Cpolygon points='80,100 130,55 160,100' fill='%23354'/%3E%3C/svg%3E" alt="Two hills under a low sun" width="160" height="100">
+</button>
+
+<modal-elemental closedby="any">
+  <dialog id="lightbox" aria-label="Two hills under a low sun">
+    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'%3E%3Crect width='160' height='100' fill='%23244'/%3E%3Ccircle cx='120' cy='28' r='14' fill='%23fc7'/%3E%3Cpolygon points='0,100 60,40 110,100' fill='%23576'/%3E%3Cpolygon points='80,100 130,55 160,100' fill='%23354'/%3E%3C/svg%3E" alt="Two hills under a low sun" width="960" height="600">
+    <form method="dialog"><button type="submit" aria-label="Close">✕</button></form>
+  </dialog>
+</modal-elemental>
+```
+
+```css demo
+body { margin: 0; padding: 1rem; min-block-size: 32rem; font: 1rem/1.5 system-ui, sans-serif; }
+
+.thumb { padding: 0; border: 0; background: none; cursor: pointer; }
+.thumb img { display: block; border-radius: 0.25rem; }
+
+/* the theme's box, opened out for a picture: no padding, no surface, wider */
+modal-elemental > dialog#lightbox {
+  --modal-elemental-max-width: 60rem;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* the picture is sized against the viewport, not against the box: the box is
+   `fit-content` around the picture, so a percentage of it would be measuring itself.
+   `object-fit` is for the short viewport, where the height cap is what bites */
+#lightbox img {
+  display: block;
+  inline-size: min(60rem, calc(100vw - 3rem));
+  block-size: auto;
+  max-block-size: calc(100dvh - 3rem);
+  object-fit: contain;
+  border-radius: 0.5rem;
+}
+
+#lightbox form { position: absolute; inset-block-start: 0.5rem; inset-inline-end: 0.5rem; margin: 0; }
+#lightbox button { border: 0; border-radius: 100%; width: 2rem; height: 2rem; cursor: pointer; }
+```
+
+The dialog is named with `aria-label` here because there is no heading to point at — a
+picture and a close button are the whole of it.
+
+### A video
+
+<!-- demo modal -->
+
+```html
+<button type="button" command="show-modal" commandfor="clip">Watch the clip</button>
+
+<modal-elemental closedby="any">
+  <dialog id="clip" aria-label="A film clip, captioned">
+    <video controls playsinline width="640" crossorigin="anonymous"
+      src="https://mdn.github.io/shared-assets/videos/friday.mp4">
+      <track kind="captions" label="English" srclang="en" default
+        src="https://mdn.github.io/shared-assets/misc/friday.vtt">
+    </video>
+    <form method="dialog"><button type="submit">Close</button></form>
+  </dialog>
+</modal-elemental>
+```
+
+```css demo
+body { margin: 0; padding: 1rem; min-block-size: 20rem; font: 1rem/1.5 system-ui, sans-serif; }
+
+modal-elemental > dialog#clip { --modal-elemental-max-width: 40rem; padding: 0.5rem; }
+#clip video { display: block; width: 100%; height: auto; }
+```
+
+Close it while it is playing: the sound stops with it.
+
+The `<track>` is not decoration and not this element's doing —
+[WCAG 2.2 SC 1.2.2](https://www.w3.org/WAI/WCAG22/Understanding/captions-prerecorded.html)
+asks for captions on anything prerecorded that has audio, and a video in a modal is still a
+video. `crossorigin="anonymous"` is what makes it work from another origin: a caption file
+is fetched under CORS, and without that attribute the track loads as nothing at all, silently.
+Same origin, drop it.
+
+<small>The clip and its caption file are MDN's, from
+[mdn/shared-assets](https://github.com/mdn/shared-assets).</small>
+
+### YouTube and Vimeo
+
+The same markup, with the player's own iframe in it. Shown here rather than run live: an
+`<iframe>` inside a closed dialog **is still fetched**, so a live demo on this page would
+call the player on every visit, opened or not.
+
+```html
+<button type="button" command="show-modal" commandfor="talk">Watch the talk</button>
+
+<modal-elemental closedby="any">
+  <dialog id="talk" aria-label="The talk">
+    <iframe
+      src="https://www.youtube-nocookie.com/embed/VIDEO_ID"
+      title="The talk"
+      width="560" height="315" loading="lazy"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
+      allowfullscreen
+    ></iframe>
+  </dialog>
+</modal-elemental>
+```
+
+```html
+<modal-elemental closedby="any">
+  <dialog id="reel" aria-label="The reel">
+    <iframe
+      src="https://player.vimeo.com/video/VIDEO_ID"
+      title="The reel"
+      width="640" height="360" loading="lazy"
+      allow="autoplay; fullscreen; picture-in-picture"
+      allowfullscreen
+    ></iframe>
+  </dialog>
+</modal-elemental>
+```
+
+```css
+/* both players, sized by ratio rather than by height */
+modal-elemental > dialog iframe {
+  display: block;
+  width: min(80vw, 60rem);
+  aspect-ratio: 16 / 9;
+  height: auto;
+  border: 0;
+}
+```
+
+Four things that are not optional on an embed. `title`, because an iframe with no title is
+announced as "frame" and nothing else. `youtube-nocookie.com` over `youtube.com`, which is
+the same player without the tracking cookie. `allowfullscreen`, since a video in a modal is
+exactly where someone will reach for it. And `loading="lazy"`, which is what holds the fetch
+until the modal is opened — without it the player is loaded, and told who is reading, on
+every page view that never opens the dialog. Checked in Chromium: a plain iframe in a closed
+`<dialog>` requests its source immediately, a lazy one waits for `showModal()`.
+
+Closing the modal reloads the frame, which is what stops the player. A reader who reopens it
+starts the video again from the beginning — the price of a player that only takes
+instructions from its own origin.
+
+## Degrading
+
+| Missing                      | What you get                                                                              |
+| ---------------------------- | ----------------------------------------------------------------------------------------- |
+| the script never loads       | `<a href="#id">` still reaches the dialog: `style.scss` shows it **in the page**, in flow, not modal |
+| the script never loads, and the browser has invoker commands | `command="show-modal"` opens it natively — modal, and without the animation |
+| `prefers-reduced-motion`     | no transition either way. The element waits for an animation that is not there and closes at once |
+| the theme is not imported    | the browser's own dialog box, with the backdrop and the motion from `style.scss`           |
+
+That first row is why the fragment is worth supporting at all: a modal is usually a piece of
+the page, and a piece of the page a reader cannot get to is a piece of the page that is gone.
+
+> [!NOTE]
+> On iOS, touch scrolling gets past `overflow: hidden` on the root, so the page behind can
+> still be dragged. `overscroll-behavior: contain` on the dialog and its backdrop is what
+> closes that, and it is in `style.scss` already — Chrome 144 was the first to honour it
+> there, and the rest will follow.
+
+## API
+
+### Attributes
+
+| Attribute       | Type    | Default        | Description                                                         |
+| --------------- | ------- | -------------- | ------------------------------------------------------------------- |
+| `closedby`      | enum    | `closerequest` | `any`, `closerequest` or `none`. Moved up from the `<dialog>` if written there |
+| `close-others`  | boolean | —              | Opening this one closes every modal already open, instead of stacking |
+
+### Properties
+
+| Property   | Type                | Description                                            |
+| ---------- | ------------------- | ------------------------------------------------------ |
+| `dialog`   | `HTMLDialogElement` | Read-only. The direct child it upgrades                |
+| `open`     | boolean             | Read-only. True until the closing animation is over    |
+| `closedBy` | string              | Read-only. What `closedby` resolves to                 |
+
+### Methods
+
+| Method             | Description                                                        |
+| ------------------ | ------------------------------------------------------------------ |
+| `show()`           | Opens it, honouring `close-others`                                 |
+| `close(value?)`    | Animates it out, then closes with that `returnValue`               |
+
+Calling `close()` on the `<dialog>` itself still works — the platform performs it
+immediately, without the animation, and the element tidies up after it. `showModal()` and
+`show()` on the dialog are picked up in full, animation included.
+
+### Events
+
+| Event          | Detail                                                              |
+| -------------- | ------------------------------------------------------------------- |
+| `modal-toggle` | `open` — the new state. `dialog` — the dialog. `depth` — how deep in a stack it sits, `0` once closed |
+
+The dialog's own `close` and `cancel` events are untouched and still fire, on the `<dialog>`,
+where the platform puts them.
+
+### Styling hooks
+
+```css
+modal-elemental > dialog[data-state="open"] {
+} /* on screen, or arriving */
+modal-elemental > dialog[data-state="closing"] {
+} /* leaving, and still in the top layer */
+modal-elemental > dialog[data-depth="1"] {
+} /* the bottom modal — the one that dims the page */
+modal-elemental:not(:defined) {
+} /* before upgrade */
+```
+
+`data-state` is the animation's hook, and `[open]` is not: the dialog is still open through
+the whole of its exit, which is what keeps it in the top layer while it fades.
+
+## The look
+
+`style.scss` is structure, motion and the sheet of dim — the last of which is not decoration:
+the APG only lets a dialog call itself modal when the content behind it is
+[obscured as well as inert](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/). `theme.scss`
+is the box, and is optional.
+
+| Property                        | Default              | Description                                              |
+| ------------------------------- | -------------------- | -------------------------------------------------------- |
+| `--modal-elemental-duration`    | `200ms`              | Both ends of the animation. `0s` closes instantly        |
+| `--modal-elemental-easing`      | `ease`               | Both ends                                                |
+| `--modal-elemental-backdrop`    | `rgb(0 0 0 / 50%)`   | The sheet over the page                                  |
+| `--modal-elemental-max-width`   | `32rem`              | Capped again at `100% - 2rem`, so a phone keeps its gutter |
+| `--modal-elemental-padding`     | `1.5rem`             | Inside the box                                           |
+| `--modal-elemental-radius`      | `0.5rem`             | Its corners                                              |
+| `--modal-elemental-margin-block` | `auto`              | Where it sits: `auto` centres, `5vh auto` pins it near the top |
+
+<!-- demo modal tab="options" -->
+
+```html
+<button type="button" command="show-modal" commandfor="options-dialog">Open it</button>
+
+<modal-elemental closedby="any">
+  <dialog id="options-dialog">
+    <h2>Turn the knobs</h2>
+    <p>The Options tab restyles this box. Copy the rule out of the bottom of the panel.</p>
+    <form method="dialog"><button type="submit">Close</button></form>
+  </dialog>
+</modal-elemental>
+```
+
+```css demo
+/* room for the dialog: the preview frame is measured from the sample, and the sample is a button */
+body { min-block-size: 20rem; }
+```
+
+A dialog whose height changes while it is being read — a search, a form that reveals a field
+— is the case for `--modal-elemental-margin-block: 5vh auto`. Centred, the box moves under
+the reader every time it grows.
+
+## Modal, or something else?
+
+| Wanted                                          | Element                                                       |
+| ----------------------------------------------- | ------------------------------------------------------------- |
+| a window that takes over the page until it is answered | this                                                    |
+| a panel that shows and hides in place          | [`<disclosure-elemental>`](disclosure.html)                    |
+| a drawer that is a panel at one breakpoint and a sheet at another | [`<disclosure-elemental media>`](disclosure.html) |
+| a list of actions hanging off a button          | [`<menu-elemental>`](menu.html)                                |
+| a hint on hover and focus                       | [`<tooltip-elemental>`](tooltip.html)                          |
+
+A modal is the heaviest thing on this list: it takes the page away, and everything else on it
+has to wait. Reach for one when the answer is genuinely needed before anything else can
+happen — and when it is not, a disclosure in the flow of the page is the thing that does not
+interrupt.
+
+<script src="{{ relativePathPrefix }}dist/elementals/modal.js"></script>

@@ -1,0 +1,88 @@
+:root {
+  --modal-elemental-duration: 200ms;
+  --modal-elemental-easing: ease;
+
+  // The sheet over the page. Here rather than in the theme, because a modal is only
+  // allowed to call itself one when the content behind it is obscured as well as inert -
+  // that is the APG's condition for `aria-modal`, not a decoration. Restyle it, do not
+  // remove it.
+  --modal-elemental-backdrop: rgb(0 0 0 / 50%);
+}
+
+modal-elemental {
+  // A coordinator, not a box: the dialog inside is painted in the top layer, where an
+  // ancestor's `overflow`, `transform` or `z-index` cannot reach it - so a wrapper with a
+  // layout of its own would style nothing and only add a box to the tree.
+  display: contents;
+}
+
+// Everything below is scoped to a dialog the element owns. A `<dialog>` elsewhere on the
+// page - one a framework opened, one shown inline - keeps the browser's own look.
+modal-elemental > dialog {
+  // Both ends of the animation are the same state, and neither is `[open]`: the element
+  // keeps the dialog open through its exit so the box is still in the top layer while it
+  // leaves. That is what stands in for the `overlay` property, which would otherwise be
+  // the only way to hold it there - and which Firefox and Safari do not have.
+  opacity: 0;
+  translate: 0 1rem;
+  transition:
+    opacity var(--modal-elemental-duration) var(--modal-elemental-easing),
+    translate var(--modal-elemental-duration) var(--modal-elemental-easing);
+
+  // The scroll a modal contains is its own. Chrome takes this as the whole answer to the
+  // page scrolling behind, and everywhere else it still stops a flick inside the dialog
+  // becoming a scroll of the document once the dialog has run out.
+  overscroll-behavior: contain;
+
+  &[data-state="open"] {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  &::backdrop {
+    background: var(--modal-elemental-backdrop);
+    opacity: 0;
+    transition: opacity var(--modal-elemental-duration) var(--modal-elemental-easing);
+  }
+
+  &[data-state="open"]::backdrop {
+    opacity: 1;
+  }
+
+  // One sheet of dim over the page, however deep the modals are stacked. Each modal paints
+  // its own backdrop, so three open at once is three sheets and the innermost - the one
+  // being read - looks the furthest away. The bottom one is the only one that has the page
+  // under it, so it is the only one that dims anything.
+  &[data-depth]:not([data-depth="1"])::backdrop {
+    background: transparent;
+  }
+}
+
+// The page behind does not scroll. `showModal()` makes it inert, which stops a click and a
+// Tab but never stopped a wheel - the one part of "modal" the platform leaves to CSS.
+// Not reliable on iOS, where touch scrolling gets past `overflow: hidden` on the root;
+// `overscroll-behavior` above is what covers that as browsers ship it.
+// Keyed on `data-depth` rather than `[open]`, because that is the attribute the element
+// writes for a *modal* one: a `<dialog>` opened with `show()` sits in the page rather than
+// over it, and locking the scroll of a page the reader can still click into is a page that
+// looks broken.
+html:has(modal-elemental > dialog[data-depth]) {
+  overflow: hidden;
+}
+
+// Before the element upgrades - and for good, if the script never arrives - a dialog is
+// `display: none` and everything in it is out of reach. A link to its `id` is what gets it
+// back: the fragment shows it in the flow of the page, unstyled and not modal, which is a
+// section of the page rather than a broken one. `position` because the browser's own rule
+// takes a shown dialog out of flow.
+modal-elemental:not(:defined) > dialog:target {
+  display: block;
+  position: static;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  modal-elemental > dialog,
+  modal-elemental > dialog::backdrop {
+    transition: none;
+  }
+}

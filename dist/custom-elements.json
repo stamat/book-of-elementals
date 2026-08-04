@@ -1789,6 +1789,366 @@
     },
     {
       "kind": "javascript-module",
+      "path": "src/elementals/modal/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "dismissMode",
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "string|null"
+              }
+            }
+          ],
+          "description": "The closing rule a `closedby` value names, defaulting the way the platform defaults it.\n\n`closerequest` for anything unrecognised rather than nothing at all, because that is what\nan invalid value does to an enumerated attribute in HTML - and because the alternative,\na typo silently producing a dialog that Escape cannot close, is the worst of the three.",
+          "return": {
+            "type": {
+              "text": "\"any\"|\"closerequest\"|\"none\""
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "dismissible",
+          "parameters": [
+            {
+              "name": "mode",
+              "type": {
+                "text": "\"any\"|\"closerequest\"|\"none\""
+              }
+            },
+            {
+              "name": "source",
+              "type": {
+                "text": "\"escape\"|\"pointer\""
+              }
+            }
+          ],
+          "description": "Whether a close request from `source` gets through, under `mode`.",
+          "return": {
+            "type": {
+              "text": "boolean"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "commandAction",
+          "parameters": [
+            {
+              "name": "command",
+              "type": {
+                "text": "string|null"
+              }
+            }
+          ],
+          "description": "What an invoker's `command` asks of a dialog, or null for one that is not ours.\n\n`request-close` and `close` land in the same place here, and the difference the platform\ndraws between them - one fires `cancel` and can be stopped, the other cannot - is drawn\nagain in ModalElemental#close, which is the only path either of them takes.",
+          "return": {
+            "type": {
+              "text": "\"open\"|\"close\"|null"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "adoption",
+          "parameters": [
+            {
+              "name": "open",
+              "description": "Whether the dialog is open now.",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "modal",
+              "description": "Whether it is open *modally* - `:modal`, not just `[open]`.",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "known",
+              "description": "Whether this element opened it and has it in the stack already.",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "What to do about a dialog that has just become open, when this element is not the one\nthat opened it - `null` for nothing at all.\n\nBecause `document.getElementById('…')` gives an author the `<dialog>` and not the element\naround it, so `showModal()` on it is the call they will reach for. Left alone, that is a\nmodal that never gets `data-state`, which the stylesheet draws at `opacity: 0` - a\nbackdrop over the page with nothing on it. Same for a `show()`, minus the backdrop.",
+          "return": {
+            "type": {
+              "text": "\"modal\"|\"inline\"|null"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "outside",
+          "parameters": [
+            {
+              "name": "rect",
+              "type": {
+                "text": "{left: number, top: number, right: number, bottom: number}"
+              }
+            },
+            {
+              "name": "x",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "y",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "description": "Whether a point is outside a box - the backdrop rather than the dialog.\n\nThe edge counts as inside, since a click landing exactly on the border of a box is a\nclick on the box.",
+          "return": {
+            "type": {
+              "text": "boolean"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<modal-elemental>` custom element.\n\nA `<dialog>` opened as a modal, per the\n[APG Modal Dialog pattern](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) - and\nmostly by the browser rather than by this element. `showModal()` already puts the dialog\nin the top layer, makes the rest of the page inert, moves focus in, brings it back on\nclose and closes on Escape, and it does all of that better than a focus trap in script\ncan: nesting one modal inside another is the browser stacking two entries in the top\nlayer, not two libraries arguing over which one owns the page.\n\nWhat is left over is what this element is: an exit animation that the platform cannot\ngive a dialog without the `overlay` property, which Firefox and Safari do not have; a\nclick on the backdrop, which needs `closedby` support Safari does not have either; the\npage behind not scrolling; and the pile of backdrops a stack of modals would otherwise\npaint on top of each other.\n\nLight DOM, no shadow root, nothing moved: the `<dialog>` stays exactly where it was\nwritten, and every attribute on it is still the platform's own.",
+          "name": "ModalElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<time>"
+              },
+              "description": "How long the dialog and its backdrop take to arrive and to leave. The element waits for the animation it starts, so `0s` closes instantly.",
+              "name": "--modal-elemental-duration",
+              "default": "200ms"
+            },
+            {
+              "type": {
+                "text": "<easing-function>"
+              },
+              "description": "Easing for both ends.",
+              "name": "--modal-elemental-easing",
+              "default": "ease"
+            }
+          ],
+          "slots": [
+            {
+              "description": "The `<dialog>`. One direct child, with the modal's content inside it.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "dialog",
+              "description": "The dialog this element upgrades. Direct child, so a nested modal's dialog is not\nmistaken for this one's.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "open",
+              "description": "Whether the modal is on screen. Closing counts as open until the animation is over,\nwhich is what the dialog is doing for that quarter second.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "adopt",
+              "description": "Take over a dialog somebody else opened, so it looks like one this element opened.\n\nA modal joins the stack and is numbered with the rest, since the backdrops have to be\ncounted whoever asked for them. A non-modal `show()` gets the visible state and nothing\nelse: it is a dialog in the page, not over it, and putting it in the stack would dim\nthe page and lock its scroll for a box the reader can still click past."
+            },
+            {
+              "kind": "field",
+              "name": "closedBy",
+              "description": "What `closedby` says, whether it was written here or on the dialog.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "parameters": [
+                {
+                  "name": "dialog"
+                }
+              ],
+              "description": "Give the dialog a name if it has none, from the first heading inside it.\n\nA dialog with no accessible name is announced as \"dialog\" and nothing else, which is\nthe most common failure of the pattern and the one an author is least likely to see -\ntheir own modal has a heading at the top of it, right there on screen. `aria-labelledby`\npoints at that heading rather than copying its words, so the two cannot drift apart.\n\nOnly a heading of this dialog: a nested modal written inside this one has headings too,\nand they name a different dialog."
+            },
+            {
+              "kind": "method",
+              "name": "show",
+              "parameters": [
+                {
+                  "name": "options",
+                  "description": "`fromHash` marks the URL as\nwhat opened it, so closing takes the fragment back off again. `pushed` says that\nfragment was navigated to rather than loaded with, which decides how it comes off.",
+                  "optional": true,
+                  "type": {
+                    "text": "{fromHash?: boolean, pushed?: boolean}"
+                  }
+                }
+              ],
+              "description": "Open the modal."
+            },
+            {
+              "kind": "method",
+              "name": "close",
+              "parameters": [
+                {
+                  "name": "returnValue",
+                  "description": "What `dialog.returnValue` should say afterwards.",
+                  "optional": true,
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ],
+              "description": "Close the modal, once its animation has finished.\n\nEvery way out lands here - Escape, the backdrop, a close button, a form, the fragment\nchanging - so there is one close, and it is animated whichever door was used. The\nexception is an author calling `close()` on the `<dialog>` itself, which the platform\nperforms immediately and this element only tidies up after."
+            },
+            {
+              "kind": "method",
+              "name": "onNativeClose",
+              "description": "Bookkeeping for a dialog that has closed, however it closed - including from script\nthat never went through this element."
+            },
+            {
+              "kind": "method",
+              "name": "onCancel",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "Escape, and every other close request the platform makes.\n\nAlways prevented, never because the dialog should stay: the close it would perform is\ninstant, and this element owns an animated one. `closedby=\"none\"` is the one case where\npreventing it is the whole answer - and a second Escape will still force the dialog\nshut, because a close watcher only lets itself be argued with once."
+            },
+            {
+              "kind": "method",
+              "name": "onPointerDown",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "Where a click started, since a selection dragged out of the dialog and released on\nthe backdrop is not a click on the backdrop."
+            },
+            {
+              "kind": "method",
+              "name": "onClick",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "A click on the backdrop, which is a click on the dialog: the backdrop is a\npseudo-element and cannot be a target of its own.\n\nTwo things have to agree for it to count. The target, so a click on a button inside is\nnever one - including the click a keyboard makes, which reports its position as the\norigin of the viewport and would otherwise read as the far corner of the backdrop. And\nthe geometry, because the dialog's own padding is part of the dialog."
+            },
+            {
+              "kind": "method",
+              "name": "onSubmit",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "`<form method=\"dialog\">`, held back long enough to animate and then performed by\nhand, `returnValue` and all."
+            },
+            {
+              "kind": "method",
+              "name": "toggled",
+              "parameters": [
+                {
+                  "name": "open"
+                }
+              ]
+            }
+          ],
+          "events": [
+            {
+              "name": "modal-toggle",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "`detail.open` is the new state, `detail.dialog` the dialog, `detail.depth` how deep in a stack of modals it sits."
+            }
+          ],
+          "attributes": [
+            {
+              "type": {
+                "text": "\"any\"|\"closerequest\"|\"none\""
+              },
+              "description": "What closes the dialog besides a close button: `closerequest` is Escape, `any` adds a click on the backdrop, `none` neither. The same three values HTML gives `<dialog>`, read from here so the element can animate the close instead of the browser cutting it short - written on the `<dialog>` it is moved up here on upgrade.",
+              "name": "closedby",
+              "default": "closerequest"
+            },
+            {
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Opening this one closes every modal already open, instead of stacking on top of them.",
+              "name": "close-others",
+              "default": "false"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "modal-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "dismissMode",
+          "declaration": {
+            "name": "dismissMode",
+            "module": "src/elementals/modal/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "dismissible",
+          "declaration": {
+            "name": "dismissible",
+            "module": "src/elementals/modal/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "commandAction",
+          "declaration": {
+            "name": "commandAction",
+            "module": "src/elementals/modal/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "adoption",
+          "declaration": {
+            "name": "adoption",
+            "module": "src/elementals/modal/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "outside",
+          "declaration": {
+            "name": "outside",
+            "module": "src/elementals/modal/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ModalElemental",
+          "declaration": {
+            "name": "ModalElemental",
+            "module": "src/elementals/modal/index.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/elementals/navbar/index.js",
       "declarations": [
         {

@@ -17,6 +17,63 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Added
 
+- **`<modal-elemental>`.** A native `<dialog>` opened with `showModal()`, per the
+  [APG Modal Dialog pattern](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) — which
+  is mostly the browser's work, and deliberately so. The top layer, the `inert` page behind,
+  the focus that goes in and comes back, <kbd>Escape</kbd>, and **nesting** all come from
+  `showModal()`: a second modal is a second entry in the top layer, and the browser computes
+  inertness from the topmost one, so there is no parent tracking and no focus trap here.
+
+  What the platform leaves behind is the element. An **exit animation**, which otherwise
+  needs the [`overlay`](https://developer.mozilla.org/en-US/docs/Web/CSS/overlay) property
+  that Firefox and Safari do not have — the element holds the dialog open until its
+  animation has finished and closes it then, which keeps it in the top layer for the fade. A
+  **click on the backdrop**, which otherwise needs `closedby` support Safari does not have
+  either. The page behind **not scrolling**. One sheet of dim rather than one per modal. And
+  `aria-labelledby` pointed at the first heading inside, since a `<dialog>` takes no name
+  from its contents and an unnamed one is announced as "dialog" and nothing else.
+
+  Triggers are HTML's own invoker commands, `command="show-modal"` and `commandfor`, handled
+  by the element rather than left to the browser: that is what makes the close animated, and
+  it is a polyfill for browsers without them for free. `<a href="#id">` opens one too — the
+  fragment in the URL opens the modal it names, and the back button closes it. All of them
+  are matched by `id` on the document, so a trigger can sit anywhere, including inside
+  another modal, and that extends to script: a `showModal()` or `show()` called on the
+  `<dialog>` itself — which is what `document.getElementById()` hands you — is picked up by
+  the element and animated in, counted in the backdrop stack and given the scroll lock,
+  exactly as though a button had done it. `closedby` takes HTML's three values with HTML's
+  default, and `close-others` replaces the stack instead of adding to it.
+
+  Closing stops what was playing: `<video>` and `<audio>` inside are paused, and every
+  `<iframe>` is reloaded, since a cross-origin player cannot be paused from the page holding
+  it. That is the whole of the lightbox and video support — the docs page shows a lightbox, a
+  `<video>`, YouTube and Vimeo as markup in a dialog, with nothing switched on.
+
+  **DOM it produces:** on the `<dialog>` — a generated `id` if it had none,
+  `aria-labelledby` if it had no name, `data-state="open"`/`"closing"` while it is on screen,
+  and `data-depth` numbering it in the stack. A `closedby` written on the `<dialog>` is
+  **moved up** to the `<modal-elemental>`, because a browser that supports it natively would
+  light-dismiss the modal itself, instantly, with a `cancel` event that
+  [cannot be prevented](https://html.spec.whatwg.org/multipage/interactive-elements.html#light-dismiss-open-dialogs).
+  Nothing is wrapped and nothing is moved. A bubbling `modal-toggle` carries `open`, `dialog`
+  and `depth`.
+
+  **CSS it writes:** `style.scss` styles `modal-elemental > dialog` and its `::backdrop`, and
+  sets `overflow: hidden` on the root while a modal is open — the one rule in this book that
+  touches the page around an element, because `inert` never stopped a wheel. The dim itself
+  is in `style.scss` rather than the theme: the APG only lets a dialog call itself modal when
+  the page behind is obscured as well as inert.
+
+  **Degrading:** with no script at all, `<a href="#id">` still reaches the dialog —
+  `style.scss` shows it in the flow of the page, not modal, rather than leaving it
+  `display: none`. With no script but a browser that has invoker commands,
+  `command="show-modal"` opens it natively, without the animation. Under
+  `prefers-reduced-motion` there is no transition and the close is immediate.
+
+  It replaces [modally](https://github.com/stamat/modally), which is now deprecated. Nesting,
+  `closeOthers` and hash-driven opening are here; the width and alignment options are custom
+  properties, which is what they always were.
+
 - **`<copy-elemental>`.** A real `<button>` that writes text to the clipboard and announces
   it. There is no APG pattern behind this one, because there is no widget — it is a button,
   and a button is already accessible. The gap is the half after the click: every copy button
