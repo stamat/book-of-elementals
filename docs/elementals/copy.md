@@ -285,6 +285,99 @@ an icon-only button with nothing on it at all.
 > }
 > ```
 
+### In the corner of a code block
+
+The look every docs site ends up building: an icon-only button pinned in the corner of the
+sample, and a small bubble that says it copied. Both are stylesheet, on the state the element
+already writes — there is no second element here, and no option to turn on.
+
+<!-- demo copy -->
+
+```html
+<div class="snippet">
+  <pre id="corner-source"><code>git switch -c the-thing</code></pre>
+
+  <copy-elemental for="corner-source" copied-text="Copied!">
+    <button type="button" aria-label="Copy the command"></button>
+  </copy-elemental>
+</div>
+```
+
+```css demo
+body { margin: 0; padding: 1rem; font: 1rem/1.5 system-ui, sans-serif; }
+
+.snippet { position: relative; }
+
+/* room at the end for the button, so a long line runs under it rather than into it */
+.snippet pre {
+  margin: 0;
+  padding: 0.75rem 3rem 0.75rem 0.75rem;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, currentcolor 6%, Canvas);
+  overflow-x: auto;
+}
+
+/* `display: block` first: the element is `display: contents` out of the box, which is no
+   box to position and no box for the bubble to hang off */
+.snippet copy-elemental {
+  display: block;
+  position: absolute;
+  inset-block-start: 0.5rem;
+  inset-inline-end: 0.5rem;
+}
+
+/* the bubble is the live region, un-clipped for as long as it is holding words. Empty, it
+   falls back to the 1px clipped span the stylesheet draws - still in the accessibility
+   tree, which is where it has to be before any text lands in it */
+.snippet .copy-elemental-status:not(:empty) {
+  inset-inline-end: calc(100% + 0.4rem);
+  inset-block-start: 50%;
+  translate: 0 -50%;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip-path: none;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.3rem;
+  /* the page's own two colours, swapped. `currentcolor` would be this rule's own `color`,
+     which is the line below - white on white */
+  background: CanvasText;
+  color: Canvas;
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+```
+
+Four things in there are load-bearing:
+
+**The bubble is the live region, not a copy of it.** No `::after`, no `attr(copied-text)`,
+nothing that could come to say something different from what the reader hears — the span the
+element already announces through is un-clipped and drawn. One node, so "seen" and "said"
+cannot drift, and the failure gets a bubble for free: `Copy failed` in the same place, without
+a second rule. Generated content would have cost a duplicate: Chromium exposes `::after` text
+as a node of its own, which puts the word in the accessibility tree twice.
+
+**`:not(:empty)`, so the empty region keeps its clipped 1px box.** A live region only
+announces text that arrives in one **already** in the accessibility tree. Un-clip it flat and
+an empty bubble sits on the page between presses; `display: none` it and the announcement goes
+with it. Styling only the state that has words is the version that is both.
+
+**`display: block` before `position`.** The element ships as `display: contents`, so dropping
+it around an existing button changes no layout at all — but a box that does not exist cannot
+be positioned, and neither can anything hanging off it. Give it a box first.
+
+**The button has no text, so `aria-label` is its whole name.** The theme's icon is a masked
+background — decorative by construction, and never a name. Nothing the bubble does touches
+that name: the region is a sibling of the button, not a child, so the button stays "Copy the
+command" throughout. A `<span>` inside the button would have renamed it to "Copy the command
+Copied!" for those two seconds, and
+[generated content counts too](https://www.w3.org/TR/accname-1.2/#comp_name_from_content).
+
+Nothing about the placement is the element's business. `data-state` and that region are the
+hooks; where the button sits, which side the bubble comes out of, and whether there is a bubble
+at all are the page's to decide.
+
 ## Copy, or something else?
 
 | Wanted                                        | Element                                    |
