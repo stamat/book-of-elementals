@@ -16,10 +16,13 @@ disclosure-elemental:not(:defined) > button {
 }
 
 .disclosure-elemental-region[hidden] {
-  margin: 0;
   padding: 0;
   border: 0;
   box-shadow: none;
+}
+
+.disclosure-elemental-region[data-state=closed] {
+  margin: 0;
 }
 
 .disclosure-elemental-region:not(:where(tr, td, th, thead, tbody, tfoot, caption)) {

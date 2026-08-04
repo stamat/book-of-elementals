@@ -140,6 +140,7 @@ document.querySelector("disclosure-elemental")
 | `aria-controls` | the button | The region's `id`, generated if the markup has none                               |
 | `type`          | the button | `button`, only if the markup did not set a type                                   |
 | `hidden`        | the region | `until-found` while closed, absent while open — set at the end of the close slide |
+| `data-state`    | the region | `open` / `closed`, flipped with the click rather than with the slide              |
 | `class`         | the region | `disclosure-elemental-region` added, nothing removed                              |
 | `data-mode`     | both       | `pinned` / `free`, only while `media` is set — see [A breakpoint that owns it](#a-breakpoint-that-owns-it) |
 
@@ -164,12 +165,17 @@ A closed region is out of the tab order and out of the accessibility tree, becau
 disclosure-elemental[open] { }                       /* the host, reflected state */
 disclosure-elemental > button[aria-expanded="true"] { } /* what the theme keys off */
 .disclosure-elemental-region { }                     /* the region, wherever it lives */
+.disclosure-elemental-region[data-state="closed"] { } /* the region, from the click onwards */
 [data-mode="free"] { }                               /* the element and the region, with `media` set */
 disclosure-elemental:not(:defined) { }               /* before upgrade */
 ```
 
 `[aria-expanded="false"]` already means "closing or closed" — the ARIA and `open` both flip
 at the click, so there is no closing class to pair with, the way the accordion needs one.
+`data-state` on the region is that same moment carried to the other end of the document,
+for the regions `for` puts out of the button's reach: `hidden` is the region's state as
+well, but it cannot land until the close slide is over, so anything transitioned has to
+key off `data-state` or it starts a whole slide late. Everything else can use either.
 
 ## Why not just `<details>`?
 
@@ -385,8 +391,11 @@ goes on a box inside the region:
 </figcaption>
 ```
 
-Margin is fine — it is outside the height, and it transitions too, so zeroing it while
-closed reads as the gap closing rather than as a jump.
+Margin is fine — it is outside the height, and it transitions too, so the gap closes with
+the height rather than dropping out from under it. It is zeroed on
+`[data-state="closed"]` rather than on `[hidden]`, because `hidden` only lands once the
+close slide is over and a margin waiting for it would still be at full size while the
+panel went, then take a quarter second of its own afterwards.
 
 Margin _inside_ the region stays inside it: the region is `display: flow-root`, because the
 slide measures it under an `overflow: hidden` that makes it a block formatting context, and

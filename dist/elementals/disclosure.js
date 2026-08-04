@@ -104,7 +104,8 @@
   function disclosureState(open) {
     return {
       expanded: open ? "true" : "false",
-      hidden: open ? null : "until-found"
+      hidden: open ? null : "until-found",
+      state: open ? "open" : "closed"
     };
   }
   function slideFrom(open, hidden, height) {
@@ -173,6 +174,7 @@
       const region = this.region;
       if (region) {
         delete region.dataset.mode;
+        delete region.dataset.state;
         region.removeEventListener("beforematch", this.onBeforeMatch);
         if (!this.contains(region)) region.removeAttribute("hidden");
       }
@@ -192,11 +194,12 @@
       const button = this.button;
       const region = this.region;
       if (!button || !region) return;
-      const state = disclosureState(this.open);
-      button.setAttribute("aria-expanded", state.expanded);
+      const { expanded, hidden, state } = disclosureState(this.open);
+      button.setAttribute("aria-expanded", expanded);
+      region.dataset.state = state;
       if (!animate) {
-        if (state.hidden === null) region.removeAttribute("hidden");
-        else region.setAttribute("hidden", state.hidden);
+        if (hidden === null) region.removeAttribute("hidden");
+        else region.setAttribute("hidden", hidden);
         return;
       }
       const from = slideFrom(this.open, region.hasAttribute("hidden"), region.offsetHeight);
@@ -206,7 +209,7 @@
         return;
       }
       slide(region, from, false, () => {
-        if (this.initialized && !this.open) region.setAttribute("hidden", state.hidden);
+        if (this.initialized && !this.open) region.setAttribute("hidden", hidden);
       });
     }
     /** Start watching whatever `media` names now, and stop watching whatever it named

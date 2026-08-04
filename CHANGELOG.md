@@ -106,6 +106,20 @@ may already be targeting**, since neither shows up in a function signature.
   `display` is the table's structure, and it carries a single class's specificity, so a
   region you give a `display` of your own still wins.
 
+- **`<disclosure-elemental>`'s gap no longer closes after the panel has gone.** The
+  region's margin is transitioned so it shuts with the height, but it was zeroed on
+  `[hidden]` — and `hidden` cannot land until the close slide is over, since it is what
+  stops the region's contents being rendered. So the panel slid shut over a quarter
+  second and the gap it left behind took another quarter second of its own.
+
+  **DOM this adds:** the region now carries `data-state="open"` / `"closed"`, flipped with
+  the click rather than with the slide. It says what `hidden` says; it can just be written
+  at the moment a transition has to start, and it reaches the regions `for` puts out of the
+  button's reach. **CSS this changes:** `margin: 0` moved from
+  `.disclosure-elemental-region[hidden]` to `.disclosure-elemental-region[data-state="closed"]`.
+  `padding`, `border` and `box-shadow` stay on `[hidden]` — none of them is transitioned,
+  and they are about the box the closed region leaves behind.
+
 ## [0.4.0] - 2026-08-04
 
 ### Added

@@ -10,13 +10,20 @@ import { ElementBase, define } from '../../core.js';
  * Browsers without it read any value at all as plain hidden, which is the same
  * content, just not found.
  *
+ * `state` says the same thing as `hidden` and exists because it can be written at a
+ * different moment: closing cannot set `hidden` until the slide is over, since that is
+ * what stops the region's contents being rendered, so anything keyed off `hidden`
+ * animates a whole slide late. `state` flips with the click, which is when a property
+ * transitioning alongside the height has to start.
+ *
  * @param {boolean} open
- * @returns {{expanded: string, hidden: string|null}} `hidden: null` meaning shown.
+ * @returns {{expanded: string, hidden: string|null, state: string}} `hidden: null` meaning shown.
  */
 export function disclosureState(open) {
   return {
     expanded: open ? 'true' : 'false',
-    hidden: open ? null : 'until-found'
+    hidden: open ? null : 'until-found',
+    state: open ? 'open' : 'closed'
   };
 }
 
@@ -196,6 +203,7 @@ export class DisclosureElemental extends ElementBase {
     const region = this.region;
     if (region) {
       delete region.dataset.mode;
+      delete region.dataset.state;
       region.removeEventListener('beforematch', this.onBeforeMatch);
       // A region left behind by its button has nothing to open it again. One inside
       // the element leaves with it; one outside would be hidden for good.
@@ -220,12 +228,13 @@ export class DisclosureElemental extends ElementBase {
     const region = this.region;
     if (!button || !region) return;
 
-    const state = disclosureState(this.open);
-    button.setAttribute('aria-expanded', state.expanded);
+    const { expanded, hidden, state } = disclosureState(this.open);
+    button.setAttribute('aria-expanded', expanded);
+    region.dataset.state = state;
 
     if (!animate) {
-      if (state.hidden === null) region.removeAttribute('hidden');
-      else region.setAttribute('hidden', state.hidden);
+      if (hidden === null) region.removeAttribute('hidden');
+      else region.setAttribute('hidden', hidden);
       return;
     }
 
@@ -244,7 +253,7 @@ export class DisclosureElemental extends ElementBase {
       // A slide can outlive what started it - another toggle, or the element leaving
       // the document. Hiding a region that is open again, or one whose button is gone
       // and so has nothing left to open it, would strand it.
-      if (this.initialized && !this.open) region.setAttribute('hidden', state.hidden);
+      if (this.initialized && !this.open) region.setAttribute('hidden', hidden);
     });
   }
 

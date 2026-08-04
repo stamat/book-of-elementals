@@ -17,10 +17,10 @@
               }
             }
           ],
-          "description": "The state a disclosure's button and region carry, for a given open state.\n\n`until-found` rather than a bare `hidden` because it is the platform's own answer\nto the oldest problem with hiding content: find-in-page and a link to a fragment\ninside the region still reveal it, and the reveal comes back as `beforematch`.\nBrowsers without it read any value at all as plain hidden, which is the same\ncontent, just not found.",
+          "description": "The state a disclosure's button and region carry, for a given open state.\n\n`until-found` rather than a bare `hidden` because it is the platform's own answer\nto the oldest problem with hiding content: find-in-page and a link to a fragment\ninside the region still reveal it, and the reveal comes back as `beforematch`.\nBrowsers without it read any value at all as plain hidden, which is the same\ncontent, just not found.\n\n`state` says the same thing as `hidden` and exists because it can be written at a\ndifferent moment: closing cannot set `hidden` until the slide is over, since that is\nwhat stops the region's contents being rendered, so anything keyed off `hidden`\nanimates a whole slide late. `state` flips with the click, which is when a property\ntransitioning alongside the height has to start.",
           "return": {
             "type": {
-              "text": "{expanded: string, hidden: string|null}"
+              "text": "{expanded: string, hidden: string|null, state: string}"
             }
           }
         },

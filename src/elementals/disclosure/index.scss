@@ -27,9 +27,9 @@ disclosure-elemental {
 // The region is the animated box, so it is the one box here that must not be padded or
 // bordered: block padding is a floor the height cannot get under - `box-sizing:
 // border-box` renders `height: 0` as the padding - so the region would slide shut down
-// to it and then cut. Put the inset on a box inside the region instead. Margin is fine,
-// and is transitioned so the rule below zeroing it while closed reads as the gap
-// closing rather than as a jump.
+// to it and then cut. Put the inset on a box inside the region instead. Margin is fine -
+// it sits outside the height - and is transitioned so it closes with the height rather
+// than dropping out from under it.
 .disclosure-elemental-region {
   transition:
     height var(--disclosure-elemental-duration) var(--disclosure-elemental-easing),
@@ -51,10 +51,19 @@ disclosure-elemental {
 // rather than left to the page, because "the panel is gone" and "its shadow is gone"
 // are not two decisions.
 .disclosure-elemental-region[hidden] {
-  margin: 0;
   padding: 0;
   border: 0;
   box-shadow: none;
+}
+
+// Margin off `data-state` rather than `hidden`, because the two are written at different
+// moments and this one is transitioned. `hidden` cannot land until the close has
+// finished - it is what stops the region's contents being rendered, which would cut the
+// slide off at frame one - so a margin keyed off it would sit at full size for the whole
+// close and only then start its own quarter second, leaving a gap closing after the panel
+// has gone. `data-state` flips with the click, so the gap closes with the height.
+.disclosure-elemental-region[data-state="closed"] {
+  margin: 0;
 }
 
 // The slide measures the region under an `overflow: hidden` it sets itself, which makes
