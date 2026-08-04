@@ -1633,6 +1633,187 @@
     },
     {
       "kind": "javascript-module",
+      "path": "src/elementals/segmented/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "checkedIndex",
+          "parameters": [
+            {
+              "name": "inputs"
+            }
+          ],
+          "description": "Which segment the knob belongs under: the index of the checked radio, or `-1` for\nnone.\n\n`-1` is a state and not a failure - a group whose markup checks nothing has no\nselection, and no knob is the honest drawing of that. The first checked one wins where\ntwo are, which is what a browser does when markup checks two radios of one name."
+        },
+        {
+          "kind": "class",
+          "description": "A row of native radio buttons drawn as one track with a knob that slides between them.\nThe prose above is the whole story; these tags are the same API in the form a machine\ncan read - `custom-elements.json` is generated from them, and the docs tables, editor\nautocomplete and the live options panel all come out of that one file.\n\nCurated by omission: `--segmented-elemental-index` and `--segmented-elemental-count`\nare written by the element and are not tagged. They are the state, not a knob to turn,\nand setting one by hand moves the knob off the segment the reader actually chose.",
+          "name": "SegmentedElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between the knob and the inside of the track.",
+              "name": "--segmented-elemental-gap",
+              "default": "3px"
+            },
+            {
+              "type": {
+                "text": "<length-percentage>"
+              },
+              "description": "Track corners. A big number is a pill at any height.",
+              "name": "--segmented-elemental-radius",
+              "default": "999px"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Track border width.",
+              "name": "--segmented-elemental-border-width",
+              "default": "1px"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Track border.",
+              "name": "--segmented-elemental-border-color",
+              "default": "transparent"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Track fill, behind every segment.",
+              "name": "--segmented-elemental-track",
+              "default": "color-mix(in srgb, currentcolor 10%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Knob fill. The page's own background, so re-point it on a card.",
+              "name": "--segmented-elemental-knob",
+              "default": "Canvas"
+            },
+            {
+              "type": {
+                "text": "<length-percentage>"
+              },
+              "description": "Knob corners.",
+              "name": "--segmented-elemental-knob-radius",
+              "default": "var(--segmented-elemental-radius)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Label colour on the segments the knob is not under.",
+              "name": "--segmented-elemental-color",
+              "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Label colour on the one it is. Set this with `--segmented-elemental-knob` - the label sits on top of the knob.",
+              "name": "--segmented-elemental-color-selected",
+              "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Segment padding, block axis. This is what sets the height.",
+              "name": "--segmented-elemental-padding-block",
+              "default": "0.375rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Segment padding, inline axis.",
+              "name": "--segmented-elemental-padding-inline",
+              "default": "0.875rem"
+            },
+            {
+              "type": {
+                "text": "<time>"
+              },
+              "description": "Knob slide and colour cross-fade.",
+              "name": "--segmented-elemental-duration",
+              "default": "250ms"
+            },
+            {
+              "type": {
+                "text": "ease | ease-in | ease-out | ease-in-out | linear"
+              },
+              "description": "Knob slide and colour cross-fade.",
+              "name": "--segmented-elemental-easing",
+              "default": "ease-in-out"
+            }
+          ],
+          "slots": [
+            {
+              "description": "One `<label>` per segment, each wrapping an `<input type=\"radio\">` and the text or icon that names it.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "inputs",
+              "description": "The segments, in document order. Direct children, so a radio group inside one\nsegment's popover is not mistaken for part of this one.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "selectedIndex",
+              "description": "Index of the checked segment, or `-1` when the group has no selection.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "onReset",
+              "description": "A form is only put back to its defaults once the `reset` event has been dispatched,\nso the selection is read on the next task rather than in the handler."
+            },
+            {
+              "kind": "method",
+              "name": "apply",
+              "description": "Push the selection onto the element, where the CSS reads it. Public because the count\nis read here: add or remove a segment and this is the one call that catches up.\n\n`data-index` as well as the custom property, because CSS cannot ask whether a custom\nproperty was set - an unset one inside `calc()` leaves the knob at zero, which is a\nknob claiming the first segment. The attribute is what the knob's existence hangs\noff, so no script and no selection both come out as no knob."
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "segmented-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "checkedIndex",
+          "declaration": {
+            "name": "checkedIndex",
+            "module": "src/elementals/segmented/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "SegmentedElemental",
+          "declaration": {
+            "name": "SegmentedElemental",
+            "module": "src/elementals/segmented/index.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/elementals/switch/index.js",
       "declarations": [
         {

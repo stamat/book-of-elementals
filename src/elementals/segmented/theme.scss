@@ -1,0 +1,123 @@
+// Optional look for `<segmented-elemental>`. Not part of the element's own stylesheet
+// and not in its bundle: that one styles structure only, and a light-DOM element cannot
+// scope a look away from a page that did not ask for one. Import this when you want the
+// look, skip it when you do not.
+// The track and the labels are mixed out of `currentcolor`, so the control sits in
+// whatever palette the page already has with nothing to configure. The knob is the one
+// value that has to know what is behind it, and it is the one to re-point on a card.
+
+segmented-elemental {
+  --segmented-elemental-gap: 3px; // between the knob and the inside of the track
+  --segmented-elemental-radius: 999px; // a pill at any height
+  --segmented-elemental-border-width: 1px;
+  --segmented-elemental-border-color: transparent;
+  --segmented-elemental-track: color-mix(in srgb, currentcolor 10%, transparent);
+
+  // `Canvas` is the page's own background, which is what a knob lifted out of a filled
+  // track is. Re-point it on a card (`--segmented-elemental-knob: var(--card-background)`),
+  // and on a page that themes in custom properties without declaring `color-scheme`,
+  // where a dark page keeps a white `Canvas` and the knob turns into a white slab.
+  --segmented-elemental-knob: Canvas;
+  --segmented-elemental-knob-radius: var(--segmented-elemental-radius);
+
+  // Both default to `currentcolor`, so out of the box the selection is told by the knob
+  // alone. Colouring the selection is these two moving together: the selected label sits
+  // *on* the knob, so a coloured knob wants a label colour that contrasts with it, and a
+  // coloured label wants the knob left pale.
+  --segmented-elemental-color: currentcolor;
+  --segmented-elemental-color-selected: currentcolor;
+  --segmented-elemental-padding-block: 0.375rem;
+  --segmented-elemental-padding-inline: 0.875rem;
+  --segmented-elemental-duration: 250ms;
+  --segmented-elemental-easing: ease-in-out;
+
+  // So the border and the padding are inside a width an author sets, rather than added
+  // to it - the knob is measured off this box and would overhang otherwise.
+  box-sizing: border-box;
+  padding: var(--segmented-elemental-gap);
+  color: var(--segmented-elemental-color);
+  background: var(--segmented-elemental-track);
+  border: var(--segmented-elemental-border-width) solid var(--segmented-elemental-border-color);
+  border-radius: var(--segmented-elemental-radius);
+
+  // The knob. One pseudo-element that moves, rather than a background per segment that
+  // lights up: one box is what can be animated between two positions, and N boxes are
+  // what cannot. It hangs off `[data-index]` rather than off the custom property,
+  // because CSS cannot ask whether a custom property was set - so no script, and a group
+  // whose markup checks nothing, both come out as no knob rather than as a knob parked
+  // on the first segment claiming a choice nobody made.
+  &[data-index]::before {
+    content: "";
+    position: absolute;
+
+    // The containing block is this element's padding box, so `100%` is the track inside
+    // its border and taking the gap off both ends leaves exactly the grid's content box
+    // - which is `--segmented-elemental-count` equal tracks. One track is the knob.
+    inset-block: var(--segmented-elemental-gap);
+    inset-inline-start: var(--segmented-elemental-gap);
+    inline-size: calc((100% - var(--segmented-elemental-gap) * 2) / var(--segmented-elemental-count));
+
+    // A percentage on `translate` is of the element's own width, and the element's own
+    // width is one segment - so the knob can never land between two of them however many
+    // there are, and there is no second copy of the segment width to keep in step.
+    translate: calc(var(--segmented-elemental-index) * 100%);
+    background: var(--segmented-elemental-knob);
+    border-radius: var(--segmented-elemental-knob-radius);
+    transition: translate var(--segmented-elemental-duration) var(--segmented-elemental-easing);
+  }
+
+  > label {
+    padding: var(--segmented-elemental-padding-block) var(--segmented-elemental-padding-inline);
+
+    // Nothing is drawn on the label - this is for the focus ring, which `style.scss` puts
+    // on the label because the radio it belongs to is a hidden pixel. An `outline`
+    // follows its element's corners, so without this the ring is a rectangle around a
+    // segment the knob has drawn as a pill.
+    border-radius: var(--segmented-elemental-knob-radius);
+    transition: color var(--segmented-elemental-duration) var(--segmented-elemental-easing);
+
+    // Keyed off `:checked` rather than off anything the script writes, so the selected
+    // segment is coloured with or without it - which is the whole of the degradation
+    // when the script never loads.
+    &:has(> input[type="radio"]:checked) {
+      color: var(--segmented-elemental-color-selected);
+    }
+
+    // A disabled segment: the same segment out of reach. `:disabled` matches a radio
+    // inside a `<fieldset disabled>` too, so one selector covers both ways of getting
+    // there.
+    &:has(> input[type="radio"]:disabled) {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+
+  // `translate` has no logical form, so the one direction in here that is not already a
+  // logical property has to be turned around by hand. The insets and the padding are
+  // logical and flip on their own.
+  &:dir(rtl)[data-index]::before {
+    translate: calc(var(--segmented-elemental-index) * -100%);
+  }
+
+  // Forced-colors mode drops author backgrounds, which here are the entire control - the
+  // knob is the only thing saying which segment is chosen. System color keywords are
+  // honoured there, so the knob is repainted in `Highlight`, the mode's own colour for a
+  // control that is set, and the label on it in `HighlightText`, because the mode
+  // guarantees that pair contrasts and guarantees nothing about any other.
+  @media (forced-colors: active) {
+    --segmented-elemental-border-color: CanvasText;
+    --segmented-elemental-color: CanvasText;
+    --segmented-elemental-color-selected: HighlightText;
+
+    &[data-index]::before {
+      background: Highlight;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &[data-index]::before,
+    > label {
+      transition: none;
+    }
+  }
+}

@@ -677,6 +677,10 @@ The theme dresses this element's `<button>` only, but the box is identical on a 
 checkbox — only the state selector differs, `:checked` where this keys off
 `[aria-checked="true"]`.
 
+More than two states is neither: that is one choice out of a few, which is
+[`<segmented-elemental>`](segmented.html) — the same track and sliding knob, over a
+native radio group.
+
 ## Layout
 
 `<switch-elemental>` is `display: contents`: a switch is usually a flex or grid item next

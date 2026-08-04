@@ -22,6 +22,7 @@ holds the JavaScript helpers, this one holds the elements.
 | `<disclosure-elemental>` | [APG Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), where `<details>` cannot go |
 | `<menu-elemental>`       | [APG Menu Button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/), nested, and not a menu below a breakpoint |
 | `<navbar-elemental>`     | [APG Disclosure Navigation](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/), folding itself away when the links stop fitting |
+| `<segmented-elemental>`  | [APG Radio Group](https://www.w3.org/WAI/ARIA/apg/patterns/radio/) on native radios, drawn as a track with a knob that slides |
 | `<switch-elemental>`     | [APG Switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/), for a setting that takes effect at once |
 | `<tabs-elemental>`       | [APG Tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), horizontal or vertical, on a list of in-page links |
 
@@ -316,6 +317,37 @@ opens by talking you out of itself, and links announced as menu items are links
 no longer. Panels stay on screen through CSS anchor positioning, with no script
 involved. Without JavaScript the whole thing is a nested list of visible links,
 which is what it was underneath all along.
+
+## `<segmented-elemental>`
+
+One choice out of a few, drawn as a track with a knob that slides under it — the
+N-state answer to the switch, on the radio group you would have written anyway:
+
+```html
+<segmented-elemental aria-label="Range">
+  <label><input type="radio" name="range" value="day" /> Day</label>
+  <label><input type="radio" name="range" value="week" checked /> Week</label>
+  <label><input type="radio" name="range" value="month" /> Month</label>
+</segmented-elemental>
+```
+
+The segments stay `<input type="radio">`, which is where the whole
+[APG Radio Group pattern](https://www.w3.org/WAI/ARIA/apg/patterns/radio/) already
+lives — arrows that move the selection and wrap, `Tab` in and out of the group
+once, submission under the shared `name`, `required`, reset, restore, and a
+`<fieldset disabled>` that takes the lot. None of it is rewritten here, which is
+why the element has no roles, no `aria-checked` and no event of its own: a radio
+fires `change`, and `change` bubbles.
+
+What is left for script is the one thing CSS cannot say for an unknown number of
+segments — which one is checked. The element writes
+`--segmented-elemental-index`, `--segmented-elemental-count` and `data-index` onto
+itself, and the theme's knob is a single pseudo-element one track wide that
+translates by the index. Without the script there is no knob at all rather than a
+knob parked on the first segment, and the selected label still takes its colour,
+because that comes from `label:has(> input:checked)` and needs nobody's help. The
+only ARIA it writes is `role="group"`, and only when you have given the element an
+`aria-label` that would otherwise be read by nothing.
 
 ## `<switch-elemental>`
 

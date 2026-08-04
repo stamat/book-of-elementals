@@ -5,5 +5,6 @@ export * from './elementals/accordion/index.js';
 export * from './elementals/disclosure/index.js';
 export * from './elementals/menu/index.js';
 export * from './elementals/navbar/index.js';
+export * from './elementals/segmented/index.js';
 export * from './elementals/switch/index.js';
 export * from './elementals/tabs/index.js';

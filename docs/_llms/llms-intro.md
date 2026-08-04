@@ -42,6 +42,16 @@ Elements published so far:
   event. A `media` attribute hands `open` to a media query — held open while it
   matches, closed when it stops — and writes `data-mode="pinned"`/`"free"` on the
   element and the region, so a stylesheet keys off the query without repeating it.
+- `<segmented-elemental>` — APG radio group drawn as a segmented control: a track
+  with a knob that slides under the checked segment, over native
+  `<input type="radio">` in `<label>`s. Arrow keys, `Tab` in and out once,
+  submission under the shared `name`, `required`, reset and restore are all the
+  browser's, so the element writes no roles, no `aria-checked`, and no event of its
+  own — a radio fires `change` and `change` bubbles. It writes
+  `--segmented-elemental-index`, `--segmented-elemental-count` and `data-index`,
+  which is what the knob is positioned from, plus `role="group"` when the element
+  carries an `aria-label` that nothing would otherwise read. No script means no
+  knob, not a knob on the wrong segment.
 - `<switch-elemental>` — APG switch: a real `<button>` given `role="switch"` and
   `aria-checked`, for a setting that takes effect the moment it is flipped (a
   theme toggle, a mute). Reflected `checked` and a bubbling `switch-toggle`

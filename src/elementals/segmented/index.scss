@@ -1,0 +1,45 @@
+segmented-elemental {
+  // The knob is positioned against the track, so the track has to be the containing
+  // block. Set here rather than in the theme, because the theme is what draws the knob
+  // and a knob positioned against the page instead is not a smaller bug.
+  position: relative;
+  display: inline-grid;
+
+  // Equal tracks, whatever N is: one track is exactly the knob's width, so the knob
+  // never has to be told how wide a segment is. It also means the row does not resize as
+  // the selection moves, which is what a control that reflows under the pointer costs.
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+
+  > label {
+    // Above the knob. The knob is `::before` on this element, so tree order already puts
+    // the labels on top of it and there is no stacking context or z-index to keep in
+    // step - which is also what lets an icon-only label sit over a filled knob.
+    position: relative;
+    display: flex;
+    gap: 0.5em;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+
+    // The radio is the control and stays the control: out of sight, still focusable,
+    // still in the arrow and Tab order, still what the form submits and what a screen
+    // reader announces as a radio in a group. A pixel rather than `display: none` or
+    // `visibility: hidden`, which would take it out of all four.
+    > input[type="radio"] {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      margin: 0;
+      opacity: 0;
+    }
+
+    // The focus ring the hidden input can no longer draw, moved onto the label that
+    // stands in for it. Structure rather than theme: a control whose focus cannot be
+    // seen is broken, not unstyled, and the theme is the part an author may skip.
+    &:has(> input[type="radio"]:focus-visible) {
+      outline: 2px solid currentcolor;
+      outline-offset: 2px;
+    }
+  }
+}

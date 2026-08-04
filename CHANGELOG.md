@@ -15,6 +15,30 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Added
+
+- **`<segmented-elemental>`.** One choice out of a few, drawn as a track with a knob that
+  slides under the checked segment — the N-state answer to `<switch-elemental>`. The
+  segments are native `<input type="radio">` inside `<label>`s, so arrow keys, `Tab` in
+  and out of the group once, submission under the shared `name`, `required`, reset,
+  restore and `<fieldset disabled>` are all the browser's; the element writes no roles and
+  no `aria-checked`, and has no event of its own, because a radio already fires a bubbling
+  `change`.
+
+  **DOM it produces:** nothing is moved or wrapped. On itself it writes the custom
+  properties `--segmented-elemental-index` and `--segmented-elemental-count`, a matching
+  `data-index` attribute, and `role="group"` — that last one only where the element
+  carries an `aria-label` or `aria-labelledby` and no `role` of its own, since ARIA on a
+  roleless element is read by nothing.
+
+  **CSS you can target:** `segmented-elemental[data-index]`,
+  `segmented-elemental > label:has(> input:checked)`, and the thirteen
+  `--segmented-elemental-*` properties in the optional theme. The knob hangs off
+  `data-index`, so no script and no selection both come out as no knob rather than as a
+  knob on the first segment. The focus ring lives in `style.scss` rather than the theme,
+  because the radio it belongs to is a hidden pixel and a control whose focus cannot be
+  seen is broken rather than unstyled.
+
 ## [0.4.0] - 2026-08-04
 
 ### Added

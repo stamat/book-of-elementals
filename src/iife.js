@@ -7,5 +7,6 @@ import './elementals/accordion/index.js';
 import './elementals/disclosure/index.js';
 import './elementals/menu/index.js';
 import './elementals/navbar/index.js';
+import './elementals/segmented/index.js';
 import './elementals/switch/index.js';
 import './elementals/tabs/index.js';
