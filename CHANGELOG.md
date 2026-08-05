@@ -15,6 +15,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-05
+
 ### Added
 
 - **`<modal-elemental>`.** A native `<dialog>` opened with `showModal()`, per the
