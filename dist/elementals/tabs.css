@@ -1,4 +1,4 @@
-/* book-of-elementals v0.5.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v0.5.1 | https://stamat.github.io/book-of-elementals/ | MIT License */
 tabs-elemental {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
