@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Bulk actions
 description: The select-all in a table header and the toolbar under it — checkbox-group-elemental, the drawn checkbox, and the one event that keeps a count honest.
-order: 3
+order: 1
 ---
 
 # Bulk actions

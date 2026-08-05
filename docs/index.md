@@ -93,22 +93,10 @@ handling are not options.
 
 ## The book so far
 
-| Element                                                | Pattern                                                                                          |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| [`<accordion-elemental>`](elementals/accordion.html)   | [APG Accordion](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/), over native `<details>`    |
-| [`<checkbox-group-elemental>`](elementals/checkbox-group.html) | [APG Checkbox (Mixed-State)](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/), a select-all that shows the dash when it is some of them |
-| [`<combobox-elemental>`](elementals/combobox.html)     | [APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/), a `<select>` you can type your way down, one value or many |
-| [`<copy-elemental>`](elementals/copy.html)             | No APG pattern — a `<button>`, the clipboard write behind it, and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-changes.html) every copy button forgets |
-| [`<disclosure-elemental>`](elementals/disclosure.html) | [APG Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), where `<details>` cannot go |
-| [`<menu-elemental>`](elementals/menu.html)             | [APG Menu Button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/), nested, and not a menu below a breakpoint |
-| [`<modal-elemental>`](elementals/modal.html)           | [APG Modal Dialog](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) on native `<dialog>` — nested, animated out, and dismissed the way the platform says |
-| [`<navbar-elemental>`](elementals/navbar.html)         | [APG Disclosure Navigation](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/), that folds itself away when the links stop fitting |
-| [`<segmented-elemental>`](elementals/segmented.html)   | [APG Radio Group](https://www.w3.org/WAI/ARIA/apg/patterns/radio/) on native radios, drawn as a track with a knob that slides |
-| [`<switch-elemental>`](elementals/switch.html)         | [APG Switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/), for a setting that takes effect at once |
-| [`<tabs-elemental>`](elementals/tabs.html)             | [APG Tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), horizontal or vertical, written on a list of in-page links |
-| [`<tooltip-elemental>`](elementals/tooltip.html)       | [APG Tooltip](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/) as far as it has consensus — a description on hover and focus, and a sentence on the page without script |
+Twelve elements, one page each — eleven on an APG pattern, one where there is
+none to have. [**The elementals**](elementals/index.html) is the index: what
+each one implements, and which gap in the platform it fills.
 
-More pages are being written. Elements published separately today —
-[compare-images-slider](https://github.com/stamat/compare-images-slider),
-[youtube-background](https://github.com/stamat/youtube-background) — keep their
-own packages; this book does not break anyone's install to absorb them.
+Assembled into whole interface pieces, they are in
+[examples](examples/site-navigation.html) — a site header, a sidebar drawer, a
+bulk-actions toolbar.

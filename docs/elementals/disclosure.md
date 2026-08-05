@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Disclosure
 description: A real button wired to a region it shows and hides — for the places a details element cannot go.
-order: 2
+order: 4
 ---
 
 # `<disclosure-elemental>`

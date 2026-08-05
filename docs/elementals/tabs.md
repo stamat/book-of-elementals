@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Tabs
 description: One panel at a time out of a set of them — the APG Tabs pattern, horizontal or vertical, written on a list of in-page links.
-order: 9
+order: 10
 ---
 
 # `<tabs-elemental>`

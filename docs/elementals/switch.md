@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Switch
 description: An on/off setting that takes effect the moment you flip it — the APG Switch pattern on a real button.
-order: 3
+order: 9
 ---
 
 # `<switch-elemental>`

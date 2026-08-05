@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Modal
 description: A native dialog opened as a modal — nested, animated, and dismissed the way the platform says.
-order: 12
+order: 6
 ---
 
 # `<modal-elemental>`

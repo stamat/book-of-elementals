@@ -61,17 +61,6 @@ Elements published so far:
   diacritics both ways, so `cacak` finds Čačak. Filtering is the only gap it fills:
   `appearance: base-select` now styles a dropdown natively, and no browser lets you type
   your way down a long list.
-- `<copy-elemental>` — a real `<button>` that writes text to the clipboard and announces
-  it. No APG pattern, because there is no widget: the gap is the half after the click, where
-  every copy button swaps an icon and tells a screen reader nothing, leaving WCAG 2.2 SC
-  4.1.3 Status Messages unmet. It appends one `<span role="status">`, clipped out of sight,
-  and writes `data-state="copied"`/`"error"` for two seconds. Attributes: `for` (also read
-  as `data-for`), `value` (literal, wins over `for`), `copied-text`, `error-text`; a
-  bubbling `copy-done` with `detail.ok` and `detail.text`. A field is copied by its current
-  `.value`; anything else by the text it shows, with leading newlines and trailing
-  whitespace stripped so a code block does not paste a command that runs itself. No
-  clipboard API, or nothing named to copy, and the button is not offered at all —
-  `data-unavailable` says which.
 - `<disclosure-elemental>` — APG disclosure: a real `<button>` wired to a region
   with `aria-expanded`/`aria-controls`, for the places `<details>` cannot go (a
   `<figcaption>`, a table row, a grid item, a region across the page). Reflected
@@ -80,24 +69,6 @@ Elements published so far:
   event. A `media` attribute hands `open` to a media query — held open while it
   matches, closed when it stops — and writes `data-mode="pinned"`/`"free"` on the
   element and the region, so a stylesheet keys off the query without repeating it.
-- `<segmented-elemental>` — APG radio group drawn as a segmented control: a track
-  with a knob that slides under the checked segment, over native
-  `<input type="radio">` in `<label>`s. Arrow keys, `Tab` in and out once,
-  submission under the shared `name`, `required`, reset and restore are all the
-  browser's, so the element writes no roles, no `aria-checked`, and no event of its
-  own — a radio fires `change` and `change` bubbles. It writes
-  `--segmented-elemental-index`, `--segmented-elemental-count` and `data-index`,
-  which is what the knob is positioned from, plus `role="group"` when the element
-  carries an `aria-label` that nothing would otherwise read. No script means no
-  knob, not a knob on the wrong segment.
-- `<switch-elemental>` — APG switch: a real `<button>` given `role="switch"` and
-  `aria-checked`, for a setting that takes effect the moment it is flipped (a
-  theme toggle, a mute). Reflected `checked` and a bubbling `switch-toggle`
-  event. Form-associated through `ElementInternals`, so `name`/`value` submit,
-  reset and restore exactly as a checkbox's do — no hidden `<input>`, and a switch
-  in a form is still this element. Two things send you to
-  `<input type="checkbox" role="switch">` instead: it needs no JavaScript at all, so
-  it survives scripting being off, and it can be labelled by a `<label>`.
 - `<menu-elemental>` — APG menu button: a `<button>` and the nested lists it
   opens, with `role="menu"`/`role="menuitem"`, arrow keys, type-ahead, `Escape`
   back to the trigger and one branch open at a time. A `media` attribute is the
@@ -128,6 +99,24 @@ Elements published so far:
   drawer. `data-mode="bar"`/`"stack"`, reflected `open`, a bubbling `navbar-toggle`,
   and three markup hooks: `data-navbar-more`, `data-navbar-toggle`,
   `data-navbar-stack`.
+- `<segmented-elemental>` — APG radio group drawn as a segmented control: a track
+  with a knob that slides under the checked segment, over native
+  `<input type="radio">` in `<label>`s. Arrow keys, `Tab` in and out once,
+  submission under the shared `name`, `required`, reset and restore are all the
+  browser's, so the element writes no roles, no `aria-checked`, and no event of its
+  own — a radio fires `change` and `change` bubbles. It writes
+  `--segmented-elemental-index`, `--segmented-elemental-count` and `data-index`,
+  which is what the knob is positioned from, plus `role="group"` when the element
+  carries an `aria-label` that nothing would otherwise read. No script means no
+  knob, not a knob on the wrong segment.
+- `<switch-elemental>` — APG switch: a real `<button>` given `role="switch"` and
+  `aria-checked`, for a setting that takes effect the moment it is flipped (a
+  theme toggle, a mute). Reflected `checked` and a bubbling `switch-toggle`
+  event. Form-associated through `ElementInternals`, so `name`/`value` submit,
+  reset and restore exactly as a checkbox's do — no hidden `<input>`, and a switch
+  in a form is still this element. Two things send you to
+  `<input type="checkbox" role="switch">` instead: it needs no JavaScript at all, so
+  it survives scripting being off, and it can be labelled by a `<label>`.
 - `<tabs-elemental>` — APG tabs, written on the markup a page would have had
   anyway: a list of in-page links and the sections they point at. `role="tablist"`,
   `role="tab"` and `role="tabpanel"` with a roving tabindex, arrow keys on the axis
@@ -144,6 +133,17 @@ Elements published so far:
   the dismissal holds until the reader leaves; the bubble itself is hoverable, per
   WCAG 2.2 SC 1.4.13; there is no timeout. **Touch pointers are ignored**, because
   a tap is not a hover — nothing essential belongs in a tooltip.
+- `<copy-elemental>` — a real `<button>` that writes text to the clipboard and announces
+  it. No APG pattern, because there is no widget: the gap is the half after the click, where
+  every copy button swaps an icon and tells a screen reader nothing, leaving WCAG 2.2 SC
+  4.1.3 Status Messages unmet. It appends one `<span role="status">`, clipped out of sight,
+  and writes `data-state="copied"`/`"error"` for two seconds. Attributes: `for` (also read
+  as `data-for`), `value` (literal, wins over `for`), `copied-text`, `error-text`; a
+  bubbling `copy-done` with `detail.ok` and `detail.text`. A field is copied by its current
+  `.value`; anything else by the text it shows, with leading newlines and trailing
+  whitespace stripped so a code block does not paste a command that runs itself. No
+  clipboard API, or nothing named to copy, and the button is not offered at all —
+  `data-unavailable` says which.
 
 Sibling project: [book-of-spells](https://github.com/stamat/book-of-spells),
 which holds the plain JavaScript helpers. This book holds the elements.

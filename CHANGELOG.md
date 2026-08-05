@@ -15,6 +15,16 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Changed
+
+- **The elementals have an index page.** `elementals/index.html` is what the sidebar's
+  "Elementals" section now points at as its overview: every element in the book with the
+  pattern it implements, in two tables — the eleven an APG pattern covers, and
+  `<copy-elemental>`, which has none to have. The home page keeps the heading and loses the
+  table, because the same list in two places is two lists to keep in step. Docs pages are
+  ordered alphabetically in the sidebar with the pattern-less one last, and so are the
+  examples. Docs only — nothing about the package changes.
+
 ## [0.5.0] - 2026-08-05
 
 ### Added

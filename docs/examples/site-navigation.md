@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Site navigation
 description: A whole site header built around navbar-elemental — logo, search, icon links, a theme switch and two calls to action beside a row of links that folds itself away.
-order: 1
+order: 3
 ---
 
 # Site navigation

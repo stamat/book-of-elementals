@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Checkbox group
 description: A select-all checkbox over the checkboxes it stands for — ticked, empty, or showing the dash when it is some of them.
-order: 6
+order: 2
 ---
 
 # `<checkbox-group-elemental>`
