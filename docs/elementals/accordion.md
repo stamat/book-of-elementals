@@ -320,22 +320,25 @@ No class: each panel its own bordered box, native disclosure marker.
 
 ### Grouped
 
-`class="grouped"` — one card instead of a stack. Neighbours overlap by a pixel so the seam
-is one line, and the rounding goes on the outer corners of the run rather than on a
-clipping wrapper: `overflow: hidden` would cut the focus ring off the summary inside,
-which is the one thing on the element a keyboard user has to see.
+`class="grouped"` — one card instead of a stack. Every panel after the first drops its own
+top border so a seam is one line, and the rounding goes on the outer corners of the run
+rather than on a clipping wrapper: `overflow: hidden` would cut the focus ring off the
+summary inside, which is the one thing on the element a keyboard user has to see.
 
 <accordion-elemental class="grouped">
   <details open>
     <summary>Panels share their borders</summary>
-    <p>Neighbours overlap by a pixel so the seam between two panels is one line
-    rather than two.</p>
+    <p>Each panel after the first drops its top border and leans on its
+    neighbour's. Pulling the two onto each other by a pixel instead would draw
+    the seam at twice the alpha, because the border is mixed out of
+    <code>currentcolor</code> and composites with itself.</p>
   </details>
   <details>
     <summary>The focused panel lifts</summary>
-    <p>Overlapping borders mean the next panel paints over the focused one's
-    outline, so the focused panel is raised instead of anything being clipped.
-    Tab through this group and the ring stays whole.</p>
+    <p>A focus ring is drawn outside the summary's box, so in a flush run it
+    reaches a pixel or two into the next panel — which is later in the document
+    and would paint over it. The focused panel is raised instead of anything
+    being clipped. Tab through this group and the ring stays whole.</p>
   </details>
 </accordion-elemental>
 <br>

@@ -90,8 +90,14 @@ accordion-elemental {
       border-radius: 0;
     }
 
+    // One border per seam, dropped rather than overlapped. Pulling the panels onto
+    // each other by a pixel is the usual trick and it is wrong for a translucent
+    // border: two of them in the same pixel composite to about twice the alpha, so
+    // every seam reads darker than the outer edge of the card. The run keeps the
+    // first panel's top border and every panel after it drops its own.
     > details + details {
-      margin-top: -1px; // share the border between neighbours
+      margin-top: 0;
+      border-top: 0;
     }
 
     > details:first-of-type,
@@ -108,8 +114,10 @@ accordion-elemental {
       border-end-end-radius: var(--accordion-elemental-radius);
     }
 
-    // Overlapping borders mean the next panel paints over the focused one's
-    // outline. Lift the focused panel instead of clipping anything.
+    // A focus ring is drawn outside the summary's box, which in a flush run is a
+    // pixel or two inside the next panel - and the next panel is later in the
+    // document, so its own painting lands on top of the ring. Lift the focused
+    // panel instead of clipping anything.
     > details:focus-within {
       position: relative;
       z-index: 1;

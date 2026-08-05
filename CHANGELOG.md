@@ -15,6 +15,19 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`<accordion-elemental class="grouped">` drew every seam twice as dark as the card's
+  outer edge.** The theme's border is mixed out of `currentcolor` and so is translucent,
+  and the run pulled neighbouring panels onto each other by a pixel to share a border —
+  two translucent lines in one pixel composite to roughly twice the alpha. Panels now sit
+  flush and every one after the first drops its own `border-top` instead, which is one
+  line at the colour the property actually asks for. **CSS:** in `accordion/theme.scss`
+  only, and only under `.grouped` — `> details + details` no longer carries
+  `margin-top: -1px`. A page overriding that rule to restore the overlap will now stack a
+  border on top of a border; a page that only sets
+  `--accordion-elemental-border-color` needs no change.
+
 ### Changed
 
 - **The elementals have an index page.** `elementals/index.html` is what the sidebar's

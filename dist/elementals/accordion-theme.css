@@ -43,7 +43,8 @@ accordion-elemental.grouped > details > summary {
   border-radius: 0;
 }
 accordion-elemental.grouped > details + details {
-  margin-top: -1px;
+  margin-top: 0;
+  border-top: 0;
 }
 accordion-elemental.grouped > details:first-of-type,
 accordion-elemental.grouped > details:first-of-type > summary {
