@@ -6,6 +6,8 @@
 // menu sits in whatever palette the page already has - including a theme switch -
 // with nothing to configure.
 
+@use "../../styles/svg";
+
 menu-elemental {
   --menu-elemental-radius: 0.375rem;
   --menu-elemental-inset: 0.35rem;
@@ -51,7 +53,7 @@ menu-elemental {
       width: var(--menu-elemental-hamburger-size);
       height: var(--menu-elemental-hamburger-size);
       background: currentcolor;
-      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M1 2.75A.75.75 0 0 1 1.75 2h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 2.75Zm0 5A.75.75 0 0 1 1.75 7h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 7.75ZM1.75 12h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5Z'/%3E%3C/svg%3E") center / contain no-repeat;
+      mask: svg.icon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M1 2.75A.75.75 0 0 1 1.75 2h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 2.75Zm0 5A.75.75 0 0 1 1.75 7h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 7.75ZM1.75 12h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5Z'/></svg>") center / contain no-repeat;
 
       @media (forced-colors: active) {
         background: CanvasText;
@@ -108,7 +110,7 @@ menu-elemental {
     height: var(--menu-elemental-caret-size);
     margin-inline-start: auto;
     background: currentcolor;
-    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: svg.icon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/></svg>") center / contain no-repeat;
 
     // Pointing at the panel it opens, which is beside the item - and so the other
     // way round in RTL, where the panel is too.
@@ -146,7 +148,7 @@ menu-elemental {
       height: var(--menu-elemental-caret-size);
       margin-inline-start: auto;
       background: currentcolor;
-      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/%3E%3C/svg%3E") center / contain no-repeat;
+      mask: svg.icon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/></svg>") center / contain no-repeat;
       rotate: -90deg;
       transition: rotate 200ms ease;
 

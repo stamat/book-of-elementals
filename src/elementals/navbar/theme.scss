@@ -6,6 +6,8 @@
 // in whatever palette the page already has - including a theme switch - with nothing to
 // configure.
 
+@use "../../styles/svg";
+
 navbar-elemental {
   --navbar-elemental-radius: 0.375rem;
   --navbar-elemental-inset: 0.35rem;
@@ -91,7 +93,7 @@ navbar-elemental[data-mode="bar"] {
       width: var(--navbar-elemental-caret-size);
       height: var(--navbar-elemental-caret-size);
       background: currentcolor;
-      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/%3E%3C/svg%3E") center / contain no-repeat;
+      mask: svg.icon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/></svg>") center / contain no-repeat;
       transition: rotate 200ms ease;
 
       // A masked icon is a painted background, and forced-colors mode overrides author
@@ -202,7 +204,7 @@ navbar-elemental[data-mode="stack"] {
       height: var(--navbar-elemental-caret-size);
       margin-inline-end: 0.25rem;
       background: currentcolor;
-      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/%3E%3C/svg%3E") center / contain no-repeat;
+      mask: svg.icon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/></svg>") center / contain no-repeat;
       rotate: -90deg;
       transition: rotate 200ms ease;
 

@@ -98,6 +98,7 @@
     "src/styles/index.scss",
     "src/styles/theme.scss",
     "src/styles/checkbox.scss",
+    "src/styles/_svg.scss",
     "dist",
     "!src/**/*.test.js"
   ],
@@ -171,6 +172,7 @@
     "playwright-core": "^1.62.1",
     "poops": "^2.0.0",
     "poops-docs-theme": "^2.0.0",
+    "sass": "^1.102.0",
     "stylelint": "^17.14.1",
     "stylelint-config-standard-scss": "^17.0.0",
     "stylelint-no-unsupported-browser-features": "^8.1.1"

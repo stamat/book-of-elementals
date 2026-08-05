@@ -1,0 +1,33 @@
+// Inline SVG for `mask` and `background`, written as SVG rather than as a percent-escaped
+// blob. A raw SVG cannot go into `url()` as it stands - `#` starts a fragment identifier
+// and `<`/`>` are not URL characters - and hand-escaping it costs the source every trace of
+// what the icon is. Encoding is the same bytes either way; only the source changes.
+
+// Sass-side and not a build step, because `theme.scss` is a published entry point: whoever
+// imports it compiles it with their own Sass, and a custom importer they do not have
+// registered is a crash rather than a fallback. Which also fixes the limit - Sass cannot
+// read a file, so this takes the markup, never a path.
+@use "sass:string";
+
+@function replace($subject, $search, $replacement) {
+  $index: string.index($subject, $search);
+
+  @if not $index {
+    @return $subject;
+  }
+
+  $rest: string.slice($subject, $index + string.length($search));
+
+  @return string.slice($subject, 1, $index - 1) + $replacement + replace($rest, $search, $replacement);
+}
+
+// `%` before the rest, or the escapes the others introduce get escaped in turn.
+@function icon($svg) {
+  $svg: replace($svg, "%", "%25");
+  $svg: replace($svg, "<", "%3C");
+  $svg: replace($svg, ">", "%3E");
+  $svg: replace($svg, "#", "%23");
+  $svg: replace($svg, '"', "%22");
+
+  @return url("data:image/svg+xml,#{$svg}");
+}
