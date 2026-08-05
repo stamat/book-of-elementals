@@ -14,10 +14,11 @@ dialog stays where your markup put it and every attribute on it is still the pla
 
 <div class="demo-block">
   <button type="button" command="show-modal" commandfor="intro-dialog">Open a modal</button>
-  <modal-elemental closedby="any">
+  <modal-elemental>
     <dialog id="intro-dialog">
       <h2>Nothing up my sleeve</h2>
-      <p>Escape closes it. So does a click outside, because this one says <code>closedby="any"</code>.</p>
+      <p>Escape closes it, and so does the cross. A click outside does not — that is
+      <code>closedby="any"</code>, and it is opt-in.</p>
       <form method="dialog"><button type="submit">Close</button></form>
     </dialog>
   </modal-elemental>
@@ -26,7 +27,7 @@ dialog stays where your markup put it and every attribute on it is still the pla
 ```html
 <button type="button" command="show-modal" commandfor="hello">Open a modal</button>
 
-<modal-elemental closedby="any">
+<modal-elemental>
   <dialog id="hello">
     <h2>Nothing up my sleeve</h2>
     <form method="dialog"><button type="submit">Close</button></form>
@@ -53,6 +54,7 @@ What is left over is this element:
 | **the page not scrolling**  | `inert` stops a click and a <kbd>Tab</kbd>. It never stopped a wheel                                                                                                                                             | `overflow: hidden` on the root while any modal is open            |
 | **stacked backdrops**       | every modal paints its own, so three open is three sheets of dim                                                                                                                                                | numbers them, and only the bottom one dims                        |
 | **a name on the dialog**    | a `<dialog>` takes no name from its contents, so an unlabelled one is announced as "dialog" and nothing more                                                                                                     | points `aria-labelledby` at the first heading inside              |
+| **a close button**          | the APG [strongly recommends a visible one](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/); HTML gives you `<form method="dialog">` and leaves the rest                                                 | writes the cross in the corner, unless `closedby="none"`          |
 
 Everything else is the browser's, unchanged and unwrapped.
 
@@ -133,11 +135,11 @@ over it. `el.show()` on the `<modal-elemental>` is the same open with `close-oth
 ```html
 <button type="button" command="show-modal" commandfor="feedback">Send feedback</button>
 
-<modal-elemental closedby="any">
+<modal-elemental>
   <dialog id="feedback">
     <h2>Send feedback</h2>
     <form method="dialog">
-      <p><label>What happened? <input name="what" /></label></p>
+      <p><label>What happened? <input name="what" autofocus /></label></p>
       <button type="submit" value="cancel">Cancel</button>
       <button type="submit" value="send">Send</button>
     </form>
@@ -164,9 +166,49 @@ instantly, with the fade cut off, and with a `cancel` event that
 | `any`                     | closes         | closes        | a lightbox, a menu, anything glanced at    |
 | `none`                    | no             | no            | a decision that has to be made             |
 
+The default is the one to reach for when a stray click must not throw work away: **write no
+`closedby` at all** and Escape is the only key out, plus the cross. `any` is the opt-in, and
+the only one of the three that watches the backdrop.
+
 `none` is not a lock. A close watcher only argues once, so a second <kbd>Esc</kbd> closes the
 dialog anyway — that is the platform refusing to trap a reader, and it is not something this
 element should undo. Use it to catch a stray press, not to hold someone hostage.
+
+### The cross in the corner
+
+Every modal gets one, written by the element — a `<button command="request-close">` as the
+dialog's first child, so it is the first thing focus lands on and the first thing a screen
+reader reaches, in the corner it is drawn in. Give it a name in your own language with
+`close-text`:
+
+```html
+<modal-elemental closedby="any" close-text="Zatvori">
+  <dialog id="…">…</dialog>
+</modal-elemental>
+```
+
+Three things follow from where it sits:
+
+- **It is absolute, against the dialog.** A modal dialog is `position: fixed` by the
+  browser's own rule, so it is already the containing block — nothing has to be positioned
+  to make the corner work, and the heading beside the cross keeps the whole width of the box.
+- **A dialog long enough to scroll takes the cross with it.** That is the cost of the
+  corner: an absolutely positioned box scrolls with the content it is positioned against.
+  Give a long modal a close button of its own at the end of the content, where the reader
+  ends up.
+- **`closedby="none"` gets no cross.** That value is a dialog to be answered rather than
+  dismissed, and a cross in the corner is a dismissal with a different shape. Write your own
+  button there, saying what taking it means.
+
+Focus starts on the cross, which is right for a dialog that is read and wrong for one that
+is filled in. `autofocus` moves it:
+
+```html
+<dialog id="feedback">
+  <h2>Send feedback</h2>
+  <input name="what" autofocus>
+</dialog>
+```
 
 ## Nesting
 
@@ -266,7 +308,6 @@ already gone back to.
 <modal-elemental closedby="any">
   <dialog id="lightbox" aria-label="Two hills under a low sun">
     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'%3E%3Crect width='160' height='100' fill='%23244'/%3E%3Ccircle cx='120' cy='28' r='14' fill='%23fc7'/%3E%3Cpolygon points='0,100 60,40 110,100' fill='%23576'/%3E%3Cpolygon points='80,100 130,55 160,100' fill='%23354'/%3E%3C/svg%3E" alt="Two hills under a low sun" width="960" height="600">
-    <form method="dialog"><button type="submit" aria-label="Close">✕</button></form>
   </dialog>
 </modal-elemental>
 ```
@@ -298,12 +339,20 @@ modal-elemental > dialog#lightbox {
   border-radius: 0.5rem;
 }
 
-#lightbox form { position: absolute; inset-block-start: 0.5rem; inset-inline-end: 0.5rem; margin: 0; }
-#lightbox button { border: 0; border-radius: 100%; width: 2rem; height: 2rem; cursor: pointer; }
+/* the element's own cross, repainted for a dark picture: it inherits the page's text
+   colour, which is the one colour that disappears against this image */
+#lightbox .modal-elemental-close {
+  color: white;
+  background: rgb(0 0 0 / 40%);
+}
+
+#lightbox .modal-elemental-close:hover { background: rgb(0 0 0 / 65%); }
 ```
 
 The dialog is named with `aria-label` here because there is no heading to point at — a
-picture and a close button are the whole of it.
+picture is the whole of it. The close button is not in the markup because the element writes
+it; the CSS above only repaints it, since a cross in the page's own text colour is a cross
+nobody finds against a photograph.
 
 ### A video
 
@@ -428,6 +477,7 @@ the page, and a piece of the page a reader cannot get to is a piece of the page 
 | --------------- | ------- | -------------- | ------------------------------------------------------------------- |
 | `closedby`      | enum    | `closerequest` | `any`, `closerequest` or `none`. Moved up from the `<dialog>` if written there |
 | `close-others`  | boolean | —              | Opening this one closes every modal already open, instead of stacking |
+| `close-text`    | string  | `Close`        | The close button's accessible name                                    |
 
 ### Properties
 
@@ -468,6 +518,8 @@ modal-elemental > dialog[data-depth="1"] {
 } /* the bottom modal — the one that dims the page */
 modal-elemental:not(:defined) {
 } /* before upgrade */
+.modal-elemental-close {
+} /* the cross the element writes */
 ```
 
 `data-state` is the animation's hook, and `[open]` is not: the dialog is still open through
@@ -487,7 +539,9 @@ is the box, and is optional.
 | `--modal-elemental-backdrop`    | `rgb(0 0 0 / 50%)`   | The sheet over the page                                  |
 | `--modal-elemental-max-width`   | `32rem`              | Capped again at `100% - 2rem`, so a phone keeps its gutter |
 | `--modal-elemental-padding`     | `1.5rem`             | Inside the box                                           |
-| `--modal-elemental-radius`      | `0.5rem`             | Its corners                                              |
+| `--modal-elemental-radius`      | `0.75rem`            | Its corners                                              |
+| `--modal-elemental-close-size`  | `2rem`               | The cross in the corner, both axes. Its glyph is sized from it |
+| `--modal-elemental-close-inset` | `0.75rem`            | How far the cross sits from the box's corner             |
 | `--modal-elemental-margin-block` | `auto`              | Where it sits: `auto` centres, `5vh auto` pins it near the top |
 
 <!-- demo modal tab="options" -->

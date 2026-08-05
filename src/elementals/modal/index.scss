@@ -58,6 +58,31 @@ modal-elemental > dialog {
   }
 }
 
+// The cross the element writes into every dialog that can be dismissed. Structure only -
+// a square in the corner, at the size and inset the page asks for - because the paint is
+// the theme's.
+// Absolute, against the dialog itself: the browser's own rule gives a modal dialog
+// `position: fixed`, so it is the containing block already and nothing here has to be
+// positioned to make that true. Out of the flow, so the heading it sits beside keeps the
+// whole width of the box and nothing shifts when the cross is not written at all.
+// `inline-end` rather than `right`, so it moves to the other corner in a right-to-left page
+// along with everything else. `z-index` because content that reaches the corner - an image,
+// a table - is painted in the same layer and would otherwise pass over the top of it.
+// A modal long enough to scroll takes the cross with it, which is the cost of the corner:
+// an absolutely positioned box is positioned against the padding box and scrolls with the
+// content. Give a long dialog a close button of its own at the end of the content.
+.modal-elemental-close {
+  position: absolute;
+  inset-block-start: var(--modal-elemental-close-inset, 0.5rem);
+  inset-inline-end: var(--modal-elemental-close-inset, 0.5rem);
+  z-index: 1;
+  inline-size: var(--modal-elemental-close-size, 2rem);
+  block-size: var(--modal-elemental-close-size, 2rem);
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
 // The page behind does not scroll. `showModal()` makes it inert, which stops a click and a
 // Tab but never stopped a wheel - the one part of "modal" the platform leaves to CSS.
 // Not reliable on iOS, where touch scrolling gets past `overflow: hidden` on the root;

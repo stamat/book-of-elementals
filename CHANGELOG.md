@@ -31,7 +31,9 @@ may already be targeting**, since neither shows up in a function signature.
   **click on the backdrop**, which otherwise needs `closedby` support Safari does not have
   either. The page behind **not scrolling**. One sheet of dim rather than one per modal. And
   `aria-labelledby` pointed at the first heading inside, since a `<dialog>` takes no name
-  from its contents and an unnamed one is announced as "dialog" and nothing else.
+  from its contents and an unnamed one is announced as "dialog" and nothing else. And the
+  cross in the corner: the APG strongly recommends a visible close button, and HTML stops at
+  `<form method="dialog">`.
 
   Triggers are HTML's own invoker commands, `command="show-modal"` and `commandfor`, handled
   by the element rather than left to the browser: that is what makes the close animated, and
@@ -49,16 +51,26 @@ may already be targeting**, since neither shows up in a function signature.
   it. That is the whole of the lightbox and video support — the docs page shows a lightbox, a
   `<video>`, YouTube and Vimeo as markup in a dialog, with nothing switched on.
 
-  **DOM it produces:** on the `<dialog>` — a generated `id` if it had none,
-  `aria-labelledby` if it had no name, `data-state="open"`/`"closing"` while it is on screen,
-  and `data-depth` numbering it in the stack. A `closedby` written on the `<dialog>` is
+  **DOM it produces:** inside the `<dialog>`, as its first child, a
+  `<button type="button" class="modal-elemental-close" command="request-close">` — the cross,
+  named by `close-text` (default `Close`) and written unless `closedby="none"`. First child
+  rather than last so the reading order, the tab order and where it is drawn agree, which
+  also makes it where focus lands: put `autofocus` on a field to move it. On the `<dialog>`
+  itself — a generated `id` if it had none, `aria-labelledby` if it had no name,
+  `data-state="open"`/`"closing"` while it is on screen, and `data-depth` numbering it in the
+  stack. A `closedby` written on the `<dialog>` is
   **moved up** to the `<modal-elemental>`, because a browser that supports it natively would
   light-dismiss the modal itself, instantly, with a `cancel` event that
   [cannot be prevented](https://html.spec.whatwg.org/multipage/interactive-elements.html#light-dismiss-open-dialogs).
   Nothing is wrapped and nothing is moved. A bubbling `modal-toggle` carries `open`, `dialog`
   and `depth`.
 
-  **CSS it writes:** `style.scss` styles `modal-elemental > dialog` and its `::backdrop`, and
+  **CSS it writes:** `style.scss` styles `modal-elemental > dialog`, its `::backdrop` and
+  `.modal-elemental-close` — the cross is `position: absolute` in the dialog's corner, which
+  the browser's own `position: fixed` on a modal dialog already makes the containing block
+  for. `theme.scss` paints it round and quiet, and gives the dialog a hairline border
+  and a two-layer shadow, because a dark box on a dark backdrop is two shades of the same
+  thing without one. `style.scss` also
   sets `overflow: hidden` on the root while a modal is open — the one rule in this book that
   touches the page around an element, because `inert` never stopped a wheel. The dim itself
   is in `style.scss` rather than the theme: the APG only lets a dialog call itself modal when

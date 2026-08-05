@@ -31,6 +31,18 @@ modal-elemental > dialog[data-depth]:not([data-depth="1"])::backdrop {
   background: transparent;
 }
 
+.modal-elemental-close {
+  position: absolute;
+  inset-block-start: var(--modal-elemental-close-inset, 0.5rem);
+  inset-inline-end: var(--modal-elemental-close-inset, 0.5rem);
+  z-index: 1;
+  inline-size: var(--modal-elemental-close-size, 2rem);
+  block-size: var(--modal-elemental-close-size, 2rem);
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
 html:has(modal-elemental > dialog[data-depth]) {
   overflow: hidden;
 }

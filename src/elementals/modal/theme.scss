@@ -8,7 +8,13 @@
 modal-elemental {
   --modal-elemental-max-width: 32rem;
   --modal-elemental-padding: 1.5rem;
-  --modal-elemental-radius: 0.5rem;
+  --modal-elemental-radius: 0.75rem;
+  --modal-elemental-close-size: 2rem;
+
+  // How far the cross sits from the box's own corner. Smaller than the padding on purpose:
+  // a round button reads as inset by its own empty ring as well, so matching the padding
+  // exactly puts it visibly further in than the text below it.
+  --modal-elemental-close-inset: 0.75rem;
 
   // Where the box sits in the viewport, as the margin the browser resolves against the
   // top layer. `auto` on both sides centres it, which is the browser's own default and the
@@ -35,14 +41,23 @@ modal-elemental > dialog {
   // that has said `color-scheme: dark` is dark without a media query, and one in forced
   // colors keeps the background the reader asked for.
   background: Canvas;
-  border: 0;
+
+  // A hairline of the page's own text color, because the shadow below is most of the edge
+  // on a light page and none of it on a dark one - a dark box on a dark backdrop is two
+  // shades of the same thing, and this is the line between them.
+  border: 1px solid color-mix(in srgb, currentcolor 12%, transparent);
   border-radius: var(--modal-elemental-radius);
 
-  // The border is the shadow, which forced-colors mode removes - leaving a box with no
+  // Two shadows rather than one: a tight, dark one for the edge the box sits on and a wide,
+  // soft one for the distance it sits at. One blur doing both jobs is either a halo or a
+  // smudge.
+  box-shadow:
+    0 0.125rem 0.5rem rgb(0 0 0 / 15%),
+    0 1.5rem 3rem rgb(0 0 0 / 25%);
+
+  // Forced colors removes both the shadow and a `color-mix` border, leaving a box with no
   // edge against a page of the same color. The outline is only painted there, where it is
   // the one thing separating the two.
-  box-shadow: 0 0.5rem 2rem rgb(0 0 0 / 25%);
-
   @media (forced-colors: active) {
     outline: 1px solid CanvasText;
   }
@@ -50,4 +65,42 @@ modal-elemental > dialog {
   // A dialog taller than the viewport scrolls inside itself rather than being cut off at
   // the bottom, which is where a form's submit button lives.
   overflow: auto;
+
+  // Whatever the cross sits over keeps out from under it. The cross is out of the flow, so
+  // without this a heading runs beneath it and the last word is the one that disappears -
+  // and it is the *next* element rather than every one of them, because that is the line
+  // the corner is on. A dialog with no cross reserves nothing.
+  > .modal-elemental-close + * {
+    padding-inline-end: calc(var(--modal-elemental-close-size) + 0.5rem);
+  }
+}
+
+// A round, quiet button that is only a cross until it is pointed at - the modal's most
+// obvious control and its least important one, so it is drawn to be found rather than to be
+// looked at. `currentcolor` throughout, so it inherits the dialog's palette and a theme
+// switch takes it with everything else.
+.modal-elemental-close {
+  display: grid;
+  place-items: center;
+  color: inherit;
+
+  // The cross is text, so its size is a font size. Half the button leaves the ring of space
+  // around it that makes a round button read as one.
+  font-size: calc(var(--modal-elemental-close-size, 2rem) * 0.5);
+  background: none;
+  border: 0;
+  border-radius: 100%;
+  transition: background var(--modal-elemental-duration) var(--modal-elemental-easing);
+
+  &:hover {
+    background: color-mix(in srgb, currentcolor 12%, transparent);
+  }
+
+  &:active {
+    background: color-mix(in srgb, currentcolor 20%, transparent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }

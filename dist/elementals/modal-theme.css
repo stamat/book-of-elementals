@@ -2,7 +2,9 @@
 modal-elemental {
   --modal-elemental-max-width: 32rem;
   --modal-elemental-padding: 1.5rem;
-  --modal-elemental-radius: 0.5rem;
+  --modal-elemental-radius: 0.75rem;
+  --modal-elemental-close-size: 2rem;
+  --modal-elemental-close-inset: 0.75rem;
   --modal-elemental-margin-block: auto;
 }
 
@@ -15,9 +17,9 @@ modal-elemental > dialog {
   padding: var(--modal-elemental-padding);
   color: inherit;
   background: Canvas;
-  border: 0;
+  border: 1px solid color-mix(in srgb, currentcolor 12%, transparent);
   border-radius: var(--modal-elemental-radius);
-  box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.25);
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.15), 0 1.5rem 3rem rgba(0, 0, 0, 0.25);
 }
 @media (forced-colors: active) {
   modal-elemental > dialog {
@@ -26,5 +28,30 @@ modal-elemental > dialog {
 }
 modal-elemental > dialog {
   overflow: auto;
+}
+modal-elemental > dialog > .modal-elemental-close + * {
+  padding-inline-end: calc(var(--modal-elemental-close-size) + 0.5rem);
+}
+
+.modal-elemental-close {
+  display: grid;
+  place-items: center;
+  color: inherit;
+  font-size: calc(var(--modal-elemental-close-size, 2rem) * 0.5);
+  background: none;
+  border: 0;
+  border-radius: 100%;
+  transition: background var(--modal-elemental-duration) var(--modal-elemental-easing);
+}
+.modal-elemental-close:hover {
+  background: color-mix(in srgb, currentcolor 12%, transparent);
+}
+.modal-elemental-close:active {
+  background: color-mix(in srgb, currentcolor 20%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal-elemental-close {
+    transition: none;
+  }
 }
 /*# sourceMappingURL=modal-theme.css.map */

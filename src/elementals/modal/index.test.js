@@ -1,13 +1,17 @@
-// The four decisions `<modal-elemental>` makes that are not DOM plumbing: what a
-// `closedby` value lets close the dialog, which invoker command means what, and whether a
-// pointer landed on the backdrop or on the box.
+// The decisions `<modal-elemental>` makes that are not DOM plumbing: what a `closedby`
+// value lets close the dialog, which invoker command means what, whether a pointer landed
+// on the backdrop or on the box, which dialogs get a cross written into them, what to do
+// about one somebody else opened, and how long a close is willing to wait for its
+// animation.
 //
 // Deliberately not covered here: `showModal()`, the top layer, the inertness of the page
 // behind and the focus that comes back on close - all of which are the browser's, not this
 // element's, and none of which jsdom implements. The exit animation is timed off
 // `getAnimations()`, which jsdom does not have either. Both belong to `script/a11y` and to
 // the docs demos, where a real browser is running.
-import { dismissMode, dismissible, commandAction, outside, adoption } from './index.js';
+import {
+  dismissMode, dismissible, commandAction, outside, adoption, writesClose, settleLimit
+} from './index.js';
 
 test('a dialog that says nothing closes the way the platform closes one: Escape, not a click outside', () => {
   expect(dismissMode(null)).toBe('closerequest');
@@ -49,6 +53,15 @@ test('a command the element does not own is left to the browser', () => {
   expect(commandAction(null)).toBe(null);
 });
 
+test('a dialog that can be dismissed is written a cross in the corner', () => {
+  expect(writesClose('closerequest')).toBe(true);
+  expect(writesClose('any')).toBe(true);
+});
+
+test('a dialog that says none is not, because a cross is a dismissal with a different shape', () => {
+  expect(writesClose('none')).toBe(false);
+});
+
 test('a modal opened by somebody else is taken over, backdrop counted with the rest', () => {
   expect(adoption(true, true, false)).toBe('modal');
 });
@@ -66,6 +79,21 @@ test('the element does not take over what it opened itself', () => {
 test('a closed dialog is nothing to take over, whatever else is true of it', () => {
   expect(adoption(false, false, false)).toBe(null);
   expect(adoption(false, true, false)).toBe(null);
+});
+
+test('a close waits for the longest animation it started, and a frame more', () => {
+  expect(settleLimit([200, 150])).toBe(250);
+});
+
+test('a close with nothing animating does not wait at all', () => {
+  expect(settleLimit([])).toBe(0);
+  // What an engine that reports its timing in something other than milliseconds looks like
+  // from here, and what a stylesheet that never loaded looks like too.
+  expect(settleLimit([null, undefined, Infinity])).toBe(0);
+});
+
+test('a duration nobody meant to ship still lets go of the modal', () => {
+  expect(settleLimit([86400000])).toBe(2000);
 });
 
 const BOX = { left: 100, top: 100, right: 300, bottom: 200 };

@@ -111,7 +111,10 @@ Elements published so far:
   removal needs the `overlay` property Firefox and Safari lack; a click on the
   backdrop under `closedby="any"`, which Safari has no support for; scroll lock on
   the page behind; `data-depth`, so a stack of modals paints one sheet of dim
-  rather than one each; and `aria-labelledby` pointed at the first heading. Opened
+  rather than one each; `aria-labelledby` pointed at the first heading; and a close
+  button written as the dialog's first child, `command="request-close"`, named by
+  `close-text`, absolute in the dialog's corner - and not written under
+  `closedby="none"`, which is a dialog to be answered rather than dismissed. Opened
   by `command="show-modal"`/`commandfor`, by a link to its `id`, or by `show()`;
   the fragment in the URL opens it, and the back button closes it. `close-others`
   replaces the stack instead of adding to it. Closing pauses `<video>`/`<audio>`

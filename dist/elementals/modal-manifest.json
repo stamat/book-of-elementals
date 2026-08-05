@@ -101,6 +101,25 @@
         },
         {
           "kind": "function",
+          "name": "settleLimit",
+          "parameters": [
+            {
+              "name": "endTimes",
+              "description": "`getComputedTiming().endTime` of each animation.",
+              "type": {
+                "text": "number[]"
+              }
+            }
+          ],
+          "description": "How long to wait for animations that say they end at `endTimes`, in milliseconds.\n\nThere is a wait at all because `finished` is a promise a browser has to keep, and one that\nnever resolves is a modal that can never be closed - the failure this element exists to\nprevent, arriving through the machinery meant to make it pretty. So the animation's own\ntiming is the wait, and the promise only has to beat it.\n\nA little past the end rather than exactly on it, since a transition resolves `finished` on\nthe frame after its last one. Zero for nothing to wait for, which is what a stylesheet\nthat was never imported looks like from here.",
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          }
+        },
+        {
+          "kind": "function",
           "name": "outside",
           "parameters": [
             {
@@ -130,6 +149,24 @@
           }
         },
         {
+          "kind": "function",
+          "name": "writesClose",
+          "parameters": [
+            {
+              "name": "mode",
+              "type": {
+                "text": "\"any\"|\"closerequest\"|\"none\""
+              }
+            }
+          ],
+          "description": "Whether the element writes a close button into a dialog closing this way.\n\nA visible close button is\n[strongly recommended](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) by the APG,\nand it is the one control a pointer has that Escape gives a keyboard for free - so it is\nwritten rather than left to be forgotten.\n\nNot under `none`, and that is the whole of the exception: `closedby=\"none\"` is a dialog\nthat has to be answered rather than dismissed, and a cross in its corner is a dismissal\nwith a different shape. A dialog that says `none` and wants a way out writes its own\nbutton, saying what taking it means.",
+          "return": {
+            "type": {
+              "text": "boolean"
+            }
+          }
+        },
+        {
           "kind": "class",
           "description": "`<modal-elemental>` custom element.\n\nA `<dialog>` opened as a modal, per the\n[APG Modal Dialog pattern](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) - and\nmostly by the browser rather than by this element. `showModal()` already puts the dialog\nin the top layer, makes the rest of the page inert, moves focus in, brings it back on\nclose and closes on Escape, and it does all of that better than a focus trap in script\ncan: nesting one modal inside another is the browser stacking two entries in the top\nlayer, not two libraries arguing over which one owns the page.\n\nWhat is left over is what this element is: an exit animation that the platform cannot\ngive a dialog without the `overlay` property, which Firefox and Safari do not have; a\nclick on the backdrop, which needs `closedby` support Safari does not have either; the\npage behind not scrolling; and the pile of backdrops a stack of modals would otherwise\npaint on top of each other.\n\nLight DOM, no shadow root, nothing moved: the `<dialog>` stays exactly where it was\nwritten, and every attribute on it is still the platform's own.",
           "name": "ModalElemental",
@@ -149,6 +186,14 @@
               "description": "Easing for both ends.",
               "name": "--modal-elemental-easing",
               "default": "ease"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "The close button, both axes. Its cross is sized from it.",
+              "name": "--modal-elemental-close-size",
+              "default": "2rem"
             }
           ],
           "slots": [
@@ -169,6 +214,16 @@
               "name": "open",
               "description": "Whether the modal is on screen. Closing counts as open until the animation is over,\nwhich is what the dialog is doing for that quarter second.",
               "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "writeClose",
+              "parameters": [
+                {
+                  "name": "dialog"
+                }
+              ],
+              "description": "Write the cross in the corner.\n\nFirst child rather than last, so the tab order and the reading order agree with where it\nis drawn - and so focus lands on it when the dialog opens, which is the right first stop\nfor a dialog that is read rather than filled in. Put `autofocus` on a field to move it.\n\n`command=\"request-close\"` rather than a handler of its own: it is the same door the\nEscape key uses, animation and all, and it is markup an author could have written.\n\nThe cross is text, not a background image, so a page that loaded the script but not the\nstylesheet still has a button with something in it. `aria-label` is what is announced -\na cross is a shape and reads as nothing."
             },
             {
               "kind": "method",
@@ -301,6 +356,14 @@
               "description": "Opening this one closes every modal already open, instead of stacking on top of them.",
               "name": "close-others",
               "default": "false"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "The close button's accessible name. Its label too, for anyone reading the markup - the cross itself is a shape and says nothing.",
+              "name": "close-text",
+              "default": "Close"
             }
           ],
           "superclass": {
@@ -346,9 +409,25 @@
         },
         {
           "kind": "js",
+          "name": "settleLimit",
+          "declaration": {
+            "name": "settleLimit",
+            "module": "src/elementals/modal/index.js"
+          }
+        },
+        {
+          "kind": "js",
           "name": "outside",
           "declaration": {
             "name": "outside",
+            "module": "src/elementals/modal/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "writesClose",
+          "declaration": {
+            "name": "writesClose",
             "module": "src/elementals/modal/index.js"
           }
         },

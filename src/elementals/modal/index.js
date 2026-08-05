@@ -65,6 +65,27 @@ export function adoption(open, modal, known) {
 }
 
 /**
+ * How long to wait for animations that say they end at `endTimes`, in milliseconds.
+ *
+ * There is a wait at all because `finished` is a promise a browser has to keep, and one that
+ * never resolves is a modal that can never be closed - the failure this element exists to
+ * prevent, arriving through the machinery meant to make it pretty. So the animation's own
+ * timing is the wait, and the promise only has to beat it.
+ *
+ * A little past the end rather than exactly on it, since a transition resolves `finished` on
+ * the frame after its last one. Zero for nothing to wait for, which is what a stylesheet
+ * that was never imported looks like from here.
+ *
+ * @param {number[]} endTimes - `getComputedTiming().endTime` of each animation.
+ * @returns {number}
+ */
+export function settleLimit(endTimes) {
+  const times = endTimes.filter((time) => typeof time === 'number' && isFinite(time));
+  if (!times.length) return 0;
+  return Math.min(SETTLE_CEILING, Math.max(...times) + 50);
+}
+
+/**
  * Whether a point is outside a box - the backdrop rather than the dialog.
  *
  * The edge counts as inside, since a click landing exactly on the border of a box is a
@@ -87,6 +108,11 @@ const stack = [];
 // Monotonic counter for generating an `id` for a dialog authored without one. Every modal
 // needs one: it is what an invoker's `commandfor` and a fragment in the URL point at.
 let dialogCount = 0;
+
+// The longest a close will ever wait for its animation, whatever that animation says about
+// itself. A ceiling on {@link settleLimit}, for a duration written in days by a stylesheet
+// nobody meant to ship.
+const SETTLE_CEILING = 2000;
 
 let listening = false;
 
@@ -165,12 +191,31 @@ function syncHash() {
  */
 function settle(dialog) {
   if (typeof dialog.getAnimations !== 'function') return Promise.resolve();
-  const running = dialog.getAnimations({ subtree: true }).filter((animation) => {
-    const effect = animation.effect;
-    return effect && effect.target === dialog &&
-      effect.getComputedTiming().iterations !== Infinity;
-  });
-  return Promise.allSettled(running.map((animation) => animation.finished));
+
+  let running;
+  try {
+    running = dialog.getAnimations({ subtree: true }).filter((animation) => {
+      const effect = animation.effect;
+      return effect && effect.target === dialog &&
+        effect.getComputedTiming().iterations !== Infinity;
+    });
+  } catch {
+    // An engine that cannot be asked what it is animating still has to be able to close the
+    // dialog. Everything in here is measurement, and a close that cannot measure is a close
+    // that happens at once - never one that does not happen.
+    return Promise.resolve();
+  }
+  const limit = settleLimit(running.map((animation) => animation.effect.getComputedTiming().endTime));
+  if (!limit) return Promise.resolve();
+
+  // Whichever comes first, the promise or the clock. Everything else here trusts an
+  // animation to end, and one of them will not: a transition the compositor never commits,
+  // an animation paused from script, an engine whose `finished` is not kept. None of those
+  // are worth a modal the reader cannot close.
+  return Promise.race([
+    Promise.allSettled(running.map((animation) => animation.finished)),
+    new Promise((resolve) => setTimeout(resolve, limit))
+  ]);
 }
 
 /**
@@ -193,6 +238,29 @@ function stopMedia(dialog) {
     const src = frame.src;
     frame.src = src;
   }
+}
+
+/** The close button the element writes, and the hook for styling it. */
+const CLOSE_CLASS = 'modal-elemental-close';
+
+/**
+ * Whether the element writes a close button into a dialog closing this way.
+ *
+ * A visible close button is
+ * [strongly recommended](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) by the APG,
+ * and it is the one control a pointer has that Escape gives a keyboard for free - so it is
+ * written rather than left to be forgotten.
+ *
+ * Not under `none`, and that is the whole of the exception: `closedby="none"` is a dialog
+ * that has to be answered rather than dismissed, and a cross in its corner is a dismissal
+ * with a different shape. A dialog that says `none` and wants a way out writes its own
+ * button, saying what taking it means.
+ *
+ * @param {"any"|"closerequest"|"none"} mode
+ * @returns {boolean}
+ */
+export function writesClose(mode) {
+  return mode !== 'none';
 }
 
 /**
@@ -220,9 +288,11 @@ function stopMedia(dialog) {
  * @tag modal-elemental
  * @attr {"any"|"closerequest"|"none"} [closedby=closerequest] - What closes the dialog besides a close button: `closerequest` is Escape, `any` adds a click on the backdrop, `none` neither. The same three values HTML gives `<dialog>`, read from here so the element can animate the close instead of the browser cutting it short - written on the `<dialog>` it is moved up here on upgrade.
  * @attr {boolean} [close-others=false] - Opening this one closes every modal already open, instead of stacking on top of them.
+ * @attr {string} [close-text=Close] - The close button's accessible name. Its label too, for anyone reading the markup - the cross itself is a shape and says nothing.
  *
  * @cssprop {<time>} [--modal-elemental-duration=200ms] - How long the dialog and its backdrop take to arrive and to leave. The element waits for the animation it starts, so `0s` closes instantly.
  * @cssprop {<easing-function>} [--modal-elemental-easing=ease] - Easing for both ends.
+ * @cssprop {<length>} [--modal-elemental-close-size=2rem] - The close button, both axes. Its cross is sized from it.
  *
  * @fires modal-toggle - `detail.open` is the new state, `detail.dialog` the dialog, `detail.depth` how deep in a stack of modals it sits.
  *
@@ -261,6 +331,7 @@ export class ModalElemental extends ElementBase {
     dialog.removeAttribute('closedby');
 
     this.name(dialog);
+    this.writeClose(dialog);
 
     // A `<dialog open>` in the markup is already showing when this runs, and there will be
     // no mutation to hear about it.
@@ -291,6 +362,37 @@ export class ModalElemental extends ElementBase {
     // support. `dialog.open` is checked because a `<dialog open>` in the markup is already
     // showing - inline and not modal, which is the author's decision, not this element's.
     if (!dialog.open && window.location.hash.slice(1) === dialog.id) this.show({ fromHash: true });
+  }
+
+  /**
+   * Write the cross in the corner.
+   *
+   * First child rather than last, so the tab order and the reading order agree with where it
+   * is drawn - and so focus lands on it when the dialog opens, which is the right first stop
+   * for a dialog that is read rather than filled in. Put `autofocus` on a field to move it.
+   *
+   * `command="request-close"` rather than a handler of its own: it is the same door the
+   * Escape key uses, animation and all, and it is markup an author could have written.
+   *
+   * The cross is text, not a background image, so a page that loaded the script but not the
+   * stylesheet still has a button with something in it. `aria-label` is what is announced -
+   * a cross is a shape and reads as nothing.
+   */
+  writeClose(dialog) {
+    if (!writesClose(this.closedBy)) return;
+    // Idempotent: an element moved in the document is disconnected and connected again, and
+    // a second cross in the corner is the kind of thing nobody notices until it ships.
+    if (dialog.querySelector(':scope > .' + CLOSE_CLASS)) return;
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = CLOSE_CLASS;
+    button.setAttribute('command', 'request-close');
+    button.setAttribute('commandfor', dialog.id);
+    button.setAttribute('aria-label', this.getAttribute('close-text') || 'Close');
+    button.textContent = '✕';
+    dialog.prepend(button);
+    this.closeButton = button;
   }
 
   /**
@@ -330,6 +432,10 @@ export class ModalElemental extends ElementBase {
 
     if (this.observer) this.observer.disconnect();
     this.observer = null;
+
+    // Only the one this element wrote: a cross an author put there is theirs to keep.
+    if (this.closeButton) this.closeButton.remove();
+    this.closeButton = null;
 
     if (dialog) {
       dialog.removeEventListener('cancel', this.onCancel);
@@ -440,7 +546,13 @@ export class ModalElemental extends ElementBase {
     depths();
 
     dialog.dataset.state = 'closing';
-    await settle(dialog);
+    try {
+      await settle(dialog);
+    } catch {
+      // Same rule as inside `settle`: nothing that goes wrong measuring an animation is
+      // allowed to leave `closing` set, because that is a modal Escape can never close
+      // again.
+    }
     // The modal can have been reopened while the animation ran, and closing it now would
     // be closing something the reader has just been given.
     if (!this.closing) return;

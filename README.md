@@ -447,6 +447,7 @@ so nothing here tracks parents or arbitrates `z-index`.
 | --------------- | ------- | -------------- | -------------------------------------------------------------------------- |
 | `closedby`      | enum    | `closerequest` | `any`, `closerequest` or `none` — HTML's own three values. Moved up from the `<dialog>` if written there |
 | `close-others`  | boolean | —              | Opening this one closes every modal already open, instead of stacking      |
+| `close-text`    | string  | `Close`        | The close button's accessible name                                         |
 
 What the platform leaves behind is the whole of the element: an **exit
 animation**, which otherwise needs the [`overlay`](https://developer.mozilla.org/en-US/docs/Web/CSS/overlay)
@@ -457,6 +458,13 @@ the page behind **not scrolling**; the pile of backdrops a stack of modals would
 paint on top of each other, of which only the bottom one dims; and an
 `aria-labelledby` pointed at the first heading, since a `<dialog>` takes no name
 from its contents.
+
+Every modal gets a cross in the corner, written by the element as its dialog's
+first child — the APG asks for a visible close button, and HTML gives you
+`<form method="dialog">` and leaves the rest. It is positioned in the
+corner of the dialog, which a modal `<dialog>` is already the containing block
+for. `closedby="none"` gets no cross: that value is a dialog to be answered
+rather than dismissed.
 
 Triggers are HTML's own invoker commands — `command="show-modal"` and
 `commandfor` — handled by the element rather than left to the browser, which is

@@ -1866,11 +1866,17 @@
     if (!open || known) return null;
     return modal ? "modal" : "inline";
   }
+  function settleLimit(endTimes) {
+    const times = endTimes.filter((time) => typeof time === "number" && isFinite(time));
+    if (!times.length) return 0;
+    return Math.min(SETTLE_CEILING, Math.max(...times) + 50);
+  }
   function outside(rect, x, y) {
     return x < rect.left || x > rect.right || y < rect.top || y > rect.bottom;
   }
   var stack = [];
   var dialogCount = 0;
+  var SETTLE_CEILING = 2e3;
   var listening = false;
   function listen() {
     if (listening) return;
@@ -1905,11 +1911,21 @@
   }
   function settle(dialog) {
     if (typeof dialog.getAnimations !== "function") return Promise.resolve();
-    const running = dialog.getAnimations({ subtree: true }).filter((animation) => {
-      const effect = animation.effect;
-      return effect && effect.target === dialog && effect.getComputedTiming().iterations !== Infinity;
-    });
-    return Promise.allSettled(running.map((animation) => animation.finished));
+    let running;
+    try {
+      running = dialog.getAnimations({ subtree: true }).filter((animation) => {
+        const effect = animation.effect;
+        return effect && effect.target === dialog && effect.getComputedTiming().iterations !== Infinity;
+      });
+    } catch {
+      return Promise.resolve();
+    }
+    const limit = settleLimit(running.map((animation) => animation.effect.getComputedTiming().endTime));
+    if (!limit) return Promise.resolve();
+    return Promise.race([
+      Promise.allSettled(running.map((animation) => animation.finished)),
+      new Promise((resolve) => setTimeout(resolve, limit))
+    ]);
   }
   function stopMedia(dialog) {
     for (const media of dialog.querySelectorAll("video, audio")) {
@@ -1919,6 +1935,10 @@
       const src = frame.src;
       frame.src = src;
     }
+  }
+  var CLOSE_CLASS = "modal-elemental-close";
+  function writesClose(mode) {
+    return mode !== "none";
   }
   var ModalElemental = class extends ElementBase {
     /** The dialog this element upgrades. Direct child, so a nested modal's dialog is not
@@ -1943,6 +1963,7 @@
       if (authored !== null && !this.hasAttribute("closedby")) this.setAttribute("closedby", authored);
       dialog.removeAttribute("closedby");
       this.name(dialog);
+      this.writeClose(dialog);
       this.adopt();
       this.observer = new MutationObserver(() => this.adopt());
       this.observer.observe(dialog, { attributes: true, attributeFilter: ["open"] });
@@ -1957,6 +1978,33 @@
       dialog.addEventListener("click", this.onClick);
       dialog.addEventListener("submit", this.onSubmit, true);
       if (!dialog.open && window.location.hash.slice(1) === dialog.id) this.show({ fromHash: true });
+    }
+    /**
+     * Write the cross in the corner.
+     *
+     * First child rather than last, so the tab order and the reading order agree with where it
+     * is drawn - and so focus lands on it when the dialog opens, which is the right first stop
+     * for a dialog that is read rather than filled in. Put `autofocus` on a field to move it.
+     *
+     * `command="request-close"` rather than a handler of its own: it is the same door the
+     * Escape key uses, animation and all, and it is markup an author could have written.
+     *
+     * The cross is text, not a background image, so a page that loaded the script but not the
+     * stylesheet still has a button with something in it. `aria-label` is what is announced -
+     * a cross is a shape and reads as nothing.
+     */
+    writeClose(dialog) {
+      if (!writesClose(this.closedBy)) return;
+      if (dialog.querySelector(":scope > ." + CLOSE_CLASS)) return;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = CLOSE_CLASS;
+      button.setAttribute("command", "request-close");
+      button.setAttribute("commandfor", dialog.id);
+      button.setAttribute("aria-label", this.getAttribute("close-text") || "Close");
+      button.textContent = "\u2715";
+      dialog.prepend(button);
+      this.closeButton = button;
     }
     /**
      * Take over a dialog somebody else opened, so it looks like one this element opened.
@@ -1988,6 +2036,8 @@
       depths();
       if (this.observer) this.observer.disconnect();
       this.observer = null;
+      if (this.closeButton) this.closeButton.remove();
+      this.closeButton = null;
       if (dialog) {
         dialog.removeEventListener("cancel", this.onCancel);
         dialog.removeEventListener("close", this.onNativeClose);
@@ -2072,7 +2122,10 @@
       if (index !== -1) stack.splice(index, 1);
       depths();
       dialog.dataset.state = "closing";
-      await settle(dialog);
+      try {
+        await settle(dialog);
+      } catch {
+      }
       if (!this.closing) return;
       this.closing = false;
       if (returnValue === void 0) dialog.close();
