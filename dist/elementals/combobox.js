@@ -1,4 +1,4 @@
-/* book-of-elementals v0.4.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v0.5.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 (() => {
   // node_modules/book-of-spells/src/helpers.mjs
   function removeAccents(inputString) {
