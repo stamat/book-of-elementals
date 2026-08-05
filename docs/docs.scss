@@ -59,6 +59,20 @@ switch-elemental {
   --switch-elemental-knob-checked: var(--bg);
 }
 
+// The same collision, costing a box rather than a colour. The docs theme gives its topbar
+// switch `display: flex` and the row's inset as padding, under a bare `switch-elemental` -
+// and this bundle loads the element's own stylesheet after the theme, where `display:
+// contents` at equal specificity further down the sheet wins. The element then generates no
+// box at all, so the theme's padding lands on nothing and the track sits hard against the
+// icon button beside it and the edge of the bar. One class of context is enough to put the
+// box back, and it is scoped to the topbar on purpose: a switch in a demo is `contents`
+// because that is what the element ships.
+.topbar-actions switch-elemental {
+  display: flex;
+  align-items: center;
+  padding-inline: var(--actions-inset);
+}
+
 // Same override, same reason: the segmented control's knob is lifted out of its track and
 // defaults to `Canvas`, which is not the background these pages paint.
 segmented-elemental {
