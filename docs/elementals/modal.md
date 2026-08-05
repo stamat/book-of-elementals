@@ -190,8 +190,9 @@ reader reaches, in the corner it is drawn in. Give it a name in your own languag
 Three things follow from where it sits:
 
 - **It is absolute, against the dialog.** A modal dialog is `position: fixed` by the
-  browser's own rule, so it is already the containing block — nothing has to be positioned
-  to make the corner work, and the heading beside the cross keeps the whole width of the box.
+  browser's own rule, so it is already the containing block — nothing has to be positioned to
+  make the corner work. Being out of the flow, it moves nothing; `theme.scss` gives the
+  element right after it room on that side, so a heading does not run under it.
 - **A dialog long enough to scroll takes the cross with it.** That is the cost of the
   corner: an absolutely positioned box scrolls with the content it is positioned against.
   Give a long modal a close button of its own at the end of the content, where the reader
@@ -455,7 +456,7 @@ instructions from its own origin.
 
 | Missing                      | What you get                                                                              |
 | ---------------------------- | ----------------------------------------------------------------------------------------- |
-| the script never loads       | `<a href="#id">` still reaches the dialog: `style.scss` shows it **in the page**, in flow, not modal |
+| the script never loads       | `<a href="#id">` still reaches the dialog: `style.scss` shows it **in the page**, in flow, not modal. No cross either — the element writes that — so what closes it is whatever you wrote yourself |
 | the script never loads, and the browser has invoker commands | `command="show-modal"` opens it natively — modal, and without the animation |
 | `prefers-reduced-motion`     | no transition either way. The element waits for an animation that is not there and closes at once |
 | the theme is not imported    | the browser's own dialog box, with the backdrop and the motion from `style.scss`           |
@@ -566,6 +567,13 @@ body { min-block-size: 20rem; }
 A dialog whose height changes while it is being read — a search, a form that reveals a field
 — is the case for `--modal-elemental-margin-block: 5vh auto`. Centred, the box moves under
 the reader every time it grows.
+
+Two more things the theme does that are worth knowing before you restyle it. The element
+right after the cross — usually the heading — is given room on that side, since the cross is
+out of the flow and would otherwise sit on top of the last word; a dialog with no cross
+reserves nothing. And the close waits for the animation **the stylesheet** describes: the
+element reads how long each transition says it takes and gives up on one that overruns it, up
+to two seconds, so a transition that stalls can never leave a modal that cannot be closed.
 
 ## Modal, or something else?
 

@@ -39,7 +39,10 @@ may already be targeting**, since neither shows up in a function signature.
   What the platform leaves behind is the element. An **exit animation**, which otherwise
   needs the [`overlay`](https://developer.mozilla.org/en-US/docs/Web/CSS/overlay) property
   that Firefox and Safari do not have — the element holds the dialog open until its
-  animation has finished and closes it then, which keeps it in the top layer for the fade. A
+  animation has finished and closes it then, which keeps it in the top layer for the fade.
+  Bounded by what that animation says about itself, and by two seconds whatever it says: a
+  transition that stalls, or an engine that never keeps its `finished` promise, must not be
+  able to leave a modal nobody can close. A
   **click on the backdrop**, which otherwise needs `closedby` support Safari does not have
   either. The page behind **not scrolling**. One sheet of dim rather than one per modal. And
   `aria-labelledby` pointed at the first heading inside, since a `<dialog>` takes no name
@@ -80,9 +83,10 @@ may already be targeting**, since neither shows up in a function signature.
   **CSS it writes:** `style.scss` styles `modal-elemental > dialog`, its `::backdrop` and
   `.modal-elemental-close` — the cross is `position: absolute` in the dialog's corner, which
   the browser's own `position: fixed` on a modal dialog already makes the containing block
-  for. `theme.scss` paints it round and quiet, and gives the dialog a hairline border
-  and a two-layer shadow, because a dark box on a dark backdrop is two shades of the same
-  thing without one. `style.scss` also
+  for. `theme.scss` paints it round and quiet, reserves room for it on the element that
+  follows it so a heading does not run underneath, and gives the dialog a hairline border and
+  a two-layer shadow, because a dark box on a dark backdrop is two shades of the same thing
+  without one. `style.scss` also
   sets `overflow: hidden` on the root while a modal is open — the one rule in this book that
   touches the page around an element, because `inert` never stopped a wheel. The dim itself
   is in `style.scss` rather than the theme: the APG only lets a dialog call itself modal when
