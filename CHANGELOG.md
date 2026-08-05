@@ -15,6 +15,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-08-05
+
 ### Fixed
 
 - **`<accordion-elemental class="grouped">` drew every seam twice as dark as the card's
