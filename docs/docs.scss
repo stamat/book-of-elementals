@@ -4,6 +4,7 @@
 @use "poops-docs-theme/scss/docs";
 @use "../src/styles/index";
 @use "../src/elementals/accordion/theme" as *;
+@use "../src/elementals/carousel/theme" as *;
 @use "../src/elementals/checkbox-group/theme" as *;
 @use "../src/elementals/combobox/theme" as *;
 @use "../src/elementals/copy/theme" as *;
@@ -322,4 +323,45 @@ switch-elemental:not([checked]) + .demo-state .on {
   [data-tabs-panel] > :last-child {
     margin-block-end: 0;
   }
+}
+
+// Demo-only: the carousels on this page. The element and its theme do the row and the
+// controls; what is left is the picture inside a slide, which is the page's content and not
+// the element's - a carousel has no opinion about what you put in one. The docs prose puts a
+// margin on every list item it contains, and a margin on a slide is a gap the snap has to
+// scroll past.
+// Selected through `[data-carousel-slide]` rather than by the class alone, which is not
+// decoration: the prose styles reach a figure with `.prose :is(figure, .code-wrap)`, and two
+// classes' worth of specificity is what it takes to put its 1.75rem margin back to nothing.
+// A margin on a slide's figure is a band of page showing above every picture, with the
+// rotation control floating in it.
+.demo-carousel {
+  margin-block: 1rem;
+
+  li {
+    margin: 0;
+  }
+
+  [data-carousel-slide] figure {
+    margin: 0;
+  }
+
+  [data-carousel-slide] figcaption {
+    margin: 0;
+    padding-block-start: 0.5rem;
+    color: var(--fg-muted);
+  }
+
+  img {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+  }
+}
+
+// Three at a time, which is the whole of what "how many slides fit" costs.
+.demo-carousel-three {
+  --carousel-elemental-slide-size: 33.333%;
 }

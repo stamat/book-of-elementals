@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Combobox
 description: A native <select> given a text field to search it with — one value or many, with a chip per selection.
-order: 3
+order: 4
 ---
 
 # `<combobox-elemental>`

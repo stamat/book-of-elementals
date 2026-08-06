@@ -12,7 +12,9 @@ const browserGlobals = {
   MutationObserver: 'readonly',
   decodeURIComponent: 'readonly',
   setTimeout: 'readonly',
-  clearTimeout: 'readonly'
+  clearTimeout: 'readonly',
+  setInterval: 'readonly',
+  clearInterval: 'readonly'
 };
 
 export default [

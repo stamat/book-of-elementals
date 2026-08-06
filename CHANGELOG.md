@@ -15,6 +15,51 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Added
+
+- **`<carousel-elemental>`.** A row of slides you scroll through, per the
+  [APG Carousel pattern](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/) — previous,
+  next, a picker with one button per slide, and, with `autoplay`, rotation on a timer with
+  the control that stops it.
+
+  **The scroll container is the state.** No transform engine, no cloned slides, no index
+  attribute to keep in step with where the row actually is: the slides sit in a
+  scroll-snapping list, moving means setting `scrollLeft`, and which slide is current is
+  whatever an `IntersectionObserver` says is on screen. That is what makes it responsive
+  for nothing — resize the window, change `--carousel-elemental-slide-size` at a breakpoint,
+  or put the whole thing in a container query, and there is no listener to fire and no
+  measurement to redo. There is no key handler either: a focused scroll container already
+  answers to the arrows, <kbd>Home</kbd>, <kbd>End</kbd> and the page keys.
+
+  **No live region, deliberately.** The APG's example flips `aria-live` because there one
+  slide exists at a time; here every slide is in the DOM, in the accessibility tree and in
+  reading order throughout, so there is nothing to announce — and no `aria-hidden` on the
+  slides off screen either, which is the bug that leaves a focusable link inside a hidden
+  subtree.
+
+  Rotation follows the pattern in full: the control is prepended to the element so it is the
+  first tab stop inside, its accessible name says what pressing it will do and it carries no
+  `aria-pressed`, hover and focus pause it, and rotation the reader started by hand ignores
+  both until that same button stops it. `prefers-reduced-motion: reduce` means `autoplay` is
+  not obeyed at upgrade — the control is still written, so the preference switches off motion
+  nobody asked for without taking the choice away.
+
+  **DOM:** on a `<ul>`/`<ol>`/`<menu>` of `<li>` slides, the element writes
+  `aria-roledescription="carousel"` and `role="region"`/`"group"` on itself,
+  `data-carousel-slides` on the list, `role="group"` +
+  `aria-roledescription="slide"` + `data-carousel-slide` on each item, appends a
+  `<div data-carousel-controls>` holding the previous button, the picker and the next button,
+  and prepends `<button data-carousel-rotate>` when `autoplay` is set. The list gets
+  `tabindex="0"` only when nothing inside the slides is focusable. Fewer than two slides and
+  it leaves the markup alone. **CSS:** new `carousel.css` and `carousel-theme.css` bundles,
+  and new `book-of-elementals/carousel` export paths; the aggregate `index.scss` and
+  `theme.scss` include them.
+
+  Refusals are on the page rather than in options: no infinite loop (it needs cloned slides —
+  both ends wrap instead), no fade, no mouse-drag, no vertical axis, no `slides-per-page`
+  attribute. It supersedes [slidescroll](https://github.com/stamat/slidescroll) and
+  [slideswap](https://github.com/stamat/slideswap), which will be archived.
+
 ## [0.5.1] - 2026-08-05
 
 ### Fixed

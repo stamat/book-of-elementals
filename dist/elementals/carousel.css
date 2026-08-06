@@ -1,0 +1,28 @@
+/* book-of-elementals v0.5.1 | https://stamat.github.io/book-of-elementals/ | MIT License */
+carousel-elemental {
+  display: block;
+  position: relative;
+}
+
+carousel-elemental > [data-carousel-slides] {
+  display: flex;
+  gap: var(--carousel-elemental-gap, 0);
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x mandatory;
+}
+
+carousel-elemental > [data-carousel-slides] > [data-carousel-slide] {
+  flex: 0 0 var(--carousel-elemental-slide-size, 100%);
+  min-width: 0;
+  scroll-snap-align: start;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  carousel-elemental > [data-carousel-slides] {
+    scroll-behavior: smooth;
+  }
+}
+/*# sourceMappingURL=carousel.css.map */

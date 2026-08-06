@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Navbar
 description: A navigation bar that measures itself — links that stop fitting move into an overflow panel, and when none of them fit the whole bar becomes a drawer.
-order: 7
+order: 8
 ---
 
 # `<navbar-elemental>`

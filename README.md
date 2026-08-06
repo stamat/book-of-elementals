@@ -19,6 +19,7 @@ holds the JavaScript helpers, this one holds the elements.
 | Element                  | Pattern                                                                                            |
 | ------------------------ | -------------------------------------------------------------------------------------------------- |
 | `<accordion-elemental>`  | [APG Accordion](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/), over native `<details>`      |
+| `<carousel-elemental>`   | [APG Carousel](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/) on a scroll-snapping list — the scroller is the state, so nothing is measured on resize |
 | `<checkbox-group-elemental>` | [APG Checkbox (Mixed-State)](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/), a select-all that shows the dash when it is some of them |
 | `<combobox-elemental>`   | [APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/), a `<select>` you can type your way down, one value or many |
 | `<disclosure-elemental>` | [APG Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), where `<details>` cannot go |
@@ -153,6 +154,50 @@ accordion-elemental {
 
 `prefers-reduced-motion: reduce` switches it off, and without JavaScript there is
 no wrapper and no animation — native instant toggling, which is still correct.
+
+## `<carousel-elemental>`
+
+A row of slides you scroll through, on the list you would have written anyway:
+
+```html
+<carousel-elemental aria-label="Places">
+  <ul>
+    <li><figure><img src="canyon.jpg" alt="A river running through a rocky canyon" /></figure></li>
+    <li><figure><img src="ridge.jpg" alt="Mist over a forested ridge at dawn" /></figure></li>
+    <li><figure><img src="lake.jpg" alt="A lake below a range of bare mountains" /></figure></li>
+  </ul>
+</carousel-elemental>
+```
+
+The scroll container is the state. There is no transform engine, no cloned slides
+and no index attribute to keep in step with where the row actually is: the slides
+sit in a scroll-snapping scroller, moving is one assignment to `scrollLeft`, and
+which slide is current is whatever an `IntersectionObserver` says is on screen.
+That is what makes it responsive for nothing — resize the window, change
+`--carousel-elemental-slide-size` at a breakpoint, put the whole thing in a
+container query, and there is no listener to fire and no measurement to redo.
+There is no key handler either: a focused scroll container already answers to the
+arrows, `Home`, `End` and the page keys.
+
+The element writes the roles of the
+[APG Carousel pattern](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/) and
+appends the controls — previous, a picker with one button per slide, next — which
+is the enhancement working rather than a preference: a previous button authored in
+the markup is a button that does nothing until the script lands. Without the script
+the same list is a scroll-snapping row you can swipe, drag the scrollbar of and
+reach with the keyboard, every slide in the page and in reading order.
+
+`autoplay` adds rotation and the control that stops it, first in the tab order
+inside the carousel, with a name that says what pressing it will do. Hover and
+focus pause it; rotation you started by hand ignores both until that button stops
+it; `prefers-reduced-motion: reduce` means it does not start on its own, and the
+control is still there for a reader who wants it.
+
+There is no live region, and that is deliberate — every slide is in the
+accessibility tree and in reading order throughout, so there is nothing to announce
+and no `aria-hidden` hiding a focusable link. No infinite loop either (it needs
+cloned slides — both ends wrap instead), no fade, no mouse-drag, no vertical axis,
+and no `slides-per-page`, which is one custom property.
 
 ## `<checkbox-group-elemental>`
 

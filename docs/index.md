@@ -93,7 +93,7 @@ handling are not options.
 
 ## The book so far
 
-Twelve elements, one page each — eleven on an APG pattern, one where there is
+Thirteen elements, one page each — twelve on an APG pattern, one where there is
 none to have. [**The elementals**](elementals/index.html) is the index: what
 each one implements, and which gap in the platform it fills.
 

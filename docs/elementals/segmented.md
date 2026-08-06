@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Segmented
 description: One choice out of a few, drawn as a track with a knob that slides — native radio buttons wearing a segmented control.
-order: 8
+order: 9
 ---
 
 # `<segmented-elemental>`

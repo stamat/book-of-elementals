@@ -88,6 +88,75 @@ accordion-elemental.caret > details[open]:not(.accordion-elemental-closing) > su
   }
 }
 
+carousel-elemental {
+  --carousel-elemental-gap: 1rem;
+  --carousel-elemental-controls-gap: 0.5rem;
+  --carousel-elemental-marker-size: 1.75rem;
+  --carousel-elemental-control: currentcolor;
+  --carousel-elemental-border: color-mix(in srgb, currentcolor 20%, transparent);
+  --carousel-elemental-hover: color-mix(in srgb, currentcolor 10%, transparent);
+  --carousel-elemental-current: CanvasText;
+  --carousel-elemental-radius: 999px;
+}
+
+carousel-elemental > [data-carousel-controls] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--carousel-elemental-controls-gap);
+  padding-block-start: var(--carousel-elemental-controls-gap);
+}
+
+carousel-elemental > [data-carousel-controls] [data-carousel-markers] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--carousel-elemental-controls-gap);
+}
+
+carousel-elemental button[aria-controls] {
+  display: grid;
+  place-items: center;
+  inline-size: var(--carousel-elemental-marker-size);
+  block-size: var(--carousel-elemental-marker-size);
+  padding: 0;
+  font: inherit;
+  line-height: 1;
+  color: var(--carousel-elemental-control);
+  cursor: pointer;
+  background: none;
+  border: 1px solid var(--carousel-elemental-border);
+  border-radius: var(--carousel-elemental-radius);
+}
+carousel-elemental button[aria-controls]:hover {
+  background: var(--carousel-elemental-hover);
+}
+
+carousel-elemental [data-carousel-marker][aria-disabled=true] {
+  color: Canvas;
+  cursor: default;
+  background: var(--carousel-elemental-current);
+  border-color: var(--carousel-elemental-current);
+}
+
+@media (forced-colors: active) {
+  carousel-elemental [data-carousel-marker][aria-disabled=true] {
+    background: Highlight;
+    border-color: Highlight;
+  }
+}
+carousel-elemental > [data-carousel-rotate] {
+  position: absolute;
+  z-index: 1;
+  inset-block-start: var(--carousel-elemental-controls-gap);
+  inset-inline-end: var(--carousel-elemental-controls-gap);
+  background: Canvas;
+}
+
+carousel-elemental > [data-carousel-slides][tabindex]:focus-visible {
+  outline: 2px solid var(--carousel-elemental-control);
+  outline-offset: 2px;
+}
+
 @media (forced-colors: active) {
   .checkbox-elemental,
   checkbox-group-elemental {

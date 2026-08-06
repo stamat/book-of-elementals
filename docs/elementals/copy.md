@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Copy
 description: A copy-to-clipboard button that says it copied — on the screen and out loud.
-order: 12
+order: 13
 ---
 
 # `<copy-elemental>`

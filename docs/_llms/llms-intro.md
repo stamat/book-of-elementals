@@ -34,6 +34,22 @@ Elements published so far:
 - `<accordion-elemental>` — APG accordion over native `<details>`; `exclusive`
   and `name` attributes, arrow-key header navigation, fragment deep links, and a
   bubbling `accordion-toggle` event.
+- `<carousel-elemental>` — APG carousel on a `<ul>`/`<ol>`/`<menu>` of `<li>` slides in a
+  scroll-snapping scroller: the scroll container is the state, so there is no transform
+  engine, no cloned slides and no index attribute, moving is one assignment to `scrollLeft`,
+  and the current slide is whatever an `IntersectionObserver` reports — which is why resize
+  and a CSS change to how many slides fit cost no code. It writes
+  `aria-roledescription="carousel"` plus `role="region"` (named) or `"group"`, `role="group"`
+  on the list and on each slide with `aria-roledescription="slide"` and an `N of M` label,
+  and appends previous, a picker of one `aria-disabled` button per slide, and next.
+  `autoplay` (with `interval`, floored at 1000ms) adds the rotation control, first in the tab
+  order, its name saying what pressing it will do and carrying no `aria-pressed`; hover and
+  focus pause it, rotation started by hand ignores both, and `prefers-reduced-motion: reduce`
+  means it does not start on its own. No live region and no `aria-hidden` on off-screen
+  slides — every slide stays in the accessibility tree. Keyboard is the browser's: a focused
+  scroll container already answers to the arrows. No infinite loop, no fade, no mouse-drag,
+  no vertical axis; how many slides fit is `--carousel-elemental-slide-size`. Fires
+  `carousel-change`; `wire()` re-reads the markup.
 - `<checkbox-group-elemental>` — APG mixed-state checkbox: a "select all" over a flat set
   of native checkboxes, ticked when all are, empty when none are, and showing the dash when
   it is some. The dash is `HTMLInputElement.indeterminate`, which has no HTML attribute and

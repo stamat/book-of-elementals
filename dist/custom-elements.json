@@ -220,6 +220,491 @@
     },
     {
       "kind": "javascript-module",
+      "path": "src/elementals/carousel/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "rotationInterval",
+          "parameters": [
+            {
+              "name": "value",
+              "description": "The attribute, as authored.",
+              "type": {
+                "text": "string|null"
+              }
+            },
+            {
+              "name": "fallback",
+              "default": "5000",
+              "description": "Milliseconds to use when it says nothing usable.",
+              "optional": true,
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "description": "How long between slides, out of the `interval` attribute.\n\nAnything that is not a positive number of milliseconds is the default rather than an\nerror: a typo in one attribute is not a reason for a carousel to stand still. The floor\nis the part worth writing down - under a second is a strobe, and it is also shorter than\nthe smooth scroll it would be interrupting, so the carousel would never finish arriving\nanywhere.",
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "stepSlide",
+          "parameters": [
+            {
+              "name": "current",
+              "description": "Index the carousel is on.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "delta",
+              "description": "`1` for next, `-1` for previous.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "count",
+              "description": "How many slides there are.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "atEdge",
+              "description": "Whether the scroller is already as far that way as it goes.",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "Which slide a press of previous or next asks for.\n\n`atEdge` is the scroller's answer to \"is there anywhere left to scroll\", not arithmetic\non the index, and that is the whole reason it is a parameter. With more than one slide on\nscreen the last few can never be the earliest visible one, so `current + 1` at the end\nwould be a press that scrolls nowhere - a carousel that looks broken exactly where a\nreader is most likely to try it.\n\nBoth ends wrap. That is what the APG's own carousel does, and the rotation has to wrap\nanyway, so the alternative is two behaviours for one direction.",
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "slideName",
+          "parameters": [
+            {
+              "name": "index"
+            },
+            {
+              "name": "count"
+            }
+          ],
+          "description": "The name a slide gets when the markup gave it none: its place in the set."
+        },
+        {
+          "kind": "function",
+          "name": "currentSlide",
+          "parameters": [
+            {
+              "name": "visible",
+              "description": "Indices of the slides currently in the scroller.",
+              "type": {
+                "text": "Iterable<number>"
+              }
+            },
+            {
+              "name": "fallback",
+              "description": "The index to keep when none are.",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "description": "Which of the slides on screen the carousel is on: the earliest of them.\n\nA row of slides is read from its start, so with three on screen the carousel is on the\nfirst of the three. Nothing on screen is not slide zero - a scroller inside a closed\n`<details>` reports every slide gone, and moving the carousel because something folded\nover it is a change nobody asked for - so that case keeps the index it had.",
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<carousel-elemental>` custom element.\n\nA row of slides you scroll through, per the\n[APG Carousel pattern](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/) - previous and\nnext, a picker with one button per slide, and, when it is asked for, automatic rotation\nwith the control that stops it.\n\n**The scroll container is the state.** There is no transform engine, no clones and no\nindex attribute to keep in step with where the row actually is: the slides sit in a\nscroll-snapping scroller, moving means setting `scrollLeft`, and which slide is current is\nwhatever an `IntersectionObserver` says is on screen. That is what buys the\nresponsiveness for nothing - resize the window, change how many slides fit in CSS, or put\nthe whole thing in a container query, and there is no listener to fire and no measurement\nto redo, because nothing was measured in the first place.\n\nLight DOM, no shadow root. Nothing you wrote is moved or wrapped; the element adds the\nroles to your list and its items, and appends the controls - which is also why the\ncontrols are its to write rather than yours. A previous button authored in the markup is\na button that does nothing until the script lands, and this element's promise is the\nother way round: with no script the slides are a scroll-snapping row you swipe, drag the\nscrollbar of, or reach with the keyboard, every slide in the page and in reading order.\n\n**No live region, and that is deliberate.** The APG's example flips `aria-live` between\n`off` and `polite` because there one slide exists at a time and a reader who cannot see\nthe swap would otherwise never hear about it. Here every slide is in the DOM, in the\naccessibility tree and in reading order the whole time, so there is nothing to announce\nand nothing hidden to miss - and no `aria-hidden` on the slides off screen either, which\nis the bug that puts a focusable link inside a hidden subtree.\n\nponytail: one axis, horizontal. A vertical carousel is the same code with the block\nproperties, and nothing has asked for one; the refusal is on the page rather than an\n`orientation` attribute nobody sets.",
+          "name": "CarouselElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length-percentage>"
+              },
+              "description": "How wide one slide is. This is how many slides fit: `50%` for two, `33.333%` for three, or any expression - it is the flex basis.",
+              "name": "--carousel-elemental-slide-size",
+              "default": "100%"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between the slides.",
+              "name": "--carousel-elemental-gap",
+              "default": "0px"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between the controls under the row.",
+              "name": "--carousel-elemental-controls-gap",
+              "default": "0.5rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Diameter of a picker button.",
+              "name": "--carousel-elemental-marker-size",
+              "default": "1.75rem"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Text and border of the controls.",
+              "name": "--carousel-elemental-control",
+              "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Border of a control that is not the current slide's.",
+              "name": "--carousel-elemental-border",
+              "default": "color-mix(in srgb, currentcolor 20%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Control background under the pointer.",
+              "name": "--carousel-elemental-hover",
+              "default": "color-mix(in srgb, currentcolor 10%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Fill of the picker button for the slide on screen.",
+              "name": "--carousel-elemental-current",
+              "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<length-percentage>"
+              },
+              "description": "Corner radius of the controls.",
+              "name": "--carousel-elemental-radius",
+              "default": "999px"
+            }
+          ],
+          "slots": [
+            {
+              "description": "One `<ul>`, `<ol>` or `<menu>` of `<li>` slides.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "scroller",
+              "description": "The scroller: the first list in the element. A carousel inside a slide keeps its own.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "slides",
+              "description": "The slides, in order. What the list holds, so a list inside a slide is not one.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "markers",
+              "description": "The picker buttons, in slide order.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "autoplay",
+              "description": "Rotate on a timer. Reflected, so `[autoplay]` is a styling hook too."
+            },
+            {
+              "kind": "field",
+              "name": "interval",
+              "description": "Milliseconds between slides while rotating."
+            },
+            {
+              "kind": "method",
+              "name": "wire",
+              "description": "Read the markup and put the pattern on it - the roles, the controls, the observer that\nwatches the row - then push the current state onto the controls.\n\nPublic and idempotent, because the slides are the page's to change: add one, remove one,\nreorder them, and this is the one call that says so. Nothing observes the markup on the\nelement's behalf, which would be a `MutationObserver` running on every page that never\ntouches its slides to save this one line on the pages that do."
+            },
+            {
+              "kind": "method",
+              "name": "writeControls",
+              "description": "Write the controls, or write them again after the slides changed.\n\nThe rotation control is a child of the element rather than of the control bar, and it is\nfirst: the APG asks for it at the head of the tab sequence inside the carousel, so that\na reader who lands in a moving carousel can stop it before reading anything. Putting it\nin the bar under the row and moving it visually would be a tab order that disagrees with\nthe page, which is the trade this project does not make - so it is drawn where it sits,\nover the top corner of the row."
+            },
+            {
+              "kind": "method",
+              "name": "control",
+              "parameters": [
+                {
+                  "name": "flag"
+                },
+                {
+                  "name": "label"
+                },
+                {
+                  "name": "id"
+                }
+              ],
+              "description": "One control button: named, typed, and pointed at the row it drives."
+            },
+            {
+              "kind": "method",
+              "name": "removeControls",
+              "description": "Take the controls back out, so `wire()` and `disconnectedCallback` leave the markup as\nthey found it."
+            },
+            {
+              "kind": "method",
+              "name": "labelRotation",
+              "description": "The rotation control's name says what pressing it will do, and it has no `aria-pressed`.\nThat is the APG's own answer for this button: a name that changes and a state that does\nnot, rather than both, which would have a screen reader read the two against each other."
+            },
+            {
+              "kind": "method",
+              "name": "onIntersect",
+              "parameters": [
+                {
+                  "name": "entries"
+                }
+              ],
+              "description": "Where the row is now, out of what the observer has seen."
+            },
+            {
+              "kind": "method",
+              "name": "apply",
+              "parameters": [
+                {
+                  "name": "at"
+                }
+              ],
+              "description": "Push the current slide onto the picker, and tell the page when it moved."
+            },
+            {
+              "kind": "method",
+              "name": "atStart",
+              "description": "Whether the scroller is as far back as it goes. `abs`, because RTL scrolls negative."
+            },
+            {
+              "kind": "method",
+              "name": "atEnd",
+              "description": "Whether the scroller is as far on as it goes."
+            },
+            {
+              "kind": "method",
+              "name": "to",
+              "parameters": [
+                {
+                  "name": "at"
+                }
+              ],
+              "description": "Scroll a slide to the start of the row.\n\nThe delta comes from the two boxes rather than from `offsetLeft`, which is measured\nagainst whichever ancestor happens to be positioned and is a different number for the\nslide and the scroller as soon as a page positions one of them. Assigning `scrollLeft`\nrather than calling `scrollTo` leaves the smoothness to CSS, where the reduced-motion\nquery already lives - see `index.scss`."
+            },
+            {
+              "kind": "method",
+              "name": "next"
+            },
+            {
+              "kind": "method",
+              "name": "previous"
+            },
+            {
+              "kind": "method",
+              "name": "play",
+              "parameters": [
+                {
+                  "name": "pinned"
+                }
+              ],
+              "description": "Start rotating.\n\n`pinned` is what the rotation control sets, and it is the APG's rule that a rotation the\nreader asked for by hand is not stopped again by a stray mouse crossing the row: hover\nand focus are ignored until the same button stops it."
+            },
+            {
+              "kind": "method",
+              "name": "pause"
+            },
+            {
+              "kind": "method",
+              "name": "tick"
+            },
+            {
+              "kind": "method",
+              "name": "clearTimer"
+            },
+            {
+              "kind": "method",
+              "name": "suspend",
+              "description": "Rotation held while the pointer or the focus is in the carousel - still rotating as far\nas the button's name is concerned, because it will be again on the way out."
+            },
+            {
+              "kind": "method",
+              "name": "resume"
+            },
+            {
+              "kind": "method",
+              "name": "onFocusOut",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "Focus moving between two controls is focus that never left."
+            },
+            {
+              "kind": "method",
+              "name": "onClick",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            }
+          ],
+          "events": [
+            {
+              "name": "carousel-change",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "`detail.index` is the slide now on screen, `detail.slide` the element itself."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "autoplay",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Rotate on a timer, and write the control that stops it. Ignored at upgrade when the reader asked for reduced motion - the control is still there to start it.",
+              "default": "false"
+            },
+            {
+              "name": "interval",
+              "type": {
+                "text": "number"
+              },
+              "description": "Milliseconds between slides while rotating. Under 1000 is treated as 1000.",
+              "default": "5000"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "The previous button's accessible name.",
+              "name": "prev-text",
+              "default": "Previous slide"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "The next button's accessible name.",
+              "name": "next-text",
+              "default": "Next slide"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "The rotation control's accessible name while stopped.",
+              "name": "play-text",
+              "default": "Start slide rotation"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "The rotation control's accessible name while rotating.",
+              "name": "pause-text",
+              "default": "Stop slide rotation"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "The word in front of the number on a picker button. `Slide 3`.",
+              "name": "slide-text",
+              "default": "Slide"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "The picker group's accessible name.",
+              "name": "picker-text",
+              "default": "Choose slide to display"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "carousel-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "rotationInterval",
+          "declaration": {
+            "name": "rotationInterval",
+            "module": "src/elementals/carousel/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "stepSlide",
+          "declaration": {
+            "name": "stepSlide",
+            "module": "src/elementals/carousel/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "slideName",
+          "declaration": {
+            "name": "slideName",
+            "module": "src/elementals/carousel/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "currentSlide",
+          "declaration": {
+            "name": "currentSlide",
+            "module": "src/elementals/carousel/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "CarouselElemental",
+          "declaration": {
+            "name": "CarouselElemental",
+            "module": "src/elementals/carousel/index.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/elementals/checkbox-group/index.js",
       "declarations": [
         {

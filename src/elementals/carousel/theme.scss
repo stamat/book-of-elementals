@@ -1,0 +1,99 @@
+// Optional look for `<carousel-elemental>`. Not part of the element's own stylesheet and not
+// in its bundle: that one styles structure only, and a light-DOM element cannot scope a look
+// away from a page that did not ask for one. Import this when you want the look, skip it when
+// you do not.
+// Colors are mixed out of `currentcolor` rather than hard-coded, so the controls sit in
+// whatever palette the page already has - including a theme switch - with nothing to
+// configure.
+
+carousel-elemental {
+  --carousel-elemental-gap: 1rem;
+  --carousel-elemental-controls-gap: 0.5rem;
+  --carousel-elemental-marker-size: 1.75rem;
+  --carousel-elemental-control: currentcolor;
+  --carousel-elemental-border: color-mix(in srgb, currentcolor 20%, transparent);
+  --carousel-elemental-hover: color-mix(in srgb, currentcolor 10%, transparent);
+
+  // `CanvasText` and not `currentcolor`, which is the one place in this theme where that
+  // would have been a bug rather than a preference: the current picker button inverts, so
+  // the fill and the text are both on one element - and `currentcolor` in a `background`
+  // resolves against that element's own `color`, which by then is `Canvas`. A white circle
+  // with white text in it. `CanvasText` follows `color-scheme` instead, so it is still the
+  // page's foreground under a theme switch, and `Canvas` below is its opposite by
+  // definition.
+  --carousel-elemental-current: CanvasText;
+  --carousel-elemental-radius: 999px;
+}
+
+carousel-elemental > [data-carousel-controls] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--carousel-elemental-controls-gap);
+  padding-block-start: var(--carousel-elemental-controls-gap);
+}
+
+carousel-elemental > [data-carousel-controls] [data-carousel-markers] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--carousel-elemental-controls-gap);
+}
+
+// One shape for all four controls - previous, next, every picker button, and the rotation
+// control over the corner of the row. They do the same kind of thing and are read as one set.
+carousel-elemental button[aria-controls] {
+  display: grid;
+  place-items: center;
+  inline-size: var(--carousel-elemental-marker-size);
+  block-size: var(--carousel-elemental-marker-size);
+  padding: 0;
+  font: inherit;
+  line-height: 1;
+  color: var(--carousel-elemental-control);
+  cursor: pointer;
+  background: none;
+  border: 1px solid var(--carousel-elemental-border);
+  border-radius: var(--carousel-elemental-radius);
+
+  &:hover {
+    background: var(--carousel-elemental-hover);
+  }
+}
+
+// The picker button for the slide on screen. `aria-disabled` and not `disabled`, so the
+// selector is the state a screen reader is being told and the two cannot drift apart.
+carousel-elemental [data-carousel-marker][aria-disabled="true"] {
+  color: Canvas;
+  cursor: default;
+  background: var(--carousel-elemental-current);
+  border-color: var(--carousel-elemental-current);
+}
+
+// Forced colors repaints text and borders in system colors, and the one button that is
+// filled rather than outlined needs a fill that survives that.
+@media (forced-colors: active) {
+  carousel-elemental [data-carousel-marker][aria-disabled="true"] {
+    background: Highlight;
+    border-color: Highlight;
+  }
+}
+
+// The rotation control sits over the top corner of the row rather than in the bar with the
+// rest, because the markup has it first - the APG wants it at the head of the tab sequence,
+// and a control drawn a long way from where it is read is a tab order that lies. Over the
+// corner is close enough to both.
+carousel-elemental > [data-carousel-rotate] {
+  position: absolute;
+  z-index: 1;
+  inset-block-start: var(--carousel-elemental-controls-gap);
+  inset-inline-end: var(--carousel-elemental-controls-gap);
+  background: Canvas;
+}
+
+// A scroller given a tab stop of its own - the element does that only when there is nothing
+// focusable inside the slides - is a box that can take focus, and focus with no ring is focus
+// nowhere. `:focus-visible`, so a click on a slide does not draw one.
+carousel-elemental > [data-carousel-slides][tabindex]:focus-visible {
+  outline: 2px solid var(--carousel-elemental-control);
+  outline-offset: 2px;
+}
