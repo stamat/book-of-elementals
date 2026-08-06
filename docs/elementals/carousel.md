@@ -268,11 +268,13 @@ not, because they are dim there, and a control that looks spent must not still a
 
 <carousel-elemental class="demo-carousel" aria-label="Rotating places" autoplay interval="4000">
   <ul>
-    <li><figure><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 90'%3E%3Crect width='160' height='90' fill='%23244'/%3E%3Ccircle cx='128' cy='24' r='12' fill='%23fc7'/%3E%3Cpolygon points='0,90 55,28 110,90' fill='%23576'/%3E%3Cpolygon points='70,90 118,42 160,90' fill='%23354'/%3E%3C/svg%3E" alt="Two hills under a low sun" width="160" height="90"><figcaption>Mist, before the sun is over the ridge</figcaption></figure></li>
-    <li><figure><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 90'%3E%3Crect width='160' height='90' fill='%23473'/%3E%3Cpolygon points='0,90 70,22 160,90' fill='%23352'/%3E%3Cpath d='M58 90 L76 38 L88 38 L98 90 Z' fill='%234a90a4'/%3E%3C/svg%3E" alt="A river running down between two slopes" width="160" height="90"><figcaption>The river, and rock on both sides of it</figcaption></figure></li>
-    <li><figure><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 90'%3E%3Crect width='160' height='90' fill='%23678'/%3E%3Cpolygon points='0,58 42,18 84,58' fill='%23889'/%3E%3Cpolygon points='62,58 104,26 150,58' fill='%2399a'/%3E%3Crect y='58' width='160' height='32' fill='%23356'/%3E%3C/svg%3E" alt="Bare peaks above a still lake" width="160" height="90"><figcaption>A lake, and nothing growing above it</figcaption></figure></li>
+    <li><figure><img src="https://picsum.photos/id/93/640/360" alt="An open bog of white cotton grass with young pines scattered across it, under a pale dawn sky" width="640" height="360" loading="lazy"><figcaption>Cotton grass, before the light is properly up</figcaption></figure></li>
+    <li><figure><img src="https://picsum.photos/id/79/640/360" alt="Steep dark hillsides in black and white, a pale track winding along the valley floor and higher peaks behind" width="640" height="360" loading="lazy"><figcaption>The valley floor, and the one way out of it</figcaption></figure></li>
+    <li><figure><img src="https://picsum.photos/id/110/640/360" alt="A low sun going down behind a line of trees at the edge of flat grassland, the sky orange above them" width="640" height="360" loading="lazy"><figcaption>The last of the sun, out over the flat</figcaption></figure></li>
   </ul>
 </carousel-elemental>
+
+<p class="demo-credit">Photographs by Caroline Sada, Dorothy Lin, Kenneth Thewissen, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a> — convenient for docs, wrong for a site you ship: self-host yours.</p>
 
 ```html
 <carousel-elemental aria-label="Rotating places" autoplay interval="4000">…</carousel-elemental>
@@ -307,13 +309,15 @@ One custom property, and no attribute:
 
 <carousel-elemental class="demo-carousel demo-carousel-three" aria-label="Three at a time">
   <ul>
-    <li><figure><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 90'%3E%3Crect width='160' height='90' fill='%23283'/%3E%3Cpolygon points='0,90 48,30 96,90' fill='%23162'/%3E%3Cpath d='M70 30 L86 30 L92 90 L64 90 Z' fill='%23bde'/%3E%3C/svg%3E" alt="A waterfall between two green slopes" width="160" height="90"></figure></li>
-    <li><figure><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 90'%3E%3Crect width='160' height='90' fill='%23354'/%3E%3Cpath d='M60 90 L76 34 L92 34 L108 90 Z' fill='%23776'/%3E%3Cpolygon points='16,90 30,26 44,90' fill='%23132'/%3E%3Cpolygon points='120,90 134,22 148,90' fill='%23132'/%3E%3C/svg%3E" alt="A road running away between two pines" width="160" height="90"></figure></li>
-    <li><figure><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 90'%3E%3Crect width='160' height='90' fill='%2389c'/%3E%3Crect y='56' width='160' height='34' fill='%23a94'/%3E%3Ccircle cx='34' cy='26' r='10' fill='%23fe9'/%3E%3C/svg%3E" alt="A field of low scrub under a wide sky" width="160" height="90"></figure></li>
-    <li><figure><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 90'%3E%3Crect width='160' height='90' fill='%23446'/%3E%3Crect x='14' y='24' width='34' height='66' fill='%23223'/%3E%3Crect x='58' y='12' width='40' height='78' fill='%23334'/%3E%3Crect x='108' y='32' width='38' height='58' fill='%23223'/%3E%3C/svg%3E" alt="A street between tall buildings" width="160" height="90"></figure></li>
-    <li><figure><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 90'%3E%3Crect width='160' height='90' fill='%23eda'/%3E%3Cpath d='M0 44 L160 30 L160 90 L0 90 Z' fill='%23368'/%3E%3Cpolygon points='6,50 26,38 44,52' fill='%23334'/%3E%3C/svg%3E" alt="Dark rock at the edge of pale sand and water" width="160" height="90"></figure></li>
+    <li><figure><img src="https://picsum.photos/id/118/640/360" alt="Dry thistle heads in the foreground over a wide valley of pale hills" width="640" height="360" loading="lazy"></figure></li>
+    <li><figure><img src="https://picsum.photos/id/120/640/360" alt="The Milky Way over a leaning wooden fence at night" width="640" height="360" loading="lazy"></figure></li>
+    <li><figure><img src="https://picsum.photos/id/76/640/360" alt="A green bicycle leaning on the weathered planks of a shed, beside a peeling blue door" width="640" height="360" loading="lazy"></figure></li>
+    <li><figure><img src="https://picsum.photos/id/90/640/360" alt="Green glass jars upturned on the posts of a bamboo fence" width="640" height="360" loading="lazy"></figure></li>
+    <li><figure><img src="https://picsum.photos/id/82/640/360" alt="Purple and white blossom on a bare branch" width="640" height="360" loading="lazy"></figure></li>
   </ul>
 </carousel-elemental>
+
+<p class="demo-credit">Photographs by Rick Waalders, Guillaume, Alexander Shustov, Rula Sibai, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a> — convenient for docs, wrong for a site you ship: self-host yours.</p>
 
 ```css
 carousel-elemental {

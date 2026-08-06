@@ -303,12 +303,12 @@ already gone back to.
 
 ```html
 <button type="button" class="thumb" command="show-modal" commandfor="lightbox">
-  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'%3E%3Crect width='160' height='100' fill='%23244'/%3E%3Ccircle cx='120' cy='28' r='14' fill='%23fc7'/%3E%3Cpolygon points='0,100 60,40 110,100' fill='%23576'/%3E%3Cpolygon points='80,100 130,55 160,100' fill='%23354'/%3E%3C/svg%3E" alt="Two hills under a low sun" width="160" height="100">
+  <img src="https://picsum.photos/id/136/320/200" alt="Tall sandstone towers rising out of pine woods" width="320" height="200">
 </button>
 
 <modal-elemental closedby="any">
-  <dialog id="lightbox" aria-label="Two hills under a low sun">
-    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'%3E%3Crect width='160' height='100' fill='%23244'/%3E%3Ccircle cx='120' cy='28' r='14' fill='%23fc7'/%3E%3Cpolygon points='0,100 60,40 110,100' fill='%23576'/%3E%3Cpolygon points='80,100 130,55 160,100' fill='%23354'/%3E%3C/svg%3E" alt="Two hills under a low sun" width="960" height="600">
+  <dialog id="lightbox" aria-label="Tall sandstone towers rising out of pine woods">
+    <img src="https://picsum.photos/id/136/1280/800" alt="Tall sandstone towers rising out of pine woods" width="1280" height="800">
   </dialog>
 </modal-elemental>
 ```
@@ -340,8 +340,8 @@ modal-elemental > dialog#lightbox {
   border-radius: 0.5rem;
 }
 
-/* the element's own cross, repainted for a dark picture: it inherits the page's text
-   colour, which is the one colour that disappears against this image */
+/* the element's own cross, repainted for a photograph: it inherits the page's text
+   colour, and no page colour is safe over a picture nobody chose */
 #lightbox .modal-elemental-close {
   color: white;
   background: rgb(0 0 0 / 40%);
@@ -354,6 +354,8 @@ The dialog is named with `aria-label` here because there is no heading to point 
 picture is the whole of it. The close button is not in the markup because the element writes
 it; the CSS above only repaints it, since a cross in the page's own text colour is a cross
 nobody finds against a photograph.
+
+<p class="demo-credit">Photograph by Marcin Czerwinski, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a> — convenient for docs, wrong for a site you ship: self-host yours.</p>
 
 ### A video
 

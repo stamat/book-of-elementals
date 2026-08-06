@@ -17,30 +17,32 @@ Native `<details>` is a disclosure already, and where it fits it wins —
 region can live _inside_ the trigger's element. This is for [when it cannot](#why-not-just-details).
 
 <figure class="demo-figure">
-  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 120'%3E%3Cpolygon points='12,26 300,54 300,64 12,86' fill='%23c86b4a'/%3E%3Cpolygon points='12,90 300,68 300,72 12,96' fill='%23777'/%3E%3Cpolyline points='12,112 84,110 156,106 228,102 300,100' fill='none' stroke='%23999' stroke-width='2'/%3E%3C/svg%3E" alt="A tapering band showing an army shrinking from 442,000 to 100,000 men on the advance and to 10,000 on the retreat, over a line of falling temperatures.">
+  <img src="https://picsum.photos/id/168/900/600" alt="Large glacial boulders on cropped grass, three of them raised on smaller stones behind, with flat farmland and a bright broken sky beyond." width="900" height="600" loading="lazy">
   <disclosure-elemental>
-    <button>Data table for the chart</button>
-    <div id="minard-data">
+    <button>Figures for this photograph</button>
+    <div id="photo-data">
       <table>
-        <caption>Napoleon's 1812 Russian campaign, after Minard</caption>
+        <caption>The picture, by the numbers</caption>
         <thead>
-          <tr><th scope="col">Location</th><th scope="col">Date</th><th scope="col">Men</th><th scope="col">Direction</th></tr>
+          <tr><th scope="col">Figure</th><th scope="col">Value</th></tr>
         </thead>
         <tbody>
-          <tr><th scope="row">Kowno</th><td>24 June</td><td>442,000</td><td>Advance</td></tr>
-          <tr><th scope="row">Smolensk</th><td>16 August</td><td>145,000</td><td>Advance</td></tr>
-          <tr><th scope="row">Moscow</th><td>14 September</td><td>100,000</td><td>Advance</td></tr>
-          <tr><th scope="row">Smolensk</th><td>14 November</td><td>37,000</td><td>Retreat</td></tr>
-          <tr><th scope="row">Kowno</th><td>7 December</td><td>10,000</td><td>Retreat</td></tr>
+          <tr><th scope="row">Photographer</th><td>Joeri Römer</td></tr>
+          <tr><th scope="row">Source size</th><td>1920 × 1280</td></tr>
+          <tr><th scope="row">Aspect ratio</th><td>3 : 2</td></tr>
+          <tr><th scope="row">Pixels</th><td>2,457,600</td></tr>
+          <tr><th scope="row">Served here at</th><td>900 × 600</td></tr>
+          <tr><th scope="row">Lorem Picsum id</th><td>168</td></tr>
         </tbody>
       </table>
     </div>
   </disclosure-elemental>
 </figure>
+<p class="demo-credit">Photograph from <a href="https://unsplash.com/photos/Xne1N4yZuOY">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a> — convenient for docs, wrong for a site you ship: self-host yours.</p>
 <br>
 
-_A long description for an image whose `alt` can only carry the gist. Try find-in-page for
-"Smolensk" with the table closed._
+_The numbers behind a figure, in the table beside it, for the reader the `alt` cannot carry
+them to. Try find-in-page for "2,457,600" with the table closed._
 
 ## Usage
 
@@ -51,8 +53,8 @@ preview above it follows as you type:
 
 ```html
 <disclosure-elemental>
-  <button>Data table for the chart</button>
-  <div id="minard-data">Six columns of numbers.</div>
+  <button>Figures for this photograph</button>
+  <div id="photo-data">Two columns of numbers.</div>
 </disclosure-elemental>
 ```
 
@@ -201,27 +203,32 @@ Point `for` at the region's `id` and the element wraps nothing but the button. T
 then lives wherever the markup needs it:
 
 <figure class="demo-figure">
-  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 120'%3E%3Ccircle cx='60' cy='60' r='34' fill='%236aa84f'/%3E%3Crect x='120' y='26' width='68' height='68' fill='%23c86b4a'/%3E%3Cpolygon points='250,26 288,94 212,94' fill='%23777'/%3E%3C/svg%3E" alt="Three shapes in a row: a green circle, an orange square and a grey triangle.">
-  <disclosure-elemental for="shapes-caption">
+  <img src="https://picsum.photos/id/129/640/400" alt="Two people on a bench with a dog at their feet, looking out over a bay towards a suspension bridge in the haze." width="640" height="400" loading="lazy">
+  <disclosure-elemental for="bench-caption">
     <button>Describe this image</button>
   </disclosure-elemental>
-  <figcaption id="shapes-caption">
-    <p>The circle is drawn first, at a third of the frame's width, in the green
-    of the sequential palette's low end. The square that follows is the same
-    visual weight in the palette's warm mid-tone, and the triangle closing the
-    row is neutral grey. Spacing between the three is even, so the row reads as
-    one series rather than as a pair with an outlier.</p>
+  <figcaption id="bench-caption">
+    <p>The bench is a slatted wooden one on a dark metal frame, standing on a
+    concrete apron at the water's edge and seen from behind. Two people sit
+    towards its right-hand end with their backs to the camera — one with long
+    fair hair, one in a checked shirt — and a dog lies on the ground behind
+    them, in the gap under the seat. Beyond the water the far shore is a low
+    line of hills, and one tower of a suspension bridge stands out of the haze
+    to the left of them, pale enough that the span reads as a single thin
+    stroke. The whole frame is washed warm, the way photographs taken into a
+    low sun over water usually are.</p>
   </figcaption>
 </figure>
+<p class="demo-credit">Photograph by Charlie Foster, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a> — convenient for docs, wrong for a site you ship: self-host yours.</p>
 <br>
 
 ```html
 <figure>
-  <img src="…" alt="Three shapes in a row: …" />
-  <disclosure-elemental for="shapes-caption">
+  <img src="…" alt="Two people on a bench with a dog at their feet, looking out…" />
+  <disclosure-elemental for="bench-caption">
     <button>Describe this image</button>
   </disclosure-elemental>
-  <figcaption id="shapes-caption">…</figcaption>
+  <figcaption id="bench-caption">…</figcaption>
 </figure>
 ```
 
@@ -328,8 +335,8 @@ the region and fires `beforematch`, which the element answers by opening. Same b
 
 ```html
 <!-- while closed -->
-<button aria-expanded="false" aria-controls="minard-data">…</button>
-<div id="minard-data" class="disclosure-elemental-region" hidden="until-found">…</div>
+<button aria-expanded="false" aria-controls="photo-data">…</button>
+<div id="photo-data" class="disclosure-elemental-region" hidden="until-found">…</div>
 ```
 
 Browsers without `until-found` read it as a plain `hidden` — the same content, just not
@@ -386,7 +393,7 @@ its own and hands you a box inside it; this element wraps nothing, on purpose, s
 goes on a box inside the region:
 
 ```html
-<figcaption id="shapes-caption">
+<figcaption id="bench-caption">
   <div class="caption-body">…</div>
 </figcaption>
 ```

@@ -40,7 +40,7 @@ on.
   </dialog>
 </modal-elemental>
 
-<p class="demo-credit">Photographs by Daniel Genser, Nicholas Swanson, Isaak Dury, May Pamintuan, Dorothy Lin, Gozha Net, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a>.</p>
+<p class="demo-credit">Photographs by Daniel Genser, Nicholas Swanson, Isaak Dury, May Pamintuan, Dorothy Lin, Gozha Net, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a> — convenient for docs, wrong for a site you ship: self-host yours.</p>
 
 ## The markup
 
@@ -116,13 +116,9 @@ whose thumbnails are a grid and whose slides are a row — the alternative is mo
 nodes between two layouts, which loses focus and scroll position every time it happens. It is
 not doubled for a screen reader, because a `<dialog>` that is not open is `display: none` and
 nothing inside it is in the tree at all. **Keep the two `alt` texts identical**, or the same
-picture answers to two different descriptions depending on how you got to it.
-
-The photographs here come off another host, which is the one thing on this page you should not
-copy. It keeps six images out of this repository, and it costs every reader of this page a
-request to somebody else's server — fine for a docs example, wrong for a site you are asking
-people to trust. Self-host them, and give each one a `width` and `height` so the row does not
-resize under the reader while they load.
+picture answers to two different descriptions depending on how you got to it. Give every one
+of them a `width` and a `height` too, so neither the grid nor the row resizes under the reader
+while they load.
 
 <script src="{{ relativePathPrefix }}dist/elementals/carousel.js"></script>
 <script src="{{ relativePathPrefix }}dist/elementals/modal.js"></script>
