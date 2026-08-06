@@ -151,6 +151,9 @@ carousel-elemental [data-carousel-marker][aria-disabled=true] {
   background: var(--carousel-elemental-current);
   border-color: var(--carousel-elemental-current);
 }
+carousel-elemental [data-carousel-marker][aria-disabled=true]:hover {
+  color: var(--carousel-elemental-current);
+}
 
 @media (forced-colors: active) {
   carousel-elemental [data-carousel-marker][aria-disabled=true] {

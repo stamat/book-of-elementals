@@ -88,6 +88,16 @@ carousel-elemental [data-carousel-marker][aria-disabled="true"] {
   cursor: default;
   background: var(--carousel-elemental-current);
   border-color: var(--carousel-elemental-current);
+
+  // The one button whose text has to move when the hover lands. Every other control is
+  // outlined, so the hover tint goes *behind* the digit; this one is filled, and the shared
+  // hover rule replaces that fill with the tint - leaving `Canvas` text on a near-`Canvas`
+  // background, which is the number gone. Inverting is also what keeps the tint the right
+  // colour: it is mixed from `currentcolor`, and `currentcolor` here is whatever this line
+  // says it is.
+  &:hover {
+    color: var(--carousel-elemental-current);
+  }
 }
 
 // Forced colors repaints text and borders in system colors, and the one button that is
