@@ -318,6 +318,11 @@
             },
             {
               "kind": "method",
+              "name": "arrived",
+              "description": "The programmatic scroll is over: the scroller speaks for itself again."
+            },
+            {
+              "kind": "method",
               "name": "apply",
               "parameters": [
                 {

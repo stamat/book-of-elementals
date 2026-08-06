@@ -64,6 +64,14 @@ may already be targeting**, since neither shows up in a function signature.
   `autoplay` is set. The previous and next buttons hold an inlined Octicon chevron
   (`chevron-left-16` / `chevron-right-16`, MIT, © GitHub Inc.) rather than a text glyph, which
   is centred by construction where a glyph is centred wherever its font's designer put it.
+
+  **The arrows go dim as a move starts, not as it lands.** A smooth scroll takes a few hundred
+  milliseconds, so reading `scrollLeft` during it left the last press of next looking live all
+  the way through the move that spent it. The element now records the position it asked the
+  scroller for, clamped to the scrollable range, and answers for the buttons from that until
+  the scroll arrives — with a one-second backstop, because a scroll the reader interrupts with
+  a swipe never reaches where it was sent and there is no event for "that scroll was
+  abandoned".
   The list gets `tabindex="0"` only when nothing inside the slides is focusable. Fewer than
   two slides and it leaves the markup alone. **CSS:** new `carousel.css` and
   `carousel-theme.css` bundles, and new `book-of-elementals/carousel` export paths; the

@@ -111,6 +111,8 @@
       this.onFocusOut = this.onFocusOut.bind(this);
       this.index = 0;
       this.visible = /* @__PURE__ */ new Set();
+      this.settling = null;
+      this.settleTimer = null;
       this.named = /* @__PURE__ */ new WeakMap();
       this.addEventListener("click", this.onClick);
       this.addEventListener("mouseenter", this.suspend);
@@ -136,6 +138,7 @@
       this.visible.clear();
       if (this.scrolls) this.scrolls.removeEventListener("scroll", this.onScroll);
       this.scrolls = null;
+      this.arrived();
       this.removeControls();
       this.removeAttribute("data-carousel-at-start");
       this.removeAttribute("data-carousel-at-end");
@@ -197,6 +200,7 @@
       this.visible.clear();
       if (this.scrolls) this.scrolls.removeEventListener("scroll", this.onScroll);
       this.scrolls = null;
+      this.arrived();
       if (!this.fade) {
         this.observer = new IntersectionObserver(this.onIntersect, { root: scroller, threshold: 0.6 });
         for (const slide of slides) this.observer.observe(slide);
@@ -288,7 +292,17 @@
     /** Scrolled: the edges are the scroller's to report, and they change without the set of
      * visible slides changing. */
     onScroll() {
+      const scroller = this.scroller;
+      if (this.settling !== null && scroller && Math.abs(scroller.scrollLeft - this.settling) <= 1) {
+        this.arrived();
+      }
       this.applyEdges();
+    }
+    /** The programmatic scroll is over: the scroller speaks for itself again. */
+    arrived() {
+      if (this.settleTimer) clearTimeout(this.settleTimer);
+      this.settleTimer = null;
+      this.settling = null;
     }
     /**
      * Push the current slide onto the picker and the slides, and tell the page when it moved.
@@ -322,7 +336,8 @@
     applyEdges() {
       const scroller = this.scroller;
       if (!scroller) return;
-      const at = this.fade ? { start: this.index <= 0, end: this.index >= this.slides.length - 1 } : scrollEdges(scroller.scrollLeft, scroller.clientWidth, scroller.scrollWidth);
+      const offset = this.settling === null || this.settling === void 0 ? scroller.scrollLeft : this.settling;
+      const at = this.fade ? { start: this.index <= 0, end: this.index >= this.slides.length - 1 } : scrollEdges(offset, scroller.clientWidth, scroller.scrollWidth);
       this.toggleAttribute("data-carousel-at-start", at.start);
       this.toggleAttribute("data-carousel-at-end", at.end);
       if (this.prevButton) this.prevButton.setAttribute("aria-disabled", String(at.start));
@@ -345,7 +360,17 @@
         return;
       }
       const scroller = this.scroller;
-      scroller.scrollLeft += slide.getBoundingClientRect().left - scroller.getBoundingClientRect().left;
+      const delta = slide.getBoundingClientRect().left - scroller.getBoundingClientRect().left;
+      const wanted = scroller.scrollLeft + delta;
+      const reach = Math.max(scroller.scrollWidth - scroller.clientWidth, 0);
+      this.settling = Math.sign(wanted) * Math.min(Math.abs(wanted), reach);
+      if (this.settleTimer) clearTimeout(this.settleTimer);
+      this.settleTimer = setTimeout(() => {
+        this.arrived();
+        this.applyEdges();
+      }, 1e3);
+      scroller.scrollLeft += delta;
+      this.applyEdges();
     }
     /** One on, stopping at the end - where the button is dim and says so. */
     next() {

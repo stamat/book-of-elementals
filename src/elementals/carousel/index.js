@@ -278,6 +278,9 @@ export class CarouselElemental extends ElementBase {
 
     this.index = 0;
     this.visible = new Set();
+    // Null rather than absent: `applyEdges` runs before the first move.
+    this.settling = null;
+    this.settleTimer = null;
     // The name this element gave each slide, so a later `wire()` renumbers its own labels
     // and keeps its hands off the ones the markup wrote. The name and not just the slide,
     // because a page is free to name a slide *after* the upgrade - and a label that no
@@ -319,6 +322,7 @@ export class CarouselElemental extends ElementBase {
     this.visible.clear();
     if (this.scrolls) this.scrolls.removeEventListener('scroll', this.onScroll);
     this.scrolls = null;
+    this.arrived();
 
     this.removeControls();
     this.removeAttribute('data-carousel-at-start');
@@ -407,6 +411,8 @@ export class CarouselElemental extends ElementBase {
     this.visible.clear();
     if (this.scrolls) this.scrolls.removeEventListener('scroll', this.onScroll);
     this.scrolls = null;
+    // A move that was in flight was aimed at a row that has since changed.
+    this.arrived();
 
     if (!this.fade) {
       // Half plus a little: a slide has to be more on screen than off to be the one being
@@ -526,7 +532,18 @@ export class CarouselElemental extends ElementBase {
   /** Scrolled: the edges are the scroller's to report, and they change without the set of
    * visible slides changing. */
   onScroll() {
+    const scroller = this.scroller;
+    if (this.settling !== null && scroller && Math.abs(scroller.scrollLeft - this.settling) <= 1) {
+      this.arrived();
+    }
     this.applyEdges();
+  }
+
+  /** The programmatic scroll is over: the scroller speaks for itself again. */
+  arrived() {
+    if (this.settleTimer) clearTimeout(this.settleTimer);
+    this.settleTimer = null;
+    this.settling = null;
   }
 
   /**
@@ -567,9 +584,18 @@ export class CarouselElemental extends ElementBase {
   applyEdges() {
     const scroller = this.scroller;
     if (!scroller) return;
+    // Where the row is *going*, not where it is. A smooth scroll takes a few hundred
+    // milliseconds, and reading `scrollLeft` during it dims the button only once the
+    // animation lands - so the last press of next looks live all the way through the move
+    // that spends it, and the state arrives after the reader has already decided to press
+    // again. `settling` is the position the browser was asked for, and it answers for the
+    // buttons until the scroll gets there.
+    const offset = this.settling === null || this.settling === undefined
+      ? scroller.scrollLeft
+      : this.settling;
     const at = this.fade
       ? { start: this.index <= 0, end: this.index >= this.slides.length - 1 }
-      : scrollEdges(scroller.scrollLeft, scroller.clientWidth, scroller.scrollWidth);
+      : scrollEdges(offset, scroller.clientWidth, scroller.scrollWidth);
 
     this.toggleAttribute('data-carousel-at-start', at.start);
     this.toggleAttribute('data-carousel-at-end', at.end);
@@ -594,7 +620,28 @@ export class CarouselElemental extends ElementBase {
       return;
     }
     const scroller = this.scroller;
-    scroller.scrollLeft += slide.getBoundingClientRect().left - scroller.getBoundingClientRect().left;
+    const delta = slide.getBoundingClientRect().left - scroller.getBoundingClientRect().left;
+    // Recorded before the scroll rather than after it, so the buttons answer for the move as
+    // it starts. Clamped to the scrollable range, which is not tidying: the last slide of a
+    // row that shows three at a time is asked for from further away than the row can scroll,
+    // and an unclamped target is a number the scroller will never reach - so the state would
+    // stay frozen on a prediction until the backstop below fired, instead of unfreezing the
+    // moment the scroll lands. Clamped by magnitude, because a right-to-left scroller counts
+    // down from zero.
+    const wanted = scroller.scrollLeft + delta;
+    const reach = Math.max(scroller.scrollWidth - scroller.clientWidth, 0);
+    this.settling = Math.sign(wanted) * Math.min(Math.abs(wanted), reach);
+    if (this.settleTimer) clearTimeout(this.settleTimer);
+    // The backstop, and the reason this cannot get stuck: a scroll the reader interrupts
+    // with a swipe never reaches the position it was sent to, and there is no event for
+    // "that scroll was abandoned". A second is longer than any smooth scroll and shorter
+    // than anyone's patience, and when it fires the scroller speaks for itself again.
+    this.settleTimer = setTimeout(() => {
+      this.arrived();
+      this.applyEdges();
+    }, 1000);
+    scroller.scrollLeft += delta;
+    this.applyEdges();
   }
 
   /** One on, stopping at the end - where the button is dim and says so. */
