@@ -187,6 +187,18 @@ screen reader, not a carousel. `role="none"` would not do it either: the scrolle
 focusable, and a presentational role on a focusable element is thrown away. Nothing is lost
 by it, because each slide is already named `3 of 10`.
 
+The slides keep `role="group"` on the `<li>`, and that is a deliberate collision.
+[ARIA in HTML](https://www.w3.org/TR/html-aria/) allows a short list of roles on an `<li>`
+inside a list, and `group` is not among them — axe's `aria-allowed-role` rule says so, and it
+is right. The [APG carousel](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/) asks for
+`role="group"` on a slide, and that role is what lets a slide carry the name `3 of 10` and the
+`aria-roledescription` that makes a screen reader say "slide" instead of "list item". The
+pattern wins: the alternative is slides that are `<div>`s in a `<div>`, which is markup nobody
+would have written without this element, and the whole promise here is that they would have.
+`aria-allowed-role` is a best-practice rule rather than a WCAG one, so `script/a11y` — which
+runs the WCAG tags — does not report it. If you run axe yourself with everything switched on,
+this is the one you will see, and it is on purpose.
+
 The list gets `tabindex="0"` only when there is nothing focusable inside the slides. A
 scrollable region a keyboard cannot reach is content a keyboard cannot read
 ([WCAG 2.1.1](https://www.w3.org/WAI/WCAG22/Understanding/keyboard.html)); a row of slides
@@ -527,5 +539,12 @@ enforced in lint). So it is not the implementation yet. It is a straight upgrade
 the sizing here are the same rules those pseudo-elements attach to, and the day it is
 Baseline the controls can come out from behind an `@supports` and the script can stop
 writing them.
+
+With one behaviour to square first. A native scroll button moves by **one page** —
+"approximately the dimension of the scroll container, similar to pressing PgUp and PgDn keys",
+and with snap set up it lands on the snap target one page away. Previous and next here move by
+**one slide**, which is the same thing on a row showing one at a time and a different thing on
+a shelf showing four. Neither is wrong — they answer different questions — but swapping these
+buttons for the pseudo-elements would change how far a press goes.
 
 <script src="{{ relativePathPrefix }}dist/elementals/carousel.js"></script>

@@ -13,6 +13,7 @@ const browserGlobals = {
   decodeURIComponent: 'readonly',
   setTimeout: 'readonly',
   clearTimeout: 'readonly',
+  getComputedStyle: 'readonly',
   setInterval: 'readonly',
   clearInterval: 'readonly'
 };

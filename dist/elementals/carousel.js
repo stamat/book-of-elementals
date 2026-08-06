@@ -22,15 +22,19 @@
     const at = Math.abs(offset);
     return { start: at <= 1, end: at + visible >= total - 1 };
   }
+  function startInset(styles, rtl) {
+    const inset = parseFloat(rtl ? styles.scrollPaddingRight : styles.scrollPaddingLeft);
+    return Number.isFinite(inset) ? inset : 0;
+  }
   function slideName(index, count) {
     return index + 1 + " of " + count;
   }
-  function currentSlide(visible, fallback) {
-    let at = -1;
-    for (const index of visible) {
-      if (at < 0 || index < at) at = index;
+  function currentSlide(starts, inset, fallback) {
+    if (!starts.length) return fallback;
+    for (let i = 0; i < starts.length; i++) {
+      if (starts[i] >= inset - 1) return i;
     }
-    return at < 0 ? fallback : at;
+    return starts.length - 1;
   }
   var FOCUSABLE = "a[href], button, input, select, textarea, summary, iframe, [tabindex], [contenteditable]";
   var carouselCount = 0;
@@ -110,7 +114,8 @@
       this.resume = this.resume.bind(this);
       this.onFocusOut = this.onFocusOut.bind(this);
       this.index = 0;
-      this.visible = /* @__PURE__ */ new Set();
+      this.inset = 0;
+      this.painted = false;
       this.settling = null;
       this.settleTimer = null;
       this.named = /* @__PURE__ */ new WeakMap();
@@ -135,11 +140,11 @@
       this.removeEventListener("focusout", this.onFocusOut);
       if (this.observer) this.observer.disconnect();
       this.observer = null;
-      this.visible.clear();
       if (this.scrolls) this.scrolls.removeEventListener("scroll", this.onScroll);
       this.scrolls = null;
       this.arrived();
       this.removeControls();
+      this.painted = false;
       this.removeAttribute("data-carousel-at-start");
       this.removeAttribute("data-carousel-at-end");
       this.removeAttribute("aria-roledescription");
@@ -194,15 +199,18 @@
         this.named.set(slide, name);
       });
       this.writeControls();
+      this.painted = false;
       this.applyLive();
       if (this.observer) this.observer.disconnect();
       this.observer = null;
-      this.visible.clear();
       if (this.scrolls) this.scrolls.removeEventListener("scroll", this.onScroll);
       this.scrolls = null;
       this.arrived();
       if (!this.fade) {
-        this.observer = new IntersectionObserver(this.onIntersect, { root: scroller, threshold: 0.6 });
+        this.observer = new IntersectionObserver(this.onIntersect, {
+          root: scroller,
+          threshold: [0, 0.25, 0.5, 0.75, 1]
+        });
         for (const slide of slides) this.observer.observe(slide);
         scroller.addEventListener("scroll", this.onScroll, { passive: true });
         this.scrolls = scroller;
@@ -278,16 +286,38 @@
       this.rotateButton.setAttribute("aria-label", this.rotating ? stop : start);
       this.rotateButton.textContent = this.rotating ? "\u23F8" : "\u25B6";
     }
-    /** Where the row is now, out of what the observer has seen. */
-    onIntersect(entries) {
-      const slides = this.slides;
-      for (const entry of entries) {
-        const at = slides.indexOf(entry.target);
-        if (at < 0) continue;
-        if (entry.isIntersecting) this.visible.add(at);
-        else this.visible.delete(at);
-      }
-      this.apply(currentSlide(this.visible, this.index));
+    /**
+     * Where the row is now, read off the layout.
+     *
+     * Called from both of the things that can move it, which is not belt and braces: the
+     * observer fires when a slide crosses one of its thresholds, and a press that shifts the row
+     * by less than that - the last step into a clamped end, or any step at all on a row of wide
+     * slides - crosses nothing and would leave the index behind. A stale index is not a cosmetic
+     * problem: the next press is measured from it, so previous appears to work once and then do
+     * nothing at all, and next jumps several slides at a time.
+     */
+    readIndex() {
+      const scroller = this.scroller;
+      if (!scroller || !scroller.clientWidth) return;
+      const edge = scroller.getBoundingClientRect().left;
+      const starts = this.slides.map((slide) => slide.getBoundingClientRect().left - edge);
+      this.apply(currentSlide(starts, this.inset, this.index));
+    }
+    /**
+     * The observer's whole job: notice that the layout changed and re-read it.
+     *
+     * A resize, a container query flipping how many slides fit, a webfont landing - none of
+     * them fire a scroll event, and this is the callback that would otherwise have to be a
+     * resize listener. The `scroll-padding` is re-read here rather than on every scroll,
+     * because a media query is the only thing that changes it and this is where layout changes
+     * arrive.
+     */
+    onIntersect() {
+      const scroller = this.scroller;
+      if (!scroller) return;
+      const styles = getComputedStyle(scroller);
+      this.inset = startInset(styles, styles.direction === "rtl");
+      this.readIndex();
     }
     /** Scrolled: the edges are the scroller's to report, and they change without the set of
      * visible slides changing. */
@@ -296,7 +326,7 @@
       if (this.settling !== null && scroller && Math.abs(scroller.scrollLeft - this.settling) <= 1) {
         this.arrived();
       }
-      this.applyEdges();
+      this.readIndex();
     }
     /** The programmatic scroll is over: the scroller speaks for itself again. */
     arrived() {
@@ -308,8 +338,11 @@
      * Push the current slide onto the picker and the slides, and tell the page when it moved.
      */
     apply(at) {
-      const changed = at !== this.index;
+      const moved = at !== this.index;
       this.index = at;
+      this.applyEdges();
+      if (!moved && this.painted) return;
+      this.painted = true;
       this.markers.forEach((marker, index) => {
         if (index === at) marker.setAttribute("aria-disabled", "true");
         else marker.removeAttribute("aria-disabled");
@@ -318,8 +351,7 @@
         if (index === at) slide.setAttribute("data-carousel-current", "");
         else slide.removeAttribute("data-carousel-current");
       });
-      this.applyEdges();
-      if (!changed) return;
+      if (!moved) return;
       this.dispatchEvent(new CustomEvent("carousel-change", {
         bubbles: true,
         detail: { index: at, slide: this.slides[at] || null }
@@ -360,7 +392,9 @@
         return;
       }
       const scroller = this.scroller;
-      const delta = slide.getBoundingClientRect().left - scroller.getBoundingClientRect().left;
+      const styles = getComputedStyle(scroller);
+      this.inset = startInset(styles, styles.direction === "rtl");
+      const delta = slide.getBoundingClientRect().left - scroller.getBoundingClientRect().left - this.inset;
       const wanted = scroller.scrollLeft + delta;
       const reach = Math.max(scroller.scrollWidth - scroller.clientWidth, 0);
       this.settling = Math.sign(wanted) * Math.min(Math.abs(wanted), reach);

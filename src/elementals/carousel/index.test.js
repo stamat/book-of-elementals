@@ -8,7 +8,7 @@
 // nothing. The roles, the focus order and the rotation control are checked by
 // `script/a11y` over the built demos, in a real browser.
 
-import { currentSlide, rotationInterval, scrollEdges, slideName, stepSlide } from './index.js';
+import { currentSlide, rotationInterval, scrollEdges, slideName, startInset, stepSlide } from './index.js';
 
 test('next moves on by one, and stops at the end rather than wrapping', () => {
   // The buttons dim at the ends, and a control that looks spent and then jumps you back to
@@ -56,17 +56,59 @@ test('a fraction of a pixel either way is still an end', () => {
   expect(scrollEdges(599.6, 300, 900).end).toBe(true);
 });
 
-test('the earliest slide on screen is the one the carousel is on', () => {
-  // More than one slide fits, and the reader reads from the start of the row.
-  expect(currentSlide([2, 3, 4], 0)).toBe(2);
-  expect(currentSlide(new Set([5, 1, 3]), 0)).toBe(1);
+test('a row with no scroll-padding scrolls the slide flush to its edge', () => {
+  expect(startInset({ scrollPaddingLeft: 'auto', scrollPaddingRight: 'auto' }, false)).toBe(0);
+  expect(startInset({ scrollPaddingLeft: '0px', scrollPaddingRight: '0px' }, false)).toBe(0);
 });
 
-test('with nothing on screen the carousel stays where it was', () => {
-  // A scroller in a collapsed or display:none ancestor reports every slide as gone, and
-  // moving the carousel to slide zero because a details element closed over it is a state
-  // change nobody asked for.
-  expect(currentSlide([], 4)).toBe(4);
+test('and one with scroll-padding stops short of it by exactly that much', () => {
+  // The bleed layout the card-row example is built on: the row runs to the edge of the page
+  // and the cards line up with the text through `scroll-padding-inline-start`. Scrolling a
+  // slide flush to the row's own edge there overshoots the snap point by the padding, and the
+  // browser snaps on to the *next* slide - one press, two slides, and it reads as the element
+  // losing count.
+  expect(startInset({ scrollPaddingLeft: '206px', scrollPaddingRight: '0px' }, false)).toBe(206);
+});
+
+test('right to left, the start edge is the other one', () => {
+  expect(startInset({ scrollPaddingLeft: '0px', scrollPaddingRight: '206px' }, true)).toBe(206);
+});
+
+test('a scroll-padding in something other than pixels is no padding at all', () => {
+  // `getComputedStyle` resolves lengths to pixels, so anything else here is `auto` or a
+  // keyword - and guessing at one would move the row by a number nobody wrote.
+  expect(startInset({ scrollPaddingLeft: 'auto', scrollPaddingRight: 'auto' }, true)).toBe(0);
+  expect(startInset({}, false)).toBe(0);
+});
+
+test('the carousel is on the first slide that has not gone past the start edge', () => {
+  // Slide 0 is off to the left, slide 1 is sitting on the edge: the reader is on slide 1.
+  expect(currentSlide([-292, 0, 292, 584], 0, 0)).toBe(1);
+  expect(currentSlide([0, 292, 584], 0, 0)).toBe(0);
+});
+
+test('and the edge moves with the row\'s scroll-padding', () => {
+  // The shelf layout: the row bleeds past its text and puts the inset back as padding, so
+  // slide 0 sits in that padding still two thirds on screen. Measured against the scroller's
+  // own box it would still read as current, the index would never advance, and the next
+  // button would stop doing anything after one press.
+  expect(currentSlide([-86, 206, 498], 206, 0)).toBe(1);
+  expect(currentSlide([206, 498, 790], 206, 0)).toBe(0);
+});
+
+test('a fraction of a pixel short of the edge is still on it', () => {
+  expect(currentSlide([205.6, 497.6], 206, 0)).toBe(0);
+});
+
+test('a row scrolled past every start edge is on its last slide', () => {
+  // Where a row whose final slides are narrower than the viewport ends up.
+  expect(currentSlide([-800, -500, -200], 0, 0)).toBe(2);
+});
+
+test('with nothing to measure the carousel stays where it was', () => {
+  // A scroller in a collapsed or display:none ancestor, and a carousel that moved because a
+  // details element folded over it is a change nobody asked for.
+  expect(currentSlide([], 0, 4)).toBe(4);
 });
 
 test('a slide with no name of its own is named by its place in the set', () => {

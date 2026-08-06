@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Sidebar drawer
 description: The documentation sidebar this site is built on — a rail on a wide screen, a drawer on a phone — assembled from disclosure-elemental, its media attribute and one media query.
-order: 2
+order: 3
 ---
 
 # Sidebar drawer

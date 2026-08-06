@@ -102,6 +102,32 @@
         },
         {
           "kind": "function",
+          "name": "startInset",
+          "parameters": [
+            {
+              "name": "styles",
+              "description": "The scroller's computed style.",
+              "type": {
+                "text": "CSSStyleDeclaration|object"
+              }
+            },
+            {
+              "name": "rtl",
+              "description": "Whether the scroller's direction is right to left.",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "How far short of the row's own edge a slide has to stop: its `scroll-padding` on the start\nside.\n\nA row that bleeds past the text it sits under puts the column's inset back as padding, and\nmoves the snap point with it - which is the only way the first card lines up with the\nheading while the row still runs to the edge of the page. Scrolling a slide flush to the\nrow's own edge there lands the same distance *past* its snap point, and a mandatory snap\nthen carries on to the next slide: one press, two slides, and it reads as the element\nlosing count.\n\nPhysical rather than logical, because the number is about to be added to `scrollLeft`: the\nstart side is the left one, or the right one where the row runs the other way.",
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          }
+        },
+        {
+          "kind": "function",
           "name": "slideName",
           "parameters": [
             {
@@ -118,21 +144,28 @@
           "name": "currentSlide",
           "parameters": [
             {
-              "name": "visible",
-              "description": "Indices of the slides currently in the scroller.",
+              "name": "starts",
+              "description": "Each slide's start edge, relative to the scroller's own.",
               "type": {
-                "text": "Iterable<number>"
+                "text": "number[]"
+              }
+            },
+            {
+              "name": "inset",
+              "description": "The row's `scroll-padding` on the start side.",
+              "type": {
+                "text": "number"
               }
             },
             {
               "name": "fallback",
-              "description": "The index to keep when none are.",
+              "description": "The index to keep when there is nothing to measure.",
               "type": {
                 "text": "number"
               }
             }
           ],
-          "description": "Which of the slides on screen the carousel is on: the earliest of them.\n\nA row of slides is read from its start, so with three on screen the carousel is on the\nfirst of the three. Nothing on screen is not slide zero - a scroller inside a closed\n`<details>` reports every slide gone, and moving the carousel because something folded\nover it is a change nobody asked for - so that case keeps the index it had.",
+          "description": "Which slide the carousel is on: the first one that has not gone past the row's start edge.\n\nMeasured against the *snap* edge rather than the scroller's box, which is the only version\nthat survives a row with `scroll-padding` on it. A shelf that bleeds past its text keeps the\ncolumn's inset as padding, and the slide before the current one sits in that padding, still\ntwo thirds on screen - so \"the earliest slide more than half visible\" answers with the slide\nyou just left, the index never advances, and the next button stops doing anything after one\npress. This asks the question the snap points already answer.\n\nA pixel of slack because a fractional layout lands a hair either side of the edge, and the\nlast slide as the fallback for a row scrolled past every start - which is where a row whose\nfinal slides are narrower than the viewport ends up.",
           "return": {
             "type": {
               "text": "number"
@@ -303,13 +336,13 @@
             },
             {
               "kind": "method",
+              "name": "readIndex",
+              "description": "Where the row is now, read off the layout.\n\nCalled from both of the things that can move it, which is not belt and braces: the\nobserver fires when a slide crosses one of its thresholds, and a press that shifts the row\nby less than that - the last step into a clamped end, or any step at all on a row of wide\nslides - crosses nothing and would leave the index behind. A stale index is not a cosmetic\nproblem: the next press is measured from it, so previous appears to work once and then do\nnothing at all, and next jumps several slides at a time."
+            },
+            {
+              "kind": "method",
               "name": "onIntersect",
-              "parameters": [
-                {
-                  "name": "entries"
-                }
-              ],
-              "description": "Where the row is now, out of what the observer has seen."
+              "description": "The observer's whole job: notice that the layout changed and re-read it.\n\nA resize, a container query flipping how many slides fit, a webfont landing - none of\nthem fire a scroll event, and this is the callback that would otherwise have to be a\nresize listener. The `scroll-padding` is re-read here rather than on every scroll,\nbecause a media query is the only thing that changes it and this is where layout changes\narrive."
             },
             {
               "kind": "method",
@@ -529,6 +562,14 @@
           "name": "scrollEdges",
           "declaration": {
             "name": "scrollEdges",
+            "module": "src/elementals/carousel/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "startInset",
+          "declaration": {
+            "name": "startInset",
             "module": "src/elementals/carousel/index.js"
           }
         },

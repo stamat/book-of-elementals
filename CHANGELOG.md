@@ -89,6 +89,33 @@ may already be targeting**, since neither shows up in a function signature.
   as `4 5 1 2 3` and dropping the focus out of any slide it moves, which is a keyboard user
   thrown to the top of the page every lap.
 
+  **A row can bleed past the text it sits under**, which is the shelf every product page has:
+  a fixed `--carousel-elemental-slide-size` so the next card is always half in view, negative
+  margins out of the column, and the column's inset put back as `padding-inline` plus a
+  matching `scroll-padding-inline-start`. Two element fixes came out of building it. `to()`
+  now subtracts the row's `scroll-padding` on the start side, because scrolling a slide flush
+  to the row's own edge lands past its snap point and a mandatory snap then carries on to the
+  next slide — one press, two slides. And the current slide is now read off the layout at the
+  snap edge rather than from "the earliest slide more than half in view": in a bleed layout
+  the slide you just left sits in that padding still two thirds on screen, so the index never
+  advanced and the next button stopped doing anything after one press. The observer's job is
+  now purely *when* to look, which is also what keeps this element free of a resize listener.
+
+  **The current slide is re-read on scroll as well as on layout change.** The observer alone
+  was not enough once the answer came from geometry: it fires when a slide crosses one of its
+  thresholds, and a press that moves the row by less than that — the last step into a clamped
+  end, or any step at all on a row of wide slides — crossed nothing, so the index stayed
+  behind. Every following press was then measured from a stale number: previous appeared to
+  work once and then did nothing at all, and next jumped several slides. The observer's
+  remaining job is to notice that the layout changed, which is what keeps this element free of
+  a resize listener.
+
+  A worked version is in [examples/card-row](examples/card-row.html), rendered rather than
+  previewed, and it is the same element with nothing added. It bleeds to the edge of the
+  window rather than to the edge of the text column, which is the only part of it coupled to
+  the docs theme's own measurements — the page says which, and why the cheaper version reads
+  as a row that has been cut off rather than one that runs off.
+
   It supersedes [slidescroll](https://github.com/stamat/slidescroll) and
   [slideswap](https://github.com/stamat/slideswap), which will be archived.
 

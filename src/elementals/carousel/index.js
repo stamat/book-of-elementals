@@ -60,29 +60,59 @@ export function scrollEdges(offset, visible, total) {
   return { start: at <= 1, end: at + visible >= total - 1 };
 }
 
+/**
+ * How far short of the row's own edge a slide has to stop: its `scroll-padding` on the start
+ * side.
+ *
+ * A row that bleeds past the text it sits under puts the column's inset back as padding, and
+ * moves the snap point with it - which is the only way the first card lines up with the
+ * heading while the row still runs to the edge of the page. Scrolling a slide flush to the
+ * row's own edge there lands the same distance *past* its snap point, and a mandatory snap
+ * then carries on to the next slide: one press, two slides, and it reads as the element
+ * losing count.
+ *
+ * Physical rather than logical, because the number is about to be added to `scrollLeft`: the
+ * start side is the left one, or the right one where the row runs the other way.
+ *
+ * @param {CSSStyleDeclaration|object} styles - The scroller's computed style.
+ * @param {boolean} rtl - Whether the scroller's direction is right to left.
+ * @returns {number} Pixels, and zero for `auto` or anything else that is not a length.
+ */
+export function startInset(styles, rtl) {
+  const inset = parseFloat(rtl ? styles.scrollPaddingRight : styles.scrollPaddingLeft);
+  return Number.isFinite(inset) ? inset : 0;
+}
+
 /** The name a slide gets when the markup gave it none: its place in the set. */
 export function slideName(index, count) {
   return (index + 1) + ' of ' + count;
 }
 
 /**
- * Which of the slides on screen the carousel is on: the earliest of them.
+ * Which slide the carousel is on: the first one that has not gone past the row's start edge.
  *
- * A row of slides is read from its start, so with three on screen the carousel is on the
- * first of the three. Nothing on screen is not slide zero - a scroller inside a closed
- * `<details>` reports every slide gone, and moving the carousel because something folded
- * over it is a change nobody asked for - so that case keeps the index it had.
+ * Measured against the *snap* edge rather than the scroller's box, which is the only version
+ * that survives a row with `scroll-padding` on it. A shelf that bleeds past its text keeps the
+ * column's inset as padding, and the slide before the current one sits in that padding, still
+ * two thirds on screen - so "the earliest slide more than half visible" answers with the slide
+ * you just left, the index never advances, and the next button stops doing anything after one
+ * press. This asks the question the snap points already answer.
  *
- * @param {Iterable<number>} visible - Indices of the slides currently in the scroller.
- * @param {number} fallback - The index to keep when none are.
+ * A pixel of slack because a fractional layout lands a hair either side of the edge, and the
+ * last slide as the fallback for a row scrolled past every start - which is where a row whose
+ * final slides are narrower than the viewport ends up.
+ *
+ * @param {number[]} starts - Each slide's start edge, relative to the scroller's own.
+ * @param {number} inset - The row's `scroll-padding` on the start side.
+ * @param {number} fallback - The index to keep when there is nothing to measure.
  * @returns {number}
  */
-export function currentSlide(visible, fallback) {
-  let at = -1;
-  for (const index of visible) {
-    if (at < 0 || index < at) at = index;
+export function currentSlide(starts, inset, fallback) {
+  if (!starts.length) return fallback;
+  for (let i = 0; i < starts.length; i++) {
+    if (starts[i] >= inset - 1) return i;
   }
-  return at < 0 ? fallback : at;
+  return starts.length - 1;
 }
 
 /**
@@ -277,7 +307,9 @@ export class CarouselElemental extends ElementBase {
     this.onFocusOut = this.onFocusOut.bind(this);
 
     this.index = 0;
-    this.visible = new Set();
+    // The row's `scroll-padding` on the start side, re-read whenever the layout changes.
+    this.inset = 0;
+    this.painted = false;
     // Null rather than absent: `applyEdges` runs before the first move.
     this.settling = null;
     this.settleTimer = null;
@@ -319,12 +351,12 @@ export class CarouselElemental extends ElementBase {
 
     if (this.observer) this.observer.disconnect();
     this.observer = null;
-    this.visible.clear();
     if (this.scrolls) this.scrolls.removeEventListener('scroll', this.onScroll);
     this.scrolls = null;
     this.arrived();
 
     this.removeControls();
+    this.painted = false;
     this.removeAttribute('data-carousel-at-start');
     this.removeAttribute('data-carousel-at-end');
 
@@ -404,21 +436,24 @@ export class CarouselElemental extends ElementBase {
     });
 
     this.writeControls();
+    this.painted = false;
     this.applyLive();
 
     if (this.observer) this.observer.disconnect();
     this.observer = null;
-    this.visible.clear();
     if (this.scrolls) this.scrolls.removeEventListener('scroll', this.onScroll);
     this.scrolls = null;
     // A move that was in flight was aimed at a row that has since changed.
     this.arrived();
 
     if (!this.fade) {
-      // Half plus a little: a slide has to be more on screen than off to be the one being
-      // read, and asking for a bare half makes two slides equally current at the midpoint of
-      // every scroll.
-      this.observer = new IntersectionObserver(this.onIntersect, { root: scroller, threshold: 0.6 });
+      // A spread rather than one threshold: this observer is a layout-change notifier now, and
+      // a single value only fires when a slide happens to cross that exact ratio. A resize
+      // that leaves every slide fully visible would cross nothing at all.
+      this.observer = new IntersectionObserver(this.onIntersect, {
+        root: scroller,
+        threshold: [0, 0.25, 0.5, 0.75, 1]
+      });
       for (const slide of slides) this.observer.observe(slide);
       // The observer answers "which slide", and cannot answer "is there anywhere left to
       // go": the last stretch of a row whose slides are narrower than it brings nothing new
@@ -517,16 +552,42 @@ export class CarouselElemental extends ElementBase {
     this.rotateButton.textContent = this.rotating ? '⏸' : '▶';
   }
 
-  /** Where the row is now, out of what the observer has seen. */
-  onIntersect(entries) {
-    const slides = this.slides;
-    for (const entry of entries) {
-      const at = slides.indexOf(entry.target);
-      if (at < 0) continue;
-      if (entry.isIntersecting) this.visible.add(at);
-      else this.visible.delete(at);
-    }
-    this.apply(currentSlide(this.visible, this.index));
+  /**
+   * Where the row is now, read off the layout.
+   *
+   * Called from both of the things that can move it, which is not belt and braces: the
+   * observer fires when a slide crosses one of its thresholds, and a press that shifts the row
+   * by less than that - the last step into a clamped end, or any step at all on a row of wide
+   * slides - crosses nothing and would leave the index behind. A stale index is not a cosmetic
+   * problem: the next press is measured from it, so previous appears to work once and then do
+   * nothing at all, and next jumps several slides at a time.
+   */
+  readIndex() {
+    const scroller = this.scroller;
+    // A scroller inside a closed `<details>`, or on a page that has just hidden it, measures
+    // zero - and moving the carousel because something folded over it is a change nobody
+    // asked for.
+    if (!scroller || !scroller.clientWidth) return;
+    const edge = scroller.getBoundingClientRect().left;
+    const starts = this.slides.map((slide) => slide.getBoundingClientRect().left - edge);
+    this.apply(currentSlide(starts, this.inset, this.index));
+  }
+
+  /**
+   * The observer's whole job: notice that the layout changed and re-read it.
+   *
+   * A resize, a container query flipping how many slides fit, a webfont landing - none of
+   * them fire a scroll event, and this is the callback that would otherwise have to be a
+   * resize listener. The `scroll-padding` is re-read here rather than on every scroll,
+   * because a media query is the only thing that changes it and this is where layout changes
+   * arrive.
+   */
+  onIntersect() {
+    const scroller = this.scroller;
+    if (!scroller) return;
+    const styles = getComputedStyle(scroller);
+    this.inset = startInset(styles, styles.direction === 'rtl');
+    this.readIndex();
   }
 
   /** Scrolled: the edges are the scroller's to report, and they change without the set of
@@ -536,7 +597,7 @@ export class CarouselElemental extends ElementBase {
     if (this.settling !== null && scroller && Math.abs(scroller.scrollLeft - this.settling) <= 1) {
       this.arrived();
     }
-    this.applyEdges();
+    this.readIndex();
   }
 
   /** The programmatic scroll is over: the scroller speaks for itself again. */
@@ -550,8 +611,19 @@ export class CarouselElemental extends ElementBase {
    * Push the current slide onto the picker and the slides, and tell the page when it moved.
    */
   apply(at) {
-    const changed = at !== this.index;
+    const moved = at !== this.index;
     this.index = at;
+    // The edges move without the slide changing - the last stretch of a scroll brings nothing
+    // new into view - so they are pushed every time, and the rest only when there is something
+    // to say. This runs on every scroll event; writing every marker and every slide each
+    // frame would be a hundred attribute writes to say nothing changed.
+    this.applyEdges();
+    // `painted` is the first pass, and it is not the same question as `moved`. A carousel
+    // opens on slide zero having never moved, and `fade` draws entirely from
+    // `data-carousel-current` - so skipping the first write because nothing changed leaves a
+    // stack of slides with none of them shown.
+    if (!moved && this.painted) return;
+    this.painted = true;
     this.markers.forEach((marker, index) => {
       // `aria-disabled` rather than `disabled`: the button for the slide you are on has
       // nowhere to go, and a `disabled` one taken out from under the focus that just pressed
@@ -565,8 +637,9 @@ export class CarouselElemental extends ElementBase {
       if (index === at) slide.setAttribute('data-carousel-current', '');
       else slide.removeAttribute('data-carousel-current');
     });
-    this.applyEdges();
-    if (!changed) return;
+    // The event is the other half: an element settling onto the slide it opened on has not
+    // changed anything, and a page listening for a change is owed silence.
+    if (!moved) return;
     this.dispatchEvent(new CustomEvent('carousel-change', {
       bubbles: true,
       detail: { index: at, slide: this.slides[at] || null }
@@ -620,7 +693,12 @@ export class CarouselElemental extends ElementBase {
       return;
     }
     const scroller = this.scroller;
-    const delta = slide.getBoundingClientRect().left - scroller.getBoundingClientRect().left;
+    // Re-read rather than trusted: the observer refreshes this on layout changes, and a page
+    // is free to change `scroll-padding` without moving anything - which fires nothing at all.
+    // A press is once per reader, so it can afford to ask.
+    const styles = getComputedStyle(scroller);
+    this.inset = startInset(styles, styles.direction === 'rtl');
+    const delta = slide.getBoundingClientRect().left - scroller.getBoundingClientRect().left - this.inset;
     // Recorded before the scroll rather than after it, so the buttons answer for the move as
     // it starts. Clamped to the scrollable range, which is not tidying: the last slide of a
     // row that shows three at a time is asked for from further away than the row can scroll,

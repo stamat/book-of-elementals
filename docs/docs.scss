@@ -365,3 +365,87 @@ switch-elemental:not([checked]) + .demo-state .on {
 .demo-carousel-three {
   --carousel-elemental-slide-size: 33.333%;
 }
+
+// Demo-only: the card shelf on the examples page. The recipe is repeated verbatim on that
+// page as the thing being taught, which is the one place in this repo where saying it twice
+// is the point rather than the bug - a reader copies the fence, and the fence has to be what
+// actually ran.
+// The bleed is a negative margin out of the 46rem prose column to the edge of the window,
+// which is the distance from the column's edge to the window's: half of what is left after
+// the sidebar and the column itself. It is the one thing on this page coupled to the docs
+// theme's own measurements - the 16rem sidebar, its 3rem gutters, the 5vw fluid ones below
+// the breakpoint where it folds away, and 60rem for that breakpoint. Bleeding only as far as
+// the content area needs none of them, and this page bleeds to the window instead because
+// stopping 48px short of it reads as the row being cut off rather than running off.
+// `46rem` and not `100%`, which is the trap: a custom property holds tokens, not a computed
+// value, so a `100%` inside one means the width of whichever element finally uses it. Written
+// that way the host resolved it against the prose column and the scroller resolved it against
+// itself - which came out as zero, and the cards lined up with the bleed instead of with the
+// heading above them.
+.demo-card-row {
+  --carousel-elemental-slide-size: 17rem;
+  --carousel-elemental-gap: 1.25rem;
+
+  // No sidebar down here: the gutters are 5vw, and the column caps at 46rem and centres.
+  --bleed: max(5vw, calc((100vw - 46rem) / 2));
+
+  margin-block: 2rem;
+  margin-inline: calc(-1 * var(--bleed));
+
+  // Sidebar in, gutters fixed at 3rem, and the column centred in what is left of the window.
+  @media (width >= 60rem) {
+    --bleed: max(3rem, calc((100vw - 16rem - 46rem) / 2));
+  }
+
+  li {
+    margin: 0;
+  }
+
+  > [data-carousel-slides] {
+    padding-inline: var(--bleed);
+
+    // Without this the first card lines up and every other one snaps flush against the
+    // window, which reads as a bug in the element and is a missing line in the page.
+    scroll-padding-inline-start: var(--bleed);
+  }
+
+  > [data-carousel-controls] {
+    justify-content: flex-end;
+    padding-inline: var(--bleed);
+  }
+
+  // (0,3,0), because the theme's own rule for the picker is (0,2,1).
+  > [data-carousel-controls] [data-carousel-markers] {
+    display: none;
+  }
+
+  .card {
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    box-sizing: border-box;
+    block-size: 100%;
+    min-block-size: 15rem;
+    padding: 1.5rem;
+    background: var(--bg-subtle, color-mix(in srgb, currentcolor 5%, transparent));
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+  }
+
+  .eyebrow {
+    margin: 0 0 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--fg-muted);
+  }
+
+  h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.125rem;
+  }
+
+  .card p:last-child {
+    margin: 0;
+    font-size: 0.9375rem;
+    color: var(--fg-muted);
+  }
+}
