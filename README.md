@@ -187,17 +187,29 @@ the markup is a button that does nothing until the script lands. Without the scr
 the same list is a scroll-snapping row you can swipe, drag the scrollbar of and
 reach with the keyboard, every slide in the page and in reading order.
 
+The arrows stop at the ends and say so before you press them: the one with nowhere
+to go takes `aria-disabled` and is dimmed, and `data-carousel-at-start` /
+`data-carousel-at-end` on the element let a page style its own. That state is the
+scroller's answer to "is there anywhere left to scroll" rather than arithmetic on
+the index — the only version that holds when three slides of five are on screen and
+the row is at its end while the current slide is the third.
+
 `autoplay` adds rotation and the control that stops it, first in the tab order
 inside the carousel, with a name that says what pressing it will do. Hover and
 focus pause it; rotation you started by hand ignores both until that button stops
 it; `prefers-reduced-motion: reduce` means it does not start on its own, and the
-control is still there for a reader who wants it.
+control is still there for a reader who wants it. The rotation is the one thing
+that wraps at the end.
 
-There is no live region, and that is deliberate — every slide is in the
-accessibility tree and in reading order throughout, so there is nothing to announce
-and no `aria-hidden` hiding a focusable link. No infinite loop either (it needs
-cloned slides — both ends wrap instead), no fade, no mouse-drag, no vertical axis,
-and no `slides-per-page`, which is one custom property.
+`fade` swaps the row for a stack that cross-fades — the same controls, picker,
+rotation and events, and the only mode where the scroller is not the state. It pays
+for itself honestly: the slides not showing are `visibility: hidden`, so they leave
+the accessibility tree and find-in-page, which is exactly the case the APG writes
+its live region for, and `fade` gets one. Scrolling there is none, and no
+`aria-hidden` on anything, because every slide is in the tree the whole time.
+
+No infinite loop, no mouse-drag, no vertical axis, and no `slides-per-page`, which
+is one custom property.
 
 ## `<checkbox-group-elemental>`
 

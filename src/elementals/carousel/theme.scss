@@ -23,6 +23,7 @@ carousel-elemental {
   // definition.
   --carousel-elemental-current: CanvasText;
   --carousel-elemental-radius: 999px;
+  --carousel-elemental-fade: 400ms;
 }
 
 carousel-elemental > [data-carousel-controls] {
@@ -57,6 +58,26 @@ carousel-elemental button[aria-controls] {
 
   &:hover {
     background: var(--carousel-elemental-hover);
+  }
+}
+
+// The chevrons are drawn on a 16 viewBox and sized in `em`, so they follow the button's text
+// size the way the digits in the picker do and the row reads as one set of controls.
+carousel-elemental :is([data-carousel-prev], [data-carousel-next]) > svg {
+  inline-size: 1em;
+  block-size: 1em;
+}
+
+// Nowhere left to go that way. `aria-disabled` and not `disabled`, so the button keeps its
+// focus and its place in the tab order - a control that vanishes from under the finger that
+// just pressed it drops the reader to the top of the page - and the look is the same promise
+// the attribute makes to a screen reader, out of the same selector.
+carousel-elemental [aria-disabled="true"]:is([data-carousel-prev], [data-carousel-next]) {
+  cursor: default;
+  opacity: 0.35;
+
+  &:hover {
+    background: none;
   }
 }
 

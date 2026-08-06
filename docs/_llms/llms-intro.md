@@ -41,15 +41,23 @@ Elements published so far:
   and a CSS change to how many slides fit cost no code. It writes
   `aria-roledescription="carousel"` plus `role="region"` (named) or `"group"`, `role="group"`
   on the list and on each slide with `aria-roledescription="slide"` and an `N of M` label,
-  and appends previous, a picker of one `aria-disabled` button per slide, and next.
+  `data-carousel-current` on the slide showing, and appends previous, a picker of one
+  `aria-disabled` button per slide, and next. The arrows stop at the ends rather than
+  wrapping and take `aria-disabled` there, with `data-carousel-at-start`/`-at-end` on the
+  element as styling hooks; the state is the scroller's, not the index's, so it still holds
+  when several slides are on screen at once.
   `autoplay` (with `interval`, floored at 1000ms) adds the rotation control, first in the tab
   order, its name saying what pressing it will do and carrying no `aria-pressed`; hover and
   focus pause it, rotation started by hand ignores both, and `prefers-reduced-motion: reduce`
-  means it does not start on its own. No live region and no `aria-hidden` on off-screen
-  slides — every slide stays in the accessibility tree. Keyboard is the browser's: a focused
-  scroll container already answers to the arrows. No infinite loop, no fade, no mouse-drag,
-  no vertical axis; how many slides fit is `--carousel-elemental-slide-size`. Fires
-  `carousel-change`; `wire()` re-reads the markup.
+  means it does not start on its own; the rotation is the one thing that wraps. Scrolling
+  there is no live region and no `aria-hidden` on off-screen slides — every slide stays in
+  the accessibility tree. Keyboard is the browser's: a focused scroll container already
+  answers to the arrows. `fade` is the other mode: slides stack in one grid cell and
+  cross-fade, the element holds the index, the ones not showing are `visibility: hidden`, and
+  because one slide really is all there is the live region comes back (`polite` on a press,
+  `off` while rotating). No infinite loop, no mouse-drag, no vertical axis; how many slides
+  fit is `--carousel-elemental-slide-size`. Fires `carousel-change`; `wire()` re-reads the
+  markup.
 - `<checkbox-group-elemental>` — APG mixed-state checkbox: a "select all" over a flat set
   of native checkboxes, ticked when all are, empty when none are, and showing the dash when
   it is some. The dash is `HTMLInputElement.indeterminate`, which has no HTML attribute and

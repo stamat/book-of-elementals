@@ -8,32 +8,52 @@
 // nothing. The roles, the focus order and the rotation control are checked by
 // `script/a11y` over the built demos, in a real browser.
 
-import { currentSlide, rotationInterval, slideName, stepSlide } from './index.js';
+import { currentSlide, rotationInterval, scrollEdges, slideName, stepSlide } from './index.js';
 
-test('next moves on by one, and stops asking for a slide past the end', () => {
-  expect(stepSlide(0, 1, 4, false)).toBe(1);
-  expect(stepSlide(3, 1, 4, false)).toBe(3);
+test('next moves on by one, and stops at the end rather than wrapping', () => {
+  // The buttons dim at the ends, and a control that looks spent and then jumps you back to
+  // the first slide is a control that lied. The rotation is the only thing that wraps.
+  expect(stepSlide(0, 1, 4)).toBe(1);
+  expect(stepSlide(3, 1, 4)).toBe(3);
 });
 
 test('previous moves back by one, and not past the first', () => {
-  expect(stepSlide(2, -1, 4, false)).toBe(1);
-  expect(stepSlide(0, -1, 4, false)).toBe(0);
-});
-
-test('at the end of the scroll, next is the first slide again', () => {
-  // The scroller's answer rather than the index's: with three slides on screen at once the
-  // last two can never be the first visible one, so `current + 1` would be a press that
-  // scrolls nowhere and a carousel that looks broken at the end.
-  expect(stepSlide(7, 1, 10, true)).toBe(0);
-});
-
-test('at the start of the scroll, previous is the last slide', () => {
-  expect(stepSlide(0, -1, 10, true)).toBe(9);
+  expect(stepSlide(2, -1, 4)).toBe(1);
+  expect(stepSlide(0, -1, 4)).toBe(0);
 });
 
 test('a carousel with no slides has no slide to move to', () => {
-  expect(stepSlide(0, 1, 0, false)).toBe(0);
-  expect(stepSlide(0, -1, 0, true)).toBe(0);
+  expect(stepSlide(0, 1, 0)).toBe(0);
+  expect(stepSlide(0, -1, 0)).toBe(0);
+});
+
+test('a row scrolled to nought is at its start', () => {
+  expect(scrollEdges(0, 300, 900)).toEqual({ start: true, end: false });
+});
+
+test('and at its end when there is nothing left to scroll', () => {
+  // Not `index === count - 1`, which is the version that breaks: with three slides on screen
+  // of five, the row is at its end while the current slide is the third, and counting to the
+  // last slide would leave two presses doing nothing.
+  expect(scrollEdges(600, 300, 900)).toEqual({ start: false, end: true });
+});
+
+test('a row short enough to fit is at both ends at once', () => {
+  // Which is the honest reading, and what dims both buttons: there is nowhere to go either
+  // way, and two live buttons over a row that cannot move get pressed twice and distrusted.
+  expect(scrollEdges(0, 900, 900)).toEqual({ start: true, end: true });
+});
+
+test('a right-to-left row scrolls negative and is at the same two ends', () => {
+  expect(scrollEdges(-0, 300, 900)).toEqual({ start: true, end: false });
+  expect(scrollEdges(-600, 300, 900)).toEqual({ start: false, end: true });
+});
+
+test('a fraction of a pixel either way is still an end', () => {
+  // A percentage width or a zoomed page lands a hair short of the number the arithmetic
+  // wants, and a next button left live over a row that cannot move is the bug that leaves.
+  expect(scrollEdges(0.4, 300, 900).start).toBe(true);
+  expect(scrollEdges(599.6, 300, 900).end).toBe(true);
 });
 
 test('the earliest slide on screen is the one the carousel is on', () => {

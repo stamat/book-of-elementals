@@ -97,6 +97,7 @@ carousel-elemental {
   --carousel-elemental-hover: color-mix(in srgb, currentcolor 10%, transparent);
   --carousel-elemental-current: CanvasText;
   --carousel-elemental-radius: 999px;
+  --carousel-elemental-fade: 400ms;
 }
 
 carousel-elemental > [data-carousel-controls] {
@@ -129,6 +130,19 @@ carousel-elemental button[aria-controls] {
 }
 carousel-elemental button[aria-controls]:hover {
   background: var(--carousel-elemental-hover);
+}
+
+carousel-elemental :is([data-carousel-prev], [data-carousel-next]) > svg {
+  inline-size: 1em;
+  block-size: 1em;
+}
+
+carousel-elemental [aria-disabled=true]:is([data-carousel-prev], [data-carousel-next]) {
+  cursor: default;
+  opacity: 0.35;
+}
+carousel-elemental [aria-disabled=true]:is([data-carousel-prev], [data-carousel-next]):hover {
+  background: none;
 }
 
 carousel-elemental [data-carousel-marker][aria-disabled=true] {

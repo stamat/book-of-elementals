@@ -31,11 +31,23 @@ may already be targeting**, since neither shows up in a function signature.
   measurement to redo. There is no key handler either: a focused scroll container already
   answers to the arrows, <kbd>Home</kbd>, <kbd>End</kbd> and the page keys.
 
-  **No live region, deliberately.** The APG's example flips `aria-live` because there one
-  slide exists at a time; here every slide is in the DOM, in the accessibility tree and in
-  reading order throughout, so there is nothing to announce — and no `aria-hidden` on the
-  slides off screen either, which is the bug that leaves a focusable link inside a hidden
-  subtree.
+  **The arrows stop at the ends and say so before you press them.** The one with nowhere to
+  go takes `aria-disabled="true"` and is dimmed, and the element carries the same fact as
+  `data-carousel-at-start` / `data-carousel-at-end` for a page to style its own. The state is
+  the scroller's answer to "is there anywhere left to scroll" rather than arithmetic on the
+  index, which is the only version that holds when more than one slide is on screen: with
+  three of five showing, the row is at its end while the current slide is the third. A row
+  short enough to fit is at both ends, and both arrows go dim. The rotation is the one thing
+  that wraps.
+
+  **`fade` is the other mode**, and the only one where the scroller is not the state: the
+  slides stack in one grid cell and cross-fade, the element holds the index, and the
+  stylesheet draws from `data-carousel-current`. Same controls, same picker, same rotation,
+  same events. It costs what it has to — the slides that are not showing are
+  `visibility: hidden`, so they leave the accessibility tree, the tab order and find-in-page,
+  and that is exactly the case the APG writes its live region for, so `fade` gets one:
+  `polite` when a press moves the slides, `off` while it rotates. Scrolling there is no live
+  region and no `aria-hidden` on anything, because every slide is in the tree the whole time.
 
   Rotation follows the pattern in full: the control is prepended to the element so it is the
   first tab stop inside, its accessible name says what pressing it will do and it carries no
@@ -45,19 +57,31 @@ may already be targeting**, since neither shows up in a function signature.
   nobody asked for without taking the choice away.
 
   **DOM:** on a `<ul>`/`<ol>`/`<menu>` of `<li>` slides, the element writes
-  `aria-roledescription="carousel"` and `role="region"`/`"group"` on itself,
-  `data-carousel-slides` on the list, `role="group"` +
-  `aria-roledescription="slide"` + `data-carousel-slide` on each item, appends a
-  `<div data-carousel-controls>` holding the previous button, the picker and the next button,
-  and prepends `<button data-carousel-rotate>` when `autoplay` is set. The list gets
-  `tabindex="0"` only when nothing inside the slides is focusable. Fewer than two slides and
-  it leaves the markup alone. **CSS:** new `carousel.css` and `carousel-theme.css` bundles,
-  and new `book-of-elementals/carousel` export paths; the aggregate `index.scss` and
-  `theme.scss` include them.
+  `aria-roledescription="carousel"` and `role="region"`/`"group"` on itself, `role="group"` on
+  the list and on each slide with `aria-roledescription="slide"` and an `N of M` label,
+  `data-carousel-current` on the slide showing, appends a `<div data-carousel-controls>`
+  holding previous, the picker and next, and prepends `<button data-carousel-rotate>` when
+  `autoplay` is set. The previous and next buttons hold an inlined Octicon chevron
+  (`chevron-left-16` / `chevron-right-16`, MIT, © GitHub Inc.) rather than a text glyph, which
+  is centred by construction where a glyph is centred wherever its font's designer put it.
+  The list gets `tabindex="0"` only when nothing inside the slides is focusable. Fewer than
+  two slides and it leaves the markup alone. **CSS:** new `carousel.css` and
+  `carousel-theme.css` bundles, and new `book-of-elementals/carousel` export paths; the
+  aggregate `index.scss` and `theme.scss` include them. Slides are `box-sizing: border-box`,
+  because the element sets their width and a padded slide would otherwise be wider than the
+  scroller it has to snap inside. The scrollbar is hidden — through a selector the element
+  only writes once it has upgraded, so a page whose script never lands keeps the scrollbar
+  and the only way through the row that it has.
 
-  Refusals are on the page rather than in options: no infinite loop (it needs cloned slides —
-  both ends wrap instead), no fade, no mouse-drag, no vertical axis, no `slides-per-page`
-  attribute. It supersedes [slidescroll](https://github.com/stamat/slidescroll) and
+  Refusals are on the page rather than in options: no mouse-drag, no vertical axis, and no
+  `slides-per-page`, which is one custom property. No infinite loop either, and that one was
+  measured rather than assumed: cloning the slides puts every slide in the accessibility tree
+  two or three times over, and the clone-free version — rotate the DOM at the end and pull
+  `scrollLeft` back by one slide — loops perfectly for the eye while leaving the reading order
+  as `4 5 1 2 3` and dropping the focus out of any slide it moves, which is a keyboard user
+  thrown to the top of the page every lap.
+
+  It supersedes [slidescroll](https://github.com/stamat/slidescroll) and
   [slideswap](https://github.com/stamat/slideswap), which will be archived.
 
 ## [0.5.1] - 2026-08-05

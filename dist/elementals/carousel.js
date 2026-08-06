@@ -14,10 +14,13 @@
     if (!Number.isFinite(ms) || ms <= 0) return fallback;
     return Math.max(ms, 1e3);
   }
-  function stepSlide(current, delta, count, atEdge) {
+  function stepSlide(current, delta, count) {
     if (count <= 0) return 0;
-    if (delta > 0) return atEdge ? 0 : Math.min(current + 1, count - 1);
-    return atEdge ? count - 1 : Math.max(current - 1, 0);
+    return Math.min(Math.max(current + delta, 0), count - 1);
+  }
+  function scrollEdges(offset, visible, total) {
+    const at = Math.abs(offset);
+    return { start: at <= 1, end: at + visible >= total - 1 };
   }
   function slideName(index, count) {
     return index + 1 + " of " + count;
@@ -31,12 +34,29 @@
   }
   var FOCUSABLE = "a[href], button, input, select, textarea, summary, iframe, [tabindex], [contenteditable]";
   var carouselCount = 0;
+  var CHEVRON = {
+    prev: "M9.78 12.78a.75.75 0 0 1-1.06 0L4.47 8.53a.75.75 0 0 1 0-1.06l4.25-4.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L6.06 8l3.72 3.72a.75.75 0 0 1 0 1.06Z",
+    next: "M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z"
+  };
+  function chevron(d) {
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 16 16");
+    svg.setAttribute("width", "16");
+    svg.setAttribute("height", "16");
+    svg.setAttribute("fill", "currentColor");
+    svg.setAttribute("aria-hidden", "true");
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute("d", d);
+    svg.append(path);
+    return svg;
+  }
   function reducedMotion() {
     return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
   var CarouselElemental = class extends ElementBase {
     static get observedAttributes() {
-      return ["autoplay", "interval"];
+      return ["autoplay", "interval", "fade"];
     }
     /** The scroller: the first list in the element. A carousel inside a slide keeps its own. */
     get scroller() {
@@ -51,6 +71,20 @@
     /** The picker buttons, in slide order. */
     get markers() {
       return this.picker ? Array.from(this.picker.children) : [];
+    }
+    /**
+     * Cross-fade in place rather than scroll a row.
+     *
+     * The one mode where the scroller is not the state: stacked slides have nothing to scroll,
+     * so the index is what this element holds and the stylesheet reads through
+     * `data-carousel-current`. Everything above it - the controls, the picker, the rotation,
+     * the events - is the same code either way.
+     */
+    get fade() {
+      return this.hasAttribute("fade");
+    }
+    set fade(value) {
+      this.toggleAttribute("fade", !!value);
     }
     /** Rotate on a timer. Reflected, so `[autoplay]` is a styling hook too. */
     get autoplay() {
@@ -71,6 +105,7 @@
       if (!this.scroller || this.slides.length < 2) return;
       this.onClick = this.onClick.bind(this);
       this.onIntersect = this.onIntersect.bind(this);
+      this.onScroll = this.onScroll.bind(this);
       this.suspend = this.suspend.bind(this);
       this.resume = this.resume.bind(this);
       this.onFocusOut = this.onFocusOut.bind(this);
@@ -99,7 +134,11 @@
       if (this.observer) this.observer.disconnect();
       this.observer = null;
       this.visible.clear();
+      if (this.scrolls) this.scrolls.removeEventListener("scroll", this.onScroll);
+      this.scrolls = null;
       this.removeControls();
+      this.removeAttribute("data-carousel-at-start");
+      this.removeAttribute("data-carousel-at-end");
       this.removeAttribute("aria-roledescription");
       const scroller = this.scroller;
       if (scroller) {
@@ -107,10 +146,12 @@
         scroller.removeAttribute("role");
         scroller.removeAttribute("tabindex");
       }
+      if (scroller) scroller.removeAttribute("aria-live");
       for (const slide of this.slides) {
         slide.removeAttribute("role");
         slide.removeAttribute("aria-roledescription");
         slide.removeAttribute("data-carousel-slide");
+        slide.removeAttribute("data-carousel-current");
         if (slide.getAttribute("aria-label") === this.named.get(slide)) slide.removeAttribute("aria-label");
       }
       this.initialized = false;
@@ -136,7 +177,7 @@
       if (!scroller.id) scroller.id = "carousel-elemental-slides-" + ++carouselCount;
       scroller.setAttribute("data-carousel-slides", "");
       scroller.setAttribute("role", "group");
-      if (scroller.querySelector(FOCUSABLE)) scroller.removeAttribute("tabindex");
+      if (this.fade || scroller.querySelector(FOCUSABLE)) scroller.removeAttribute("tabindex");
       else scroller.tabIndex = 0;
       slides.forEach((slide, at) => {
         slide.setAttribute("role", "group");
@@ -150,10 +191,18 @@
         this.named.set(slide, name);
       });
       this.writeControls();
+      this.applyLive();
       if (this.observer) this.observer.disconnect();
+      this.observer = null;
       this.visible.clear();
-      this.observer = new IntersectionObserver(this.onIntersect, { root: scroller, threshold: 0.6 });
-      for (const slide of slides) this.observer.observe(slide);
+      if (this.scrolls) this.scrolls.removeEventListener("scroll", this.onScroll);
+      this.scrolls = null;
+      if (!this.fade) {
+        this.observer = new IntersectionObserver(this.onIntersect, { root: scroller, threshold: 0.6 });
+        for (const slide of slides) this.observer.observe(slide);
+        scroller.addEventListener("scroll", this.onScroll, { passive: true });
+        this.scrolls = scroller;
+      }
       this.apply(Math.min(this.index, Math.max(slides.length - 1, 0)));
     }
     /**
@@ -177,7 +226,7 @@
       this.controls = document.createElement("div");
       this.controls.setAttribute("data-carousel-controls", "");
       this.prevButton = this.control("data-carousel-prev", this.getAttribute("prev-text") || "Previous slide", id);
-      this.prevButton.textContent = "\u2039";
+      this.prevButton.append(chevron(CHEVRON.prev));
       this.picker = document.createElement("div");
       this.picker.setAttribute("data-carousel-markers", "");
       this.picker.setAttribute("role", "group");
@@ -189,7 +238,7 @@
         this.picker.append(marker);
       });
       this.nextButton = this.control("data-carousel-next", this.getAttribute("next-text") || "Next slide", id);
-      this.nextButton.textContent = "\u203A";
+      this.nextButton.append(chevron(CHEVRON.next));
       this.controls.append(this.prevButton, this.picker, this.nextButton);
       this.append(this.controls);
     }
@@ -236,7 +285,14 @@
       }
       this.apply(currentSlide(this.visible, this.index));
     }
-    /** Push the current slide onto the picker, and tell the page when it moved. */
+    /** Scrolled: the edges are the scroller's to report, and they change without the set of
+     * visible slides changing. */
+    onScroll() {
+      this.applyEdges();
+    }
+    /**
+     * Push the current slide onto the picker and the slides, and tell the page when it moved.
+     */
     apply(at) {
       const changed = at !== this.index;
       this.index = at;
@@ -244,23 +300,36 @@
         if (index === at) marker.setAttribute("aria-disabled", "true");
         else marker.removeAttribute("aria-disabled");
       });
+      this.slides.forEach((slide, index) => {
+        if (index === at) slide.setAttribute("data-carousel-current", "");
+        else slide.removeAttribute("data-carousel-current");
+      });
+      this.applyEdges();
       if (!changed) return;
       this.dispatchEvent(new CustomEvent("carousel-change", {
         bubbles: true,
         detail: { index: at, slide: this.slides[at] || null }
       }));
     }
-    /** Whether the scroller is as far back as it goes. `abs`, because RTL scrolls negative. */
-    atStart() {
-      return Math.abs(this.scroller.scrollLeft) <= 1;
-    }
-    /** Whether the scroller is as far on as it goes. */
-    atEnd() {
+    /**
+     * Whether there is anywhere left to go, either way - onto the two buttons as `aria-disabled`
+     * and onto the element as a styling hook.
+     *
+     * Both at once is a row short enough to fit, and both buttons go dim: a carousel with
+     * nothing to scroll is a list, and two live buttons over a list that cannot move is the
+     * kind of thing that gets pressed twice and then distrusted.
+     */
+    applyEdges() {
       const scroller = this.scroller;
-      return Math.abs(scroller.scrollLeft) + scroller.clientWidth >= scroller.scrollWidth - 1;
+      if (!scroller) return;
+      const at = this.fade ? { start: this.index <= 0, end: this.index >= this.slides.length - 1 } : scrollEdges(scroller.scrollLeft, scroller.clientWidth, scroller.scrollWidth);
+      this.toggleAttribute("data-carousel-at-start", at.start);
+      this.toggleAttribute("data-carousel-at-end", at.end);
+      if (this.prevButton) this.prevButton.setAttribute("aria-disabled", String(at.start));
+      if (this.nextButton) this.nextButton.setAttribute("aria-disabled", String(at.end));
     }
     /**
-     * Scroll a slide to the start of the row.
+     * Show a slide: scroll it to the start of the row, or cross-fade to it.
      *
      * The delta comes from the two boxes rather than from `offsetLeft`, which is measured
      * against whichever ancestor happens to be positioned and is a different number for the
@@ -271,14 +340,32 @@
     to(at) {
       const slide = this.slides[at];
       if (!slide) return;
+      if (this.fade) {
+        this.apply(at);
+        return;
+      }
       const scroller = this.scroller;
       scroller.scrollLeft += slide.getBoundingClientRect().left - scroller.getBoundingClientRect().left;
     }
+    /** One on, stopping at the end - where the button is dim and says so. */
     next() {
-      this.to(stepSlide(this.index, 1, this.slides.length, this.atEnd()));
+      if (this.hasAttribute("data-carousel-at-end")) return;
+      this.to(stepSlide(this.index, 1, this.slides.length));
     }
     previous() {
-      this.to(stepSlide(this.index, -1, this.slides.length, this.atStart()));
+      if (this.hasAttribute("data-carousel-at-start")) return;
+      this.to(stepSlide(this.index, -1, this.slides.length));
+    }
+    /**
+     * One on for the rotation, which is the only thing here that wraps.
+     *
+     * A carousel that rotates to its last slide and stops is a carousel that quietly died, so
+     * the end goes back to the beginning. The buttons do not, because they are dim there and a
+     * control that looks spent must not still act.
+     */
+    advance() {
+      if (this.hasAttribute("data-carousel-at-end")) this.to(0);
+      else this.to(stepSlide(this.index, 1, this.slides.length));
     }
     /**
      * Start rotating.
@@ -292,16 +379,38 @@
       this.pinned = !!pinned;
       this.tick();
       this.labelRotation();
+      this.applyLive();
     }
     pause() {
       this.rotating = false;
       this.pinned = false;
       this.clearTimer();
       this.labelRotation();
+      this.applyLive();
+    }
+    /**
+     * The live region, and only in `fade`.
+     *
+     * Stacked, one slide is all there is, so a reader who cannot see the cross-fade is owed the
+     * announcement - `polite` when the slides move because somebody pressed something. `off`
+     * while it rotates, which is the half people leave out: a carousel announcing itself every
+     * five seconds interrupts whatever else is being read, forever.
+     *
+     * Scrolling there is no region at all. Every slide is in the tree the whole time, so there
+     * is nothing to announce that the reader cannot already reach.
+     */
+    applyLive() {
+      const scroller = this.scroller;
+      if (!scroller) return;
+      if (!this.fade) {
+        scroller.removeAttribute("aria-live");
+        return;
+      }
+      scroller.setAttribute("aria-live", this.rotating ? "off" : "polite");
     }
     tick() {
       this.clearTimer();
-      this.timer = setInterval(() => this.next(), this.interval);
+      this.timer = setInterval(() => this.advance(), this.interval);
     }
     clearTimer() {
       if (this.timer) clearInterval(this.timer);
@@ -340,6 +449,11 @@
     }
     attributeChangedCallback(name, previous, current) {
       if (!this.initialized || previous === current) return;
+      if (name === "fade") {
+        this.wire();
+        this.applyLive();
+        return;
+      }
       if (name === "autoplay") {
         this.writeControls();
         this.apply(this.index);
