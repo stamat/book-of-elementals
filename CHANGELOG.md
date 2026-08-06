@@ -110,8 +110,16 @@ may already be targeting**, since neither shows up in a function signature.
   remaining job is to notice that the layout changed, which is what keeps this element free of
   a resize listener.
 
-  A worked version is in [examples/card-row](examples/card-row.html), rendered rather than
-  previewed, and it is the same element with nothing added. It bleeds to the edge of the
+  Two worked versions are in the examples, both rendered rather than previewed:
+  [card-row](examples/card-row.html), the shelf above, and
+  [lightbox](examples/lightbox.html) — a gallery whose thumbnails open
+  `<modal-elemental>` with this element inside it in `fade`, opening on the picture that was
+  clicked and cross-fading through the rest. Neither element needed a line of new code for
+  that; the page adds six. It surfaces what `fade` is worth beyond the look: a carousel inside
+  a closed `<dialog>` measures zero, so the scrolling row has to be moved after `modal-toggle`
+  rather than on the click, while a stack has nothing to measure and takes the index while the
+  dialog is still shut — which is also what makes the opening jump instant, since a transition
+  on a box nobody is rendering never runs. It bleeds to the edge of the
   window rather than to the edge of the text column, which is the only part of it coupled to
   the docs theme's own measurements — the page says which, and why the cheaper version reads
   as a row that has been cut off rather than one that runs off.

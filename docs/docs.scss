@@ -449,3 +449,168 @@ switch-elemental:not([checked]) + .demo-state .on {
     color: var(--fg-muted);
   }
 }
+
+// Demo-only: the lightbox example - a grid of thumbnails, and the dialog they open. The
+// element does the row and its controls; what is left is the gallery around it, which is the
+// page's content and not the element's.
+.demo-thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: 0.75rem;
+  margin-block: 1.5rem;
+  padding: 0;
+  list-style: none;
+
+  li {
+    margin: 0;
+  }
+
+  button {
+    display: block;
+    inline-size: 100%;
+    padding: 0;
+    cursor: pointer;
+    background: none;
+    border: 0;
+    border-radius: var(--radius);
+  }
+
+  img {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--radius);
+  }
+}
+
+// The dialog is sized to the picture rather than to the page: wide enough to be worth opening,
+// never wider than the window. No padding, so the picture is the box and the dialog's corners
+// are the picture's - which is what `overflow` is for here, since the corners are rounded and
+// a photograph has none of its own.
+.demo-lightbox {
+  // Both of them, because the theme's own ceiling is 32rem and it is the smaller of the two:
+  // a width set on the box alone is a width `max-inline-size` then takes back.
+  --modal-elemental-max-width: 52rem;
+
+  // Lighter than the element's own 50%: this dialog is the size of the picture rather than of
+  // a form, so the page around it is most of what is on screen and dimming it to half is a
+  // room with the lights off. Declared here rather than read from `:root`, because the dots
+  // below are painted out of the same value and two numbers that have to match are one bug.
+  --modal-elemental-backdrop: rgb(0 0 0 / 35%);
+
+  inline-size: min(52rem, 92vw);
+  padding: 0;
+  overflow: hidden;
+
+  // The picture is the edge. A hairline of the page's own color around a photograph is a
+  // frame nobody asked for, and the shadow the theme puts under the box already says where
+  // it stops.
+  border: 0;
+
+  li {
+    margin: 0;
+  }
+
+  img {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+
+    // The dialog's own ceiling, said again on the picture: the box no longer scrolls, so the
+    // picture is what has to stop growing on a short window.
+    max-block-size: calc(100dvh - 2rem);
+    aspect-ratio: 4 / 3;
+
+    // `contain`, because a lightbox is for looking at the whole picture - a crop is what the
+    // thumbnail was for. The letterbox is black rather than the page's color: it reads as the
+    // edge of a photograph rather than as part of the dialog.
+    object-fit: contain;
+    background: #000;
+  }
+
+  // Everything drawn over the picture brings its own contrast, because what is under it is a
+  // photograph and no palette answers for that - the page's `currentcolor` is the one thing
+  // here that cannot be trusted to have any. A white glyph on its own patch of dim reads on
+  // both a pale sky and a dark ridge, which no single flat color does.
+  // Darker than the backdrop and not for looks: a chevron is a shape drawn in white, and 35%
+  // black over a pale sky puts it under 3:1. The dots below carry no glyph and are free to
+  // match.
+  > .modal-elemental-close,
+  carousel-elemental :is([data-carousel-prev], [data-carousel-next]) {
+    color: #fff;
+    background: rgb(0 0 0 / 45%);
+    border: 0;
+
+    &:hover {
+      background: rgb(0 0 0 / 70%);
+    }
+  }
+
+  // The cross is over the picture, so the room the theme reserves beside it is room taken out
+  // of the picture for nothing.
+  > .modal-elemental-close + * {
+    padding-inline-end: 0;
+  }
+
+  // The controls come off the flow and go over the picture. Their box keeps its place in the
+  // tree and loses its height, so the two chevrons centre on the photograph rather than on the
+  // photograph plus a bar underneath it.
+  [data-carousel-controls] {
+    padding: 0;
+  }
+
+  :is([data-carousel-prev], [data-carousel-next]) {
+    position: absolute;
+    inset-block-start: 50%;
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    font-size: 1.25rem;
+    translate: 0 -50%;
+  }
+
+  [data-carousel-prev] {
+    inset-inline-start: 0.75rem;
+  }
+
+  [data-carousel-next] {
+    inset-inline-end: 0.75rem;
+  }
+
+  [data-carousel-markers] {
+    position: absolute;
+    inset-block-end: 0.75rem;
+    inset-inline: 0;
+    justify-content: center;
+  }
+
+  carousel-elemental {
+    --carousel-elemental-marker-size: 0.6875rem;
+  }
+
+  // Dots. The number goes out of sight and not out of the button: `aria-label` is what names
+  // these, and it says `Slide 3` whether or not the 3 is drawn.
+  // The same dim as the sheet over the page, out of the same custom property, so the six of
+  // them read as one piece of the lightbox's own furniture rather than as six holes in the
+  // photograph.
+  // The ring is what the arrows do not need and these do: a dot is small and its fill is
+  // dark, so on a photograph with a dark foot - foliage, a shadowed hillside - the five
+  // unvisited ones disappear into it entirely and the picker reads as a single dot. White at
+  // 70% is the one edge that survives both that and a pale sky.
+  [data-carousel-marker] {
+    font-size: 0;
+    background: var(--modal-elemental-backdrop);
+    border-color: rgb(255 255 255 / 70%);
+  }
+
+  [data-carousel-marker][aria-disabled="true"] {
+    background: #fff;
+  }
+}
+
+// Demo-only: the line crediting the photographers under the gallery.
+.demo-credit {
+  font-size: 0.875rem;
+  color: var(--fg-muted);
+}
