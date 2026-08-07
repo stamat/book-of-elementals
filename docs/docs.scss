@@ -617,3 +617,132 @@ switch-elemental:not([checked]) + .demo-state .on {
   font-size: 0.875rem;
   color: var(--fg-muted);
 }
+
+// Demo-only: the video gallery example - posters that open one dialog with a player built
+// into it. Sixteen by nine everywhere, since that is what all three sources hand back and a
+// grid of two ratios is a grid nobody lines up.
+.video-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 1rem;
+  margin-block: 1.5rem;
+  padding: 0;
+  list-style: none;
+
+  li {
+    margin: 0;
+  }
+
+  // Two rows, still over name, and every box that belongs on the still is placed in the first
+  // of them. The badge is the reason: centred against the link as a whole it counts the name
+  // underneath as part of the picture and sits low on it.
+  a {
+    display: grid;
+    grid-template-columns: 100%;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img {
+    grid-area: 1 / 1;
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: var(--radius);
+  }
+
+  // A film hosted as a file has no still to show unless somebody made one, which is the
+  // honest state and not a missing image: the tile is the label's own dark box.
+  .no-poster::before {
+    grid-area: 1 / 1;
+    aspect-ratio: 16 / 9;
+    content: "";
+    background: linear-gradient(160deg, #2b2b33, #101014);
+    border-radius: var(--radius);
+  }
+
+  // The play badge, in its own dim because what is under it is a photograph and no palette
+  // answers for that. A pseudo-element rather than markup: it names nothing, and the link's
+  // text is already the name.
+  a::after {
+    display: grid;
+    grid-area: 1 / 1;
+    inline-size: 3rem;
+    block-size: 3rem;
+    font-size: 1.125rem;
+    color: #fff;
+    pointer-events: none;
+    content: "\25b6";
+    background: rgb(0 0 0 / 55%);
+    border-radius: 50%;
+    place-items: center;
+    place-self: center;
+  }
+
+  a:hover::after {
+    background: rgb(0 0 0 / 80%);
+  }
+
+  span {
+    grid-area: 2 / 1;
+    margin-block-start: 0.5rem;
+    font-size: 0.9375rem;
+  }
+
+  // Outside the link, because everything inside one is part of the name the player and the
+  // dialog are given.
+  small {
+    display: block;
+    font-size: 0.8125rem;
+    color: var(--fg-muted);
+  }
+}
+
+// The dialog is the player and a strip above it. Sized against the window, since every source
+// in the gallery is sixteen by nine and a fixed height is a letterbox at every width but one.
+.demo-player {
+  // Both of them, because the theme's own ceiling is 32rem and it is the smaller of the two.
+  --modal-elemental-max-width: 56rem;
+  --modal-elemental-backdrop: rgb(0 0 0 / 55%);
+  --modal-elemental-close-size: 1.75rem;
+  --modal-elemental-close-inset: 0.375rem;
+
+  inline-size: min(56rem, 92vw);
+
+  // The strip the cross lives in, and the reason this dialog has any padding at all: every
+  // player draws its own controls along its top edge - YouTube's share and settings sit
+  // exactly where a corner cross would - so a cross over the film is two buttons in one
+  // place. The box is 2.5rem taller instead and nothing overlaps. Black rather than the
+  // theme's surface, because what is under it is a film with its own letterbox.
+  padding: 2.5rem 0 0;
+  overflow: hidden;
+  background: #000;
+  border: 0;
+
+  :is(iframe, video) {
+    display: block;
+    inline-size: 100%;
+    max-block-size: calc(100dvh - 4.5rem);
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border: 0;
+  }
+
+  // White, because the strip is black in both themes and `currentcolor` here is the page's
+  // own text color - which in light mode is a black cross on a black bar.
+  > .modal-elemental-close {
+    color: #fff;
+    background: none;
+    border: 0;
+
+    &:hover {
+      background: rgb(255 255 255 / 20%);
+    }
+  }
+
+  // The room the theme reserves beside the cross is room taken out of the film for nothing.
+  > .modal-elemental-close + * {
+    padding-inline-end: 0;
+  }
+}

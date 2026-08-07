@@ -102,6 +102,7 @@
         "lang": "en",
         "url": "https://stamat.github.io/book-of-elementals",
         "repo": "https://github.com/stamat/book-of-elementals",
+        "footer": "<a href=\"https://github.com/stamat/book-of-elementals\" target=\"_blank\" rel=\"noopener\">book-of-elementals</a> v0.5.1 — MIT licensed. Built with 💩 <a href=\"https://github.com/stamat/poops\" target=\"_blank\" rel=\"noopener\">Poops</a>, <a href=\"https://github.com/stamat/poops-docs-theme\" target=\"_blank\" rel=\"noopener\">poops-docs-theme</a> and <a href=\"https://github.com/stamat/code-preview-element\" target=\"_blank\" rel=\"noopener\">code-preview-element</a>.",
         "branch": "main",
         "iconLinks": [
           { "title": "npm", "url": "https://www.npmjs.com/package/book-of-elementals", "icon": "npm" }
