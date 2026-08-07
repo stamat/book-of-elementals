@@ -60,6 +60,7 @@ carousel-elemental[fade] > [data-carousel-slides] {
   gap: 0;
   overflow: visible;
   scroll-snap-type: none;
+  touch-action: pan-y pinch-zoom;
 }
 
 carousel-elemental[fade] > [data-carousel-slides] > [data-carousel-slide] {

@@ -206,9 +206,12 @@ rotation and events, and the only mode where the scroller is not the state. It p
 for itself honestly: the slides not showing are `visibility: hidden`, so they leave
 the accessibility tree and find-in-page, which is exactly the case the APG writes
 its live region for, and `fade` gets one. Scrolling there is none, and no
-`aria-hidden` on anything, because every slide is in the tree the whole time.
+`aria-hidden` on anything, because every slide is in the tree the whole time. A
+stack is not a scroll container either, so `fade` is the one place this element
+reads a gesture of its own: a touch swipe across it moves one slide, where the
+scrolling row gets that from the browser for nothing.
 
-No infinite loop, no mouse-drag, no vertical axis, and no `slides-per-page`, which
+No infinite loop, no mouse drag, no vertical axis, and no `slides-per-page`, which
 is one custom property.
 
 ## `<checkbox-group-elemental>`

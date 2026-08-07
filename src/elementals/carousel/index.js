@@ -38,6 +38,40 @@ export function stepSlide(current, delta, count) {
 }
 
 /**
+ * How far a finger has to travel before it is a swipe and not a tap: forty CSS pixels.
+ *
+ * Absolute rather than a fraction of the slide, because it is answering about the hand and
+ * not the layout - a tap wobbles by the same few pixels whether the slide is a phone wide or
+ * a thumbnail. Well past the slop a browser allows a tap before it stops synthesising a
+ * `click`, which is what keeps a swipe over a slide with a link on it from following it.
+ */
+const SWIPE = 40;
+
+/**
+ * Which way a finger that has just come up was asking to go: `1` for next, `-1` for previous,
+ * `0` for neither.
+ *
+ * Only `fade` ever asks. A scrolled row is a real scroll container and swipes natively, and
+ * a second answer laid over the browser's would fight it; stacked slides have nothing to
+ * scroll, so the gesture is the element's to read or the mode does not have one.
+ *
+ * The vertical test is the one that matters and it is not a small tolerance - a gesture is
+ * horizontal only when it travelled further across than down. Anything gentler turns the
+ * flick that reads a long slide into a slide change under the words being read, and a
+ * perfect diagonal says nothing about which was meant, so it means neither.
+ *
+ * @param {number} dx - Pixels travelled across, finger down to finger up.
+ * @param {number} dy - Pixels travelled down.
+ * @param {boolean} rtl - Whether the carousel's direction is right to left, where the next
+ *   slide is the one to the *right* - the same way round as the arrows under it.
+ * @returns {number}
+ */
+export function swipeStep(dx, dy, rtl) {
+  if (Math.abs(dx) < SWIPE || Math.abs(dy) >= Math.abs(dx)) return 0;
+  return (rtl ? dx > 0 : dx < 0) ? 1 : -1;
+}
+
+/**
  * Whether a scroller is as far back, or as far on, as it goes.
  *
  * The scroller's own answer and not arithmetic on the index, which is the only one that
@@ -203,6 +237,11 @@ function reducedMotion() {
  * `fade` is the mode where one slide really is all there is, and there the live region comes
  * back, off while rotating and polite when it is not, exactly as the pattern asks.
  *
+ * **One gesture, and only in `fade`.** A scrolling row swipes because it is a scroll
+ * container, and a second answer laid over the browser's would fight it. A stack is not one,
+ * so there the swipe is read here - touch and pen, never the mouse, which has the buttons and
+ * the keyboard and would pay for a drag with the page's text selection and link clicks.
+ *
  * ponytail: one axis, horizontal. A vertical carousel is the same code with the block
  * properties, and nothing has asked for one; the refusal is on the page rather than an
  * `orientation` attribute nobody sets.
@@ -210,7 +249,7 @@ function reducedMotion() {
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/carousel/
  *
  * @tag carousel-elemental
- * @attr {boolean} [fade=false] - Cross-fade one slide at a time in place, instead of scrolling a row. The slides stack, so the row is as tall as the tallest.
+ * @attr {boolean} [fade=false] - Cross-fade one slide at a time in place, instead of scrolling a row. The slides stack, so the row is as tall as the tallest, and a touch swipe across them moves one slide.
  * @attr {boolean} [autoplay=false] - Rotate on a timer, and write the control that stops it. Ignored at upgrade when the reader asked for reduced motion - the control is still there to start it.
  * @attr {number} [interval=5000] - Milliseconds between slides while rotating. Under 1000 is treated as 1000.
  * @attr {string} [prev-text=Previous slide] - The previous button's accessible name.
@@ -302,6 +341,10 @@ export class CarouselElemental extends ElementBase {
     this.onClick = this.onClick.bind(this);
     this.onIntersect = this.onIntersect.bind(this);
     this.onScroll = this.onScroll.bind(this);
+    this.onSwipeStart = this.onSwipeStart.bind(this);
+    this.onSwipeEnd = this.onSwipeEnd.bind(this);
+    this.onSwipeCancel = this.onSwipeCancel.bind(this);
+    this.onSwipeClick = this.onSwipeClick.bind(this);
     this.suspend = this.suspend.bind(this);
     this.resume = this.resume.bind(this);
     this.onFocusOut = this.onFocusOut.bind(this);
@@ -313,6 +356,9 @@ export class CarouselElemental extends ElementBase {
     // Null rather than absent: `applyEdges` runs before the first move.
     this.settling = null;
     this.settleTimer = null;
+    // The finger currently down, and whether the last one to come up changed a slide.
+    this.swipe = null;
+    this.swiped = false;
     // The name this element gave each slide, so a later `wire()` renumbers its own labels
     // and keeps its hands off the ones the markup wrote. The name and not just the slide,
     // because a page is free to name a slide *after* the upgrade - and a label that no
@@ -353,6 +399,7 @@ export class CarouselElemental extends ElementBase {
     this.observer = null;
     if (this.scrolls) this.scrolls.removeEventListener('scroll', this.onScroll);
     this.scrolls = null;
+    this.unswipe();
     this.arrived();
 
     this.removeControls();
@@ -443,10 +490,22 @@ export class CarouselElemental extends ElementBase {
     this.observer = null;
     if (this.scrolls) this.scrolls.removeEventListener('scroll', this.onScroll);
     this.scrolls = null;
+    this.unswipe();
     // A move that was in flight was aimed at a row that has since changed.
     this.arrived();
 
-    if (!this.fade) {
+    if (this.fade) {
+      // The gesture the other mode gets from the platform. Stacked slides are not a scroll
+      // container, so nothing here is being doubled up on - see `swipeStep`.
+      scroller.addEventListener('pointerdown', this.onSwipeStart);
+      scroller.addEventListener('pointerup', this.onSwipeEnd);
+      scroller.addEventListener('pointercancel', this.onSwipeCancel);
+      // Capture, because the click it is here to swallow is aimed at whatever the finger
+      // landed on - a link inside the slide, which would otherwise have been followed by the
+      // swipe that left it.
+      scroller.addEventListener('click', this.onSwipeClick, true);
+      this.swipes = scroller;
+    } else {
       // A spread rather than one threshold: this observer is a layout-change notifier now, and
       // a single value only fires when a slide happens to cross that exact ratio. A resize
       // that leaves every slide fully visible would cross nothing at all.
@@ -797,6 +856,82 @@ export class CarouselElemental extends ElementBase {
   clearTimer() {
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
+  }
+
+  /**
+   * A finger lands on a stacked slide. Remember where, and which finger.
+   *
+   * The mouse is not one of them, and that is the refusal rather than an oversight: a desktop
+   * pointer has the buttons, the picker and the keyboard, and reading a drag from it costs
+   * the page its text selection, its image dragging and its link clicks - see the docs page.
+   * A second finger while one is already down is a pinch, and the first one's numbers are now
+   * noise, so the gesture is abandoned rather than answered wrongly.
+   */
+  onSwipeStart(e) {
+    this.swiped = false;
+    if (this.swipe || e.pointerType === 'mouse') {
+      this.swipe = null;
+      return;
+    }
+    this.swipe = { id: e.pointerId, x: e.clientX, y: e.clientY };
+  }
+
+  /** And comes up: the two points are the whole gesture, which is why there is no `pointermove`
+   * listener here to run on every frame of every scroll down the page. */
+  onSwipeEnd(e) {
+    const from = this.swipe;
+    this.swipe = null;
+    // The list can be gone between the finger landing and it lifting - a page is free to
+    // swap its slides out, and `getComputedStyle(null)` throws.
+    const scroller = this.scroller;
+    if (!from || !scroller || e.pointerId !== from.id) return;
+    const step = swipeStep(
+      e.clientX - from.x,
+      e.clientY - from.y,
+      getComputedStyle(scroller).direction === 'rtl'
+    );
+    if (!step) return;
+    // The ends hold, exactly as they do for the buttons: the arrow is dim there, and a
+    // gesture that still moved would be the carousel disagreeing with its own controls.
+    this.swiped = true;
+    if (step > 0) this.next();
+    else this.previous();
+  }
+
+  /** The browser took the gesture - a scroll started under it, or the finger left the screen's
+   * edge. Whatever it became, it is not this element's to finish. */
+  onSwipeCancel() {
+    this.swipe = null;
+  }
+
+  /**
+   * Swallow the click a committed swipe leaves behind.
+   *
+   * A touch that ends on a link fires one, and forty pixels of travel is past the slop most
+   * browsers stop synthesising it at - but *most* is not all, and the one that still fires
+   * navigates away from a page the reader was only swiping through. `detail` is what keeps
+   * this off the keyboard: Enter on a link reports zero pointer clicks, and the flag it would
+   * otherwise find is the stale one from a swipe minutes ago.
+   */
+  onSwipeClick(e) {
+    if (!this.swiped) return;
+    this.swiped = false;
+    if (!e.detail) return;
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  /** Every swipe listener comes back off, and the half-finished gesture with it. */
+  unswipe() {
+    if (this.swipes) {
+      this.swipes.removeEventListener('pointerdown', this.onSwipeStart);
+      this.swipes.removeEventListener('pointerup', this.onSwipeEnd);
+      this.swipes.removeEventListener('pointercancel', this.onSwipeCancel);
+      this.swipes.removeEventListener('click', this.onSwipeClick, true);
+    }
+    this.swipes = null;
+    this.swipe = null;
+    this.swiped = false;
   }
 
   /** Rotation held while the pointer or the focus is in the carousel - still rotating as far

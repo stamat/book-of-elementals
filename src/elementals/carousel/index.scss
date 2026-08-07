@@ -76,6 +76,13 @@ carousel-elemental[fade] > [data-carousel-slides] {
   gap: 0;
   overflow: visible;
   scroll-snap-type: none;
+
+  // The stack has nothing to scroll, so a swipe across it is the element's to read - and this
+  // is the line that says so. `pan-y` leaves scrolling down the page to the browser, which is
+  // the gesture that must not be caught; without it a page that scrolls sideways would take
+  // the swipe instead. `pinch-zoom` is not optional either way: `pan-y` alone would take
+  // zooming with it, and a reader who magnifies to read is a reader this cannot cost.
+  touch-action: pan-y pinch-zoom;
 }
 
 // `visibility` and not `display`, so the fade has two states to move between - and it is

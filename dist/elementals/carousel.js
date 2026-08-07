@@ -18,6 +18,11 @@
     if (count <= 0) return 0;
     return Math.min(Math.max(current + delta, 0), count - 1);
   }
+  var SWIPE = 40;
+  function swipeStep(dx, dy, rtl) {
+    if (Math.abs(dx) < SWIPE || Math.abs(dy) >= Math.abs(dx)) return 0;
+    return (rtl ? dx > 0 : dx < 0) ? 1 : -1;
+  }
   function scrollEdges(offset, visible, total) {
     const at = Math.abs(offset);
     return { start: at <= 1, end: at + visible >= total - 1 };
@@ -110,6 +115,10 @@
       this.onClick = this.onClick.bind(this);
       this.onIntersect = this.onIntersect.bind(this);
       this.onScroll = this.onScroll.bind(this);
+      this.onSwipeStart = this.onSwipeStart.bind(this);
+      this.onSwipeEnd = this.onSwipeEnd.bind(this);
+      this.onSwipeCancel = this.onSwipeCancel.bind(this);
+      this.onSwipeClick = this.onSwipeClick.bind(this);
       this.suspend = this.suspend.bind(this);
       this.resume = this.resume.bind(this);
       this.onFocusOut = this.onFocusOut.bind(this);
@@ -118,6 +127,8 @@
       this.painted = false;
       this.settling = null;
       this.settleTimer = null;
+      this.swipe = null;
+      this.swiped = false;
       this.named = /* @__PURE__ */ new WeakMap();
       this.addEventListener("click", this.onClick);
       this.addEventListener("mouseenter", this.suspend);
@@ -142,6 +153,7 @@
       this.observer = null;
       if (this.scrolls) this.scrolls.removeEventListener("scroll", this.onScroll);
       this.scrolls = null;
+      this.unswipe();
       this.arrived();
       this.removeControls();
       this.painted = false;
@@ -205,8 +217,15 @@
       this.observer = null;
       if (this.scrolls) this.scrolls.removeEventListener("scroll", this.onScroll);
       this.scrolls = null;
+      this.unswipe();
       this.arrived();
-      if (!this.fade) {
+      if (this.fade) {
+        scroller.addEventListener("pointerdown", this.onSwipeStart);
+        scroller.addEventListener("pointerup", this.onSwipeEnd);
+        scroller.addEventListener("pointercancel", this.onSwipeCancel);
+        scroller.addEventListener("click", this.onSwipeClick, true);
+        this.swipes = scroller;
+      } else {
         this.observer = new IntersectionObserver(this.onIntersect, {
           root: scroller,
           threshold: [0, 0.25, 0.5, 0.75, 1]
@@ -474,6 +493,73 @@
     clearTimer() {
       if (this.timer) clearInterval(this.timer);
       this.timer = null;
+    }
+    /**
+     * A finger lands on a stacked slide. Remember where, and which finger.
+     *
+     * The mouse is not one of them, and that is the refusal rather than an oversight: a desktop
+     * pointer has the buttons, the picker and the keyboard, and reading a drag from it costs
+     * the page its text selection, its image dragging and its link clicks - see the docs page.
+     * A second finger while one is already down is a pinch, and the first one's numbers are now
+     * noise, so the gesture is abandoned rather than answered wrongly.
+     */
+    onSwipeStart(e) {
+      this.swiped = false;
+      if (this.swipe || e.pointerType === "mouse") {
+        this.swipe = null;
+        return;
+      }
+      this.swipe = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    }
+    /** And comes up: the two points are the whole gesture, which is why there is no `pointermove`
+     * listener here to run on every frame of every scroll down the page. */
+    onSwipeEnd(e) {
+      const from = this.swipe;
+      this.swipe = null;
+      const scroller = this.scroller;
+      if (!from || !scroller || e.pointerId !== from.id) return;
+      const step = swipeStep(
+        e.clientX - from.x,
+        e.clientY - from.y,
+        getComputedStyle(scroller).direction === "rtl"
+      );
+      if (!step) return;
+      this.swiped = true;
+      if (step > 0) this.next();
+      else this.previous();
+    }
+    /** The browser took the gesture - a scroll started under it, or the finger left the screen's
+     * edge. Whatever it became, it is not this element's to finish. */
+    onSwipeCancel() {
+      this.swipe = null;
+    }
+    /**
+     * Swallow the click a committed swipe leaves behind.
+     *
+     * A touch that ends on a link fires one, and forty pixels of travel is past the slop most
+     * browsers stop synthesising it at - but *most* is not all, and the one that still fires
+     * navigates away from a page the reader was only swiping through. `detail` is what keeps
+     * this off the keyboard: Enter on a link reports zero pointer clicks, and the flag it would
+     * otherwise find is the stale one from a swipe minutes ago.
+     */
+    onSwipeClick(e) {
+      if (!this.swiped) return;
+      this.swiped = false;
+      if (!e.detail) return;
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    /** Every swipe listener comes back off, and the half-finished gesture with it. */
+    unswipe() {
+      if (this.swipes) {
+        this.swipes.removeEventListener("pointerdown", this.onSwipeStart);
+        this.swipes.removeEventListener("pointerup", this.onSwipeEnd);
+        this.swipes.removeEventListener("pointercancel", this.onSwipeCancel);
+        this.swipes.removeEventListener("click", this.onSwipeClick, true);
+      }
+      this.swipes = null;
+      this.swipe = null;
+      this.swiped = false;
     }
     /** Rotation held while the pointer or the focus is in the carousel - still rotating as far
      * as the button's name is concerned, because it will be again on the way out. */

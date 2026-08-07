@@ -49,6 +49,16 @@ may already be targeting**, since neither shows up in a function signature.
   `polite` when a press moves the slides, `off` while it rotates. Scrolling there is no live
   region and no `aria-hidden` on anything, because every slide is in the tree the whole time.
 
+  **`fade` also reads a touch swipe**, which is the one gesture this element handles itself. A
+  scrolling row swipes because it *is* a scroll container; a stack is not one, so on a phone
+  `fade` had the buttons and the picker and nothing else. Forty pixels across, and further
+  across than down, moves one slide — touch and pen, never the mouse, which keeps its text
+  selection, its image dragging and its link clicks. It does not follow the finger (there is
+  nothing to translate) and it does not wrap at the ends, where the arrow is dim and a gesture
+  that still moved would disagree with the element's own controls. The stack takes
+  `touch-action: pan-y pinch-zoom`, so scrolling down the page and zooming in stay the
+  browser's, and a committed swipe swallows the one `click` a touch ending on a link fires.
+
   Rotation follows the pattern in full: the control is prepended to the element so it is the
   first tab stop inside, its accessible name says what pressing it will do and it carries no
   `aria-pressed`, hover and focus pause it, and rotation the reader started by hand ignores
@@ -81,7 +91,7 @@ may already be targeting**, since neither shows up in a function signature.
   only writes once it has upgraded, so a page whose script never lands keeps the scrollbar
   and the only way through the row that it has.
 
-  Refusals are on the page rather than in options: no mouse-drag, no vertical axis, and no
+  Refusals are on the page rather than in options: no mouse drag, no vertical axis, and no
   `slides-per-page`, which is one custom property. No infinite loop either, and that one was
   measured rather than assumed: cloning the slides puts every slide in the accessibility tree
   two or three times over, and the clone-free version — rotate the DOM at the end and pull

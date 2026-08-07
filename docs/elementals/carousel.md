@@ -379,7 +379,7 @@ attribute rather than the default:
 | Every slide in the accessibility tree         | Only the current one — the rest are `visibility: hidden`           |
 | No live region needed                         | `aria-live`, `polite` when pressed and `off` while rotating         |
 | Find-in-page searches every slide             | Finds only the slide showing                                        |
-| Swipe, scrollbar, arrow keys on the scroller  | Buttons and the picker, nothing else                                |
+| Swipe, scrollbar, arrow keys on the scroller  | Swipe, the buttons and the picker — no scrollbar, no arrow keys     |
 | Without script: a scrolling row               | Without script: every slide stacked on top of the last              |
 
 `visibility` and not `opacity` alone, because a slide at `opacity: 0` is still focusable and
@@ -391,6 +391,24 @@ The height is the tallest slide's, since everything is in one grid cell — whic
 adaptive height a fading slideshow needs, without a box that resizes under the reader between
 two slides of different lengths. `--carousel-elemental-fade` sets the duration, and
 `prefers-reduced-motion: reduce` cuts it to nothing whatever it says.
+
+### The swipe
+
+A stack is not a scroll container, so the swipe the scrolling row gets from the browser had
+to be written here — and it is the only place in this element where a gesture is read at all.
+Forty pixels across, and further across than down, moves one slide. It is not adjustable and
+there is no attribute for it: a swipe is a hand, not a layout, and a tap wobbles by the same
+few pixels whether the slide is a phone wide or a thumbnail.
+
+What it deliberately does not do is the part worth reading:
+
+| Not this                              | Because                                                                                     |
+| ------------------------------------- | --------------------------------------------------------------------------------------------- |
+| The mouse                             | [Still refused](#what-it-does-not-do). Touch and pen only, and the check is on `pointerType`   |
+| Follow the finger                     | There is nothing to translate — the fade runs at its full duration once the gesture commits    |
+| Wrap at the ends                      | The arrow is dim there, and a gesture that still moved would disagree with the element's own controls |
+| Catch a scroll down the page          | `touch-action: pan-y pinch-zoom`, and a gesture more vertical than horizontal is not a swipe. Zooming stays the browser's |
+| Follow the link the finger landed on  | A touch ending on a link fires a `click`, and a committed swipe swallows exactly one of them   |
 
 ## Slides that change
 
@@ -508,7 +526,7 @@ A carousel is where features breed, so the refusals are part of the element:
 | Not here            | Why, and what to do instead                                                                 |
 | ------------------- | ------------------------------------------------------------------------------------------- |
 | Infinite loop       | [Measured below](#the-infinite-loop-that-is-not-here). The rotation wraps; the arrows stop    |
-| Drag with the mouse | The scroller already drags on touch, and a desktop pointer has the buttons and the wheel    |
+| Drag with the mouse | A desktop pointer has the buttons, the picker and the keyboard, and reading a drag off it costs the page its text selection, its image dragging and its link clicks. Touch swipes either mode — natively when it scrolls, [written here](#the-swipe) when it fades |
 | Vertical            | The same code with the block properties, and nothing has asked for one                      |
 | Adaptive height     | CSS. It is already the tallest slide either way — `align-items: start` on the scroller for ragged ones |
 | `slides-per-page`   | `--carousel-elemental-slide-size`, which a breakpoint can change and an attribute cannot     |
