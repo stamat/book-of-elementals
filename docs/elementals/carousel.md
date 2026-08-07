@@ -431,6 +431,18 @@ rebuilds the picker and re-observes the row. Safe to call as often as you like. 
 line on the pages that build their slides, instead of a `MutationObserver` running on every
 page that never touches them.
 
+**It works from empty, and back to empty.** An element whose list has fewer than two slides
+puts no pattern on it — one slide is a figure, and a picker with a single button in it would
+be worse than the markup it upgraded — but it still binds its listeners and waits, so a
+gallery that ships an empty `<ul>` and fills it on demand is a `wire()` away from a working
+carousel. Emptying one takes the roles, the names and the controls back off and leaves the
+list, rather than leaving controls that drive nothing. The
+[lightbox example](../examples/lightbox.html#a-gallery-at-scale) is that shape end to end.
+
+The one thing it cannot do is invent the list. The scroller is markup this element upgrades,
+never something it writes: with no `<ul>`, `<ol>` or `<menu>` inside, there is nothing to
+wire and `wire()` returns.
+
 ## The look
 
 `style.scss` is structure only — the scroller, the snap, and how wide one slide is. Take

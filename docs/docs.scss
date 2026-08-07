@@ -465,7 +465,10 @@ switch-elemental:not([checked]) + .demo-state .on {
     margin: 0;
   }
 
-  button {
+  // Both, because the two galleries on that page are the same grid reached two ways: one opens
+  // the dialog with the platform's invoker, the other is a link to the picture that script
+  // intercepts.
+  :is(button, a) {
     display: block;
     inline-size: 100%;
     padding: 0;

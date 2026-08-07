@@ -111,7 +111,7 @@
     }
     connectedCallback() {
       if (this.initialized) return;
-      if (!this.scroller || this.slides.length < 2) return;
+      if (!this.scroller) return;
       this.onClick = this.onClick.bind(this);
       this.onIntersect = this.onIntersect.bind(this);
       this.onScroll = this.onScroll.bind(this);
@@ -137,7 +137,7 @@
       this.addEventListener("focusout", this.onFocusOut);
       this.initialized = true;
       this.wire();
-      if (this.autoplay && !reducedMotion()) this.play();
+      if (this.autoplay && this.slides.length > 1 && !reducedMotion()) this.play();
     }
     disconnectedCallback() {
       if (!this.initialized) return;
@@ -149,6 +149,19 @@
       this.removeEventListener("mouseleave", this.resume);
       this.removeEventListener("focusin", this.suspend);
       this.removeEventListener("focusout", this.onFocusOut);
+      this.strip();
+      this.initialized = false;
+    }
+    /**
+     * Take the pattern back off, leaving the markup the page wrote: a list.
+     *
+     * Two callers, which are the same event approached from opposite sides - a carousel leaving
+     * the document, and one whose page has taken its slides away. Everything written comes back
+     * off in both, because a `role="group"` with `aria-roledescription="slide"` on a row nothing
+     * is driving is a carousel announced to a screen reader that no longer has controls, and a
+     * scroller left with a tab stop is a stop onto nothing.
+     */
+    strip() {
       if (this.observer) this.observer.disconnect();
       this.observer = null;
       if (this.scrolls) this.scrolls.removeEventListener("scroll", this.onScroll);
@@ -165,8 +178,8 @@
         scroller.removeAttribute("data-carousel-slides");
         scroller.removeAttribute("role");
         scroller.removeAttribute("tabindex");
+        scroller.removeAttribute("aria-live");
       }
-      if (scroller) scroller.removeAttribute("aria-live");
       for (const slide of this.slides) {
         slide.removeAttribute("role");
         slide.removeAttribute("aria-roledescription");
@@ -174,7 +187,6 @@
         slide.removeAttribute("data-carousel-current");
         if (slide.getAttribute("aria-label") === this.named.get(slide)) slide.removeAttribute("aria-label");
       }
-      this.initialized = false;
     }
     /**
      * Read the markup and put the pattern on it - the roles, the controls, the observer that
@@ -189,6 +201,10 @@
       const scroller = this.scroller;
       if (!scroller) return;
       const slides = this.slides;
+      if (slides.length < 2) {
+        this.strip();
+        return;
+      }
       this.setAttribute("aria-roledescription", "carousel");
       if (!this.hasAttribute("role")) {
         const named = this.hasAttribute("aria-label") || this.hasAttribute("aria-labelledby");

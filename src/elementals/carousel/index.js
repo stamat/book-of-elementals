@@ -334,9 +334,12 @@ export class CarouselElemental extends ElementBase {
     // Wait until the light-DOM children have been parsed. The bundle is loaded deferred or
     // at the end of the body, so by upgrade time they are there.
     if (this.initialized) return;
-    // One slide is a figure, not a carousel, and a carousel that writes a picker with one
-    // button in it is worse than the markup it upgraded.
-    if (!this.scroller || this.slides.length < 2) return;
+    // A list is the markup this element upgrades, not something it writes, so an element with
+    // none is not a carousel and cannot become one. How many slides are *in* that list is a
+    // different question, and `wire()` owns it: a gallery whose slides are built later starts
+    // with an empty row, and the listeners have to be on it by then or the controls that
+    // arrive with the slides drive nothing.
+    if (!this.scroller) return;
 
     this.onClick = this.onClick.bind(this);
     this.onIntersect = this.onIntersect.bind(this);
@@ -380,7 +383,9 @@ export class CarouselElemental extends ElementBase {
     // Reduced motion is the one case where `autoplay` is read and not obeyed. The control
     // is still written, so a reader who wants the rotation can still have it - which is the
     // difference between honouring a preference and overruling a person.
-    if (this.autoplay && !reducedMotion()) this.play();
+    // Nothing to rotate is the other: a timer over an empty row would tick for the life of the
+    // page to move between no slides.
+    if (this.autoplay && this.slides.length > 1 && !reducedMotion()) this.play();
   }
 
   disconnectedCallback() {
@@ -395,6 +400,20 @@ export class CarouselElemental extends ElementBase {
     this.removeEventListener('focusin', this.suspend);
     this.removeEventListener('focusout', this.onFocusOut);
 
+    this.strip();
+    this.initialized = false;
+  }
+
+  /**
+   * Take the pattern back off, leaving the markup the page wrote: a list.
+   *
+   * Two callers, which are the same event approached from opposite sides - a carousel leaving
+   * the document, and one whose page has taken its slides away. Everything written comes back
+   * off in both, because a `role="group"` with `aria-roledescription="slide"` on a row nothing
+   * is driving is a carousel announced to a screen reader that no longer has controls, and a
+   * scroller left with a tab stop is a stop onto nothing.
+   */
+  strip() {
     if (this.observer) this.observer.disconnect();
     this.observer = null;
     if (this.scrolls) this.scrolls.removeEventListener('scroll', this.onScroll);
@@ -406,18 +425,15 @@ export class CarouselElemental extends ElementBase {
     this.painted = false;
     this.removeAttribute('data-carousel-at-start');
     this.removeAttribute('data-carousel-at-end');
-
-    // Everything written comes back off. A `role="group"` with `aria-roledescription="slide"`
-    // on a row nothing is driving is a carousel announced to a screen reader that no longer
-    // has controls, and a scroller left with a tab stop is a stop onto nothing.
     this.removeAttribute('aria-roledescription');
+
     const scroller = this.scroller;
     if (scroller) {
       scroller.removeAttribute('data-carousel-slides');
       scroller.removeAttribute('role');
       scroller.removeAttribute('tabindex');
+      scroller.removeAttribute('aria-live');
     }
-    if (scroller) scroller.removeAttribute('aria-live');
     for (const slide of this.slides) {
       slide.removeAttribute('role');
       slide.removeAttribute('aria-roledescription');
@@ -425,8 +441,6 @@ export class CarouselElemental extends ElementBase {
       slide.removeAttribute('data-carousel-current');
       if (slide.getAttribute('aria-label') === this.named.get(slide)) slide.removeAttribute('aria-label');
     }
-
-    this.initialized = false;
   }
 
   /**
@@ -442,6 +456,16 @@ export class CarouselElemental extends ElementBase {
     const scroller = this.scroller;
     if (!scroller) return;
     const slides = this.slides;
+    // One slide is a figure, not a carousel, and an element that wrote a picker with a single
+    // button in it would be worse than the markup it upgraded. An empty row is the same answer
+    // for a different reason: a gallery builds its slides when the reader asks for them, and
+    // until then there is nothing to put a pattern on. Either way this is the pass that takes
+    // it back off, so a page that empties its carousel is left with a list rather than with
+    // controls driving nothing.
+    if (slides.length < 2) {
+      this.strip();
+      return;
+    }
 
     this.setAttribute('aria-roledescription', 'carousel');
     // `region` when the author named it, `group` when they did not. A region is a landmark,

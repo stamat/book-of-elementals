@@ -549,6 +549,11 @@
             },
             {
               "kind": "method",
+              "name": "strip",
+              "description": "Take the pattern back off, leaving the markup the page wrote: a list.\n\nTwo callers, which are the same event approached from opposite sides - a carousel leaving\nthe document, and one whose page has taken its slides away. Everything written comes back\noff in both, because a `role=\"group\"` with `aria-roledescription=\"slide\"` on a row nothing\nis driving is a carousel announced to a screen reader that no longer has controls, and a\nscroller left with a tab stop is a stop onto nothing."
+            },
+            {
+              "kind": "method",
               "name": "wire",
               "description": "Read the markup and put the pattern on it - the roles, the controls, the observer that\nwatches the row - then push the current state onto the controls.\n\nPublic and idempotent, because the slides are the page's to change: add one, remove one,\nreorder them, and this is the one call that says so. Nothing observes the markup on the\nelement's behalf, which would be a `MutationObserver` running on every page that never\ntouches its slides to save this one line on the pages that do."
             },

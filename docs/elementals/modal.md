@@ -294,8 +294,12 @@ already gone back to.
 
 | Inside the dialog | On close                                                          |
 | ----------------- | ----------------------------------------------------------------- |
-| `<video>`, `<audio>` | paused where it was                                            |
-| `<iframe>`        | reloaded, since a cross-origin player cannot be paused from here — so it reopens at the start |
+| `<video>`, `<audio>` | paused where it was, so reopening carries on from there        |
+| `<iframe>`        | its `src` set again, since a cross-origin player cannot be paused from here — so it reopens at the start |
+
+Starting it is the other half, and that one is yours: `modal-toggle` says when a modal
+opened and hands you the dialog, `play()` is the platform's, and a player in an iframe takes
+its instruction as a query parameter. Both are below.
 
 ### A lightbox
 
@@ -383,7 +387,29 @@ modal-elemental > dialog#clip { --modal-elemental-max-width: 40rem; padding: 0.5
 #clip video { display: block; width: 100%; height: auto; }
 ```
 
-Close it while it is playing: the sound stops with it.
+```js demo
+// One listener for every modal on the page: `modal-toggle` bubbles, and its detail carries
+// the dialog that opened.
+document.addEventListener("modal-toggle", (e) => {
+  if (!e.detail.open) return;
+  const video = e.detail.dialog.querySelector("video");
+  if (!video) return;
+  // A rejected promise here is the browser's autoplay policy, not a bug: a modal opened
+  // from the URL arrives with no click behind it, and sound needs one.
+  video.play().catch(() => {});
+});
+```
+
+Open it and it plays; close it and it stops at the second the reader left it; reopen, and it
+carries on from there. The pause is the element's, the play is that listener, and nothing
+else is needed on either end.
+
+Two things make it work. The listener runs inside the click that opened the modal, so the
+gesture the [autoplay policy](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay)
+asks for is still the browser's to spend — checked in Chrome on this page: the promise
+resolves and the clip runs, with nothing muted to get it there. And `autoplay` on the
+`<video>` is not the same thing and not what you want here: the attribute fires when the
+page loads, not when the modal opens, on a video nobody has asked for yet.
 
 The `<track>` is not decoration and not this element's doing —
 [WCAG 2.2 SC 1.2.2](https://www.w3.org/WAI/WCAG22/Understanding/captions-prerecorded.html)
@@ -397,18 +423,23 @@ Same origin, drop it.
 
 ### YouTube and Vimeo
 
-The same markup, with the player's own iframe in it. Shown here rather than run live: an
-`<iframe>` inside a closed dialog **is still fetched**, so a live demo on this page would
-call the player on every visit, opened or not.
+The same markup, with the player's own iframe in it. Autoplay is a query parameter rather
+than a listener, because the frame is not loaded until the modal is opened — `autoplay=1` is
+read at that load, and the click that opened the dialog is the gesture behind it, handed to
+the player by `allow="autoplay"`. Checked in Chrome on this page: opening the modal starts
+the film. A browser that blocks autoplay with sound — Firefox does, by default — loads the
+same frame and leaves it on its own play button, which is the failure worth having.
+
+<!-- demo modal -->
 
 ```html
-<button type="button" command="show-modal" commandfor="talk">Watch the talk</button>
+<button type="button" command="show-modal" commandfor="talk">Watch the film</button>
 
 <modal-elemental closedby="any">
-  <dialog id="talk" aria-label="The talk">
+  <dialog id="talk" aria-label="Big Buck Bunny">
     <iframe
-      src="https://www.youtube-nocookie.com/embed/VIDEO_ID"
-      title="The talk"
+      src="https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ?autoplay=1"
+      title="Big Buck Bunny, a Blender Foundation short film"
       width="560" height="315" loading="lazy"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
       allowfullscreen
@@ -417,11 +448,22 @@ call the player on every visit, opened or not.
 </modal-elemental>
 ```
 
+```css demo
+body { margin: 0; padding: 1rem; min-block-size: 20rem; font: 1rem/1.5 system-ui, sans-serif; }
+
+modal-elemental > dialog#talk { --modal-elemental-max-width: 40rem; padding: 0.5rem; }
+#talk iframe { display: block; width: 100%; aspect-ratio: 16 / 9; height: auto; border: 0; }
+```
+
+<p class="demo-credit"><em>Big Buck Bunny</em> © Blender Foundation, <a href="https://peach.blender.org/">peach.blender.org</a>, CC BY 3.0 — played here from YouTube, which is a third party this page hands nothing to until you press the button.</p>
+
+Vimeo is the same shape, with the parameter it uses for the same thing:
+
 ```html
 <modal-elemental closedby="any">
   <dialog id="reel" aria-label="The reel">
     <iframe
-      src="https://player.vimeo.com/video/VIDEO_ID"
+      src="https://player.vimeo.com/video/VIDEO_ID?autoplay=1"
       title="The reel"
       width="640" height="360" loading="lazy"
       allow="autoplay; fullscreen; picture-in-picture"
@@ -431,16 +473,9 @@ call the player on every visit, opened or not.
 </modal-elemental>
 ```
 
-```css
-/* both players, sized by ratio rather than by height */
-modal-elemental > dialog iframe {
-  display: block;
-  width: min(80vw, 60rem);
-  aspect-ratio: 16 / 9;
-  height: auto;
-  border: 0;
-}
-```
+Both players are sized by ratio rather than by height, which is the `aspect-ratio` line in
+the sample's CSS: an iframe's `height` attribute is a starting number, and a width in
+percent with a height in pixels is a letterbox at every size but one.
 
 Four things that are not optional on an embed. `title`, because an iframe with no title is
 announced as "frame" and nothing else. `youtube-nocookie.com` over `youtube.com`, which is
@@ -450,9 +485,12 @@ until the modal is opened — without it the player is loaded, and told who is r
 every page view that never opens the dialog. Checked in Chromium: a plain iframe in a closed
 `<dialog>` requests its source immediately, a lazy one waits for `showModal()`.
 
-Closing the modal reloads the frame, which is what stops the player. A reader who reopens it
-starts the video again from the beginning — the price of a player that only takes
-instructions from its own origin.
+Closing the modal sets the frame's `src` again, which is what stops the player — and `lazy`
+is why that costs nothing: the dialog is `display: none` by then, so the load waits for the
+next open rather than fetching a player nobody can see. Checked in Chrome, counting requests:
+one when the modal is opened, none when it is closed, a second one on the next open. What a
+reader gets from that is the video from the beginning each time, which is the price of a
+player that only takes instructions from its own origin.
 
 ## Degrading
 
