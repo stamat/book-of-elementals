@@ -15,6 +15,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-07
+
 ### Added
 
 - **`<carousel-elemental>`.** A row of slides you scroll through, per the
