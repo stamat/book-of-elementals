@@ -134,6 +134,10 @@ mode where there is nothing to scroll, and there the element holds the index its
 | `pause()`    | —           | Stop.                                              |
 | `wire()`     | —           | Re-read the markup, [see below](#slides-that-change). |
 
+Those methods are the whole way in from outside. There is no `command`/`commandfor`
+vocabulary here the way there is on [`<modal-elemental>`](modal.html) —
+[why](#what-it-does-not-do).
+
 ### Events
 
 `carousel-change` fires whenever the slide on screen changes — a button, the rotation, a
@@ -530,6 +534,7 @@ A carousel is where features breed, so the refusals are part of the element:
 | Vertical            | The same code with the block properties, and nothing has asked for one                      |
 | Adaptive height     | CSS. It is already the tallest slide either way — `align-items: start` on the scroller for ragged ones |
 | `slides-per-page`   | `--carousel-elemental-slide-size`, which a breakpoint can change and an attribute cannot     |
+| `command` triggers  | The modal takes `command`/`commandfor` because those are the platform's own — a `<dialog>` opens from them with this script absent, and the element only steps in to animate it. A carousel command would be a name invented here, so the button would sit dead until the module lands, which is the thing [the controls exist to avoid](#what-it-writes). An outside control is a line of script: `carousel.to(2)`. The platform is coming for this one too — [declarative scroll commands](https://github.com/danielsakhapov/declarative-scroll-commands-for-html-explainer) would give a scroll container `command="page-inline-end"` with snapping honoured, and that is a better answer than a name from this book |
 
 ### The infinite loop that is not here
 
