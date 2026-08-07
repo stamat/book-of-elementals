@@ -69,11 +69,7 @@ Elements published so far:
   restore. Disabled checkboxes are never moved and still count; every child that moves fires
   `input` and `change`. One level, not a tree — a nested group is a separate group. With no
   script the parent is hidden rather than offered dead. Its boxes are drawn by
-  `styles/checkbox.scss` (`book-of-elementals/checkbox.scss`,
-  `dist/book-of-elementals-checkbox.css`), the one look in the package that is not an
-  element's: opt in with `class="checkbox-elemental"` on a container or a `<label>` to give
-  any other checkbox the same look, and set the eight `--checkbox-elemental-*` properties on
-  whatever carries the class. Never a bare `input[type="checkbox"]` selector.
+  `styles/checkbox.scss`, below.
 - `<combobox-elemental>` — APG combobox over a native `<select>`: a `role="combobox"`
   text field that filters the options, a `role="listbox"` popup, and the cursor kept in
   `aria-activedescendant` so focus never leaves the field. `multiple` on the `<select>`
@@ -168,6 +164,22 @@ Elements published so far:
   whitespace stripped so a code block does not paste a command that runs itself. No
   clipboard API, or nothing named to copy, and the button is not offered at all —
   `data-unavailable` says which.
+
+One stylesheet here is not an element's, and it is the only one that ever will be — a
+control gets a look in this package only when an element in it cannot be drawn without one:
+
+- `styles/checkbox.scss` (`book-of-elementals/checkbox.scss`,
+  `dist/book-of-elementals-checkbox.css`) — a checkbox drawn with `appearance: none` over a
+  real `<input type="checkbox">`, so focus, `Space`, the label association, `disabled` and
+  submission stay the browser's. It exists because `<checkbox-group-elemental>`'s mixed
+  state is a dash and `accent-color` cannot draw one, and it is opt-in: put
+  `class="checkbox-elemental"` on a container or on a `<label>`, never a bare
+  `input[type="checkbox"]` selector. Seven properties —
+  `--checkbox-elemental-size|radius|border-width|border-color|fill|mark|gap` — set on
+  whatever carries the class, with the defaults left as `var()` fallbacks so a value on any
+  ancestor reaches every box under it, group included. Under `forced-colors` the fill
+  becomes `Highlight` and the mark `HighlightText`. It comes in with
+  `checkbox-group/theme.scss` already.
 
 Sibling project: [book-of-spells](https://github.com/stamat/book-of-spells),
 which holds the plain JavaScript helpers. This book holds the elements.

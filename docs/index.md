@@ -100,3 +100,8 @@ each one implements, and which gap in the platform it fills.
 Assembled into whole interface pieces, they are in
 [examples](examples/site-navigation.html) — a site header, a sidebar drawer, a
 bulk-actions toolbar.
+
+One thing here is not an element. [**The drawn checkbox**](checkbox.html) is a
+stylesheet `<checkbox-group-elemental>` could not be drawn without — the mixed
+state's dash is the one part `accent-color` cannot touch — and it is opt-in with
+a class, so every other checkbox on the page can wear the same look.

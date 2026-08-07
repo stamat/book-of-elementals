@@ -270,13 +270,14 @@ checkbox can wear. **Opt in with a class, on a container or on a `<label>`:**
 @use "book-of-elementals/checkbox.scss"; // or dist/book-of-elementals-checkbox.min.css
 ```
 
-Eight `--checkbox-elemental-*` properties, set on whatever carries the class exactly as the
-switch's go on the element. It arrives with `checkbox-group/theme.scss` already. Never a
-bare `input[type="checkbox"]` selector: importing a theme for an accordion must not
-silently redraw every checkbox on the page. This is the only look in the package that is
-not an element's, and the line is stated in
-[CONTRIBUTING.md](CONTRIBUTING.md) — a control gets one only when an element cannot be
-drawn without it.
+It arrives with `checkbox-group/theme.scss` already, and never as a bare
+`input[type="checkbox"]` selector: importing a theme for an accordion must not silently
+redraw every checkbox on the page. The seven `--checkbox-elemental-*` properties and the
+`forced-colors` behaviour are on
+[the drawn checkbox](https://stamat.github.io/book-of-elementals/checkbox.html) — the only
+look in the package that is not an element's, and the line is stated in
+[CONTRIBUTING.md](CONTRIBUTING.md): a control gets one only when an element cannot be drawn
+without it.
 
 ## `<combobox-elemental>`
 

@@ -251,30 +251,25 @@ attribute when it upgrades, at any depth. The
 
 ## The look
 
-`style.scss` is structure only; `theme.scss` is the look and is optional. The boxes
-themselves are drawn — `appearance: none` on a real `<input type="checkbox">`, so focus,
-<kbd>Space</kbd>, the label association, `disabled` and submission are all still the
-browser's — because the third state is the one thing `accent-color` cannot help with: it
-recolours the browser's box and can say nothing about its size, its corners, or the weight
-of the dash.
+`style.scss` is structure only; `theme.scss` is the look and is optional. What the theme
+adds of this element's own is one property — the arrangement a lone checkbox has no use
+for:
 
-That drawing is **not this element's**. It lives in `styles/checkbox.scss`, comes in with
-the theme automatically, and is the one look in this package that any checkbox can wear —
-see [any checkbox, the same look](#any-checkbox-the-same-look) below.
+| Property                            | Default  | Description                                 |
+| ------------------------------------- | -------- | --------------------------------------------- |
+| `--checkbox-group-elemental-indent` | `1.75em` | How far the children sit in from the parent |
 
-| Property                                      | Default                | Description                        |
-| ---------------------------------------------- | ---------------------- | ----------------------------------- |
-| `--checkbox-elemental-size`                   | `1.15em`               | Box size, both axes                |
-| `--checkbox-elemental-radius`                 | `0.25em`               | Box corners                        |
-| `--checkbox-elemental-border-width`           | `1.5px`                | Box border                         |
-| `--checkbox-elemental-border-color`           | `currentcolor` at 45%  | Box border, unticked               |
-| `--checkbox-elemental-fill`                   | `currentcolor`         | Box fill once ticked or mixed      |
-| `--checkbox-elemental-mark`                   | `Canvas`               | The tick and the dash              |
-| `--checkbox-elemental-gap`                    | `0.6em`                | Between a box and its label text   |
-| `--checkbox-group-elemental-indent`           | `1.75em`               | How far the children sit in. The group's alone |
+The boxes themselves are **not this element's**, though this element is why they exist: the
+third state is a dash, and `accent-color` recolours the browser's box while saying nothing
+about its size, its corners or the weight of a line through the middle of it. So they are
+drawn, in `styles/checkbox.scss`, which the theme imports for you and which any checkbox on
+the page can wear. The seven `--checkbox-elemental-*` properties, the `forced-colors`
+behaviour and how to point the same look at the rest of your form are all on
+[the drawn checkbox](../checkbox.html).
 
-That is the table above, live. Turn the knobs in the **Options** tab until it looks the way
-you want, then copy the rule out of the bottom of the panel:
+The **Options** tab below turns all eight — the indent above and the seven the boxes share.
+Turn them until it looks the way you want, then copy the rule out of the bottom of the
+panel:
 
 <!-- demo checkbox-group tab="options" -->
 
@@ -287,65 +282,6 @@ you want, then copy the rule out of the bottom of the panel:
   </ul>
 </checkbox-group-elemental>
 ```
-
-Under `forced-colors` the fill becomes `Highlight` and the mark `HighlightText`, the one
-pair that mode guarantees contrasts — and the mark is a shape rather than a colour change,
-so a ticked box and a mixed one are still told apart with no colour at all.
-
-> [!NOTE]
-> `--checkbox-elemental-mark` defaults to `Canvas`, the page's own background, because that
-> is what a tick cut out of a filled box is. Re-point it on a card, and on a page that themes
-> in custom properties **without declaring `color-scheme`** — there `Canvas` stays white in
-> dark mode and the tick disappears into the fill.
-
-### Any checkbox, the same look
-
-A page with this element on it has one drawn checkbox and a browserful of default ones,
-which is a mismatch the element caused. So the drawing is a stylesheet of its own, and you
-point it at whatever you like — **the class marks a container, and a `<label>` counts as
-one**:
-
-```html
-<form class="checkbox-elemental">…</form>
-<!-- every checkbox inside it -->
-<label class="checkbox-elemental"><input type="checkbox" /> Remember me</label>
-<!-- just this one -->
-```
-
-```scss
-@use "book-of-elementals/checkbox.scss";
-```
-
-```html
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/book-of-elementals/dist/book-of-elementals-checkbox.min.css"
-/>
-```
-
-It comes in with `checkbox-group/theme.scss` already, so a page using the group only needs
-the class where it wants the rest to match. The custom properties are the same ones, set on
-whatever carries the class — a `<checkbox-group-elemental>` inside a tuned container takes
-the container's values too, so one form is one look:
-
-```css
-form.checkbox-elemental {
-  --checkbox-elemental-size: 1.4em;
-  --checkbox-elemental-radius: 50%;
-  --checkbox-elemental-fill: #0a7;
-  --checkbox-elemental-mark: white;
-}
-```
-
-It is opt-in and always will be. A stylesheet that restyled `input[type="checkbox"]`
-outright would mean importing this book's theme for an accordion and silently getting every
-checkbox on the page redrawn, which is the toll this package exists not to charge.
-
-> [!NOTE]
-> This is the only look here that is not an element's, and the line is drawn where it is for
-> a reason: **a control gets a look in this package only when an element in it cannot be
-> drawn without one.** The checkbox qualifies because the dash cannot be drawn any other way.
-> A text input, a `<select>` or a button does not, and will not.
 
 ## Select-all, or something else?
 
