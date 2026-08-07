@@ -21,6 +21,16 @@
 //   opens - a flyout that only appears on hover, or a state only a key can reach, is not
 //   in this sweep.
 // - the pages' own markup, per above, and the inline (non-preview) samples that sit in it.
+// - contrast axe cannot compute: a colour over a pseudo element, under a box that overlaps
+//   it, or on content with no text in it. There is no ratio to hold to AA when the
+//   background is not knowable, so these are printed by reason at the end of a run rather
+//   than guessed at or failed on. The contrast it can compute is held to AA like the rest.
+//
+// And the limit that is this project's rather than the tool's: what any of that measures is
+// the optional theme an element ships. These are light-DOM elements meant to be restyled
+// from the outside - the first colour an author changes is the last one these numbers
+// describe, and keeping AA is theirs from that point on. The audit is evidence the default
+// look is sound, never a promise that a page using it is.
 
 // The callbacks handed to `evaluate` and `waitForFunction` are serialised and run in the
 // page, not here - which is the one place in this repo where a Node script writes browser
@@ -70,6 +80,13 @@ const options = { runOnly: TAGS, rules: Object.fromEntries(OFF.map((id) => [id, 
 // focusable in it, when what it holds is a list of links a click away.
 const context = { exclude: ['[hidden="until-found"]'] };
 
+// Attributes whose value is a list of IDs, checked here because axe will not: a menu button
+// carrying `aria-controls` beside `aria-haspopup` may legitimately name a popup that is not
+// in the document yet, so axe answers "unable to determine" and a typo in any of these fails
+// no run, on any element. A reference to nothing is a name, a description or a relationship
+// the reader silently never gets, and nothing on the page looks wrong.
+const IDREFS = ['aria-controls', 'aria-labelledby', 'aria-describedby', 'aria-activedescendant'];
+
 /** Every built page carrying at least one live preview. */
 function demoPages() {
   return readdirSync(SITE, { recursive: true })
@@ -103,10 +120,22 @@ function serve() {
   });
 }
 
+/** Every reference in the frame, in the state it is in, that points at no element. */
+function danglingRefs(frame) {
+  return frame.evaluate((attrs) => attrs.flatMap((attr) =>
+    [...document.querySelectorAll(`[${attr}]`)].flatMap((el) =>
+      el.getAttribute(attr).split(/\s+/).filter(Boolean)
+        .filter((id) => !document.getElementById(id))
+        .map((id) => `<${el.localName} ${attr}="${id}">`))), IDREFS);
+}
+
 async function runAxe(frame) {
   // Once per frame: a frame is audited in several states, and axe is half a megabyte to parse.
   if (!await frame.evaluate(() => 'axe' in window)) await frame.addScriptTag({ path: AXE });
-  return frame.evaluate(([ctx, opts]) => window.axe.run(ctx, opts), [context, options]);
+  const result = await frame.evaluate(([ctx, opts]) => window.axe.run(ctx, opts), [context, options]);
+  // Per state rather than once per frame: `aria-activedescendant` is written when a listbox
+  // opens and gone when it closes, so the only state worth checking is the one on screen.
+  return { ...result, dangling: await danglingRefs(frame) };
 }
 
 /**
@@ -220,7 +249,10 @@ const browser = await chromium.launch();
 // stable enough to measure: sampled mid-transition, a colour reads as whatever the fade
 // is currently on, and contrast comes out different on every run.
 const page = await browser.newPage({ reducedMotion: 'reduce' });
-const report = { violations: 0, frames: 0, states: 0, skipped: [], dead: [], review: new Map() };
+// `dangling` is a Set and its entries carry no state or theme: a reference pointing at
+// nothing is the same bug in every state it survives into, and listing it fourteen times
+// buries the one line naming the attribute to fix.
+const report = { violations: 0, frames: 0, states: 0, skipped: [], dead: [], review: new Map(), dangling: new Set() };
 
 for (const path of pages) {
   for (const theme of THEMES) {
@@ -242,10 +274,20 @@ for (const path of pages) {
       if (theme === THEMES[0]) report.frames++;
       for (const [state, result] of await auditFrame(frame, report)) {
         report.violations += result.violations.length;
-        // Counted by rule and named, never as a bare total: "needing review" is a checked
-        // element axe could not decide about - a colour over a gradient, say - and a number
-        // with no rule beside it is a number nobody can act on.
-        for (const r of result.incomplete) report.review.set(r.id, (report.review.get(r.id) ?? 0) + r.nodes.length);
+        for (const ref of result.dangling) report.dangling.add(`${path} › preview ${i + 1}: ${ref}`);
+        // Counted by rule and by reason, never as a bare total: "needing review" is a checked
+        // element axe could not decide about, and which of those it is decides whether anyone
+        // should care - a colour over a pseudo element is unknowable and stays that way, a
+        // reason nobody recognises is the one to go and read.
+        for (const r of result.incomplete) {
+          for (const node of r.nodes) {
+            // Some messages tail off into the attribute that caused them, which would give
+            // every id in the book a bucket of its own.
+            const check = node.any?.[0] ?? node.none?.[0] ?? node.all?.[0];
+            const key = `${r.id} — ${check?.message.replace(/:\s[\s\S]*$/, '') ?? r.help}`;
+            report.review.set(key, (report.review.get(key) ?? 0) + 1);
+          }
+        }
         print(path, i + 1, `${theme} › ${state}`, result.violations);
       }
     }
@@ -257,11 +299,16 @@ server.close();
 
 console.log(
   `\naxe: ${report.states} audits over ${report.frames} previews on ${pages.length} pages,` +
-  ` ${THEMES.join(' and ')} — ${report.violations} violations`
+  ` ${THEMES.join(' and ')} — ${report.violations} violations,` +
+  ` ${report.dangling.size} references pointing at nothing`
 );
 if (report.review.size) {
-  const byRule = [...report.review].map(([id, n]) => `${id} ×${n}`).join(', ');
-  console.log(`needing review, decided by hand rather than here: ${byRule}`);
+  console.log('needing review, decided by hand rather than here:');
+  for (const [why, n] of [...report.review].sort((a, b) => b[1] - a[1])) console.log(`  ×${n}  ${why}`);
+}
+if (report.dangling.size) {
+  console.log('\n✗ referenced ids that are on no element, so the relationship is not there:');
+  for (const ref of report.dangling) console.log(`  ${ref}`);
 }
 if (report.skipped.length) {
   console.log(`${report.skipped.length} controls could not be clicked, and were not audited open:`);
@@ -270,4 +317,4 @@ if (report.skipped.length) {
 if (report.dead.length) {
   console.log(`\n✗ never registered, so the preview audited was plain markup: ${[...new Set(report.dead)].join(', ')}`);
 }
-process.exit(report.violations || report.dead.length ? 1 : 0);
+process.exit(report.violations || report.dead.length || report.dangling.size ? 1 : 0);

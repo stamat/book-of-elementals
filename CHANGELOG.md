@@ -127,6 +127,35 @@ may already be targeting**, since neither shows up in a function signature.
   It supersedes [slidescroll](https://github.com/stamat/slidescroll) and
   [slideswap](https://github.com/stamat/slideswap), which will be archived.
 
+- **A versioning section in the README**, which the file had gone without. Semantic
+  versioning is the easy half; the half worth writing down is what the version is *about*,
+  because nothing here is called from your code. The markup an element writes and the hooks a
+  stylesheet reaches for are what a major is spent on, and the themes are explicitly not:
+  they are one look meant to be replaced, so the custom properties they read are covered and
+  the values are not. It also says what `0.x` means while it lasts, and that
+  `<carousel-elemental>` is the reason for waiting.
+
+- **`script/a11y` fails on a reference that points at nothing** — `aria-controls`,
+  `aria-labelledby`, `aria-describedby` or `aria-activedescendant` naming an id no element
+  has. axe will not decide this one: a menu button carrying `aria-controls` beside
+  `aria-haspopup` may legitimately name a popup that is not in the document yet, so it
+  answers "unable to determine" and a typo in any of those attributes failed no run, on any
+  element. Checked in each state rather than once per preview, since
+  `aria-activedescendant` is written when a listbox opens and gone when it closes. Nothing
+  in the book was dangling; the check went in green and stays that way.
+
+### Changed
+
+- **The a11y sweep says what it could not decide, and why.** "Needing review" was printed as
+  a bare count per rule, which named a number nobody could act on: the 88 contrast checks it
+  reports are four different situations, and three of them are permanent. They are now
+  grouped by reason — a background under an overlapping box, a background from a pseudo
+  element, content with no text in it — so a reason nobody recognises is the one to go and
+  read. The header comment also stops implying the sweep settles contrast on its own, and
+  says whose contrast it is once a page restyles: the elements are light DOM so that they
+  can be restyled, and the first colour an author changes is the last one those numbers
+  describe.
+
 ## [0.5.1] - 2026-08-05
 
 ### Fixed

@@ -68,9 +68,20 @@ which browser and assistive technology. A minimal page beats a description.
   colours out of `currentcolor` and the system palette, so `color-scheme` is
   what a contrast bug hides behind. It audits the previews rather than the pages
   around them, so a violation it prints is this project's and not the docs
-  theme's. A rule it cannot decide is listed as needing review rather than
-  failing the run; hover-only states and anything a click cannot reach are not
-  covered, which is what a browser and a screen reader are still for.
+  theme's. It also fails on an `aria-controls`, `aria-labelledby`,
+  `aria-describedby` or `aria-activedescendant` naming an id that is on no
+  element — axe files that as undecided rather than failing, because a
+  collapsed menu button may legitimately point at a popup that does not exist
+  yet, so a typo in one otherwise fails no run anywhere.
+
+  A rule it cannot decide is listed as needing review, by rule and by reason,
+  rather than failing the run. Most of those are contrast axe cannot compute —
+  a colour over a pseudo element or under something overlapping it — and they
+  stay that way. Note what contrast means here at all: it measures the optional
+  theme, which is one look meant to be replaced, so it is evidence the default
+  is sound and not a promise about a page that restyled it. Hover-only states
+  and anything a click cannot reach are not covered either, which is what a
+  browser and a screen reader are still for.
 - **Say what the DOM does.** The elements write into the light DOM, so the markup
   they produce and the CSS an author may already target are the public API —
   changes to either belong in the changelog entry, in those words.
