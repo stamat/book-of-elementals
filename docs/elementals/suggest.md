@@ -1,11 +1,11 @@
 ---
 layout: poops-docs-theme/docs
-title: Listbox
+title: Suggest
 description: A list of links a text field drives with the arrow keys — the results panel, minus any opinion about where the results came from.
-order: 6
+order: 10
 ---
 
-# `<listbox-elemental>`
+# `<suggest-elemental>`
 
 A list of links a text field can drive with the arrow keys, per the
 [APG Combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) with a listbox
@@ -16,13 +16,13 @@ It owns the keyboard and the ARIA. It does not fetch, does not filter, and has n
 about what put the links there. Give it a `<ul>` of `<a>`, point it at an input, and the
 arrows, Enter and Escape behave the way the pattern says.
 
-<!-- demo listbox -->
+<!-- demo suggest -->
 
 ```html
 <div class="field">
   <label for="jump">Jump to</label>
   <input type="search" id="jump" autocomplete="off" placeholder="press ↓">
-  <listbox-elemental for="jump">
+  <suggest-elemental for="jump">
     <ul>
       <li><a href="accordion.html">Accordion</a></li>
       <li><a href="combobox.html">Combobox</a></li>
@@ -30,7 +30,7 @@ arrows, Enter and Escape behave the way the pattern says.
       <li><a href="menu.html">Menu</a></li>
       <li><a href="modal.html">Modal</a></li>
     </ul>
-  </listbox-elemental>
+  </suggest-elemental>
 </div>
 
 <style>
@@ -54,11 +54,11 @@ Two things, joined by `for`:
 
 ```html
 <input type="search" id="q">
-<listbox-elemental for="q">
+<suggest-elemental for="q">
   <ul>
     <li><a href="/docs/install/">Install</a></li>
   </ul>
-</listbox-elemental>
+</suggest-elemental>
 ```
 
 Only `<a href>` becomes an option. A link without an `href` is not a destination, and a row
@@ -78,9 +78,9 @@ into the list that was on screen a moment ago points at a row that has moved or 
 | Attribute | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `for` | string | — | `id` of the text field that drives it. Without it the element does nothing. |
-| `open` | boolean | `false` | Whether the panel is showing. Reflected, so `[open]` is a styling hook, and settable so whatever fills the list can show it: `listbox.open = true`. |
+| `open` | boolean | `false` | Whether the panel is showing. Reflected, so `[open]` is a styling hook, and settable so whatever fills the list can show it: `suggest.open = true`. |
 
-`listbox-toggle` fires on every change, with `detail.open`.
+`suggest-toggle` fires on every change, with `detail.open`.
 
 ## Keyboard
 
@@ -93,11 +93,17 @@ into the list that was on screen a moment ago points at a row that has moved or 
 | `Enter` | left to the page, so the form still submits | follows the option under the cursor |
 | `Escape` | left to the page, so it can clear the field | closes |
 | `Tab` | leaves | closes, then leaves |
-| `Home` `End` | move the caret through what you typed | the same — they are the field's, not the panel's |
+| `Home` `End` | move the caret through what you typed | the caret, until a row is under the cursor — then the ends of the list |
 
-Everything else is left where it was typed. `Home` and `End` are the ones worth naming: a
-panel that took them would strand a reader trying to get back to the start of their own
-query.
+Everything else is left where it was typed.
+
+`Home` and `End` are the pair worth explaining. The pattern calls them optional and gives
+two answers: jump the list, or — "if the combobox is editable" — put the caret back on the
+first character. This field is always editable, so both are right at different moments. Up
+to the first arrow key the reader is still writing a query, and a `Home` that jumped the
+list rather than reaching the start of `install` would be wrong on nearly every press. Once
+an arrow has put a cursor on a row they are reading results, and the ends of the list are
+the only thing those keys can mean. Escape, or typing again, hands them back.
 
 The pointer takes the cursor with it. Two cursors that disagree is the bug — the pointer
 sitting on one row while `aria-activedescendant` names another, and `Enter` going somewhere
@@ -114,7 +120,7 @@ box until the element is defined.
 [That one](combobox.html) is a view of a `<select>`. It holds a value, submits under a name,
 resets with the form, and its options carry `aria-selected`.
 
-|  | `<combobox-elemental>` | `<listbox-elemental>` |
+|  | `<combobox-elemental>` | `<suggest-elemental>` |
 | --- | --- | --- |
 | An option is | a `<select>` option — a value | a link — a destination |
 | Carries | `aria-selected`, `aria-multiselectable` | neither |
@@ -138,17 +144,17 @@ styles your `<input>`**: that control is yours, and styling it is what a design 
 
 | Custom property | Default | What it does |
 | --- | --- | --- |
-| `--listbox-elemental-radius` | `0.375rem` | Corners of the panel |
-| `--listbox-elemental-inset` | `0.5rem` | The one padding unit, down the side of every row |
-| `--listbox-elemental-max-height` | `20rem` | How tall the panel gets before it scrolls |
-| `--listbox-elemental-surface` | `Canvas` | What the panel is painted on |
-| `--listbox-elemental-active` | `color-mix(in srgb, currentcolor 12%, transparent)` | The row under the cursor |
+| `--suggest-elemental-radius` | `0.375rem` | Corners of the panel |
+| `--suggest-elemental-inset` | `0.5rem` | The one padding unit, down the side of every row |
+| `--suggest-elemental-max-height` | `20rem` | How tall the panel gets before it scrolls |
+| `--suggest-elemental-surface` | `Canvas` | What the panel is painted on |
+| `--suggest-elemental-active` | `color-mix(in srgb, currentcolor 12%, transparent)` | The row under the cursor |
 
 ```scss
-@use "book-of-elementals/listbox/style.scss";
-@use "book-of-elementals/listbox/theme.scss"; // optional
+@use "book-of-elementals/suggest/style.scss";
+@use "book-of-elementals/suggest/theme.scss"; // optional
 ```
 
 ```javascript
-import "book-of-elementals/listbox";
+import "book-of-elementals/suggest";
 ```

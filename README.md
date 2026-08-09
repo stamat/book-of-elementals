@@ -23,11 +23,11 @@ holds the JavaScript helpers, this one holds the elements.
 | `<checkbox-group-elemental>` | [APG Checkbox (Mixed-State)](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/), a select-all that shows the dash when it is some of them |
 | `<combobox-elemental>`   | [APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/), a `<select>` you can type your way down, one value or many |
 | `<disclosure-elemental>` | [APG Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), where `<details>` cannot go |
-| `<listbox-elemental>`    | [APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) with a listbox popup — a list of links a text field drives with the arrow keys |
 | `<menu-elemental>`       | [APG Menu Button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/), nested, and not a menu below a breakpoint |
 | `<modal-elemental>`      | [APG Modal Dialog](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) on native `<dialog>` — nested, animated out, and dismissed the way the platform says |
 | `<navbar-elemental>`     | [APG Disclosure Navigation](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/), folding itself away when the links stop fitting |
 | `<segmented-elemental>`  | [APG Radio Group](https://www.w3.org/WAI/ARIA/apg/patterns/radio/) on native radios, drawn as a track with a knob that slides |
+| `<suggest-elemental>`    | [APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) with a listbox popup — a list of links a text field drives with the arrow keys |
 | `<switch-elemental>`     | [APG Switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/), for a setting that takes effect at once |
 | `<tabs-elemental>`       | [APG Tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), horizontal or vertical, on a list of in-page links |
 | `<tooltip-elemental>`    | [APG Tooltip](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/) as far as it has consensus — a description on hover and focus, still on the page without script |
@@ -434,46 +434,6 @@ The element is `display: contents`, so dropping it around existing markup change
 no layout. With scripting off the region is simply visible and the button is not
 offered, which for a long description is the right way round.
 
-## `<listbox-elemental>`
-
-A list of links a text field drives with the arrow keys — the results panel a search box, a
-filter and a "jump to" field all end up needing, and only the half of it that has nothing to
-do with where the results came from.
-
-```html
-<input type="search" id="q" autocomplete="off" />
-<listbox-elemental for="q">
-  <ul>
-    <li><a href="/docs/install/">Install</a></li>
-    <li><a href="/docs/config/">Configuration</a></li>
-  </ul>
-</listbox-elemental>
-```
-
-| Attribute | Type    | Default | Description                                                                     |
-| --------- | ------- | ------- | ------------------------------------------------------------------------------- |
-| `for`     | string  | —       | `id` of the text field that drives it. Without it the element does nothing.     |
-| `open`    | boolean | `false` | Whether the panel is showing. Reflected, and settable so whatever fills the list can show it. |
-
-Only `<a href>` becomes an option — a row that goes nowhere is a dead line on the list. The
-`<ul>` and its `<li>`s are marked `role="presentation"`, since a `listbox` may only own
-`option`s; the boxes stay for your CSS, only the semantics come off. Replace the contents
-whenever you like and the element re-marks them, so there is no refresh to forget.
-
-Focus never enters the list. The cursor is `aria-activedescendant` on the field, which is
-what lets someone keep typing while they walk the results — a roving `tabindex` would take
-the caret out of the field on the first arrow key. `Enter` follows the row under the cursor,
-`Escape` closes, and both are left to the page while the panel is closed, so the form still
-submits and the field can still be cleared. `Home` and `End` are always the field's.
-
-Not [`<combobox-elemental>`](#combobox-elemental), which is a view of a `<select>`: that one
-holds a value and its options carry `aria-selected`. These options are links — destinations,
-not values, with nothing to select. Reach for the combobox when the answer goes into a form,
-for this when the answer is somewhere to go.
-
-It does not fetch, filter, rank or highlight. With scripting off it is a list of links, in
-flow and visible — nothing is authored `hidden`, so nothing is lost.
-
 ## `<menu-elemental>`
 
 A `<button>` and the nested lists it opens — plus one thing the APG has no
@@ -680,6 +640,46 @@ knob parked on the first segment, and the selected label still takes its colour,
 because that comes from `label:has(> input:checked)` and needs nobody's help. The
 only ARIA it writes is `role="group"`, and only when you have given the element an
 `aria-label` that would otherwise be read by nothing.
+
+## `<suggest-elemental>`
+
+A list of links a text field drives with the arrow keys — the results panel a search box, a
+filter and a "jump to" field all end up needing, and only the half of it that has nothing to
+do with where the results came from.
+
+```html
+<input type="search" id="q" autocomplete="off" />
+<suggest-elemental for="q">
+  <ul>
+    <li><a href="/docs/install/">Install</a></li>
+    <li><a href="/docs/config/">Configuration</a></li>
+  </ul>
+</suggest-elemental>
+```
+
+| Attribute | Type    | Default | Description                                                                     |
+| --------- | ------- | ------- | ------------------------------------------------------------------------------- |
+| `for`     | string  | —       | `id` of the text field that drives it. Without it the element does nothing.     |
+| `open`    | boolean | `false` | Whether the panel is showing. Reflected, and settable so whatever fills the list can show it. |
+
+Only `<a href>` becomes an option — a row that goes nowhere is a dead line on the list. The
+`<ul>` and its `<li>`s are marked `role="presentation"`, since a `listbox` may only own
+`option`s; the boxes stay for your CSS, only the semantics come off. Replace the contents
+whenever you like and the element re-marks them, so there is no refresh to forget.
+
+Focus never enters the list. The cursor is `aria-activedescendant` on the field, which is
+what lets someone keep typing while they walk the results — a roving `tabindex` would take
+the caret out of the field on the first arrow key. `Enter` follows the row under the cursor,
+`Escape` closes, and both are left to the page while the panel is closed, so the form still
+submits and the field can still be cleared. `Home` and `End` are always the field's.
+
+Not [`<combobox-elemental>`](#combobox-elemental), which is a view of a `<select>`: that one
+holds a value and its options carry `aria-selected`. These options are links — destinations,
+not values, with nothing to select. Reach for the combobox when the answer goes into a form,
+for this when the answer is somewhere to go.
+
+It does not fetch, filter, rank or highlight. With scripting off it is a list of links, in
+flow and visible — nothing is authored `hidden`, so nothing is lost.
 
 ## `<switch-elemental>`
 

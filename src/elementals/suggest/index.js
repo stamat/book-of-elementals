@@ -7,22 +7,31 @@ import { ElementBase, define, nextIndex, placeFlyout } from '../../core.js';
  * map for a textbox with a listbox popup, as a table rather than a branch tree, so it can
  * be read and tested without a DOM.
  *
- * `Home` and `End` are deliberately absent. In this pattern they belong to the text field
- * - they move the caret through what has been typed - and a popup that took them would
- * strand a reader trying to get back to the start of their own query.
+ * `Home` and `End` are the pattern's one genuinely two-sided key, and it calls them
+ * optional: either they jump the list, or - "if the combobox is editable" - they return the
+ * caret to the first character of what was typed. This field is always editable, so both
+ * answers are right at different moments, and `cursor` is which moment it is.
+ *
+ * Before an arrow key has put a cursor on a row the reader is still writing a query, and a
+ * `Home` that jumped the list rather than reaching the start of `install` would be the
+ * wrong answer on nearly every press. Once there is a cursor they are reading results
+ * instead of writing, and the ends of the list are the only thing those keys can mean.
  *
  * @param {string} key `KeyboardEvent.key`
  * @param {boolean} altKey Whether Alt was held
  * @param {boolean} open Whether the popup is showing
- * @returns {"open"|"open-first"|"open-last"|"move"|"activate"|"close"|null} `null` for a key
- *   this popup has no opinion about, which is every key that types a character.
+ * @param {boolean} [cursor=false] Whether a row is already under the cursor
+ * @returns {"open"|"open-first"|"open-last"|"move"|"first"|"last"|"activate"|"close"|null}
+ *   `null` for a key this popup has no opinion about, which is every key that types a
+ *   character.
  * @example
- * listboxAction('ArrowDown', false, false) // => 'open-first'
- * listboxAction('ArrowDown', true, false) // => 'open', Alt opens without choosing
- * listboxAction('ArrowDown', false, true) // => 'move'
- * listboxAction('a', false, true) // => null
+ * suggestAction('ArrowDown', false, false) // => 'open-first'
+ * suggestAction('ArrowDown', true, false) // => 'open', Alt opens without choosing
+ * suggestAction('ArrowDown', false, true) // => 'move'
+ * suggestAction('Home', false, true, false) // => null, the caret is still the point
+ * suggestAction('Home', false, true, true) // => 'first'
  */
-export function listboxAction(key, altKey, open) {
+export function suggestAction(key, altKey, open, cursor) {
   if (!open) {
     if (key === 'ArrowDown') return altKey ? 'open' : 'open-first';
     if (key === 'ArrowUp') return 'open-last';
@@ -30,6 +39,8 @@ export function listboxAction(key, altKey, open) {
   }
   if (key === 'ArrowUp' && altKey) return 'close';
   if (key === 'ArrowDown' || key === 'ArrowUp') return 'move';
+  if (key === 'Home' && cursor) return 'first';
+  if (key === 'End' && cursor) return 'last';
   if (key === 'Enter') return 'activate';
   if (key === 'Escape' || key === 'Tab') return 'close';
   return null;
@@ -46,7 +57,7 @@ export function listboxAction(key, altKey, open) {
  * @param {string|null} activeId `id` of the option the cursor is on, or null for none
  * @returns {{expanded: string, hidden: boolean, activedescendant: string|null}}
  */
-export function listboxState(open, activeId) {
+export function suggestState(open, activeId) {
   return {
     expanded: open ? 'true' : 'false',
     hidden: !open,
@@ -55,10 +66,10 @@ export function listboxState(open, activeId) {
 }
 
 /** Monotonic counter, so a listbox and its options have `id`s to be pointed at. */
-let listboxCount = 0;
+let suggestCount = 0;
 
 /**
- * `<listbox-elemental>` custom element.
+ * `<suggest-elemental>` custom element.
  *
  * A list of links a text field can drive with the arrow keys, per the
  * [APG Combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) with a
@@ -84,21 +95,21 @@ let listboxCount = 0;
  *
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/combobox/
  *
- * @tag listbox-elemental
+ * @tag suggest-elemental
  * @attr {string} for - `id` of the text field that drives it. Without it the element does nothing.
  * @attr {boolean} [open=false] - Whether the popup is showing. Reflected, so `[open]` is a styling hook, and settable so whatever fills the list can show it.
  *
- * @cssprop {<length>} [--listbox-elemental-radius=0.375rem] - Corners of the popup.
- * @cssprop {<length>} [--listbox-elemental-inset=0.5rem] - The one padding unit: down the side of every option, and inside the popup's ends.
- * @cssprop {<length>} [--listbox-elemental-max-height=20rem] - How tall the popup gets before it scrolls.
- * @cssprop {<color>} [--listbox-elemental-surface=Canvas] - What the popup is painted on.
- * @cssprop {<color>} [--listbox-elemental-active=color-mix(in srgb, currentcolor 12%, transparent)] - The option the cursor is on - where Enter would land, and what the pointer moves.
+ * @cssprop {<length>} [--suggest-elemental-radius=0.375rem] - Corners of the popup.
+ * @cssprop {<length>} [--suggest-elemental-inset=0.5rem] - The one padding unit: down the side of every option, and inside the popup's ends.
+ * @cssprop {<length>} [--suggest-elemental-max-height=20rem] - How tall the popup gets before it scrolls.
+ * @cssprop {<color>} [--suggest-elemental-surface=Canvas] - What the popup is painted on.
+ * @cssprop {<color>} [--suggest-elemental-active=color-mix(in srgb, currentcolor 12%, transparent)] - The option the cursor is on - where Enter would land, and what the pointer moves.
  *
- * @fires listbox-toggle - `detail.open` is the new state.
+ * @fires suggest-toggle - `detail.open` is the new state.
  *
  * @slot - The `<ul>` of `<a>` the popup shows. Replace its contents whenever you like; the element re-marks them.
  */
-export class ListboxElemental extends ElementBase {
+export class SuggestElemental extends ElementBase {
   static get observedAttributes() {
     return ['open'];
   }
@@ -130,7 +141,7 @@ export class ListboxElemental extends ElementBase {
     if (!control) return;
 
     this.initialized = true;
-    if (!this.id) this.id = 'listbox-elemental-' + (++listboxCount);
+    if (!this.id) this.id = 'suggest-elemental-' + (++suggestCount);
 
     this.setAttribute('role', 'listbox');
     control.setAttribute('role', 'combobox');
@@ -216,7 +227,7 @@ export class ListboxElemental extends ElementBase {
   apply() {
     const control = this.control;
     if (!control) return;
-    const { expanded, hidden } = listboxState(this.open, null);
+    const { expanded, hidden } = suggestState(this.open, null);
     control.setAttribute('aria-expanded', expanded);
     this.hidden = hidden;
     if (this.open) this.place();
@@ -233,7 +244,7 @@ export class ListboxElemental extends ElementBase {
       else option.removeAttribute('data-active');
     }
 
-    const { activedescendant } = listboxState(this.open, this.active ? this.active.id : null);
+    const { activedescendant } = suggestState(this.open, this.active ? this.active.id : null);
     if (activedescendant) control.setAttribute('aria-activedescendant', activedescendant);
     else control.removeAttribute('aria-activedescendant');
   }
@@ -278,14 +289,14 @@ export class ListboxElemental extends ElementBase {
   attributeChangedCallback(name, previous, current) {
     if (!this.initialized || previous === current) return;
     this.apply();
-    this.dispatchEvent(new CustomEvent('listbox-toggle', {
+    this.dispatchEvent(new CustomEvent('suggest-toggle', {
       bubbles: true,
       detail: { open: this.open }
     }));
   }
 
   onKeyDown(e) {
-    const action = listboxAction(e.key, e.altKey, this.open);
+    const action = suggestAction(e.key, e.altKey, this.open, !!this.active);
     if (!action) return;
 
     const options = this.options;
@@ -311,6 +322,11 @@ export class ListboxElemental extends ElementBase {
 
     if (!options.length) return;
     e.preventDefault();
+
+    if (action === 'first' || action === 'last') {
+      this.moveTo(action === 'first' ? 0 : options.length - 1);
+      return;
+    }
 
     if (action === 'move') {
       this.moveTo(nextIndex(options.indexOf(this.active), e.key, options.length));
@@ -355,4 +371,4 @@ export class ListboxElemental extends ElementBase {
   }
 }
 
-define('listbox-elemental', ListboxElemental);
+define('suggest-elemental', SuggestElemental);

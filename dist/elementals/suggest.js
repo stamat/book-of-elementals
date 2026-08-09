@@ -36,8 +36,8 @@
     };
   }
 
-  // src/elementals/listbox/index.js
-  function listboxAction(key, altKey, open) {
+  // src/elementals/suggest/index.js
+  function suggestAction(key, altKey, open, cursor) {
     if (!open) {
       if (key === "ArrowDown") return altKey ? "open" : "open-first";
       if (key === "ArrowUp") return "open-last";
@@ -45,19 +45,21 @@
     }
     if (key === "ArrowUp" && altKey) return "close";
     if (key === "ArrowDown" || key === "ArrowUp") return "move";
+    if (key === "Home" && cursor) return "first";
+    if (key === "End" && cursor) return "last";
     if (key === "Enter") return "activate";
     if (key === "Escape" || key === "Tab") return "close";
     return null;
   }
-  function listboxState(open, activeId) {
+  function suggestState(open, activeId) {
     return {
       expanded: open ? "true" : "false",
       hidden: !open,
       activedescendant: open && activeId ? activeId : null
     };
   }
-  var listboxCount = 0;
-  var ListboxElemental = class extends ElementBase {
+  var suggestCount = 0;
+  var SuggestElemental = class extends ElementBase {
     static get observedAttributes() {
       return ["open"];
     }
@@ -83,7 +85,7 @@
       const control = this.control;
       if (!control) return;
       this.initialized = true;
-      if (!this.id) this.id = "listbox-elemental-" + ++listboxCount;
+      if (!this.id) this.id = "suggest-elemental-" + ++suggestCount;
       this.setAttribute("role", "listbox");
       control.setAttribute("role", "combobox");
       control.setAttribute("aria-controls", this.id);
@@ -146,7 +148,7 @@
     apply() {
       const control = this.control;
       if (!control) return;
-      const { expanded, hidden } = listboxState(this.open, null);
+      const { expanded, hidden } = suggestState(this.open, null);
       control.setAttribute("aria-expanded", expanded);
       this.hidden = hidden;
       if (this.open) this.place();
@@ -160,7 +162,7 @@
         if (option === this.active) option.setAttribute("data-active", "");
         else option.removeAttribute("data-active");
       }
-      const { activedescendant } = listboxState(this.open, this.active ? this.active.id : null);
+      const { activedescendant } = suggestState(this.open, this.active ? this.active.id : null);
       if (activedescendant) control.setAttribute("aria-activedescendant", activedescendant);
       else control.removeAttribute("aria-activedescendant");
     }
@@ -202,13 +204,13 @@
     attributeChangedCallback(name, previous, current) {
       if (!this.initialized || previous === current) return;
       this.apply();
-      this.dispatchEvent(new CustomEvent("listbox-toggle", {
+      this.dispatchEvent(new CustomEvent("suggest-toggle", {
         bubbles: true,
         detail: { open: this.open }
       }));
     }
     onKeyDown(e) {
-      const action = listboxAction(e.key, e.altKey, this.open);
+      const action = suggestAction(e.key, e.altKey, this.open, !!this.active);
       if (!action) return;
       const options = this.options;
       if (action === "close") {
@@ -226,6 +228,10 @@
       }
       if (!options.length) return;
       e.preventDefault();
+      if (action === "first" || action === "last") {
+        this.moveTo(action === "first" ? 0 : options.length - 1);
+        return;
+      }
       if (action === "move") {
         this.moveTo(nextIndex(options.indexOf(this.active), e.key, options.length));
         return;
@@ -253,6 +259,6 @@
       this.open = false;
     }
   };
-  define("listbox-elemental", ListboxElemental);
+  define("suggest-elemental", SuggestElemental);
 })();
-//# sourceMappingURL=listbox.js.map
+//# sourceMappingURL=suggest.js.map

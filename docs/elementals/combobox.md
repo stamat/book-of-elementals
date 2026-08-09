@@ -13,6 +13,11 @@ searchable, tag-holding select every application ends up needing. The `<select>`
 the control: it holds the value, submits under its own `name`, and resets and restores
 with the form. Light DOM, no shadow root.
 
+[`<suggest-elemental>`](suggest.html) is the same pattern pointed the other way, and the
+test is one question: **does the answer go into a form, or does it take you somewhere?** A
+city on a signup form is this element. A docs search box is that one — there is no chosen
+result to submit, and the reader has left the page the moment they pick.
+
 <p class="demo-row">
   <label for="city-demo">City</label>
   <combobox-elemental style="max-width: 20rem">

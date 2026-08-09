@@ -17,16 +17,18 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Added
 
-- **`<listbox-elemental>`** — a list of links a text field drives with the arrow keys, per
+- **`<suggest-elemental>`** — a list of links a text field drives with the arrow keys, per
   the [APG Combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) with a
   listbox popup.
 
   Every search box, filter and "jump to" field grows the same panel, and every one of them
   rebuilds the same keyboard from scratch: the cursor that is `aria-activedescendant` rather
   than focus, so typing can carry on while you walk the list; `Enter` that belongs to the
-  panel while it is open and to the form while it is not; `Home` and `End` left with the
-  caret, which is the one people get wrong and which strands a reader trying to get back to
-  the start of their own query.
+  panel while it is open and to the form while it is not; and `Home`/`End`, which the pattern
+  calls optional and answers two ways — jump the list, or, "if the combobox is editable", put
+  the caret back on the first character. Both are right here at different moments, so they
+  stay with the caret until an arrow key has put a cursor on a row and the reader has stopped
+  writing.
 
   Give it a `<ul>` of `<a>` and point it at an input with `for`. Only `<a href>` becomes an
   option; the `<ul>` and its `<li>`s are marked `role="presentation"`, since a `listbox` may
