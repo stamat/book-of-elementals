@@ -91,29 +91,32 @@ export function arrowOffset(trigger, bubble, horizontal, rtl) {
 /**
  * Where the bubble starts on the axis it runs *along* - the one the caret slides on.
  *
- * Two answers, because a control wider than its bubble and a control narrower than it want
- * opposite things. Wider: centre the bubble on it, so the caret comes out of the middle of
- * both. Narrower: line the two up at the edge the placement chose, because a small button
- * centred under a long sentence puts most of that sentence to one side of the thing it
- * belongs to, and the caret already carries the pointing.
+ * Centred on the trigger when the placement asked for it, and on the edge it named
+ * otherwise - `placeFlyout` is what decides between the two, and declines to centre where a
+ * centred bubble would not fit.
  *
- * Centring is then held inside the viewport, which is the one thing that outranks either
- * rule - and it does not spoil the caret, since that is measured against wherever the
- * bubble actually landed.
+ * The widths used to decide this instead: a control narrower than its bubble was edge-
+ * aligned on the grounds that a small button centred under a long sentence puts most of that
+ * sentence to one side of what it belongs to. An icon button under a one-word bubble is the
+ * case that breaks the rule - barely narrower, and plainly wrong sitting off to the left of
+ * the thing it names - and the caret carries the pointing at either width anyway.
+ *
+ * The clamp is the last word on both answers, not just on the centred one. `placeFlyout`
+ * refusing to centre still leaves an edge that can run off the viewport on its own, and a
+ * bubble rendered outside it is a bubble nobody reads. It does not spoil the caret, which is
+ * measured against wherever the bubble actually landed.
  *
  * @param {number} start Trigger's near edge on this axis, in viewport coordinates
  * @param {number} end Trigger's far edge
  * @param {number} size The bubble's extent on the same axis
  * @param {number} limit The viewport's, on that axis
  * @param {boolean} toStart Whether the placement asked for the near edge, in physical terms
+ * @param {boolean} [centred=false] Whether the placement asked for the trigger's middle
  * @returns {number} Where the bubble's near edge goes
  */
-export function alignOnAxis(start, end, size, limit, toStart) {
-  if (end - start >= size) {
-    const centred = (start + end) / 2 - size / 2;
-    return Math.min(Math.max(centred, 0), Math.max(limit - size, 0));
-  }
-  return toStart ? start : end - size;
+export function alignOnAxis(start, end, size, limit, toStart, centred) {
+  const at = centred ? (start + end) / 2 - size / 2 : (toStart ? start : end - size);
+  return Math.min(Math.max(at, 0), Math.max(limit - size, 0));
 }
 
 /** What counts as the trigger when the element wraps one. Focusable by the platform's own
@@ -387,22 +390,28 @@ export class TooltipElemental extends ElementBase {
       width: bubble.width + (horizontal ? gap : 0),
       height: bubble.height + (horizontal ? 0 : gap)
     };
+    // A tooltip always wants its trigger's middle - it is a bubble with a caret, and a caret
+    // coming out of a corner points at whatever happens to be beside the control. Asked for
+    // unconditionally rather than through an attribute: there is no page that wants its
+    // tooltips hanging off one edge, and an option nobody would turn off is not an option.
     const { side, align } = horizontal
       ? placeSubmenu(trigger, panel, viewport, rtl)
-      : placeFlyout(trigger, panel, viewport, rtl);
+      : placeFlyout(trigger, panel, viewport, rtl, true);
 
     // `side` and `align` are logical and these are physical pixels, so the direction
     // decides which edge each one names: the inline start is the left in LTR and the right
-    // in RTL, which is what both of these xors say.
+    // in RTL, which is what both of these xors say. `center` has no side, so it falls
+    // through both of them untouched.
     const after = (side === 'inline-end') !== rtl;
     const toStart = (align === 'start') !== rtl;
+    const centred = align === 'center';
 
     const top = horizontal
-      ? alignOnAxis(trigger.top, trigger.bottom, bubble.height, viewport.height, align === 'start')
+      ? alignOnAxis(trigger.top, trigger.bottom, bubble.height, viewport.height, align === 'start', centred)
       : (side === 'block-end' ? trigger.bottom + gap : trigger.top - bubble.height - gap);
     const left = horizontal
       ? (after ? trigger.right + gap : trigger.left - bubble.width - gap)
-      : alignOnAxis(trigger.left, trigger.right, bubble.width, viewport.width, toStart);
+      : alignOnAxis(trigger.left, trigger.right, bubble.width, viewport.width, toStart, centred);
 
     this.bubbleElement.dataset.side = side;
     this.bubbleElement.dataset.align = align;

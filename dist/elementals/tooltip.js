@@ -10,13 +10,16 @@
   function fits(at, size, limit) {
     return at >= 0 && at + size <= limit;
   }
-  function placeFlyout(trigger, panel, viewport, rtl) {
+  function placeFlyout(trigger, panel, viewport, rtl, centred) {
     const below = fits(trigger.bottom, panel.height, viewport.height);
     const above = fits(trigger.top - panel.height, panel.height, viewport.height);
+    const side = below || !above ? "block-end" : "block-start";
+    const middle = trigger.left + (trigger.right - trigger.left - panel.width) / 2;
+    if (centred && fits(middle, panel.width, viewport.width)) return { side, align: "center" };
     const start = rtl ? trigger.right - panel.width : trigger.left;
     const end = rtl ? trigger.left : trigger.right - panel.width;
     return {
-      side: below || !above ? "block-end" : "block-start",
+      side,
       align: fits(start, panel.width, viewport.width) || !fits(end, panel.width, viewport.width) ? "start" : "end"
     };
   }
@@ -71,12 +74,9 @@
     const middle = (trigger.left + trigger.right) / 2;
     return rtl ? bubble.left + bubble.width - middle : middle - bubble.left;
   }
-  function alignOnAxis(start, end, size, limit, toStart) {
-    if (end - start >= size) {
-      const centred = (start + end) / 2 - size / 2;
-      return Math.min(Math.max(centred, 0), Math.max(limit - size, 0));
-    }
-    return toStart ? start : end - size;
+  function alignOnAxis(start, end, size, limit, toStart, centred) {
+    const at = centred ? (start + end) / 2 - size / 2 : toStart ? start : end - size;
+    return Math.min(Math.max(at, 0), Math.max(limit - size, 0));
   }
   var FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
   var CLOSE_DELAY = 120;
@@ -230,11 +230,12 @@
         width: bubble.width + (horizontal ? gap : 0),
         height: bubble.height + (horizontal ? 0 : gap)
       };
-      const { side, align } = horizontal ? placeSubmenu(trigger, panel, viewport, rtl) : placeFlyout(trigger, panel, viewport, rtl);
+      const { side, align } = horizontal ? placeSubmenu(trigger, panel, viewport, rtl) : placeFlyout(trigger, panel, viewport, rtl, true);
       const after = side === "inline-end" !== rtl;
       const toStart = align === "start" !== rtl;
-      const top = horizontal ? alignOnAxis(trigger.top, trigger.bottom, bubble.height, viewport.height, align === "start") : side === "block-end" ? trigger.bottom + gap : trigger.top - bubble.height - gap;
-      const left = horizontal ? after ? trigger.right + gap : trigger.left - bubble.width - gap : alignOnAxis(trigger.left, trigger.right, bubble.width, viewport.width, toStart);
+      const centred = align === "center";
+      const top = horizontal ? alignOnAxis(trigger.top, trigger.bottom, bubble.height, viewport.height, align === "start", centred) : side === "block-end" ? trigger.bottom + gap : trigger.top - bubble.height - gap;
+      const left = horizontal ? after ? trigger.right + gap : trigger.left - bubble.width - gap : alignOnAxis(trigger.left, trigger.right, bubble.width, viewport.width, toStart, centred);
       this.bubbleElement.dataset.side = side;
       this.bubbleElement.dataset.align = align;
       this.bubbleElement.style.top = `${Math.round(top)}px`;

@@ -193,16 +193,53 @@ The side it settled on is written back as `data-side`, so a caret can point the 
 
 ### How it lines up with the control
 
-Two rules, because a wide control and a narrow one want opposite things:
+**Centred on the trigger, at every width** — the bubble sits on its middle, and the caret
+comes out of the middle of both.
 
-| The control is | What happens | Why |
-| --- | --- | --- |
-| **wider** than the bubble | the bubble is centred on it, caret out of the middle | a short tooltip pinned to the corner of a long toolbar button looks like it belongs to something else |
-| **narrower** than the bubble | their edges line up, on whichever side the placement chose | a small button centred under a long sentence leaves most of that sentence beside the thing it describes |
+Then the viewport gets the last word. A control near an edge cannot be centred on without
+the bubble hanging off, so the bubble is pulled back inside and stops at the edge. The caret
+follows it, because the caret is measured against wherever the bubble actually landed rather
+than against where it was aimed — which is what lets it keep pointing at the button after the
+bubble has moved out from under it.
 
-Centring gives way to the viewport, never the other way round — a bubble is moved back
-inside the edge and the caret follows, because the caret is measured against wherever the
-bubble actually landed.
+<!-- demo tooltip -->
+
+```html
+<div class="row">
+  <tooltip-elemental>
+    <button type="button" title="Hard against the left edge">
+      <span aria-hidden="true">◧</span>
+    </button>
+  </tooltip-elemental>
+
+  <tooltip-elemental>
+    <button type="button">Centred, with room on both sides</button>
+    <span>Nothing in the way</span>
+  </tooltip-elemental>
+
+  <tooltip-elemental>
+    <button type="button" title="Hard against the right edge">
+      <span aria-hidden="true">◨</span>
+    </button>
+  </tooltip-elemental>
+</div>
+```
+
+```css demo
+body { margin: 0; padding: 4rem 0 6rem; font: 1rem/1.5 system-ui, sans-serif; }
+.row { display: flex; justify-content: space-between; align-items: start; }
+button { font: inherit; padding: 0.4em 0.8em; }
+```
+
+_Hover the two square buttons at the ends. Their bubbles are wider than they are and would
+run off the frame if they were centred, so each stops at the edge — and the caret slides
+along to stay over the button. The middle one has room and is centred on its trigger._
+
+The decision itself is
+[`placeFlyout`](https://github.com/stamat/book-of-spells) in book-of-spells, which answers
+`center` when there is room for it and falls back to whichever edge fits when there is not.
+The clamp is applied after either answer, because the fallback edge can run off just as
+easily as the centre could.
 
 ### Where the caret points
 

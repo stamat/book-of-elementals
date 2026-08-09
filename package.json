@@ -177,7 +177,7 @@
     "lint:es": "es-check es2020 \"dist/**/*.js\""
   },
   "dependencies": {
-    "book-of-spells": "^2.0.0"
+    "book-of-spells": "^2.1.0"
   },
   "devDependencies": {
     "@custom-elements-manifest/analyzer": "^0.11.0",

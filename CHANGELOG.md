@@ -91,6 +91,22 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Changed
 
+- **`<tooltip-elemental>` centres its bubble on the trigger at every width, and never
+  outside the viewport.** It used to centre only on a control *wider* than the bubble and
+  align to an edge otherwise, on the grounds that a small button centred under a long
+  sentence leaves most of that sentence beside the thing it describes. An icon button under
+  a one-word bubble is what breaks that rule — barely narrower, and plainly wrong sitting off
+  to one side of what it names — and the caret carries the pointing at either width.
+
+  The bubble is then held inside the viewport whichever way it was aligned. The edge fallback
+  used to be handed back unchecked, so a tooltip on a control at the very edge of the screen
+  could be positioned at a negative coordinate and render partly off it.
+
+  The centring decision itself is `placeFlyout`'s fifth argument, which is why the dependency
+  floor moves to **`book-of-spells@^2.1.0`**. On 2.0.0 that argument does not exist, the call
+  degrades to edge alignment, and the bubble goes back to sitting beside what it names — so
+  the floor is the version, not the caret.
+
 - **One hover tint across the book.** Every optional theme that tints a control under the
   pointer now mixes `currentcolor` at **10%**, which is what `menu`, `tabs` and `carousel`
   already used. Two were out of step and neither had a reason written down beside it:

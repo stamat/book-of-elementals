@@ -125,9 +125,17 @@
               "type": {
                 "text": "boolean"
               }
+            },
+            {
+              "name": "centred",
+              "description": "Whether the placement asked for the trigger's middle",
+              "optional": true,
+              "type": {
+                "text": "boolean"
+              }
             }
           ],
-          "description": "Where the bubble starts on the axis it runs *along* - the one the caret slides on.\n\nTwo answers, because a control wider than its bubble and a control narrower than it want\nopposite things. Wider: centre the bubble on it, so the caret comes out of the middle of\nboth. Narrower: line the two up at the edge the placement chose, because a small button\ncentred under a long sentence puts most of that sentence to one side of the thing it\nbelongs to, and the caret already carries the pointing.\n\nCentring is then held inside the viewport, which is the one thing that outranks either\nrule - and it does not spoil the caret, since that is measured against wherever the\nbubble actually landed.",
+          "description": "Where the bubble starts on the axis it runs *along* - the one the caret slides on.\n\nCentred on the trigger when the placement asked for it, and on the edge it named\notherwise - `placeFlyout` is what decides between the two, and declines to centre where a\ncentred bubble would not fit.\n\nThe widths used to decide this instead: a control narrower than its bubble was edge-\naligned on the grounds that a small button centred under a long sentence puts most of that\nsentence to one side of what it belongs to. An icon button under a one-word bubble is the\ncase that breaks the rule - barely narrower, and plainly wrong sitting off to the left of\nthe thing it names - and the caret carries the pointing at either width anyway.\n\nThe clamp is the last word on both answers, not just on the centred one. `placeFlyout`\nrefusing to centre still leaves an edge that can run off the viewport on its own, and a\nbubble rendered outside it is a bubble nobody reads. It does not spoil the caret, which is\nmeasured against wherever the bubble actually landed.",
           "return": {
             "type": {
               "text": "number"

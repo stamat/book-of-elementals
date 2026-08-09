@@ -37,13 +37,16 @@
   function fits(at, size, limit) {
     return at >= 0 && at + size <= limit;
   }
-  function placeFlyout(trigger, panel, viewport, rtl) {
+  function placeFlyout(trigger, panel, viewport, rtl, centred) {
     const below = fits(trigger.bottom, panel.height, viewport.height);
     const above = fits(trigger.top - panel.height, panel.height, viewport.height);
+    const side = below || !above ? "block-end" : "block-start";
+    const middle = trigger.left + (trigger.right - trigger.left - panel.width) / 2;
+    if (centred && fits(middle, panel.width, viewport.width)) return { side, align: "center" };
     const start = rtl ? trigger.right - panel.width : trigger.left;
     const end = rtl ? trigger.left : trigger.right - panel.width;
     return {
-      side: below || !above ? "block-end" : "block-start",
+      side,
       align: fits(start, panel.width, viewport.width) || !fits(end, panel.width, viewport.width) ? "start" : "end"
     };
   }

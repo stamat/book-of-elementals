@@ -76,24 +76,43 @@ test('beside the trigger the caret runs down the other axis', () => {
 
 test('a control wider than its bubble gets the bubble centred on it, caret out of the middle', () => {
   // The 400-wide button of WIDE against a 120-wide bubble: 100 + (400 - 120) / 2.
-  expect(alignOnAxis(WIDE.left, WIDE.right, 120, 1000, true)).toBe(240);
+  expect(alignOnAxis(WIDE.left, WIDE.right, 120, 1000, true, true)).toBe(240);
   // Which is the middle of both, so the caret has nowhere to be but centred.
   expect(arrowOffset(WIDE, { ...BUBBLE, left: 240 }, false, false)).toBe(60);
 });
 
-test('a control narrower than its bubble keeps the edge the placement chose', () => {
-  expect(alignOnAxis(100, 140, 200, 1000, true)).toBe(100);
-  expect(alignOnAxis(100, 140, 200, 1000, false)).toBe(-60);
+// The width of the two used to decide this: a control narrower than its bubble was aligned
+// to an edge instead, so most of a long sentence sat to one side of the small button it
+// belonged to. A bubble that is only a little wider than its trigger - an icon button and
+// one word - then looked plainly wrong, sitting off to the left of what it named. Centring
+// is now the answer at every width, and the caret is what carries the pointing either way.
+test('a bubble is centred on its trigger whatever the two of them measure', () => {
+  // A 40-wide control against a 200-wide bubble: (100 + 140) / 2 - 100. Which edge the
+  // placement preferred does not come into it, because centring has no sides.
+  expect(alignOnAxis(100, 140, 200, 1000, true, true)).toBe(20);
+  expect(alignOnAxis(100, 140, 200, 1000, false, true)).toBe(20);
 });
 
-test('centring never pushes the bubble off the viewport', () => {
+test('an edge-aligned bubble is still the placement the caller asked for', () => {
+  expect(alignOnAxis(100, 400, 200, 1000, true, false)).toBe(100);
+  expect(alignOnAxis(100, 400, 200, 1000, false, false)).toBe(200);
+});
+
+// The viewport is the last word on both answers. `placeFlyout` refuses to centre where a
+// centred bubble would not fit, but the edge it falls back to can run off just as easily -
+// so the clamp is here, after either of them, rather than trusted to the choice above it.
+test('neither answer is allowed to put the bubble outside the viewport', () => {
   // A wide control against the left edge, and against the right.
-  expect(alignOnAxis(-40, 200, 120, 1000, true)).toBe(20);
-  expect(alignOnAxis(800, 1040, 120, 1000, true)).toBe(860);
+  expect(alignOnAxis(-40, 200, 120, 1000, true, true)).toBe(20);
+  expect(alignOnAxis(800, 1040, 120, 1000, true, true)).toBe(860);
   // A control running off the far edge: centred would be 340, and the last place the bubble
   // fits is 180.
-  expect(alignOnAxis(200, 600, 120, 300, true)).toBe(180);
+  expect(alignOnAxis(200, 600, 120, 300, true, true)).toBe(180);
   // A bubble wider than the viewport has nowhere to go, and is put at the near edge rather
   // than at a negative one.
-  expect(alignOnAxis(0, 400, 500, 300, true)).toBe(0);
+  expect(alignOnAxis(0, 400, 500, 300, true, true)).toBe(0);
+  // And the edge answer, which used to be handed back unchecked: a bubble aligned to the
+  // near edge of a control at the viewport's start, and to the far edge of one at its end.
+  expect(alignOnAxis(-60, 20, 200, 1000, true, false)).toBe(0);
+  expect(alignOnAxis(980, 1060, 200, 1000, false, false)).toBe(800);
 });
