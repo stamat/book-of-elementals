@@ -48,7 +48,8 @@
     if (key === "Home" && cursor) return "first";
     if (key === "End" && cursor) return "last";
     if (key === "Enter") return "activate";
-    if (key === "Escape" || key === "Tab") return "close";
+    if (key === "Escape") return "close";
+    if (key === "Tab") return "leave";
     return null;
   }
   function suggestState(open, activeId) {
@@ -213,9 +214,9 @@
       const action = suggestAction(e.key, e.altKey, this.open, !!this.active);
       if (!action) return;
       const options = this.options;
-      if (action === "close") {
+      if (action === "close" || action === "leave") {
         if (!this.open) return;
-        e.preventDefault();
+        if (action === "close") e.preventDefault();
         this.open = false;
         return;
       }

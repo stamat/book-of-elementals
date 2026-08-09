@@ -22,12 +22,20 @@ test('Alt with the down arrow opens without choosing anything', () => {
   expect(suggestAction('ArrowUp', true, true)).toBe('close');
 });
 
-test('an open popup walks on the arrows, follows Enter, and closes on Escape or Tab', () => {
+test('an open popup walks on the arrows and follows Enter', () => {
   expect(suggestAction('ArrowDown', false, true)).toBe('move');
   expect(suggestAction('ArrowUp', false, true)).toBe('move');
   expect(suggestAction('Enter', false, true)).toBe('activate');
+});
+
+// Both keys shut the popup, and they differ in what has to happen after. Escape has done
+// its whole job once the popup is gone, so its default - emptying a search field - is the
+// page's to keep. Tab was on its way out of the field, and a Tab that only closes is a
+// second press needed to do what the first one said. Two actions rather than one, because
+// the key's meaning is the only place that knows whether its default has to survive.
+test('Tab closes the popup on its way out of the field, where Escape closes it and stays', () => {
   expect(suggestAction('Escape', false, true)).toBe('close');
-  expect(suggestAction('Tab', false, true)).toBe('close');
+  expect(suggestAction('Tab', false, true)).toBe('leave');
 });
 
 // A popup that is not showing has no opinion about any of these: Enter submits the form,

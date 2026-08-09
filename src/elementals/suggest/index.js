@@ -21,7 +21,12 @@ import { ElementBase, define, nextIndex, placeFlyout } from '../../core.js';
  * @param {boolean} altKey Whether Alt was held
  * @param {boolean} open Whether the popup is showing
  * @param {boolean} [cursor=false] Whether a row is already under the cursor
- * @returns {"open"|"open-first"|"open-last"|"move"|"first"|"last"|"activate"|"close"|null}
+ * `close` and `leave` both shut the popup and differ in what the key still has to do after.
+ * Escape is finished once the popup is gone, so its own default - emptying a search field -
+ * is the page's to keep. Tab was on its way out of the field, and swallowing it would cost
+ * a second press to do what the first one already said.
+ *
+ * @returns {"open"|"open-first"|"open-last"|"move"|"first"|"last"|"activate"|"close"|"leave"|null}
  *   `null` for a key this popup has no opinion about, which is every key that types a
  *   character.
  * @example
@@ -30,6 +35,7 @@ import { ElementBase, define, nextIndex, placeFlyout } from '../../core.js';
  * suggestAction('ArrowDown', false, true) // => 'move'
  * suggestAction('Home', false, true, false) // => null, the caret is still the point
  * suggestAction('Home', false, true, true) // => 'first'
+ * suggestAction('Tab', false, true) // => 'leave', closes and carries on out of the field
  */
 export function suggestAction(key, altKey, open, cursor) {
   if (!open) {
@@ -42,7 +48,8 @@ export function suggestAction(key, altKey, open, cursor) {
   if (key === 'Home' && cursor) return 'first';
   if (key === 'End' && cursor) return 'last';
   if (key === 'Enter') return 'activate';
-  if (key === 'Escape' || key === 'Tab') return 'close';
+  if (key === 'Escape') return 'close';
+  if (key === 'Tab') return 'leave';
   return null;
 }
 
@@ -301,11 +308,13 @@ export class SuggestElemental extends ElementBase {
 
     const options = this.options;
 
-    if (action === 'close') {
+    if (action === 'close' || action === 'leave') {
       // Escape on a closed popup belongs to whatever owns the field - clearing it is the
       // usual answer - so it is not swallowed here.
       if (!this.open) return;
-      e.preventDefault();
+      // Tab keeps its default: it was already leaving, and a Tab that only shut the popup
+      // would need pressing twice to do the one thing it says.
+      if (action === 'close') e.preventDefault();
       this.open = false;
       return;
     }
