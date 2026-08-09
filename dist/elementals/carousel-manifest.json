@@ -72,28 +72,21 @@
           "name": "swipeStep",
           "parameters": [
             {
-              "name": "dx",
-              "description": "Pixels travelled across, finger down to finger up.",
+              "name": "direction",
+              "description": "`left` or `right`, as the gesture reported it.",
               "type": {
-                "text": "number"
-              }
-            },
-            {
-              "name": "dy",
-              "description": "Pixels travelled down.",
-              "type": {
-                "text": "number"
+                "text": "string"
               }
             },
             {
               "name": "rtl",
-              "description": "Whether the carousel's direction is right to left, where the next\nslide is the one to the *right* - the same way round as the arrows under it.",
+              "description": "Whether the carousel's direction is right to left.",
               "type": {
                 "text": "boolean"
               }
             }
           ],
-          "description": "Which way a finger that has just come up was asking to go: `1` for next, `-1` for previous,\n`0` for neither.\n\nOnly `fade` ever asks. A scrolled row is a real scroll container and swipes natively, and\na second answer laid over the browser's would fight it; stacked slides have nothing to\nscroll, so the gesture is the element's to read or the mode does not have one.\n\nThe vertical test is the one that matters and it is not a small tolerance - a gesture is\nhorizontal only when it travelled further across than down. Anything gentler turns the\nflick that reads a long slide into a slide change under the words being read, and a\nperfect diagonal says nothing about which was meant, so it means neither.",
+          "description": "Which way a finger that has just come up was asking to go: `1` for next, `-1` for previous.\n\nOnly `fade` ever asks. A scrolled row is a real scroll container and swipes natively, and\na second answer laid over the browser's would fight it; stacked slides have nothing to\nscroll, so the gesture is read for them or the mode does not have one.\n\nThe one part of that gesture book-of-spells cannot answer, because it reads the screen and\nnot the writing direction: where the carousel runs right to left the next slide is the one\nto the *right*, the same way round as the arrows under it.",
           "return": {
             "type": {
               "text": "number"
@@ -460,38 +453,13 @@
             },
             {
               "kind": "method",
-              "name": "onSwipeStart",
+              "name": "onSwipe",
               "parameters": [
                 {
                   "name": "e"
                 }
               ],
-              "description": "A finger lands on a stacked slide. Remember where, and which finger.\n\nThe mouse is not one of them, and that is the refusal rather than an oversight: a desktop\npointer has the buttons, the picker and the keyboard, and reading a drag from it costs\nthe page its text selection, its image dragging and its link clicks - see the docs page.\nA second finger while one is already down is a pinch, and the first one's numbers are now\nnoise, so the gesture is abandoned rather than answered wrongly."
-            },
-            {
-              "kind": "method",
-              "name": "onSwipeEnd",
-              "parameters": [
-                {
-                  "name": "e"
-                }
-              ],
-              "description": "And comes up: the two points are the whole gesture, which is why there is no `pointermove`\nlistener here to run on every frame of every scroll down the page."
-            },
-            {
-              "kind": "method",
-              "name": "onSwipeCancel",
-              "description": "The browser took the gesture - a scroll started under it, or the finger left the screen's\nedge. Whatever it became, it is not this element's to finish."
-            },
-            {
-              "kind": "method",
-              "name": "onSwipeClick",
-              "parameters": [
-                {
-                  "name": "e"
-                }
-              ],
-              "description": "Swallow the click a committed swipe leaves behind.\n\nA touch that ends on a link fires one, and forty pixels of travel is past the slop most\nbrowsers stop synthesising it at - but *most* is not all, and the one that still fires\nnavigates away from a page the reader was only swiping through. `detail` is what keeps\nthis off the keyboard: Enter on a link reports zero pointer clicks, and the flag it would\notherwise find is the stale one from a swipe minutes ago."
+              "description": "A finger has come up on a stacked slide, having travelled far enough across to have meant\nit. The ends hold, exactly as they do for the buttons: the arrow is dim there, and a\ngesture that still moved would be the carousel disagreeing with its own controls.\n\nA gesture more down the page than across it is the page scrolling and never arrives here -\n`swipe` reports the axis it travelled furthest along, and only that one."
             },
             {
               "kind": "method",

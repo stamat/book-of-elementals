@@ -4,6 +4,12 @@
   var objProto = Object.prototype;
   var foldF64 = new Float64Array(1);
   var foldU32 = new Uint32Array(foldF64.buffer);
+  function isObject(o) {
+    return typeof o === "object" && !Array.isArray(o) && o !== null;
+  }
+  function isFunction(o) {
+    return typeof o === "function";
+  }
   var PLAIN = {
     \u00C6: "AE",
     \u00E6: "ae",
@@ -35,6 +41,100 @@
   };
   var PLAIN_RE = new RegExp(`[${Object.keys(PLAIN).join("")}]`, "g");
 
+  // node_modules/book-of-spells/src/dom.mjs
+  function swipe(element, callback, threshold = 150, timeThreshold = 0) {
+    let mouse = true;
+    let start = null;
+    let swiped = false;
+    if (isObject(callback)) {
+      const options = callback;
+      callback = options.callback;
+      threshold = options.threshold || threshold;
+      timeThreshold = options.timeThreshold || timeThreshold;
+      if (options.mouse === false) mouse = false;
+    }
+    if (!element) return null;
+    const handleStart = function(e) {
+      swiped = false;
+      if (start || !mouse && e.pointerType === "mouse") {
+        start = null;
+        return;
+      }
+      start = { id: e.pointerId, x: e.clientX, y: e.clientY, time: Date.now() };
+      if (element.setPointerCapture) {
+        try {
+          element.setPointerCapture(e.pointerId);
+        } catch {
+        }
+      }
+      element.dispatchEvent(new CustomEvent("swipestart", { detail: { target: element, startX: start.x, startY: start.y, startTime: start.time } }));
+    };
+    const handleEnd = function(e) {
+      const from = start;
+      start = null;
+      if (!from || e.pointerId !== from.id) return;
+      const endX = e.clientX;
+      const endY = e.clientY;
+      const endTime = Date.now();
+      const deltaX = Math.abs(endX - from.x);
+      const deltaY = Math.abs(endY - from.y);
+      const left = endX < from.x;
+      const up = endY < from.y;
+      const horizontal = deltaX > deltaY && deltaX > threshold;
+      const vertical = deltaY > deltaX && deltaY > threshold;
+      const timeElapsed = endTime - from.time;
+      if (horizontal || vertical) {
+        if (!timeThreshold || timeElapsed <= timeThreshold) {
+          const res = {
+            target: element,
+            deltaX,
+            deltaY,
+            startX: from.x,
+            startY: from.y,
+            endX,
+            endY,
+            threshold,
+            horizontal,
+            vertical,
+            horizontalDirection: left ? "left" : "right",
+            verticalDirection: up ? "up" : "down",
+            direction: horizontal ? left ? "left" : "right" : up ? "up" : "down",
+            timeElapsed,
+            timeThreshold
+          };
+          swiped = true;
+          if (isFunction(callback)) callback(res);
+          element.dispatchEvent(new CustomEvent("swipe", { detail: res }));
+        }
+      }
+      element.dispatchEvent(new CustomEvent("swipeend", { detail: { target: element, startX: from.x, startY: from.y, startTime: from.time, endX, endY, endTime } }));
+    };
+    const handleCancel = function() {
+      start = null;
+    };
+    const handleClick = function(e) {
+      if (!swiped) return;
+      swiped = false;
+      if (!e.detail) return;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    element.addEventListener("pointerdown", handleStart);
+    element.addEventListener("pointerup", handleEnd);
+    element.addEventListener("pointercancel", handleCancel);
+    element.addEventListener("click", handleClick, true);
+    return {
+      destroy: function() {
+        element.removeEventListener("pointerdown", handleStart);
+        element.removeEventListener("pointerup", handleEnd);
+        element.removeEventListener("pointercancel", handleCancel);
+        element.removeEventListener("click", handleClick, true);
+        start = null;
+        swiped = false;
+      }
+    };
+  }
+
   // node_modules/book-of-spells/src/elements.mjs
   var ElementBase = typeof HTMLElement !== "undefined" ? HTMLElement : class {
   };
@@ -54,9 +154,8 @@
     return Math.min(Math.max(current + delta, 0), count - 1);
   }
   var SWIPE = 40;
-  function swipeStep(dx, dy, rtl) {
-    if (Math.abs(dx) < SWIPE || Math.abs(dy) >= Math.abs(dx)) return 0;
-    return (rtl ? dx > 0 : dx < 0) ? 1 : -1;
+  function swipeStep(direction, rtl) {
+    return direction === (rtl ? "right" : "left") ? 1 : -1;
   }
   function scrollEdges(offset, visible, total) {
     const at = Math.abs(offset);
@@ -150,10 +249,7 @@
       this.onClick = this.onClick.bind(this);
       this.onIntersect = this.onIntersect.bind(this);
       this.onScroll = this.onScroll.bind(this);
-      this.onSwipeStart = this.onSwipeStart.bind(this);
-      this.onSwipeEnd = this.onSwipeEnd.bind(this);
-      this.onSwipeCancel = this.onSwipeCancel.bind(this);
-      this.onSwipeClick = this.onSwipeClick.bind(this);
+      this.onSwipe = this.onSwipe.bind(this);
       this.suspend = this.suspend.bind(this);
       this.resume = this.resume.bind(this);
       this.onFocusOut = this.onFocusOut.bind(this);
@@ -162,8 +258,7 @@
       this.painted = false;
       this.settling = null;
       this.settleTimer = null;
-      this.swipe = null;
-      this.swiped = false;
+      this.swipes = null;
       this.named = /* @__PURE__ */ new WeakMap();
       this.addEventListener("click", this.onClick);
       this.addEventListener("mouseenter", this.suspend);
@@ -271,11 +366,7 @@
       this.unswipe();
       this.arrived();
       if (this.fade) {
-        scroller.addEventListener("pointerdown", this.onSwipeStart);
-        scroller.addEventListener("pointerup", this.onSwipeEnd);
-        scroller.addEventListener("pointercancel", this.onSwipeCancel);
-        scroller.addEventListener("click", this.onSwipeClick, true);
-        this.swipes = scroller;
+        this.swipes = swipe(scroller, { callback: this.onSwipe, threshold: SWIPE, mouse: false });
       } else {
         this.observer = new IntersectionObserver(this.onIntersect, {
           root: scroller,
@@ -546,71 +637,24 @@
       this.timer = null;
     }
     /**
-     * A finger lands on a stacked slide. Remember where, and which finger.
+     * A finger has come up on a stacked slide, having travelled far enough across to have meant
+     * it. The ends hold, exactly as they do for the buttons: the arrow is dim there, and a
+     * gesture that still moved would be the carousel disagreeing with its own controls.
      *
-     * The mouse is not one of them, and that is the refusal rather than an oversight: a desktop
-     * pointer has the buttons, the picker and the keyboard, and reading a drag from it costs
-     * the page its text selection, its image dragging and its link clicks - see the docs page.
-     * A second finger while one is already down is a pinch, and the first one's numbers are now
-     * noise, so the gesture is abandoned rather than answered wrongly.
+     * A gesture more down the page than across it is the page scrolling and never arrives here -
+     * `swipe` reports the axis it travelled furthest along, and only that one.
      */
-    onSwipeStart(e) {
-      this.swiped = false;
-      if (this.swipe || e.pointerType === "mouse") {
-        this.swipe = null;
-        return;
-      }
-      this.swipe = { id: e.pointerId, x: e.clientX, y: e.clientY };
-    }
-    /** And comes up: the two points are the whole gesture, which is why there is no `pointermove`
-     * listener here to run on every frame of every scroll down the page. */
-    onSwipeEnd(e) {
-      const from = this.swipe;
-      this.swipe = null;
+    onSwipe(e) {
       const scroller = this.scroller;
-      if (!from || !scroller || e.pointerId !== from.id) return;
-      const step = swipeStep(
-        e.clientX - from.x,
-        e.clientY - from.y,
-        getComputedStyle(scroller).direction === "rtl"
-      );
-      if (!step) return;
-      this.swiped = true;
+      if (!e.horizontal || !scroller) return;
+      const step = swipeStep(e.horizontalDirection, getComputedStyle(scroller).direction === "rtl");
       if (step > 0) this.next();
       else this.previous();
     }
-    /** The browser took the gesture - a scroll started under it, or the finger left the screen's
-     * edge. Whatever it became, it is not this element's to finish. */
-    onSwipeCancel() {
-      this.swipe = null;
-    }
-    /**
-     * Swallow the click a committed swipe leaves behind.
-     *
-     * A touch that ends on a link fires one, and forty pixels of travel is past the slop most
-     * browsers stop synthesising it at - but *most* is not all, and the one that still fires
-     * navigates away from a page the reader was only swiping through. `detail` is what keeps
-     * this off the keyboard: Enter on a link reports zero pointer clicks, and the flag it would
-     * otherwise find is the stale one from a swipe minutes ago.
-     */
-    onSwipeClick(e) {
-      if (!this.swiped) return;
-      this.swiped = false;
-      if (!e.detail) return;
-      e.preventDefault();
-      e.stopPropagation();
-    }
     /** Every swipe listener comes back off, and the half-finished gesture with it. */
     unswipe() {
-      if (this.swipes) {
-        this.swipes.removeEventListener("pointerdown", this.onSwipeStart);
-        this.swipes.removeEventListener("pointerup", this.onSwipeEnd);
-        this.swipes.removeEventListener("pointercancel", this.onSwipeCancel);
-        this.swipes.removeEventListener("click", this.onSwipeClick, true);
-      }
+      if (this.swipes) this.swipes.destroy();
       this.swipes = null;
-      this.swipe = null;
-      this.swiped = false;
     }
     /** Rotation held while the pointer or the focus is in the carousel - still rotating as far
      * as the button's name is concerned, because it will be again on the way out. */

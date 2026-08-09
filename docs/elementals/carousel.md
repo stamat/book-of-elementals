@@ -398,9 +398,10 @@ two slides of different lengths. `--carousel-elemental-fade` sets the duration, 
 
 ### The swipe
 
-A stack is not a scroll container, so the swipe the scrolling row gets from the browser had
-to be written here — and it is the only place in this element where a gesture is read at all.
-Forty pixels across, and further across than down, moves one slide. It is not adjustable and
+A stack is not a scroll container, so the swipe the scrolling row gets from the browser has to
+be read for it — `swipe()` from [book-of-spells](https://github.com/stamat/book-of-spells) does
+the reading, and this is the only place in this element where a gesture is read at all. Forty
+pixels across, and further across than down, moves one slide. It is not adjustable and
 there is no attribute for it: a swipe is a hand, not a layout, and a tap wobbles by the same
 few pixels whether the slide is a phone wide or a thumbnail.
 

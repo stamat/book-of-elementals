@@ -65,6 +65,20 @@ may already be targeting**, since neither shows up in a function signature.
   was working around are handled inside `removeAccents` itself now, which is where the bug
   always was. Anything reaching for either wants `matchesSearch` from book-of-spells.
 
+- **`<carousel-elemental>` reads its `fade` swipe with `swipe()` from book-of-spells**, which
+  carries what this element had hand-rolled: pointer events, the axis the finger travelled
+  furthest along, the gesture the browser takes back mid-scroll, the second finger that makes a
+  swipe a pinch, and the click a committed swipe leaves on the link under it. Forty pixels
+  across and further across than down still moves one slide, the mouse is still refused, and
+  the DOM, the roles and the CSS hooks are untouched.
+
+  One thing is newly observable: while the element is in `fade`, the scroller now dispatches
+  book-of-spells' `swipestart`, `swipeend` and `swipe` events. And `swipeStep`, exported and
+  the only piece of the gesture that stayed here, takes the direction the swipe reported —
+  `swipeStep('left', rtl)` — rather than a pair of pixel deltas. Which way `left` points when
+  the reader reads right to left is the carousel's question; how far a finger has to travel is
+  not.
+
 ### Fixed
 
 - **The sidebar drawer example no longer slides itself shut on load.** Closed is the state the

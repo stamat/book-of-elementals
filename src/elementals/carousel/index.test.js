@@ -7,6 +7,11 @@
 // faked in jsdom has no layout, so it would answer every question with zero and prove
 // nothing. The roles, the focus order and the rotation control are checked by
 // `script/a11y` over the built demos, in a real browser.
+//
+// Nor how far a finger has to travel to have meant it, nor that a gesture more down the page
+// than across it is the page scrolling: those left with the hand-rolled gesture, and are
+// `swipe()` in book-of-spells now, tested there. What stays here is the half that is the
+// carousel's own - which way `left` points when the reader reads right to left.
 
 import { currentSlide, rotationInterval, scrollEdges, slideName, startInset, stepSlide, swipeStep } from './index.js';
 
@@ -28,39 +33,16 @@ test('a carousel with no slides has no slide to move to', () => {
 });
 
 test('a swipe to the left asks for the next slide, and to the right the previous one', () => {
-  expect(swipeStep(-80, 0, false)).toBe(1);
-  expect(swipeStep(80, 0, false)).toBe(-1);
+  expect(swipeStep('left', false)).toBe(1);
+  expect(swipeStep('right', false)).toBe(-1);
 });
 
 test('and the other way round in a right-to-left carousel', () => {
   // The direction is the reader's, not the axis's: in Arabic or Hebrew the next slide is the
   // one to the right, which is where the scrolled mode already puts it - and a `fade` that
   // went the other way would disagree with the arrow sitting under it.
-  expect(swipeStep(80, 0, true)).toBe(1);
-  expect(swipeStep(-80, 0, true)).toBe(-1);
-});
-
-test('a swipe too short to have been meant is not a swipe', () => {
-  // A tap on a slide travels a few pixels between finger down and finger up, and a carousel
-  // that changes slide when the reader meant to press the link on it is worse than one that
-  // never moved.
-  expect(swipeStep(-12, 0, false)).toBe(0);
-  expect(swipeStep(12, 0, false)).toBe(0);
-});
-
-test('a swipe more down the page than across it is the page scrolling, not the carousel', () => {
-  // The gesture that reads a long slide: the finger travels far, and mostly downwards. Left
-  // as a swipe it changes the slide out from under the words being read.
-  expect(swipeStep(-60, 90, false)).toBe(0);
-  expect(swipeStep(-60, -90, false)).toBe(0);
-});
-
-test('a diagonal that is still mostly across is a swipe', () => {
-  expect(swipeStep(-90, 60, false)).toBe(1);
-});
-
-test('a perfect diagonal is not, because it says nothing about which was meant', () => {
-  expect(swipeStep(-60, 60, false)).toBe(0);
+  expect(swipeStep('right', true)).toBe(1);
+  expect(swipeStep('left', true)).toBe(-1);
 });
 
 test('a row scrolled to nought is at its start', () => {
