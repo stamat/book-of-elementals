@@ -242,7 +242,7 @@ what `data-captions` is for. One language here — a page with several carries t
 
 | Part | What it already does |
 | --- | --- |
-| `<dialog>` + `showModal()` | The top layer, the page behind going inert, Escape, and focus returning to the poster you opened from |
+| `<dialog>` + `showModal()` | The top layer, the page behind going inert, <kbd>Escape</kbd>, and focus returning to the poster you opened from |
 | `<modal-elemental>` | The animated open and close, the close button, the click on the backdrop that `closedby="any"` asks for, the page's scroll, and `modal-toggle` |
 | This page | What a video gallery is: which film, which player it needs, and throwing it away afterwards |
 

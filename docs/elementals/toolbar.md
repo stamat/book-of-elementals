@@ -24,9 +24,10 @@ is — the role, the axis, and the single `tabindex="0"` that moves.
 </toolbar-elemental>
 ```
 
-_Tab in, then walk it with `←` and `→`. Tab again and you are past the whole bar, not one
-button further along it. `Undo` is skipped — the platform will not focus a `disabled`
-control, so the cursor does not stop where focus cannot follow._
+_<kbd>Tab</kbd> in, then walk it with <kbd>←</kbd> and <kbd>→</kbd>. <kbd>Tab</kbd> again and
+you are past the whole bar, not one button further along it. **Undo** is skipped — the
+platform will not focus a `disabled` control, so the cursor does not stop where focus cannot
+follow._
 
 ## The markup
 
@@ -79,9 +80,9 @@ leave — and a screen reader announces the group on the way past.
 </toolbar-elemental>
 ```
 
-_Walk it with `→` from **Bold**. The group boundaries are not stops — the cursor crosses from
-**Code** to **Quote** on one press, and `End` reaches **Undo**, because `Redo` is disabled
-and the platform will not focus it._
+_Walk it with <kbd>→</kbd> from **Bold**. The group boundaries are not stops — the cursor
+crosses from **Code** to **Quote** on one press, and <kbd>End</kbd> reaches **Undo**, because
+**Redo** is disabled and the platform will not focus it._
 
 The element needs nothing told to it: the controls are found wherever they sit, so a group —
 or a [`<tooltip-elemental>`](tooltip.html) wrapped round a button — is a layer the walk sees
@@ -100,16 +101,16 @@ default and a second copy of a fact is a second thing to keep in step.
 
 | Key | Horizontal | Vertical |
 | --- | --- | --- |
-| `→` `←` | previous / next control | left to the page |
-| `↓` `↑` | left to the page | previous / next control |
-| `Home` `End` | first / last control | first / last control |
-| `Tab` | past the whole bar | past the whole bar |
-| `Enter` `Space` | presses the control | presses the control |
+| <kbd>→</kbd> <kbd>←</kbd> | previous / next control | left to the page |
+| <kbd>↓</kbd> <kbd>↑</kbd> | left to the page | previous / next control |
+| <kbd>Home</kbd> <kbd>End</kbd> | first / last control | first / last control |
+| <kbd>Tab</kbd> | past the whole bar | past the whole bar |
+| <kbd>Enter</kbd> <kbd>Space</kbd> | presses the control | presses the control |
 
-**The ends do not wrap.** Running off one is not how you get anywhere here — `Tab` is — and
-a bar that looped would be a bar a reader can walk forever without noticing they had.
+**The ends do not wrap.** Running off one is not how you get anywhere here — <kbd>Tab</kbd>
+is — and a bar that looped would be a bar a reader can walk forever without noticing they had.
 
-The off-axis arrows are not merely unused. A `↓` on a horizontal bar is the page scrolling,
+The off-axis arrows are not merely unused. A <kbd>↓</kbd> on a horizontal bar is the page scrolling,
 and a toolbar that swallowed it would pin the page under a reader who is passing through.
 
 The tab stop follows focus. Click the last button and the arrows carry on from there rather

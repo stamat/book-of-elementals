@@ -104,7 +104,7 @@ screen and the transition has something to animate.
 
 | Part | What it already does |
 | --- | --- |
-| `<dialog>` + `showModal()` | The top layer, the page behind going inert, Escape, and the focus returning to the thumbnail you opened from |
+| `<dialog>` + `showModal()` | The top layer, the page behind going inert, <kbd>Escape</kbd>, and the focus returning to the thumbnail you opened from |
 | `<modal-elemental>` | The close button, the animated close, and `modal-toggle` |
 | `<carousel-elemental>` | `aria-roledescription="carousel"`, each picture named `3 of 6`, the picker, the cross-fade, the live region `fade` owes a screen reader, and arrows that dim at the ends |
 | Neither | Anything new. This page is the only thing that knows what a lightbox is |

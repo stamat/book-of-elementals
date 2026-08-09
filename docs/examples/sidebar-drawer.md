@@ -339,7 +339,7 @@ all and is a drawer at every width.
 ## Focus, which is the page's too
 
 The pattern does not move focus, and for most disclosures that is right: the region is the
-next thing after the button, so `Tab` reaches it. This one is not next. The button is the
+next thing after the button, so <kbd>Tab</kbd> reaches it. This one is not next. The button is the
 first thing in the header and the panel is the last thing in the layout, so between them sit
 the brand, and in a real docs header the search field and every icon link as well. Opening a
 panel that then takes five tabs to reach is a panel that opened for the mouse only.
@@ -360,7 +360,7 @@ are actually on rather than the top of the list. And `region` and `button` are t
 own properties — the page never has to re-find by selector what the element already resolved.
 
 The other half is the close. Setting `hidden` on a panel with focus inside it drops focus to
-`<body>`, and the next `Tab` restarts from the top of the document — so `close()` takes focus
+`<body>`, and the next <kbd>Tab</kbd> restarts from the top of the document — so `close()` takes focus
 back to the button first, while the panel is still rendered:
 
 ```javascript
@@ -461,11 +461,11 @@ than a `transitionend` listener.
 
 Only that direction wants it. Put the same declaration on `#sidebar` unconditionally and the
 opening drawer inherits a `content-visibility` transition it cannot finish: the panel slides
-in and paints, and its links stay skipped behind it — not focusable, not scrollable, `Tab`
-straight past a drawer you can see. Keying it to `[hidden]` means the rule is gone by the
+in and paints, and its links stay skipped behind it — not focusable, not scrollable,
+<kbd>Tab</kbd> straight past a drawer you can see. Keying it to `[hidden]` means the rule is gone by the
 time the attribute is, so opening flips at once and only the close is deferred.
 
-Worth a `Tab` through the open drawer whenever you touch this — a panel that renders is not
+Worth a <kbd>Tab</kbd> through the open drawer whenever you touch this — a panel that renders is not
 the same as a panel that is there, and this is the failure that looks like it works.
 
 Note where the padding is: on the `<nav>` inside the panel, not on the panel. That is the

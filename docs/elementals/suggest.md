@@ -79,7 +79,7 @@ into the list that was on screen a moment ago points at a row that has moved or 
 | --- | --- | --- | --- |
 | `for` | string | — | `id` of the text field that drives it. Without it the element does nothing. |
 | `open` | boolean | `false` | Whether the panel is showing. Reflected, so `[open]` is a styling hook, and settable so whatever fills the list can show it: `suggest.open = true`. |
-| `tab-completes` | boolean | `false` | `Tab` takes the row under the cursor instead of leaving the field. For a completer whose rows are text about to be typed. |
+| `tab-completes` | boolean | `false` | <kbd>Tab</kbd> takes the row under the cursor instead of leaving the field. For a completer whose rows are text about to be typed. |
 
 `suggest-toggle` fires on every change, with `detail.open`.
 
@@ -87,40 +87,41 @@ into the list that was on screen a moment ago points at a row that has moved or 
 
 | Key | Panel closed | Panel open |
 | --- | --- | --- |
-| `↓` | opens, cursor on the first option | moves down, wrapping |
-| `↑` | opens, cursor on the last option | moves up, wrapping |
-| `Alt` + `↓` | opens, no cursor — see the list without committing to a row | — |
-| `Alt` + `↑` | — | closes |
-| `Enter` | left to the page, so the form still submits | follows the option under the cursor |
-| `Escape` | left to the page, so it can clear the field | closes |
-| `Tab` | leaves | closes, then leaves — or takes the row under the cursor, with `tab-completes` |
-| `Home` `End` | move the caret through what you typed | the caret, until a row is under the cursor — then the ends of the list |
+| <kbd>↓</kbd> | opens, cursor on the first option | moves down, wrapping |
+| <kbd>↑</kbd> | opens, cursor on the last option | moves up, wrapping |
+| <kbd>Alt</kbd> + <kbd>↓</kbd> | opens, no cursor — see the list without committing to a row | — |
+| <kbd>Alt</kbd> + <kbd>↑</kbd> | — | closes |
+| <kbd>Enter</kbd> | left to the page, so the form still submits | follows the option under the cursor |
+| <kbd>Escape</kbd> | left to the page, so it can clear the field | closes |
+| <kbd>Tab</kbd> | leaves | closes, then leaves — or takes the row under the cursor, with `tab-completes` |
+| <kbd>Home</kbd> <kbd>End</kbd> | move the caret through what you typed | the caret, until a row is under the cursor — then the ends of the list |
 
 Everything else is left where it was typed.
 
-`Home` and `End` are the pair worth explaining. The pattern calls them optional and gives
-two answers: jump the list, or — "if the combobox is editable" — put the caret back on the
-first character. This field is always editable, so both are right at different moments. Up
-to the first arrow key the reader is still writing a query, and a `Home` that jumped the
-list rather than reaching the start of `install` would be wrong on nearly every press. Once
-an arrow has put a cursor on a row they are reading results, and the ends of the list are
-the only thing those keys can mean. Escape, or typing again, hands them back.
+<kbd>Home</kbd> and <kbd>End</kbd> are the pair worth explaining. The pattern calls them
+optional and gives two answers: jump the list, or — "if the combobox is editable" — put the
+caret back on the first character. This field is always editable, so both are right at
+different moments. Up to the first arrow key the reader is still writing a query, and a
+<kbd>Home</kbd> that jumped the list rather than reaching the start of `install` would be
+wrong on nearly every press. Once an arrow has put a cursor on a row they are reading
+results, and the ends of the list are the only thing those keys can mean. <kbd>Escape</kbd>,
+or typing again, hands them back.
 
 The pointer takes the cursor with it. Two cursors that disagree is the bug — the pointer
-sitting on one row while `aria-activedescendant` names another, and `Enter` going somewhere
-the reader is not looking.
+sitting on one row while `aria-activedescendant` names another, and <kbd>Enter</kbd> going
+somewhere the reader is not looking.
 
 **`tab-completes` is off by default and should stay off for a list of links.** These rows are
-destinations, so a `Tab` that took the one under the cursor would navigate off the page on
-the keystroke that means "move along". Where the rows are text about to be typed — a mention,
-an emoji — it is what every editor does, so the markup asks for it rather than the element
-guessing. It is not in the
-[pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/), whose `Tab` row says only that
-the combobox is in the page's tab sequence; the thing the pattern *does* give you is
-automatic selection, which is `moveTo(0)` and costs no attribute.
+destinations, so a <kbd>Tab</kbd> that took the one under the cursor would navigate off the
+page on the keystroke that means "move along". Where the rows are text about to be typed — a
+mention, an emoji — it is what every editor does, so the markup asks for it rather than the
+element guessing. It is not in the
+[pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/), whose <kbd>Tab</kbd> row says
+only that the combobox is in the page's tab sequence; the thing the pattern *does* give you
+is automatic selection, which is `moveTo(0)` and costs no attribute.
 
-With nothing under the cursor `Tab` leaves regardless, however the attribute is set — a panel
-with no answer must never cost a second press to get out of.
+With nothing under the cursor <kbd>Tab</kbd> leaves regardless, however the attribute is
+set — a panel with no answer must never cost a second press to get out of.
 
 ## Completing a token
 
@@ -266,8 +267,8 @@ panel.addEventListener("click", (event) => {
 ```
 
 _Type `@ni`, or `:fi`. The panel follows the caret onto the next line, the first row is
-already under the cursor, and `Enter` — or `Tab`, because of `tab-completes` — takes it
-without an arrow key first._
+already under the cursor, and <kbd>Enter</kbd> — or <kbd>Tab</kbd>, because of
+`tab-completes` — takes it without an arrow key first._
 
 Three parts of that are worth naming, because each is a place the element stops and the page
 starts:

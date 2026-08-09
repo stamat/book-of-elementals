@@ -182,7 +182,7 @@ and a hidden panel is a box with nothing in it to stop on.
 | <kbd>Enter</kbd> / <kbd>Space</kbd>                     | Select the focused tab — the point of `manual` |
 
 The strip is **one** stop on the way through the page, not one per tab: the selected tab is
-the only one `Tab` can land on and the arrows do the rest. That is the roving tabindex, and
+the only one <kbd>Tab</kbd> can land on and the arrows do the rest. That is the roving tabindex, and
 it is what makes a set of twelve tabs something a keyboard visitor can get past.
 
 Keys off the strip's own axis are left alone. <kbd>↓</kbd> on a horizontal strip is the

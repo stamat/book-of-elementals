@@ -212,14 +212,16 @@ panel.addEventListener("click", (event) => {
 });
 ```
 
-Select a word and press **Bold**. Type `@ni` or `:fi` in the field. Then press `Ctrl`/`Cmd`
-+ `Z` — every one of those undoes, in order, because none of this ever assigned to `value`.
+Select a word and press **Bold**. Type `@ni` or `:fi` in the field. Then press
+<kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Z</kbd> — every one of those undoes, in order, because
+none of this ever assigned to `value`.
 
 ## The bar is one tab stop
 
-Six buttons above a field is six presses of `Tab` between the reader and the field they came
-to write in. [`<toolbar-elemental>`](../elementals/toolbar.html) makes it one: `Tab` enters
-the bar, `←` and `→` walk it, `Tab` again lands in the `<textarea>`.
+Six buttons above a field is six presses of <kbd>Tab</kbd> between the reader and the field
+they came to write in. [`<toolbar-elemental>`](../elementals/toolbar.html) makes it one:
+<kbd>Tab</kbd> enters the bar, <kbd>←</kbd> and <kbd>→</kbd> walk it, <kbd>Tab</kbd> again
+lands in the `<textarea>`.
 
 The bar is named, and it says what it acts on:
 
@@ -242,7 +244,8 @@ sometimes a lie is worse than no state at all. These are actions: they insert ma
 The two `role="group"`s split text marks from block marks. That is a real division — a
 screen reader announces the group and its label on entering it — and it is **not** a stop the
 keyboard has to get into and out of. The arrows run straight through: six controls, one
-sequence, `←` from the first heading button lands on the code button in the group before it.
+sequence, <kbd>←</kbd> from the first heading button lands on the code button in the group
+before it.
 
 The theme draws the rule between them off `[role="group"] + [role="group"]`, so the line
 appears between groups and never hangs off either end of the bar.

@@ -34,7 +34,7 @@ element's own page.
 | [`<suggest-elemental>`](suggest.html)                          | [APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) with a listbox popup — the results panel, minus any opinion about where the results came from                                                  |
 | [`<switch-elemental>`](switch.html)                            | [APG Switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/), for a setting that takes effect at once                                                                                                           |
 | [`<tabs-elemental>`](tabs.html)                                | [APG Tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), horizontal or vertical, written on a list of in-page links                                                                                            |
-| [`<toolbar-elemental>`](toolbar.html)                          | [APG Toolbar](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/) — a row of buttons the arrows walk and `Tab` passes in one step                                                                                  |
+| [`<toolbar-elemental>`](toolbar.html)                          | [APG Toolbar](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/) — a row of buttons the arrows walk and <kbd>Tab</kbd> passes in one step                                                                                  |
 | [`<tooltip-elemental>`](tooltip.html)                          | [APG Tooltip](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/) as far as it has consensus — a description on hover and focus, and a sentence on the page without script                                         |
 
 ## Where none does
