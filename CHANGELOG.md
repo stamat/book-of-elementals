@@ -15,6 +15,28 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The sidebar drawer example no longer slides itself shut on load.** Closed is the state the
+  panel _arrives_ in — the element writes it at upgrade, from the `media` query — but the
+  transform transition was live from the first frame, so on a load where the script landed
+  after the first paint (a cold cache, a slow phone) the browser animated the gap between the
+  rail the stylesheet had drawn and the closed drawer the script asked for: the page's opening
+  move was the navigation leaving. The transition rules now key off a `sidebar-ready` class the
+  page adds on the first tap, with a reflow between the class and the state so that tap still
+  slides. Counting animation frames instead was tried and measured — a closed panel painted for
+  two frames still slid in from nothing when the rule arrived.
+
+- **Escape no longer closes the rail in the sidebar drawer example.** The page's light dismiss
+  had no breakpoint test, on the reasoning that `media` would put `open` straight back — and it
+  does not: the query writes the state when it _changes_, and a query that is still matching
+  changes nothing. So Escape above the breakpoint closed a rail nothing could reopen, the
+  toggle being `display: none` at that width. `close()` now returns early while the element
+  reports `data-mode="pinned"`, which covers the scrim as well as the key.
+
+  Both were the page's to get wrong rather than the element's, and `<disclosure-elemental>` is
+  unchanged — but the example is what gets copied.
+
 ## [0.6.0] - 2026-08-07
 
 ### Added

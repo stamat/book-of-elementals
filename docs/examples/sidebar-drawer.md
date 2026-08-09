@@ -146,11 +146,13 @@ body { margin: 0; padding: 0; --line: color-mix(in srgb, currentcolor 15%, trans
 #sidebar {
   /* the theme's gap belongs under a trigger, and this panel is not under one */
   margin: 0;
-  /* the drawer travels, it does not grow: transform instead of the element's height slide */
-  transition: transform 0.2s ease;
 }
+/* the drawer travels, it does not grow: transform instead of the element's height slide. Only
+   once a tap has asked for one — closed is where the drawer loads, and a transition live from
+   the first frame slides it there while the reader watches */
+#sidebar:where(.sidebar-ready) { transition: transform 0.2s ease; }
 /* only while closing — see below, an opening panel must not defer being reachable */
-#sidebar[hidden] { transition: transform 0.2s ease, content-visibility 0.2s allow-discrete; }
+#sidebar[hidden]:where(.sidebar-ready) { transition: transform 0.2s ease, content-visibility 0.2s allow-discrete; }
 @media (prefers-reduced-motion: reduce) { #sidebar { transition: none; } }
 
 /* `free` is the element saying its query stopped matching — a drawer, not a rail. The
@@ -175,14 +177,23 @@ disclosure-elemental[data-mode="free"] .nav-toggle { display: inline-flex; }
 ```js demo
 const drawer = document.querySelector("disclosure-elemental");
 
-// the drawer is not modal, so light dismiss is the page's to add
+// the drawer is not modal, so light dismiss is the page's to add. `pinned` is the rail,
+// which no dismissal may touch: the query writes `open` when it *changes*, so nothing
+// would put back a rail Escape closed
 const close = () => {
-  if (!drawer.open) return;
+  if (!drawer.open || drawer.dataset.mode === "pinned") return;
   // focus first, while the panel is still rendered: closing hides it, and a link
   // focused inside would drop focus to <body>
   if (drawer.region.contains(document.activeElement)) drawer.button.focus();
   drawer.open = false;
 };
+
+// the transition arrives with the first tap, so a drawer nobody has touched cannot slide
+// itself shut on load. The reflow is what keeps that first tap animated
+drawer.button.addEventListener("click", () => {
+  drawer.region.classList.add("sidebar-ready");
+  void drawer.region.offsetWidth;
+}, { once: true });
 
 // the panel is far from its button in tab order, so opening hands focus over
 drawer.addEventListener("disclosure-toggle", (e) => {
@@ -308,8 +319,22 @@ document.querySelector(".scrim").addEventListener("click", close);
 addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
 ```
 
-No breakpoint test in either. Both only fire while the drawer is on screen, and above the
-breakpoint the attribute puts `open` straight back — so `close()` can just say what it means.
+No breakpoint test in either, because the one that is needed is in `close()` and covers both.
+The scrim is not on screen above the breakpoint, but the keyboard is at every width, and a
+rail closed by Escape is a rail nothing brings back: `media` writes `open` when the query
+_changes_, and a query that is still matching changes nothing — so the panel is gone, with the
+button that would reopen it `display: none` up here. The guard goes where every dismissal
+already passes through:
+
+```javascript
+const close = () => {
+  if (!drawer.open || drawer.dataset.mode === "pinned") return;
+  // …
+};
+```
+
+`pinned` rather than not-`free`, because a disclosure with no `media` attribute has no mode at
+all and is a drawer at every width.
 
 ## Focus, which is the page's too
 
@@ -340,7 +365,7 @@ back to the button first, while the panel is still rendered:
 
 ```javascript
 const close = () => {
-  if (!drawer.open) return;
+  if (!drawer.open || drawer.dataset.mode === "pinned") return;
   if (drawer.region.contains(document.activeElement)) drawer.button.focus();
   drawer.open = false;
 };
@@ -371,9 +396,7 @@ grows into the space it needs. A drawer does not grow — it is already full hei
 arrives from off-screen — so the page takes the animation back:
 
 ```css
-#sidebar {
-  transition: transform 0.2s ease;
-}
+#sidebar:where(.sidebar-ready) { transition: transform 0.2s ease; }
 
 .sidebar[data-mode="free"][hidden] { transform: translateX(-100%); }
 ```
@@ -381,21 +404,53 @@ arrives from off-screen — so the page takes the animation back:
 The height slide is not switched off with a flag. The element
 [reads the transition back out of the computed styles](../elementals/disclosure.html#animation)
 to time itself, so a region with no `height` transition has nothing to time and the state
-lands at once — leaving the transform to do the moving. The transition is not scoped to
-`free` on purpose: at the wide end there is no transform to animate either, and a rail that
-slid open on every page load would be a page load you can watch happening.
+lands at once — leaving the transform to do the moving. It is not scoped to `free` either: at
+the wide end there is no transform to animate, and a rail that slid open on every page load
+would be a page load you can watch happening. What it _is_ scoped to is a class, which is the
+next thing.
 
-`margin: 0` in the same rule is the other thing handed back. The element's optional theme
+`margin: 0` on the same panel is the other thing handed back. The element's optional theme
 puts half a rem above the region, which is the right gap between a trigger and the thing it
 opened directly beneath it — and here the trigger is up in the header and the panel is
 flush against it, so that gap is a seam under the topbar instead. It is zeroed for both
 modes, because the rail has the same seam.
 
-`allow-discrete` is the other half, and it is on the closed state rather than on the panel:
+### The transition arrives with the first tap
+
+A transition live from the first frame is a drawer that closes itself while you watch. Closed
+is the state the panel _arrives_ in — the element writes it at upgrade, from the query — so on
+a load where the script lands after the first paint, which is a cold cache or a slow phone,
+the browser has the rail already drawn and is asked for a closed drawer. It animates the
+difference, and the page's opening move is the navigation sliding off-screen. No transition
+until something asks for one, and nothing has asked yet:
+
+```javascript
+drawer.button.addEventListener("click", () => {
+  drawer.region.classList.add("sidebar-ready");
+  void drawer.region.offsetWidth;
+}, { once: true });
+```
+
+The first tap still slides, and the reflow is why. The listener is on the button, so it runs
+before the element's own handler catches the click on its way up, and reading `offsetWidth`
+flushes the closed panel with the transition already on it. Without that read the class and
+the state land in one recalc — a style change the transition was not there for, so the first
+tap would jump and every tap after it would slide.
+
+Counting frames instead does not hold, which is worth knowing before you try it: a closed
+panel painted for two `requestAnimationFrame`s still slid in from nothing the moment the rule
+arrived. And `:where()` rather than the bare class, so the specificity stays what it was and
+the reduced-motion rule below still wins on source order.
+
+Crossing the breakpoint before any tap snaps rather than slides — which is what the element
+already does with the state itself.
+
+`allow-discrete` is the other half of the transition, and it is on the closed state rather
+than on the panel:
 
 ```css
-#sidebar { transition: transform 0.2s ease; }
-#sidebar[hidden] { transition: transform 0.2s ease, content-visibility 0.2s allow-discrete; }
+#sidebar:where(.sidebar-ready) { transition: transform 0.2s ease; }
+#sidebar[hidden]:where(.sidebar-ready) { transition: transform 0.2s ease, content-visibility 0.2s allow-discrete; }
 ```
 
 `hidden="until-found"` computes to `content-visibility: hidden`, which is what keeps the
