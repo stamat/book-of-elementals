@@ -1,45 +1,5 @@
-import { removeAccents } from 'book-of-spells/src/helpers.mjs';
+import { matchesSearch } from 'book-of-spells/src/helpers.mjs';
 import { ElementBase, define, nextIndex } from '../../core.js';
-
-/** Single code points that carry a stroke rather than a combining mark, so decomposition
- * has nothing to strip off them. Serbian `đ` is the one that matters here; the rest are
- * the same shape of problem in the neighbouring alphabets. */
-const STROKES = { đ: 'd', ð: 'd', ł: 'l', ø: 'o', ħ: 'h' };
-
-/**
- * Text flattened to what a reader can type on any keyboard: lower case, with the
- * diacritics taken off.
- *
- * `removeAccents` is the sibling's, and does the part that is the same everywhere -
- * NFKD, the combining marks dropped, and the ligatures that are two letters wearing one
- * glyph (`œ`, `æ`, `ß`) spelled out. What it leaves is the stroked letters, which are
- * single code points with no mark to strip: `đ` comes out of decomposition exactly as it
- * went in, so a search for `dordevic` would miss `Đorđević` without the second pass.
- *
- * Not `slugify`, which is next door in the same file and looks like the same job. It is
- * for URLs, so it drops everything outside `[\w0-9-]` - `Београд` comes out empty, `北京`
- * comes out empty, `Đorđe` comes out as `ore`. A search box that cannot find a Cyrillic
- * city on a Serbian site is not a smaller bug than one that cannot fold an accent.
- */
-export function fold(text) {
-  return removeAccents(text).toLowerCase().replace(/[đðłøħ]/g, (c) => STROKES[c]);
-}
-
-/**
- * Whether an option's label answers what has been typed.
- *
- * "Contains" and not "starts with": the reader looking through a list of cities for
- * `york` knows New York is not spelled that way and is asking for the one word they
- * remember. Both sides fold, so a query typed with diacritics and one typed without both
- * land on the same options.
- *
- * An empty query matches everything, which is what makes the unfiltered list the same
- * code path as the filtered one.
- */
-export function matchesQuery(label, query) {
-  const needle = fold(query.trim());
-  return needle === '' || fold(label).includes(needle);
-}
 
 /**
  * Whether the popup opens upwards: only when it does not fit below and there is more
@@ -543,7 +503,7 @@ export class ComboboxElemental extends ElementBase {
   filter() {
     let shown = 0;
     for (const pair of this.pairs) {
-      const hit = matchesQuery(pair.option.text, this.query);
+      const hit = matchesSearch(pair.option.text, this.query);
       pair.item.hidden = !hit;
       if (hit) shown++;
     }

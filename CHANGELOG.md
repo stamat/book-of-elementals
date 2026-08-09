@@ -15,6 +15,22 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Changed
+
+- **`<combobox-elemental>` filters through `matchesSearch` from book-of-spells**, which is
+  where the function moved now that a second filtering list wants it. The dependency is
+  **`book-of-spells@^2.0.0`** — the major is theirs, for a `removeAccents` that folds letters
+  it used to leave alone and a `keyboard` module split out of `dom`.
+
+  Typing finds more than it did, in one direction only: `Þ`, `ẞ`, `Ŋ`, `ı`, `Ŧ` and `Ǥ` fold
+  now, where before only `đ ð ł ø ħ` did. Nothing that matched before stops matching. The
+  element's DOM, its roles and its CSS hooks are untouched.
+
+  Two exports went with the move: `fold` and `matchesQuery` are no longer importable from
+  `book-of-elementals/combobox`, and `fold` no longer exists anywhere — the stroked letters it
+  was working around are handled inside `removeAccents` itself now, which is where the bug
+  always was. Anything reaching for either wants `matchesSearch` from book-of-spells.
+
 ### Fixed
 
 - **The sidebar drawer example no longer slides itself shut on load.** Closed is the state the
