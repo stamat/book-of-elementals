@@ -22,7 +22,11 @@ copy-elemental {
   // declaring `color-scheme`, where a dark page keeps a white `Canvas`.
   --copy-elemental-surface: Canvas;
   --copy-elemental-border-color: color-mix(in srgb, currentcolor 30%, transparent);
-  --copy-elemental-hover: color-mix(in srgb, currentcolor 8%, var(--copy-elemental-surface));
+
+  // 10% is the book's one hover tint, mixed here into the surface rather than into
+  // transparency: this button is opaque so the code behind it stays hidden, and a tint that
+  // let any of it through would be a button you can read through on hover.
+  --copy-elemental-hover: color-mix(in srgb, currentcolor 10%, var(--copy-elemental-surface));
 
   // Green for the state that worked and red for the one that did not, both mixed towards
   // the page's own text color so they land in its palette rather than beside it. Colour is

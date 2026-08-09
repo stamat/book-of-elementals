@@ -1,0 +1,32 @@
+// Structure only: the axis, and the gap that keeps the controls off each other. The look -
+// the outline, the corners, what a pressed button does - is `theme.scss`, and optional.
+
+toolbar-elemental {
+  display: flex;
+  align-items: center;
+  gap: var(--toolbar-elemental-gap, 0.25rem);
+}
+
+// Not decoration. The element writes `aria-orientation="vertical"` off this same attribute,
+// and an arrow key map that says one thing while the bar is drawn running the other way is
+// a keyboard that disagrees with the screen - so which way the controls stack belongs to the
+// structure stylesheet and not to a look a page may replace.
+toolbar-elemental[vertical] {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+// A `role="group"` inside the bar is one set of related controls - the pattern's own way of
+// saying "these three belong together" - and it lays out the same way the bar does. The
+// arrows walk straight through it: a group divides the bar visually and for a screen reader,
+// and it is not a stop the keyboard has to enter and leave.
+toolbar-elemental [role="group"] {
+  display: flex;
+  align-items: center;
+  gap: var(--toolbar-elemental-gap, 0.25rem);
+}
+
+toolbar-elemental[vertical] [role="group"] {
+  flex-direction: column;
+  align-items: stretch;
+}

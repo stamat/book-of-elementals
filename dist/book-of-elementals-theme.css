@@ -423,7 +423,7 @@ copy-elemental {
   --copy-elemental-radius: 0.35rem;
   --copy-elemental-surface: Canvas;
   --copy-elemental-border-color: color-mix(in srgb, currentcolor 30%, transparent);
-  --copy-elemental-hover: color-mix(in srgb, currentcolor 8%, var(--copy-elemental-surface));
+  --copy-elemental-hover: color-mix(in srgb, currentcolor 10%, var(--copy-elemental-surface));
   --copy-elemental-copied-color: color-mix(in srgb, currentcolor 30%, #1a7f4b);
   --copy-elemental-error-color: color-mix(in srgb, currentcolor 30%, #e5484d);
   --copy-elemental-duration: 150ms;
@@ -715,7 +715,7 @@ navbar-elemental {
   --navbar-elemental-bar-thickness: 2px;
   --navbar-elemental-bar-gap: 0.35em;
   --navbar-elemental-surface: Canvas;
-  --navbar-elemental-hover: color-mix(in srgb, currentcolor 4%, transparent);
+  --navbar-elemental-hover: color-mix(in srgb, currentcolor 10%, transparent);
   --navbar-elemental-border: color-mix(in srgb, currentcolor 20%, transparent);
   --navbar-elemental-shadow: 0 4px 20px rgb(0 0 0 / 15%);
 }
@@ -997,6 +997,32 @@ segmented-elemental:dir(rtl)[data-index]::before {
   }
 }
 
+suggest-elemental {
+  --suggest-elemental-radius: 0.375rem;
+  --suggest-elemental-inset: 0.5rem;
+  --suggest-elemental-surface: Canvas;
+  --suggest-elemental-active: color-mix(in srgb, currentcolor 12%, transparent);
+  padding-block: calc(var(--suggest-elemental-inset) * 0.5);
+  color: CanvasText;
+  background: var(--suggest-elemental-surface);
+  border: 1px solid color-mix(in srgb, currentcolor 25%, transparent);
+  border-radius: var(--suggest-elemental-radius);
+  box-shadow: 0 0.25rem 0.75rem color-mix(in srgb, CanvasText 15%, transparent);
+  inline-size: 100%;
+}
+suggest-elemental [role=option] {
+  border-radius: calc(var(--suggest-elemental-radius) - 2px);
+}
+@media (forced-colors: active) {
+  suggest-elemental {
+    box-shadow: none;
+  }
+  suggest-elemental [role=option][data-active] {
+    color: HighlightText;
+    background: Highlight;
+  }
+}
+
 switch-elemental {
   --switch-elemental-width: 3.625rem;
   --switch-elemental-height: 2rem;
@@ -1198,6 +1224,60 @@ tabs-elemental[vertical] > [data-tabs-list] > li > [aria-selected=true] {
 tabs-elemental[vertical] > [data-tabs-panel] {
   padding-block-start: 0;
   padding-inline-start: var(--tabs-elemental-panel-inset);
+}
+
+toolbar-elemental {
+  --toolbar-elemental-gap: 0.25rem;
+  --toolbar-elemental-inset: 0.25rem;
+  --toolbar-elemental-radius: 0.375rem;
+  --toolbar-elemental-border: color-mix(in srgb, currentcolor 20%, transparent);
+  --toolbar-elemental-hover: color-mix(in srgb, currentcolor 10%, transparent);
+  --toolbar-elemental-pressed: color-mix(in srgb, currentcolor 18%, transparent);
+}
+
+toolbar-elemental {
+  padding: var(--toolbar-elemental-inset);
+  border: 1px solid var(--toolbar-elemental-border);
+  border-radius: var(--toolbar-elemental-radius);
+}
+
+toolbar-elemental > [role=group] + [role=group] {
+  padding-inline-start: var(--toolbar-elemental-inset);
+  border-inline-start: 1px solid var(--toolbar-elemental-border);
+}
+
+toolbar-elemental[vertical] > [role=group] + [role=group] {
+  padding-block-start: var(--toolbar-elemental-inset);
+  padding-inline-start: 0;
+  border-block-start: 1px solid var(--toolbar-elemental-border);
+  border-inline-start: 0;
+}
+
+toolbar-elemental button,
+toolbar-elemental a[href] {
+  padding: 0.35rem 0.5rem;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: var(--toolbar-elemental-radius);
+}
+toolbar-elemental button:hover,
+toolbar-elemental a[href]:hover {
+  background: var(--toolbar-elemental-hover);
+}
+toolbar-elemental button[aria-pressed=true],
+toolbar-elemental a[href][aria-pressed=true] {
+  background: var(--toolbar-elemental-pressed);
+}
+toolbar-elemental button:disabled, toolbar-elemental button[aria-disabled=true],
+toolbar-elemental a[href]:disabled,
+toolbar-elemental a[href][aria-disabled=true] {
+  cursor: default;
+  opacity: 0.45;
 }
 
 tooltip-elemental {

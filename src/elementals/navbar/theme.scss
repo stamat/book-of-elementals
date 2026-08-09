@@ -21,7 +21,7 @@ navbar-elemental {
   // background in both themes and in forced-colors, which no fixed color manages in even one
   // of them.
   --navbar-elemental-surface: Canvas;
-  --navbar-elemental-hover: color-mix(in srgb, currentcolor 4%, transparent);
+  --navbar-elemental-hover: color-mix(in srgb, currentcolor 10%, transparent);
   --navbar-elemental-border: color-mix(in srgb, currentcolor 20%, transparent);
   --navbar-elemental-shadow: 0 4px 20px rgb(0 0 0 / 15%);
 

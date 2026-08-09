@@ -33,14 +33,22 @@
             },
             {
               "name": "cursor",
-              "description": "Whether a row is already under the cursor\n`close` and `leave` both shut the popup and differ in what the key still has to do after.\nEscape is finished once the popup is gone, so its own default - emptying a search field -\nis the page's to keep. Tab was on its way out of the field, and swallowing it would cost\na second press to do what the first one already said.",
+              "description": "Whether a row is already under the cursor",
+              "optional": true,
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "tabCompletes",
+              "description": "Whether Tab may take the row under the cursor",
               "optional": true,
               "type": {
                 "text": "boolean"
               }
             }
           ],
-          "description": "What a key means to a listbox popup, given whether it is showing.\n\nThe [APG combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) keyboard\nmap for a textbox with a listbox popup, as a table rather than a branch tree, so it can\nbe read and tested without a DOM.\n\n`Home` and `End` are the pattern's one genuinely two-sided key, and it calls them\noptional: either they jump the list, or - \"if the combobox is editable\" - they return the\ncaret to the first character of what was typed. This field is always editable, so both\nanswers are right at different moments, and `cursor` is which moment it is.\n\nBefore an arrow key has put a cursor on a row the reader is still writing a query, and a\n`Home` that jumped the list rather than reaching the start of `install` would be the\nwrong answer on nearly every press. Once there is a cursor they are reading results\ninstead of writing, and the ends of the list are the only thing those keys can mean.",
+          "description": "What a key means to a listbox popup, given whether it is showing.\n\nThe [APG combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) keyboard\nmap for a textbox with a listbox popup, as a table rather than a branch tree, so it can\nbe read and tested without a DOM.\n\n`Home` and `End` are the pattern's one genuinely two-sided key, and it calls them\noptional: either they jump the list, or - \"if the combobox is editable\" - they return the\ncaret to the first character of what was typed. This field is always editable, so both\nanswers are right at different moments, and `cursor` is which moment it is.\n\nBefore an arrow key has put a cursor on a row the reader is still writing a query, and a\n`Home` that jumped the list rather than reaching the start of `install` would be the\nwrong answer on nearly every press. Once there is a cursor they are reading results\ninstead of writing, and the ends of the list are the only thing those keys can mean.\n\n`close` and `leave` both shut the popup and differ in what the key still has to do after.\nEscape is finished once the popup is gone, so its own default - emptying a search field -\nis the page's to keep. Tab was on its way out of the field, and swallowing it would cost\na second press to do what the first one already said.\n\n`tabCompletes` is the one exception, and it is opt-in because the rows here are links: a\nTab that took the one under the cursor would navigate away on a keystroke that means\n\"move along\". Where the rows are text about to be typed - a mention, an emoji - it is what\nevery editor does, so the markup asks for it rather than the element guessing.",
           "return": {
             "type": {
               "text": "\"open\"|\"open-first\"|\"open-last\"|\"move\"|\"first\"|\"last\"|\"activate\"|\"close\"|\"leave\"|null"
@@ -141,6 +149,11 @@
               "kind": "field",
               "name": "open",
               "description": "Whether the popup is showing. Reflected, so `[open]` is a styling hook too."
+            },
+            {
+              "kind": "field",
+              "name": "tabCompletes",
+              "description": "Whether Tab takes the row under the cursor rather than leaving the field."
             },
             {
               "kind": "method",
@@ -245,6 +258,14 @@
               },
               "description": "`id` of the text field that drives it. Without it the element does nothing.",
               "name": "for"
+            },
+            {
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Tab takes the row under the cursor instead of leaving. For a completer whose rows are text about to be typed; wrong for a list of links, which is why it is opt-in.",
+              "name": "tab-completes",
+              "default": "false"
             }
           ],
           "superclass": {

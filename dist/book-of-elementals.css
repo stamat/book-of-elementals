@@ -482,6 +482,44 @@ segmented-elemental > label:has(> input[type=radio]:focus-visible) {
   outline-offset: 2px;
 }
 
+suggest-elemental {
+  position: absolute;
+  z-index: 1;
+  max-height: var(--suggest-elemental-max-height, 20rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+suggest-elemental :where(ul, ol) {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+suggest-elemental [role=option] {
+  display: block;
+  padding: calc(var(--suggest-elemental-inset, 0.5rem) * 0.75) var(--suggest-elemental-inset, 0.5rem);
+  color: inherit;
+  text-decoration: none;
+}
+suggest-elemental [role=option][data-active] {
+  background: var(--suggest-elemental-active, color-mix(in srgb, currentcolor 12%, transparent));
+}
+suggest-elemental[data-side=block-end] {
+  inset-block-start: 100%;
+}
+suggest-elemental[data-side=block-start] {
+  inset-block-end: 100%;
+}
+suggest-elemental[data-align=start] {
+  inset-inline-start: 0;
+}
+suggest-elemental[data-align=end] {
+  inset-inline-end: 0;
+}
+suggest-elemental:not(:defined) {
+  position: static;
+  max-height: none;
+}
+
 switch-elemental {
   display: contents;
 }
@@ -520,12 +558,38 @@ tabs-elemental > [data-tabs-panel][hidden] {
   box-shadow: none;
 }
 
+toolbar-elemental {
+  display: flex;
+  align-items: center;
+  gap: var(--toolbar-elemental-gap, 0.25rem);
+}
+
+toolbar-elemental[vertical] {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+toolbar-elemental [role=group] {
+  display: flex;
+  align-items: center;
+  gap: var(--toolbar-elemental-gap, 0.25rem);
+}
+
+toolbar-elemental[vertical] [role=group] {
+  flex-direction: column;
+  align-items: stretch;
+}
+
 tooltip-elemental {
   display: contents;
 }
 
 tooltip-elemental[hidden],
 tooltip-elemental > [hidden] {
+  display: none;
+}
+
+tooltip-elemental:not(:defined):has(> [title]) > :last-child {
   display: none;
 }
 

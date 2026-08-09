@@ -7,7 +7,7 @@ copy-elemental {
   --copy-elemental-radius: 0.35rem;
   --copy-elemental-surface: Canvas;
   --copy-elemental-border-color: color-mix(in srgb, currentcolor 30%, transparent);
-  --copy-elemental-hover: color-mix(in srgb, currentcolor 8%, var(--copy-elemental-surface));
+  --copy-elemental-hover: color-mix(in srgb, currentcolor 10%, var(--copy-elemental-surface));
   --copy-elemental-copied-color: color-mix(in srgb, currentcolor 30%, #1a7f4b);
   --copy-elemental-error-color: color-mix(in srgb, currentcolor 30%, #e5484d);
   --copy-elemental-duration: 150ms;

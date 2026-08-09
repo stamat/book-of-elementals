@@ -38,6 +38,22 @@ test('Tab closes the popup on its way out of the field, where Escape closes it a
   expect(suggestAction('Tab', false, true)).toBe('leave');
 });
 
+// Opt-in, and never the default: these rows are links, so a Tab that took the one under the
+// cursor would navigate away from the page on a keystroke that means "move along". It is
+// right for a token completer, where the row is text about to be typed, and wrong for the
+// panel this element usually is - so the markup asks for it.
+test('Tab takes the row under the cursor only where the popup was told it may', () => {
+  expect(suggestAction('Tab', false, true, true, true)).toBe('activate');
+  expect(suggestAction('Tab', false, true, true, false)).toBe('leave');
+});
+
+// Nothing under the cursor is nothing to complete, and a Tab swallowed there is a reader
+// pressing it twice to leave a panel that had no answer for them.
+test('Tab with no cursor leaves, however the popup was told to treat it', () => {
+  expect(suggestAction('Tab', false, true, false, true)).toBe('leave');
+  expect(suggestAction('Tab', false, false, false, true)).toBe(null);
+});
+
 // A popup that is not showing has no opinion about any of these: Enter submits the form,
 // Escape clears the field, Tab leaves. Swallowing one is a field that cannot be used.
 test('a closed popup leaves Enter, Escape and Tab to the page', () => {

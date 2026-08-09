@@ -37,7 +37,7 @@
   }
 
   // src/elementals/suggest/index.js
-  function suggestAction(key, altKey, open, cursor) {
+  function suggestAction(key, altKey, open, cursor, tabCompletes) {
     if (!open) {
       if (key === "ArrowDown") return altKey ? "open" : "open-first";
       if (key === "ArrowUp") return "open-last";
@@ -49,7 +49,7 @@
     if (key === "End" && cursor) return "last";
     if (key === "Enter") return "activate";
     if (key === "Escape") return "close";
-    if (key === "Tab") return "leave";
+    if (key === "Tab") return cursor && tabCompletes ? "activate" : "leave";
     return null;
   }
   function suggestState(open, activeId) {
@@ -80,6 +80,13 @@
     }
     set open(value) {
       this.toggleAttribute("open", !!value);
+    }
+    /** Whether Tab takes the row under the cursor rather than leaving the field. */
+    get tabCompletes() {
+      return this.hasAttribute("tab-completes");
+    }
+    set tabCompletes(value) {
+      this.toggleAttribute("tab-completes", !!value);
     }
     connectedCallback() {
       if (this.initialized) return;
@@ -211,7 +218,7 @@
       }));
     }
     onKeyDown(e) {
-      const action = suggestAction(e.key, e.altKey, this.open, !!this.active);
+      const action = suggestAction(e.key, e.altKey, this.open, !!this.active, this.tabCompletes);
       if (!action) return;
       const options = this.options;
       if (action === "close" || action === "leave") {

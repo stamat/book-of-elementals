@@ -1,0 +1,166 @@
+---
+layout: poops-docs-theme/docs
+title: Toolbar
+description: A row of buttons the arrow keys walk and Tab passes in one step — the APG Toolbar pattern, across the page or down it.
+order: 13
+---
+
+# `<toolbar-elemental>`
+
+A bar of six buttons is six tab stops between the reader and whatever comes after it. The
+[APG Toolbar pattern](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/) is the answer: one
+tab stop for the bar, arrow keys between the controls inside it. That is all this element
+is — the role, the axis, and the single `tabindex="0"` that moves.
+
+<!-- demo toolbar -->
+
+```html
+<toolbar-elemental aria-label="Formatting">
+  <button type="button" aria-pressed="true">Bold</button>
+  <button type="button" aria-pressed="false">Italic</button>
+  <button type="button" aria-pressed="false">Code</button>
+  <button type="button">Link</button>
+  <button type="button" disabled>Undo</button>
+</toolbar-elemental>
+```
+
+_Tab in, then walk it with `←` and `→`. Tab again and you are past the whole bar, not one
+button further along it. `Undo` is skipped — the platform will not focus a `disabled`
+control, so the cursor does not stop where focus cannot follow._
+
+## The markup
+
+The buttons you would have written anyway, wrapped, and named:
+
+```html
+<toolbar-elemental aria-label="Formatting">
+  <button type="button">Bold</button>
+  <button type="button">Italic</button>
+</toolbar-elemental>
+```
+
+**Name it.** A toolbar takes its name from `aria-label`, or `aria-labelledby` where
+something on the page already says it. The element cannot invent one and does not pretend
+to — an unnamed toolbar is announced as "toolbar" and nothing more, and where a page has
+two of them, naming is not optional.
+
+Only `<button>` and `<a href>` are walked. A `<select>` or a text field wants the arrow keys
+for itself, so it is left alone and stays a tab stop of its own — which is also
+[MDN's advice](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/toolbar_role):
+keep a control like that out of a toolbar, or put it last.
+
+Both the pattern and MDN say a toolbar is for grouping **three or more** controls. Nothing
+here enforces it — two buttons are two tab stops, and a bar that saved one of them would be
+ceremony rather than a saving.
+
+## Groups
+
+Related controls go in a `role="group"` with its own label. The arrows run straight through
+it — six controls in two groups are one sequence, not two the keyboard has to enter and
+leave — and a screen reader announces the group on the way past.
+
+<!-- demo toolbar -->
+
+```html
+<toolbar-elemental aria-label="Formatting">
+  <div role="group" aria-label="Text">
+    <button type="button">Bold</button>
+    <button type="button">Italic</button>
+    <button type="button">Code</button>
+  </div>
+  <div role="group" aria-label="Blocks">
+    <button type="button">Quote</button>
+    <button type="button">List</button>
+  </div>
+  <div role="group" aria-label="History">
+    <button type="button">Undo</button>
+    <button type="button" disabled>Redo</button>
+  </div>
+</toolbar-elemental>
+```
+
+_Walk it with `→` from **Bold**. The group boundaries are not stops — the cursor crosses from
+**Code** to **Quote** on one press, and `End` reaches **Undo**, because `Redo` is disabled
+and the platform will not focus it._
+
+The element needs nothing told to it: the controls are found wherever they sit, so a group —
+or a [`<tooltip-elemental>`](tooltip.html) wrapped round a button — is a layer the walk sees
+through. The theme draws a rule between one group and the next, and never off either end.
+
+## Attributes
+
+| Attribute | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `vertical` | boolean | `false` | The bar runs down the page. Swaps the arrow keys with it, stacks the controls, and writes `aria-orientation="vertical"`. |
+
+`aria-orientation` is written only when it is true, because horizontal is the role's own
+default and a second copy of a fact is a second thing to keep in step.
+
+## Keyboard
+
+| Key | Horizontal | Vertical |
+| --- | --- | --- |
+| `→` `←` | previous / next control | left to the page |
+| `↓` `↑` | left to the page | previous / next control |
+| `Home` `End` | first / last control | first / last control |
+| `Tab` | past the whole bar | past the whole bar |
+| `Enter` `Space` | presses the control | presses the control |
+
+**The ends do not wrap.** Running off one is not how you get anywhere here — `Tab` is — and
+a bar that looped would be a bar a reader can walk forever without noticing they had.
+
+The off-axis arrows are not merely unused. A `↓` on a horizontal bar is the page scrolling,
+and a toolbar that swallowed it would pin the page under a reader who is passing through.
+
+The tab stop follows focus. Click the last button and the arrows carry on from there rather
+than jumping back to the start.
+
+## Disabled controls
+
+A `disabled` button keeps its place and is skipped by the arrows, because the platform will
+not focus one and a cursor that lands where focus cannot follow is a bar that stops moving.
+
+To keep a control reachable and merely inert — announced, explainable, not pressable — use
+`aria-disabled="true"` instead. It stays focusable, so the arrows still reach it, and the
+theme dims it the same way.
+
+Buttons that enable and disable as the document changes are the ordinary case, not an exotic
+one, so the element watches for it. Nothing has to call a refresh, and forgetting one would
+be a bar whose only tab stop had just gone `disabled`.
+
+## Without script
+
+Buttons, each its own tab stop. That is the state the pattern improves on rather than a
+broken one — nothing is authored `tabindex="-1"`, so nothing is lost when the script never
+arrives.
+
+## What it will not do
+
+No overflow menu, no wrapping, no `aria-pressed` bookkeeping, and no opinion about what the
+buttons do. A toggle button's state is yours to set; the theme reads it off `aria-pressed`
+rather than off a class, so there is one place it lives.
+
+## Styling
+
+The structure stylesheet lays the bar out on its axis and nothing else — that part is not
+decoration, because an `aria-orientation` that disagrees with which way the buttons are
+drawn is a keyboard that disagrees with the screen. The theme is optional and draws the bar
+and the controls in it.
+
+| Custom property | Default | What it does |
+| --- | --- | --- |
+| `--toolbar-elemental-gap` | `0.25rem` | Between the controls |
+| `--toolbar-elemental-inset` | `0.25rem` | Padding inside the bar |
+| `--toolbar-elemental-radius` | `0.375rem` | Corners of the bar, and of a control in it |
+| `--toolbar-elemental-border` | `color-mix(in srgb, currentcolor 20%, transparent)` | The bar's outline |
+| `--toolbar-elemental-hover` | `color-mix(in srgb, currentcolor 10%, transparent)` | A control under the pointer |
+| `--toolbar-elemental-pressed` | `color-mix(in srgb, currentcolor 18%, transparent)` | A control whose `aria-pressed` is true |
+
+```scss
+@use "book-of-elementals/toolbar/style.scss";
+@use "book-of-elementals/toolbar/theme.scss"; // optional
+```
+
+```javascript
+import "book-of-elementals/toolbar";
+```

@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Tooltip
 description: A description that shows on hover and on focus — and is still on the page when the script is not.
-order: 13
+order: 14
 ---
 
 # `<tooltip-elemental>`

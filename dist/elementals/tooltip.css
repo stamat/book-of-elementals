@@ -8,6 +8,10 @@ tooltip-elemental > [hidden] {
   display: none;
 }
 
+tooltip-elemental:not(:defined):has(> [title]) > :last-child {
+  display: none;
+}
+
 tooltip-elemental:defined[role=tooltip],
 tooltip-elemental:defined > [role=tooltip] {
   position: fixed;

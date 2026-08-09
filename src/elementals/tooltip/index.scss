@@ -17,6 +17,18 @@ tooltip-elemental > [hidden] {
   display: none;
 }
 
+// Before upgrade the bubble is a sentence in flow - the degradation this element promises,
+// and the reason the words are written rather than stored in an attribute. The `title` shape
+// is the one exception: there the platform's own tooltip is already carrying those exact
+// words until the element takes the attribute off, so the sentence beside it is a second
+// copy, painted for as long as the bundle takes to arrive.
+// Hidden only there, and only while undefined. A page whose script never lands keeps a
+// fallback either way - the native tooltip in this shape, the sentence in the other - which
+// is why this cannot simply hide every bubble by default.
+tooltip-elemental:not(:defined):has(> [title]) > :last-child {
+  display: none;
+}
+
 // The two shapes, and one rule: the element itself when `for` named a trigger elsewhere,
 // or the child it wraps. `:defined` guards both, because before upgrade - and forever, on
 // a page whose script never loaded - these are a sentence next to a control, and a

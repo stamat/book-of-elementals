@@ -30,6 +30,7 @@ holds the JavaScript helpers, this one holds the elements.
 | `<suggest-elemental>`    | [APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) with a listbox popup — a list of links a text field drives with the arrow keys |
 | `<switch-elemental>`     | [APG Switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/), for a setting that takes effect at once |
 | `<tabs-elemental>`       | [APG Tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), horizontal or vertical, on a list of in-page links |
+| `<toolbar-elemental>`    | [APG Toolbar](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/) — a row of buttons the arrows walk and Tab passes in one step |
 | `<tooltip-elemental>`    | [APG Tooltip](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/) as far as it has consensus — a description on hover and focus, still on the page without script |
 | `<copy-elemental>`       | No APG pattern — a `<button>`, the clipboard write behind it, and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-changes.html) every copy button forgets |
 
@@ -767,6 +768,34 @@ hidden with `hidden="until-found"`.
 The element is a `grid` with every panel in the same cell, which is the one layout it
 insists on: panels laid out one after another mean a page that jumps by the height of the
 last one every time you change tabs. `vertical` puts the strip beside them instead of above.
+
+## `<toolbar-elemental>`
+
+A row of buttons that costs the reader one tab stop instead of one per button:
+
+```html
+<toolbar-elemental aria-label="Formatting">
+  <button type="button">Bold</button>
+  <button type="button">Italic</button>
+  <button type="button">Code</button>
+</toolbar-elemental>
+```
+
+| Attribute  | Type    | Default | Description                                                              |
+| ---------- | ------- | ------- | ------------------------------------------------------------------------ |
+| `vertical` | boolean | `false` | The bar runs down the page. The arrow keys and `aria-orientation` go with it. |
+
+The element writes `role="toolbar"` and keeps a roving `tabindex` in step: `Tab` enters the
+bar and the next `Tab` is past all of it, with the arrows moving between the controls in
+between. It answers to the axis `aria-orientation` promises and not the other one, because a
+`↓` on a horizontal bar is the page scrolling. The ends do not wrap — `Tab` is how you leave,
+and a bar that looped is one you can walk forever without noticing.
+
+Name it. The element cannot invent an `aria-label` and does not pretend to. Only `<button>`
+and `<a href>` are walked, since a `<select>` or a text field wants the arrows for itself;
+`disabled` controls are skipped because the platform will not focus one, and `aria-disabled`
+is how you keep a control reachable and inert. Without script every button is a button, each
+its own tab stop.
 
 ## `<tooltip-elemental>`
 

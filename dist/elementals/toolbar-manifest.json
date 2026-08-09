@@ -1,0 +1,164 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/toolbar/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "toolbarKey",
+          "parameters": [
+            {
+              "name": "key",
+              "description": "`KeyboardEvent.key`",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "vertical",
+              "description": "Whether the bar runs down the page",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "Which of `stepIndex`'s keys an arrow means on this bar's axis, if any.\n\nA toolbar answers to one axis and leaves the other where it was pressed - Left/Right on\na bar across the page, Up/Down on one down it - which is the whole of what\n`aria-orientation` promises. The other axis is not merely unused: a Down arrow on a\nhorizontal bar is the page scrolling, and swallowing it would pin the page under a reader\nwho is only passing through.",
+          "return": {
+            "type": {
+              "text": "string|null"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<toolbar-elemental>` custom element.\n\nA row of buttons the arrow keys walk and Tab passes in one step, per the\n[APG Toolbar pattern](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/).\n\nA bar of six buttons is six tab stops between the reader and whatever is after it. The\npattern's answer is a roving `tabindex`: one stop for the bar, arrows between the\ncontrols inside it. That is all this element is - the role, the axis, and the one\n`tabindex=\"0\"` that moves.\n\nThe ends do not wrap. Running off one is not how you get anywhere here: Tab is, and a bar\nthat looped would be a bar a reader can walk forever without noticing they had.\n\n**Name it.** A toolbar takes its name from `aria-label`, or `aria-labelledby` if something\non the page already says it - and where there is more than one bar, naming them is not\noptional. The element cannot invent one, and does not pretend to: an unnamed toolbar is\nannounced as a toolbar and nothing else.\n\nLight DOM, no shadow root. Degrades to what it is: with no script, the buttons are\nbuttons, each its own tab stop. That is the state the pattern improves on, not a broken\none - nothing is lost when the script never arrives.",
+          "name": "ToolbarElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between the controls.",
+              "name": "--toolbar-elemental-gap",
+              "default": "0.25rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Padding inside the bar.",
+              "name": "--toolbar-elemental-inset",
+              "default": "0.25rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Corners of the bar and of a control inside it.",
+              "name": "--toolbar-elemental-radius",
+              "default": "0.375rem"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The bar's outline.",
+              "name": "--toolbar-elemental-border",
+              "default": "color-mix(in srgb, currentcolor 20%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "A control under the pointer.",
+              "name": "--toolbar-elemental-hover",
+              "default": "color-mix(in srgb, currentcolor 10%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "A control whose `aria-pressed` is true.",
+              "name": "--toolbar-elemental-pressed",
+              "default": "color-mix(in srgb, currentcolor 18%, transparent)"
+            }
+          ],
+          "slots": [
+            {
+              "description": "The controls: `<button>`s and links, in the order the arrows should walk them.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "vertical",
+              "description": "Whether the bar runs down the page. Reflected, so `[vertical]` is a styling hook."
+            },
+            {
+              "kind": "field",
+              "name": "controls",
+              "description": "The controls the arrows walk, in document order.\n\nA `disabled` button is left out because the platform will not focus one, and a cursor\nthat lands where focus cannot follow is a bar that stops moving. Keeping such a control\nreachable is `aria-disabled` on it instead - still focusable, still announced, and this\nlist still has it.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "wire",
+              "description": "Put the axis on the bar and the single tab stop inside it.\n\nThe stop follows focus where there is any, so a bar entered by clicking its last button\nis a bar the arrows carry on from there rather than one that jumps back to the start."
+            },
+            {
+              "kind": "method",
+              "name": "onFocusIn"
+            },
+            {
+              "kind": "method",
+              "name": "onKeyDown",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            }
+          ],
+          "attributes": [
+            {
+              "name": "vertical",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "The bar runs down the page rather than across it. Swaps the arrow keys with it, and says so with `aria-orientation`.",
+              "default": "false"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "toolbar-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "toolbarKey",
+          "declaration": {
+            "name": "toolbarKey",
+            "module": "src/elementals/toolbar/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ToolbarElemental",
+          "declaration": {
+            "name": "ToolbarElemental",
+            "module": "src/elementals/toolbar/index.js"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -3692,14 +3692,22 @@
             },
             {
               "name": "cursor",
-              "description": "Whether a row is already under the cursor\n`close` and `leave` both shut the popup and differ in what the key still has to do after.\nEscape is finished once the popup is gone, so its own default - emptying a search field -\nis the page's to keep. Tab was on its way out of the field, and swallowing it would cost\na second press to do what the first one already said.",
+              "description": "Whether a row is already under the cursor",
+              "optional": true,
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "tabCompletes",
+              "description": "Whether Tab may take the row under the cursor",
               "optional": true,
               "type": {
                 "text": "boolean"
               }
             }
           ],
-          "description": "What a key means to a listbox popup, given whether it is showing.\n\nThe [APG combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) keyboard\nmap for a textbox with a listbox popup, as a table rather than a branch tree, so it can\nbe read and tested without a DOM.\n\n`Home` and `End` are the pattern's one genuinely two-sided key, and it calls them\noptional: either they jump the list, or - \"if the combobox is editable\" - they return the\ncaret to the first character of what was typed. This field is always editable, so both\nanswers are right at different moments, and `cursor` is which moment it is.\n\nBefore an arrow key has put a cursor on a row the reader is still writing a query, and a\n`Home` that jumped the list rather than reaching the start of `install` would be the\nwrong answer on nearly every press. Once there is a cursor they are reading results\ninstead of writing, and the ends of the list are the only thing those keys can mean.",
+          "description": "What a key means to a listbox popup, given whether it is showing.\n\nThe [APG combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) keyboard\nmap for a textbox with a listbox popup, as a table rather than a branch tree, so it can\nbe read and tested without a DOM.\n\n`Home` and `End` are the pattern's one genuinely two-sided key, and it calls them\noptional: either they jump the list, or - \"if the combobox is editable\" - they return the\ncaret to the first character of what was typed. This field is always editable, so both\nanswers are right at different moments, and `cursor` is which moment it is.\n\nBefore an arrow key has put a cursor on a row the reader is still writing a query, and a\n`Home` that jumped the list rather than reaching the start of `install` would be the\nwrong answer on nearly every press. Once there is a cursor they are reading results\ninstead of writing, and the ends of the list are the only thing those keys can mean.\n\n`close` and `leave` both shut the popup and differ in what the key still has to do after.\nEscape is finished once the popup is gone, so its own default - emptying a search field -\nis the page's to keep. Tab was on its way out of the field, and swallowing it would cost\na second press to do what the first one already said.\n\n`tabCompletes` is the one exception, and it is opt-in because the rows here are links: a\nTab that took the one under the cursor would navigate away on a keystroke that means\n\"move along\". Where the rows are text about to be typed - a mention, an emoji - it is what\nevery editor does, so the markup asks for it rather than the element guessing.",
           "return": {
             "type": {
               "text": "\"open\"|\"open-first\"|\"open-last\"|\"move\"|\"first\"|\"last\"|\"activate\"|\"close\"|\"leave\"|null"
@@ -3800,6 +3808,11 @@
               "kind": "field",
               "name": "open",
               "description": "Whether the popup is showing. Reflected, so `[open]` is a styling hook too."
+            },
+            {
+              "kind": "field",
+              "name": "tabCompletes",
+              "description": "Whether Tab takes the row under the cursor rather than leaving the field."
             },
             {
               "kind": "method",
@@ -3904,6 +3917,14 @@
               },
               "description": "`id` of the text field that drives it. Without it the element does nothing.",
               "name": "for"
+            },
+            {
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Tab takes the row under the cursor instead of leaving. For a completer whose rows are text about to be typed; wrong for a list of links, which is why it is opt-in.",
+              "name": "tab-completes",
+              "default": "false"
             }
           ],
           "superclass": {
@@ -4652,6 +4673,164 @@
           "declaration": {
             "name": "TabsElemental",
             "module": "src/elementals/tabs/index.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/toolbar/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "toolbarKey",
+          "parameters": [
+            {
+              "name": "key",
+              "description": "`KeyboardEvent.key`",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "vertical",
+              "description": "Whether the bar runs down the page",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "Which of `stepIndex`'s keys an arrow means on this bar's axis, if any.\n\nA toolbar answers to one axis and leaves the other where it was pressed - Left/Right on\na bar across the page, Up/Down on one down it - which is the whole of what\n`aria-orientation` promises. The other axis is not merely unused: a Down arrow on a\nhorizontal bar is the page scrolling, and swallowing it would pin the page under a reader\nwho is only passing through.",
+          "return": {
+            "type": {
+              "text": "string|null"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<toolbar-elemental>` custom element.\n\nA row of buttons the arrow keys walk and Tab passes in one step, per the\n[APG Toolbar pattern](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/).\n\nA bar of six buttons is six tab stops between the reader and whatever is after it. The\npattern's answer is a roving `tabindex`: one stop for the bar, arrows between the\ncontrols inside it. That is all this element is - the role, the axis, and the one\n`tabindex=\"0\"` that moves.\n\nThe ends do not wrap. Running off one is not how you get anywhere here: Tab is, and a bar\nthat looped would be a bar a reader can walk forever without noticing they had.\n\n**Name it.** A toolbar takes its name from `aria-label`, or `aria-labelledby` if something\non the page already says it - and where there is more than one bar, naming them is not\noptional. The element cannot invent one, and does not pretend to: an unnamed toolbar is\nannounced as a toolbar and nothing else.\n\nLight DOM, no shadow root. Degrades to what it is: with no script, the buttons are\nbuttons, each its own tab stop. That is the state the pattern improves on, not a broken\none - nothing is lost when the script never arrives.",
+          "name": "ToolbarElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between the controls.",
+              "name": "--toolbar-elemental-gap",
+              "default": "0.25rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Padding inside the bar.",
+              "name": "--toolbar-elemental-inset",
+              "default": "0.25rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Corners of the bar and of a control inside it.",
+              "name": "--toolbar-elemental-radius",
+              "default": "0.375rem"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The bar's outline.",
+              "name": "--toolbar-elemental-border",
+              "default": "color-mix(in srgb, currentcolor 20%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "A control under the pointer.",
+              "name": "--toolbar-elemental-hover",
+              "default": "color-mix(in srgb, currentcolor 10%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "A control whose `aria-pressed` is true.",
+              "name": "--toolbar-elemental-pressed",
+              "default": "color-mix(in srgb, currentcolor 18%, transparent)"
+            }
+          ],
+          "slots": [
+            {
+              "description": "The controls: `<button>`s and links, in the order the arrows should walk them.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "vertical",
+              "description": "Whether the bar runs down the page. Reflected, so `[vertical]` is a styling hook."
+            },
+            {
+              "kind": "field",
+              "name": "controls",
+              "description": "The controls the arrows walk, in document order.\n\nA `disabled` button is left out because the platform will not focus one, and a cursor\nthat lands where focus cannot follow is a bar that stops moving. Keeping such a control\nreachable is `aria-disabled` on it instead - still focusable, still announced, and this\nlist still has it.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "wire",
+              "description": "Put the axis on the bar and the single tab stop inside it.\n\nThe stop follows focus where there is any, so a bar entered by clicking its last button\nis a bar the arrows carry on from there rather than one that jumps back to the start."
+            },
+            {
+              "kind": "method",
+              "name": "onFocusIn"
+            },
+            {
+              "kind": "method",
+              "name": "onKeyDown",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            }
+          ],
+          "attributes": [
+            {
+              "name": "vertical",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "The bar runs down the page rather than across it. Swaps the arrow keys with it, and says so with `aria-orientation`.",
+              "default": "false"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "toolbar-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "toolbarKey",
+          "declaration": {
+            "name": "toolbarKey",
+            "module": "src/elementals/toolbar/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ToolbarElemental",
+          "declaration": {
+            "name": "ToolbarElemental",
+            "module": "src/elementals/toolbar/index.js"
           }
         }
       ]

@@ -17,15 +17,21 @@ import { ElementBase, define, nextIndex, placeFlyout } from '../../core.js';
  * wrong answer on nearly every press. Once there is a cursor they are reading results
  * instead of writing, and the ends of the list are the only thing those keys can mean.
  *
- * @param {string} key `KeyboardEvent.key`
- * @param {boolean} altKey Whether Alt was held
- * @param {boolean} open Whether the popup is showing
- * @param {boolean} [cursor=false] Whether a row is already under the cursor
  * `close` and `leave` both shut the popup and differ in what the key still has to do after.
  * Escape is finished once the popup is gone, so its own default - emptying a search field -
  * is the page's to keep. Tab was on its way out of the field, and swallowing it would cost
  * a second press to do what the first one already said.
  *
+ * `tabCompletes` is the one exception, and it is opt-in because the rows here are links: a
+ * Tab that took the one under the cursor would navigate away on a keystroke that means
+ * "move along". Where the rows are text about to be typed - a mention, an emoji - it is what
+ * every editor does, so the markup asks for it rather than the element guessing.
+ *
+ * @param {string} key `KeyboardEvent.key`
+ * @param {boolean} altKey Whether Alt was held
+ * @param {boolean} open Whether the popup is showing
+ * @param {boolean} [cursor=false] Whether a row is already under the cursor
+ * @param {boolean} [tabCompletes=false] Whether Tab may take the row under the cursor
  * @returns {"open"|"open-first"|"open-last"|"move"|"first"|"last"|"activate"|"close"|"leave"|null}
  *   `null` for a key this popup has no opinion about, which is every key that types a
  *   character.
@@ -36,8 +42,9 @@ import { ElementBase, define, nextIndex, placeFlyout } from '../../core.js';
  * suggestAction('Home', false, true, false) // => null, the caret is still the point
  * suggestAction('Home', false, true, true) // => 'first'
  * suggestAction('Tab', false, true) // => 'leave', closes and carries on out of the field
+ * suggestAction('Tab', false, true, true, true) // => 'activate', takes the row instead
  */
-export function suggestAction(key, altKey, open, cursor) {
+export function suggestAction(key, altKey, open, cursor, tabCompletes) {
   if (!open) {
     if (key === 'ArrowDown') return altKey ? 'open' : 'open-first';
     if (key === 'ArrowUp') return 'open-last';
@@ -49,7 +56,7 @@ export function suggestAction(key, altKey, open, cursor) {
   if (key === 'End' && cursor) return 'last';
   if (key === 'Enter') return 'activate';
   if (key === 'Escape') return 'close';
-  if (key === 'Tab') return 'leave';
+  if (key === 'Tab') return cursor && tabCompletes ? 'activate' : 'leave';
   return null;
 }
 
@@ -105,6 +112,7 @@ let suggestCount = 0;
  * @tag suggest-elemental
  * @attr {string} for - `id` of the text field that drives it. Without it the element does nothing.
  * @attr {boolean} [open=false] - Whether the popup is showing. Reflected, so `[open]` is a styling hook, and settable so whatever fills the list can show it.
+ * @attr {boolean} [tab-completes=false] - Tab takes the row under the cursor instead of leaving. For a completer whose rows are text about to be typed; wrong for a list of links, which is why it is opt-in.
  *
  * @cssprop {<length>} [--suggest-elemental-radius=0.375rem] - Corners of the popup.
  * @cssprop {<length>} [--suggest-elemental-inset=0.5rem] - The one padding unit: down the side of every option, and inside the popup's ends.
@@ -140,6 +148,15 @@ export class SuggestElemental extends ElementBase {
 
   set open(value) {
     this.toggleAttribute('open', !!value);
+  }
+
+  /** Whether Tab takes the row under the cursor rather than leaving the field. */
+  get tabCompletes() {
+    return this.hasAttribute('tab-completes');
+  }
+
+  set tabCompletes(value) {
+    this.toggleAttribute('tab-completes', !!value);
   }
 
   connectedCallback() {
@@ -303,7 +320,7 @@ export class SuggestElemental extends ElementBase {
   }
 
   onKeyDown(e) {
-    const action = suggestAction(e.key, e.altKey, this.open, !!this.active);
+    const action = suggestAction(e.key, e.altKey, this.open, !!this.active, this.tabCompletes);
     if (!action) return;
 
     const options = this.options;

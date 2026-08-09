@@ -17,6 +17,37 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Added
 
+- **`<toolbar-elemental>`** — a row of buttons the arrow keys walk and `Tab` passes in one
+  step, per the [APG Toolbar pattern](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/).
+
+  A bar of six buttons is six tab stops between the reader and whatever comes after it. The
+  pattern's answer is a roving `tabindex`: one stop for the bar, arrows between the controls
+  inside it. That is the whole element — the role, the axis, and the one `tabindex="0"` that
+  moves.
+
+  Wrap the buttons and name the bar with `aria-label`; the element cannot invent a name and
+  does not pretend to. `vertical` swaps the arrow keys and writes
+  `aria-orientation="vertical"`. The ends do not wrap, because `Tab` is how you leave and a
+  bar that looped is one a reader can walk forever without noticing.
+
+  Related controls go in a `role="group"` with its own label, and the arrows run straight
+  through it — six controls in two groups are one sequence, not two the keyboard has to enter
+  and leave. Nothing has to be told about the group: controls are found wherever they sit, so
+  a group, or a `<tooltip-elemental>` wrapped round a button, is a layer the walk sees
+  through. The theme draws a rule between one group and the next and never off either end.
+
+  Only `<button>` and `<a href>` are walked: a `<select>` or a text field wants the arrows
+  for itself, so it is left alone and stays a tab stop of its own. A `disabled` control is
+  skipped, since the platform will not focus one and a cursor that lands where focus cannot
+  follow is a bar that stops moving — `aria-disabled` is how you keep one reachable and
+  inert. Buttons that enable and disable as the document changes are watched for, so there
+  is no refresh to forget.
+
+  DOM it writes: `role="toolbar"` on itself, `aria-orientation="vertical"` only when
+  `vertical` is set, and `tabindex` on every button and link inside it. With scripting off
+  the buttons are buttons, each its own tab stop — the state the pattern improves on, not a
+  broken one.
+
 - **`<suggest-elemental>`** — a list of links a text field drives with the arrow keys, per
   the [APG Combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) with a
   listbox popup.
@@ -40,6 +71,13 @@ may already be targeting**, since neither shows up in a function signature.
   the language of whatever built the list. `open` is reflected and settable, so the thing
   that owns the query is the thing that shows the panel.
 
+  `tab-completes` opts Tab into taking the row under the cursor instead of leaving the
+  field — what a mention or emoji completer wants, where the row is text about to be typed.
+  It is off by default and stays that way, because these rows are links: on the panel this
+  element usually is, a Tab that took one would navigate off the page on a keystroke meaning
+  "move along". With no row under the cursor Tab leaves regardless, so a panel with no answer
+  never costs a second press.
+
   Not `<combobox-elemental>`, which is a view of a `<select>` — that one holds a value and
   its options carry `aria-selected`. These options are links: destinations, not values. The
   two share the cursor mechanics and nothing else.
@@ -52,6 +90,16 @@ may already be targeting**, since neither shows up in a function signature.
   With scripting off it is a list of links, in flow and visible.
 
 ### Changed
+
+- **One hover tint across the book.** Every optional theme that tints a control under the
+  pointer now mixes `currentcolor` at **10%**, which is what `menu`, `tabs` and `carousel`
+  already used. Two were out of step and neither had a reason written down beside it:
+  `--navbar-elemental-hover` was 4% and `--copy-elemental-hover` was 8%.
+
+  A navbar link and a copy button therefore darken more under the pointer than before. Both
+  are custom properties, so a page that liked the old value re-declares one line;
+  `--copy-elemental-hover` keeps mixing into `--copy-elemental-surface` rather than into
+  transparency, because that button is opaque on purpose — it sits over a code block.
 
 - **`<combobox-elemental>` filters through `matchesSearch` from book-of-spells**, which is
   where the function moved now that a second filtering list wants it. The dependency is
@@ -82,6 +130,16 @@ may already be targeting**, since neither shows up in a function signature.
   not.
 
 ### Fixed
+
+- **`<tooltip-elemental>` no longer paints the bubble before it upgrades, in the `title`
+  shape.** A trigger with a `title` and a matching bubble had its words on screen twice
+  between parse and upgrade: once as the sentence in flow, once as the native tooltip the
+  attribute still gave. The sentence is now hidden while the element is `:not(:defined)`,
+  and **only** where the trigger still carries a `title`.
+
+  Deliberately not hidden everywhere. In the other shape the sentence is the whole fallback,
+  and a page whose script never lands would lose it — so the rule keys off `:has(> [title])`,
+  which is exactly the case where the platform is already saying the same words.
 
 - **The sidebar drawer example no longer slides itself shut on load.** Closed is the state the
   panel _arrives_ in — the element writes it at upgrade, from the `media` query — but the
