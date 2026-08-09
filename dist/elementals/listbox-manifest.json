@@ -1,0 +1,278 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/listbox/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "listboxAction",
+          "parameters": [
+            {
+              "name": "key",
+              "description": "`KeyboardEvent.key`",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "altKey",
+              "description": "Whether Alt was held",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "open",
+              "description": "Whether the popup is showing",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "What a key means to a listbox popup, given whether it is showing.\n\nThe [APG combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) keyboard\nmap for a textbox with a listbox popup, as a table rather than a branch tree, so it can\nbe read and tested without a DOM.\n\n`Home` and `End` are deliberately absent. In this pattern they belong to the text field\n- they move the caret through what has been typed - and a popup that took them would\nstrand a reader trying to get back to the start of their own query.",
+          "return": {
+            "type": {
+              "text": "\"open\"|\"open-first\"|\"open-last\"|\"move\"|\"activate\"|\"close\"|null"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "listboxState",
+          "parameters": [
+            {
+              "name": "open",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "activeId",
+              "description": "`id` of the option the cursor is on, or null for none",
+              "type": {
+                "text": "string|null"
+              }
+            }
+          ],
+          "description": "The state a listbox and its control carry, for a given open state and cursor.\n\n`activedescendant: null` means the attribute comes off rather than being written empty:\nan `aria-activedescendant` pointing at nothing is a control claiming a cursor it does\nnot have, and screen readers announce the stale option.",
+          "return": {
+            "type": {
+              "text": "{expanded: string, hidden: boolean, activedescendant: string|null}"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<listbox-elemental>` custom element.\n\nA list of links a text field can drive with the arrow keys, per the\n[APG Combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) with a\nlistbox popup - the results panel every search field, filter and \"jump to\" box ends up\nneeding, and the half of it that has nothing to do with where the results came from.\n\nIt owns the keyboard and the ARIA and nothing else: no fetching, no filtering, no\nopinion about what put the links there. Give it an `<ul>` of `<a>` and point it at an\ninput, and typing, arrowing and Enter behave the way the pattern says.\n\n**Not `<combobox-elemental>`.** That one is a view of a `<select>`: it holds a value, it\nsubmits under a name, its options carry `aria-selected`. These options are links - they\nare destinations, not values, and there is nothing to select. The two share the cursor\nmechanics and nothing else.\n\nFocus never enters the list. The cursor is `aria-activedescendant` on the control, which\nis what lets someone keep typing while walking the results - a roving `tabindex` would\ntake the caret out of the field on the first arrow key.\n\nLight DOM, no shadow root. Degrades to what it is: with no script, a list of links,\nvisible and reachable. Nothing is authored `hidden`, so nothing is lost when the script\nis not there.",
+          "name": "ListboxElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Corners of the popup.",
+              "name": "--listbox-elemental-radius",
+              "default": "0.375rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "The one padding unit: down the side of every option, and inside the popup's ends.",
+              "name": "--listbox-elemental-inset",
+              "default": "0.5rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "How tall the popup gets before it scrolls.",
+              "name": "--listbox-elemental-max-height",
+              "default": "20rem"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "What the popup is painted on.",
+              "name": "--listbox-elemental-surface",
+              "default": "Canvas"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The option the cursor is on - where Enter would land, and what the pointer moves.",
+              "name": "--listbox-elemental-active",
+              "default": "color-mix(in srgb, currentcolor 12%, transparent)"
+            }
+          ],
+          "slots": [
+            {
+              "description": "The `<ul>` of `<a>` the popup shows. Replace its contents whenever you like; the element re-marks them.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "control",
+              "description": "The text field driving this popup - what `for` names.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "options",
+              "description": "The options, in document order. Links only: an `<a>` with no `href` is not a\ndestination, and a listbox option that goes nowhere is a dead row on the list.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "open",
+              "description": "Whether the popup is showing. Reflected, so `[open]` is a styling hook too."
+            },
+            {
+              "kind": "method",
+              "name": "mark",
+              "description": "Give the current children the roles and `id`s the pattern needs.\n\nA `listbox` may only own `option`s, and the markup between them here is a `<ul>` and\nan `<li>` per row - both of which carry list semantics of their own. `presentation`\ntakes those off without taking the boxes away, so the options are owned by the listbox\ndirectly and the CSS still has its list to lay out."
+            },
+            {
+              "kind": "method",
+              "name": "apply",
+              "description": "Push `open` onto the popup and its control."
+            },
+            {
+              "kind": "method",
+              "name": "applyCursor",
+              "description": "Write the cursor - `aria-activedescendant` on the control, a marker on the option."
+            },
+            {
+              "kind": "method",
+              "name": "moveTo",
+              "parameters": [
+                {
+                  "name": "index",
+                  "type": {
+                    "text": "number|null"
+                  }
+                }
+              ],
+              "description": "Move the cursor to an index, and scroll it into view.\n\n`nearest` rather than `center`: the cursor usually moves one row at a time, and a\npopup that re-centres on every arrow key slides the whole list under the reader when\nonly one line needed to come into view."
+            },
+            {
+              "kind": "method",
+              "name": "place",
+              "description": "Put the popup where there is room for it, as two attributes for the CSS to key off.\n\nThe element does not write coordinates: a light-DOM popup lives in the page's own\nstacking and layout, and an element setting `top` and `left` on it is an element\nfighting whatever the page already decided. `data-side` and `data-align` say which\ncorner won, and the stylesheet spends them."
+            },
+            {
+              "kind": "method",
+              "name": "onKeyDown",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onFocusOut",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onPointerMove",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onPointerDown",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onClick",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            }
+          ],
+          "events": [
+            {
+              "name": "listbox-toggle",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "`detail.open` is the new state."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "open",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether the popup is showing. Reflected, so `[open]` is a styling hook, and settable so whatever fills the list can show it.",
+              "default": "false"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "`id` of the text field that drives it. Without it the element does nothing.",
+              "name": "for"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "listbox-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "listboxAction",
+          "declaration": {
+            "name": "listboxAction",
+            "module": "src/elementals/listbox/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "listboxState",
+          "declaration": {
+            "name": "listboxState",
+            "module": "src/elementals/listbox/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ListboxElemental",
+          "declaration": {
+            "name": "ListboxElemental",
+            "module": "src/elementals/listbox/index.js"
+          }
+        }
+      ]
+    }
+  ]
+}

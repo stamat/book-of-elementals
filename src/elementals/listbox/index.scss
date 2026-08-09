@@ -1,0 +1,57 @@
+listbox-elemental {
+  // A box, unlike most of the book: this one is a floating panel, so it has to be
+  // positioned, sized and scrolled. Positioned against whatever the page has made the
+  // containing block - usually a wrapper around the field - because a light-DOM popup
+  // lives in the page's own layout and an element writing coordinates onto it is an
+  // element fighting a decision the page already made. The element writes `data-side`
+  // and `data-align`; these rules spend them.
+  position: absolute;
+  z-index: 1;
+  max-height: var(--listbox-elemental-max-height, 20rem);
+  overflow-y: auto;
+
+  // `overscroll-behavior` and not a scroll lock: reaching the end of the results should
+  // stop, not carry on into the page behind and take the field off screen with it.
+  overscroll-behavior: contain;
+
+  // The list inside is marked `role="presentation"`, which takes its semantics off and
+  // leaves its default look - a disc marker and an indent nobody asked for.
+  :where(ul, ol) {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  [role="option"] {
+    display: block;
+    padding: calc(var(--listbox-elemental-inset, 0.5rem) * 0.75) var(--listbox-elemental-inset, 0.5rem);
+
+    // The rows are links, and a panel of underlined blue is a panel nobody can read down.
+    // The row is the affordance here - the whole box highlights under the cursor.
+    color: inherit;
+    text-decoration: none;
+  }
+
+  // One cursor, driven from one place. `data-active` is written by the element for both
+  // the keyboard and the pointer, so a hover rule is not needed and would be a second
+  // answer to the same question: the pointer moving already moves `data-active`, and a
+  // `:hover` beside it would light a second row whenever the two disagree.
+  [role="option"][data-active] {
+    background: var(--listbox-elemental-active, color-mix(in srgb, currentcolor 12%, transparent));
+  }
+
+  // Where the element said there was room. Block-start is the flip: the panel sits above
+  // the field instead of below it.
+  &[data-side="block-end"] { inset-block-start: 100%; }
+  &[data-side="block-start"] { inset-block-end: 100%; }
+  &[data-align="start"] { inset-inline-start: 0; }
+  &[data-align="end"] { inset-inline-end: 0; }
+
+  // Before the element is defined there is no field driving it and nothing to open it, so
+  // the panel is what it is: a list of links, in flow, visible. That is the whole of the
+  // degradation, and it is why nothing here is authored `hidden`.
+  &:not(:defined) {
+    position: static;
+    max-height: none;
+  }
+}

@@ -8,29 +8,6 @@
       "declarations": [
         {
           "kind": "function",
-          "name": "fold",
-          "parameters": [
-            {
-              "name": "text"
-            }
-          ],
-          "description": "Text flattened to what a reader can type on any keyboard: lower case, with the\ndiacritics taken off.\n\n`removeAccents` is the sibling's, and does the part that is the same everywhere -\nNFKD, the combining marks dropped, and the ligatures that are two letters wearing one\nglyph (`œ`, `æ`, `ß`) spelled out. What it leaves is the stroked letters, which are\nsingle code points with no mark to strip: `đ` comes out of decomposition exactly as it\nwent in, so a search for `dordevic` would miss `Đorđević` without the second pass.\n\nNot `slugify`, which is next door in the same file and looks like the same job. It is\nfor URLs, so it drops everything outside `[\\w0-9-]` - `Београд` comes out empty, `北京`\ncomes out empty, `Đorđe` comes out as `ore`. A search box that cannot find a Cyrillic\ncity on a Serbian site is not a smaller bug than one that cannot fold an accent."
-        },
-        {
-          "kind": "function",
-          "name": "matchesQuery",
-          "parameters": [
-            {
-              "name": "label"
-            },
-            {
-              "name": "query"
-            }
-          ],
-          "description": "Whether an option's label answers what has been typed.\n\n\"Contains\" and not \"starts with\": the reader looking through a list of cities for\n`york` knows New York is not spelled that way and is asking for the one word they\nremember. Both sides fold, so a query typed with diacritics and one typed without both\nland on the same options.\n\nAn empty query matches everything, which is what makes the unfiltered list the same\ncode path as the filtered one."
-        },
-        {
-          "kind": "function",
           "name": "flipsUp",
           "parameters": [
             {
@@ -420,22 +397,6 @@
         }
       ],
       "exports": [
-        {
-          "kind": "js",
-          "name": "fold",
-          "declaration": {
-            "name": "fold",
-            "module": "src/elementals/combobox/index.js"
-          }
-        },
-        {
-          "kind": "js",
-          "name": "matchesQuery",
-          "declaration": {
-            "name": "matchesQuery",
-            "module": "src/elementals/combobox/index.js"
-          }
-        },
         {
           "kind": "js",
           "name": "flipsUp",

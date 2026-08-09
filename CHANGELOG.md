@@ -15,6 +15,40 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Added
+
+- **`<listbox-elemental>`** — a list of links a text field drives with the arrow keys, per
+  the [APG Combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) with a
+  listbox popup.
+
+  Every search box, filter and "jump to" field grows the same panel, and every one of them
+  rebuilds the same keyboard from scratch: the cursor that is `aria-activedescendant` rather
+  than focus, so typing can carry on while you walk the list; `Enter` that belongs to the
+  panel while it is open and to the form while it is not; `Home` and `End` left with the
+  caret, which is the one people get wrong and which strands a reader trying to get back to
+  the start of their own query.
+
+  Give it a `<ul>` of `<a>` and point it at an input with `for`. Only `<a href>` becomes an
+  option; the `<ul>` and its `<li>`s are marked `role="presentation"`, since a `listbox` may
+  only own `option`s. Replacing the list's contents re-marks them — the element watches, so
+  there is no refresh to forget, and forgetting one would be a list a screen reader cannot
+  see.
+
+  It fetches nothing, filters nothing, ranks nothing and announces no count: "5 results" is
+  the language of whatever built the list. `open` is reflected and settable, so the thing
+  that owns the query is the thing that shows the panel.
+
+  Not `<combobox-elemental>`, which is a view of a `<select>` — that one holds a value and
+  its options carry `aria-selected`. These options are links: destinations, not values. The
+  two share the cursor mechanics and nothing else.
+
+  DOM it writes: `role="listbox"` and an `id` on itself, `role="option"` and an `id` per
+  link, `role="presentation"` on the list boxes, `data-active` on the row under the cursor,
+  and `data-side`/`data-align` for which corner the panel had room in — it writes no
+  coordinates, so the panel stays inside your layout. On the field: `role="combobox"`,
+  `aria-controls`, `aria-autocomplete="list"`, `aria-expanded` and `aria-activedescendant`.
+  With scripting off it is a list of links, in flow and visible.
+
 ### Changed
 
 - **`<combobox-elemental>` filters through `matchesSearch` from book-of-spells**, which is

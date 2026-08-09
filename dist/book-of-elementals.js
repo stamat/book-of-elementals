@@ -5,6 +5,9 @@
   var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
   // node_modules/book-of-spells/src/helpers.mjs
+  var objProto = Object.prototype;
+  var foldF64 = new Float64Array(1);
+  var foldU32 = new Uint32Array(foldF64.buffer);
   function stringToNumber(str) {
     if (/^\s*-?\d+\s*$/.test(str)) return parseInt(str);
     if (/^\s*-?\d+\.\d+\s*$/.test(str)) return parseFloat(str);
@@ -15,8 +18,42 @@
   function transformCamelCaseToDash(str) {
     return str.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
   }
+  var PLAIN = {
+    \u00C6: "AE",
+    \u00E6: "ae",
+    \u0152: "OE",
+    \u0153: "oe",
+    \u00DF: "ss",
+    "\u1E9E": "SS",
+    \u00DE: "TH",
+    \u00FE: "th",
+    \u0110: "D",
+    \u0111: "d",
+    \u00D0: "D",
+    \u00F0: "d",
+    \u00D8: "O",
+    \u00F8: "o",
+    \u0141: "L",
+    \u0142: "l",
+    \u013F: "L",
+    \u0140: "l",
+    \u0126: "H",
+    \u0127: "h",
+    \u0166: "T",
+    \u0167: "t",
+    \u01E4: "G",
+    \u01E5: "g",
+    \u014A: "N",
+    \u014B: "n",
+    \u0131: "i"
+  };
+  var PLAIN_RE = new RegExp(`[${Object.keys(PLAIN).join("")}]`, "g");
   function removeAccents(inputString) {
-    return inputString.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/Œ/g, "OE").replace(/œ/g, "oe").replace(/Æ/g, "AE").replace(/æ/g, "ae").replace(/ß/g, "ss").normalize("NFC");
+    return inputString.replace(PLAIN_RE, (c) => PLAIN[c]).normalize("NFKD").replace(/[\u0300-\u036f]/g, "").normalize("NFC");
+  }
+  function matchesSearch(label, search) {
+    const needle = removeAccents(search.trim()).toLowerCase();
+    return needle === "" || removeAccents(label).toLowerCase().includes(needle);
   }
 
   // node_modules/book-of-spells/src/dom.mjs
@@ -531,14 +568,6 @@
   define("checkbox-group-elemental", CheckboxGroupElemental);
 
   // src/elementals/combobox/index.js
-  var STROKES = { \u0111: "d", \u00F0: "d", \u0142: "l", \u00F8: "o", \u0127: "h" };
-  function fold(text) {
-    return removeAccents(text).toLowerCase().replace(/[đðłøħ]/g, (c) => STROKES[c]);
-  }
-  function matchesQuery(label, query) {
-    const needle = fold(query.trim());
-    return needle === "" || fold(label).includes(needle);
-  }
   function flipsUp(field, panelHeight, viewportHeight) {
     const below = viewportHeight - field.bottom;
     if (panelHeight <= below) return false;
@@ -861,7 +890,7 @@
     filter() {
       let shown = 0;
       for (const pair of this.pairs) {
-        const hit = matchesQuery(pair.option.text, this.query);
+        const hit = matchesSearch(pair.option.text, this.query);
         pair.item.hidden = !hit;
         if (hit) shown++;
       }
