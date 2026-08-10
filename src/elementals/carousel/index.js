@@ -133,9 +133,79 @@ export function swapHeight(from, to, reduced) {
   return !reduced && from !== to;
 }
 
-/** The name a slide gets when the markup gave it none: its place in the set. */
-export function slideName(index, count) {
-  return (index + 1) + ' of ' + count;
+/** The place in the set a slide is named by, where `position-text` said nothing. */
+const POSITION = '{n} of {total}';
+
+/**
+ * The name a slide gets when the markup gave it none: its place in the set.
+ *
+ * `1 of 10` is English, and it is the name a screen reader reads out for every slide in the
+ * carousel - so leaving it as the only string on this element a page cannot reach is
+ * leaving the most-read one. `position-text` is the whole template rather than the word
+ * between the numbers, because "of" between them is English's shape too: Japanese counts
+ * the other way round, `10 中の 3`.
+ *
+ * An empty attribute falls back rather than being honoured. It would otherwise write
+ * `aria-label=""`, and a slide with no name at all is worse than a slide named in the
+ * wrong language.
+ *
+ * @param {number} index - Which slide, from zero.
+ * @param {number} count - How many slides there are.
+ * @param {string|null} [template] - `position-text`, with `{n}` and `{total}` in it.
+ * @returns {string}
+ * @example
+ * slideName(2, 10) // => '3 of 10'
+ * slideName(2, 10, '{n} od {total}') // => '3 od 10'
+ */
+export function slideName(index, count, template) {
+  const text = template == null || template.trim() === '' ? POSITION : template;
+  return text.replace(/\{n\}/g, index + 1).replace(/\{total\}/g, count);
+}
+
+/**
+ * A picker button's accessible name: `slide-text` with the slide's number in it.
+ *
+ * `Slide 3` is English's order, and putting the number after the word is a decision this
+ * element has no business making for a language it cannot read. Hungarian writes `3. dia`,
+ * Japanese `3枚目`. A `slide-text` holding `{n}` says where the number goes and the element
+ * only fills it in; one that does not gets the number appended, which is what every
+ * `slide-text` written before this did.
+ *
+ * @param {string} word - `slide-text`, with or without `{n}` in it.
+ * @param {number} index - Which slide, from zero.
+ * @returns {string}
+ * @example
+ * markerName('Slide', 2) // => 'Slide 3'
+ * markerName('{n}. dia', 2) // => '3. dia'
+ */
+export function markerName(word, index) {
+  const number = index + 1;
+  if (word.indexOf('{n}') === -1) return word + ' ' + number;
+  return word.replace(/\{n\}/g, number);
+}
+
+/**
+ * The word a screen reader says in place of the role: `carousel` here, `slide` on each of
+ * them.
+ *
+ * `aria-roledescription` is author-localized by definition - it overrides the name assistive
+ * technology has for a role, in whatever language that technology had it in, so "the value
+ * should be translated when a page is localized"
+ * ([MDN](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-roledescription)).
+ * English baked into the element is a Serbian page whose slides announce themselves in
+ * English, and there is nothing the page can do about it.
+ *
+ * Whitespace is refused rather than written, which the same page asks for: the value must be
+ * "not empty and contains more than just whitespace characters". Honouring `" "` would
+ * override the role announcement with nothing at all, so a reader stops hearing "group" and
+ * hears nothing in its place - worse than the English it replaced.
+ *
+ * @param {string|null} raw - The attribute, as authored.
+ * @param {string} fallback - The English word to use when it said nothing usable.
+ * @returns {string}
+ */
+export function roleDescription(raw, fallback) {
+  return raw == null || raw.trim() === '' ? fallback : raw;
 }
 
 /**
@@ -304,7 +374,10 @@ function reducedMotion() {
  * @attr {string} [next-text=Next slide] - The next button's accessible name.
  * @attr {string} [play-text=Start slide rotation] - The rotation control's accessible name while stopped.
  * @attr {string} [pause-text=Stop slide rotation] - The rotation control's accessible name while rotating.
- * @attr {string} [slide-text=Slide] - The word in front of the number on a picker button. `Slide 3`.
+ * @attr {string} [slide-text=Slide] - The word in front of the number on a picker button. `Slide 3`. Holding `{n}` it says where the number goes instead: `{n}. dia`.
+ * @attr {string} [position-text={n} of {total}] - The name a slide gets where the markup gave it none. `{n}` is its number, `{total}` how many there are.
+ * @attr {string} [roledescription-text=carousel] - The word a screen reader says for the element instead of "group". Whitespace is refused, since a role announcement overridden with nothing is worse than one in the wrong language.
+ * @attr {string} [slide-roledescription-text=slide] - The same for each slide, instead of "group". Whitespace is refused for the same reason.
  * @attr {string} [picker-text=Choose slide to display] - The picker group's accessible name.
  *
  * @cssprop {<length-percentage>} [--carousel-elemental-slide-size=100%] - How wide one slide is. This is how many slides fit: `50%` for two, `33.333%` for three, or any expression - it is the flex basis.
@@ -517,7 +590,7 @@ export class CarouselElemental extends ElementBase {
       return;
     }
 
-    this.setAttribute('aria-roledescription', 'carousel');
+    this.setAttribute('aria-roledescription', roleDescription(this.getAttribute('roledescription-text'), 'carousel'));
     // `region` when the author named it, `group` when they did not. A region is a landmark,
     // and a landmark with no name is one more unnamed stop in the landmark list - while
     // `aria-roledescription` on an element with no role at all is silently nothing, which is
@@ -543,15 +616,17 @@ export class CarouselElemental extends ElementBase {
     if (this.fade || scroller.querySelector(FOCUSABLE)) scroller.removeAttribute('tabindex');
     else scroller.tabIndex = 0;
 
+    const position = this.getAttribute('position-text');
+    const slideRole = roleDescription(this.getAttribute('slide-roledescription-text'), 'slide');
     slides.forEach((slide, at) => {
       slide.setAttribute('role', 'group');
-      slide.setAttribute('aria-roledescription', 'slide');
+      slide.setAttribute('aria-roledescription', slideRole);
       slide.setAttribute('data-carousel-slide', '');
       const label = slide.getAttribute('aria-label');
       const authored = slide.hasAttribute('aria-labelledby')
         || (label !== null && label !== this.named.get(slide));
       if (authored) return;
-      const name = slideName(at, slides.length);
+      const name = slideName(at, slides.length, position);
       slide.setAttribute('aria-label', name);
       this.named.set(slide, name);
     });
@@ -635,7 +710,7 @@ export class CarouselElemental extends ElementBase {
 
     const word = this.getAttribute('slide-text') || 'Slide';
     this.slides.forEach((slide, at) => {
-      const marker = this.control('data-carousel-marker', word + ' ' + (at + 1), id);
+      const marker = this.control('data-carousel-marker', markerName(word, at), id);
       // The number stays visible: it is the accessible name's own visible half, so a theme
       // that draws these as dots is a choice a page makes rather than a label hidden by
       // default. `Slide 3` contains `3`, which is what WCAG asks of a name over a label.

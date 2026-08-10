@@ -46,6 +46,32 @@
           "description": "Which chip takes focus after the one at `index` is removed, or `-1` for the input.\n\n`count` is how many there were before the removal, so every index below the last one\nhands focus to whatever slid into its place, and removing the last one has nothing to\nslide - focus goes back to the input rather than to the document body, which is where\na keyboard reader loses the control entirely."
         },
         {
+          "kind": "function",
+          "name": "removeName",
+          "parameters": [
+            {
+              "name": "verb",
+              "description": "`remove-text`, with or without `{label}` in it.",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "label",
+              "description": "The option's own text.",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "description": "A chip remove button's accessible name: `remove-text` with the option it would remove.\n\nVerb then noun is English's order, and a `remove-text` the element concatenates in front\nof the label can only ever produce that one. German puts the verb last - `React\nentfernen` - so a page translating this had a verb and no way to move it. A `remove-text`\nholding `{label}` says where the option goes and the element only fills it in; one that\ndoes not gets the label appended, which is what every `remove-text` written before this\ndid.\n\nThe replacement is a function rather than the label itself, because `String.replace`\nreads `$&` and `$'` in a plain replacement as references back into the match - and the\nlabel is `<option>` text, which is whatever the page's data had in it.",
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          }
+        },
+        {
           "kind": "class",
           "description": "`<combobox-elemental>` custom element.\n\nA `<select>` given a text field to search it with, per the\n[APG Combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) - the\nsearchable, tag-holding select every application ends up needing and the platform\nstill has no answer for.\n\nThe gap is narrow and worth naming, because most of what these libraries do is now\nnative. `appearance: base-select` styles the button, the picker and every `<option>`\nwith ordinary CSS, which is the half people used to reach for select2 to get. What it\ndoes not do is **filter**: there is no typing your way down a list of four hundred\ncities, in any browser, with or without the new styling. That is what this element is,\nand it is why it is not simply a stylesheet.\n\nThe `<select>` stays, and stays the control. It holds the value, submits under its own\n`name`, resets, restores, honours `required` and `disabled`, and goes down with a\n`<fieldset disabled>` - none of which is written here, because a second element\nmirroring the state is a second element that can disagree with it. The field, the\nlistbox and the chips are a view of it; every pick sets `option.selected` and lets the\n`<select>` fire the `change` that was going to be listened for anyway.\n\n`multiple` on the `<select>` is what makes it multi-select. The chips, the\nremove buttons and `Backspace` on an empty field come with it - and the caret goes,\nsince a caret is the mark of a control holding one value out of a list and a field full\nof tags has already said what this one holds. It is the one part of\nthis element with no APG example behind it - the pattern's six are all single-select.\nWhat is written here follows the pattern where it speaks (`aria-multiselectable`,\n`aria-selected` on every option rather than only the chosen one, a listbox that stays\nopen across picks) and is plain buttons where it does not.\n\nLight DOM, no shadow root. This one *does* build markup - a field, a listbox and a\nchip per selection - which the elements wrapping native widgets do not have to. That\nmarkup is the public API and is documented as such.\n\nDegrades honestly: with no script the `<select>` is a `<select>`, which is the whole\ncontrol minus the searching. Nothing is hidden until there is something to hide it\nbehind.\n\nponytail: the option list is built once, at upgrade, and filtered by hiding. Replace\nthe `<option>`s at runtime and call `apply()`; wire a `MutationObserver` if that stops\nbeing rare.",
           "name": "ComboboxElemental",
@@ -384,7 +410,7 @@
               "type": {
                 "text": "string"
               },
-              "description": "The verb in a chip's remove button, in front of the option's label.",
+              "description": "The verb in a chip's remove button, in front of the option's label. Holding `{label}` it says where the label goes instead: `{label} entfernen`.",
               "default": "Remove"
             }
           ],
@@ -410,6 +436,14 @@
           "name": "focusAfterRemoval",
           "declaration": {
             "name": "focusAfterRemoval",
+            "module": "src/elementals/combobox/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "removeName",
+          "declaration": {
+            "name": "removeName",
             "module": "src/elementals/combobox/index.js"
           }
         },

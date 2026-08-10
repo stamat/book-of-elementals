@@ -99,6 +99,39 @@ may already be targeting**, since neither shows up in a function signature.
   the buttons are buttons, each its own tab stop — the state the pattern improves on, not a
   broken one.
 
+- **`<carousel-elemental>` takes `position-text`**, the name every unnamed slide gets. It was
+  `1 of 10`, built in the code with no attribute behind it — the most-read string on the
+  element, since a screen reader says it on arriving at every slide, and the only one a page
+  could not translate. `position-text="{n} od {total}"` makes it `3 od 10`.
+
+  The whole sentence rather than the word between the numbers, because `of` between two
+  numbers is English's *shape* as much as its word: Japanese counts the other way round,
+  `{total} 中の {n}`. Set to nothing it falls back to the English rather than being honoured,
+  since the alternative is `aria-label=""` and a slide with no name at all is worse than one
+  named in the wrong language.
+
+  The default is unchanged, so a carousel that sets nothing writes exactly what it wrote
+  before.
+
+- **`<carousel-elemental>` takes `roledescription-text` and `slide-roledescription-text`**,
+  the last two words it said in English with no way out: `aria-roledescription`, which is
+  `carousel` on the element and `slide` on each `<li>`. That attribute is
+  [author-localized by definition](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-roledescription)
+  — it replaces the name assistive technology has for a role, in whatever language that
+  technology had it in — so shipping it hardcoded meant a Serbian page whose slides announce
+  themselves in English and nothing the page could do about it.
+
+  Whitespace is refused rather than written. MDN asks that the value contain "more than just
+  whitespace characters", and honouring `" "` would override the role announcement with
+  nothing at all: a reader stops hearing "group" and hears nothing in its place, which is
+  worse than the English it replaced.
+
+  That closes the set. Every word this element says out loud is now an attribute — nine of
+  them, and the carousel page has [a sample with all nine
+  set](https://stamat.github.io/book-of-elementals/elementals/carousel.html#in-another-language).
+  Defaults are unchanged throughout, so a carousel that sets nothing writes what it always
+  did.
+
 - **`<suggest-elemental>`** — a list of links a text field drives with the arrow keys, per
   the [APG Combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) with a
   listbox popup.
@@ -141,6 +174,24 @@ may already be targeting**, since neither shows up in a function signature.
   With scripting off it is a list of links, in flow and visible.
 
 ### Changed
+
+- **`slide-text` and `remove-text` take a `{…}` placeholder, so the word order is the page's
+  and not English's.** Both attributes handed the element a word and let it decide where the
+  other half went: `slide-text` got a number appended after a space, `remove-text` got the
+  option's label appended after a space. That is English's order and only English's.
+  Hungarian numbers a slide `3. dia`, Japanese `3枚目`; German removes one with the verb last,
+  `React entfernen`. No value of either attribute could reach any of them — a page could
+  translate the word and was then stuck with the sentence built around it.
+
+  A `slide-text` holding `{n}`, or a `remove-text` holding `{label}`, says where that half
+  goes and the element only fills it in. `slide-text="{n}. dia"` is `3. dia`;
+  `remove-text="{label} entfernen"` is `React entfernen`. Every value written before this
+  keeps working unchanged, because an attribute with no placeholder in it still gets the
+  number or the label appended exactly as it did.
+
+  It matches `<search-elemental>`, whose `results-text` has taken `{n}` since it landed. No
+  DOM or CSS change: the same `aria-label`, on the same buttons, with the words in the order
+  the page asked for.
 
 - **`<carousel-elemental>`'s rotation control is drawn, opaque, and counts down.** It was `▶`
   and `⏸` typed as text on a button whose fill lost a specificity fight — three faults in one

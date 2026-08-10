@@ -168,8 +168,18 @@
   function swapHeight(from, to, reduced) {
     return !reduced && from !== to;
   }
-  function slideName(index, count) {
-    return index + 1 + " of " + count;
+  var POSITION = "{n} of {total}";
+  function slideName(index, count, template) {
+    const text = template == null || template.trim() === "" ? POSITION : template;
+    return text.replace(/\{n\}/g, index + 1).replace(/\{total\}/g, count);
+  }
+  function markerName(word, index) {
+    const number = index + 1;
+    if (word.indexOf("{n}") === -1) return word + " " + number;
+    return word.replace(/\{n\}/g, number);
+  }
+  function roleDescription(raw, fallback) {
+    return raw == null || raw.trim() === "" ? fallback : raw;
   }
   function currentSlide(starts, inset, fallback) {
     if (!starts.length) return fallback;
@@ -366,7 +376,7 @@
         this.strip();
         return;
       }
-      this.setAttribute("aria-roledescription", "carousel");
+      this.setAttribute("aria-roledescription", roleDescription(this.getAttribute("roledescription-text"), "carousel"));
       if (!this.hasAttribute("role")) {
         const named = this.hasAttribute("aria-label") || this.hasAttribute("aria-labelledby");
         this.setAttribute("role", named ? "region" : "group");
@@ -376,14 +386,16 @@
       scroller.setAttribute("role", "group");
       if (this.fade || scroller.querySelector(FOCUSABLE)) scroller.removeAttribute("tabindex");
       else scroller.tabIndex = 0;
+      const position = this.getAttribute("position-text");
+      const slideRole = roleDescription(this.getAttribute("slide-roledescription-text"), "slide");
       slides.forEach((slide, at) => {
         slide.setAttribute("role", "group");
-        slide.setAttribute("aria-roledescription", "slide");
+        slide.setAttribute("aria-roledescription", slideRole);
         slide.setAttribute("data-carousel-slide", "");
         const label = slide.getAttribute("aria-label");
         const authored = slide.hasAttribute("aria-labelledby") || label !== null && label !== this.named.get(slide);
         if (authored) return;
-        const name = slideName(at, slides.length);
+        const name = slideName(at, slides.length, position);
         slide.setAttribute("aria-label", name);
         this.named.set(slide, name);
       });
@@ -441,7 +453,7 @@
       this.picker.setAttribute("aria-label", this.getAttribute("picker-text") || "Choose slide to display");
       const word = this.getAttribute("slide-text") || "Slide";
       this.slides.forEach((slide, at) => {
-        const marker = this.control("data-carousel-marker", word + " " + (at + 1), id);
+        const marker = this.control("data-carousel-marker", markerName(word, at), id);
         marker.textContent = String(at + 1);
         this.picker.append(marker);
       });

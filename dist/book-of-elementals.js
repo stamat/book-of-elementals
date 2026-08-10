@@ -554,8 +554,18 @@
   function swapHeight(from, to, reduced) {
     return !reduced && from !== to;
   }
-  function slideName(index, count) {
-    return index + 1 + " of " + count;
+  var POSITION = "{n} of {total}";
+  function slideName(index, count, template) {
+    const text = template == null || template.trim() === "" ? POSITION : template;
+    return text.replace(/\{n\}/g, index + 1).replace(/\{total\}/g, count);
+  }
+  function markerName(word, index) {
+    const number = index + 1;
+    if (word.indexOf("{n}") === -1) return word + " " + number;
+    return word.replace(/\{n\}/g, number);
+  }
+  function roleDescription(raw, fallback) {
+    return raw == null || raw.trim() === "" ? fallback : raw;
   }
   function currentSlide(starts, inset, fallback) {
     if (!starts.length) return fallback;
@@ -752,7 +762,7 @@
         this.strip();
         return;
       }
-      this.setAttribute("aria-roledescription", "carousel");
+      this.setAttribute("aria-roledescription", roleDescription(this.getAttribute("roledescription-text"), "carousel"));
       if (!this.hasAttribute("role")) {
         const named = this.hasAttribute("aria-label") || this.hasAttribute("aria-labelledby");
         this.setAttribute("role", named ? "region" : "group");
@@ -762,14 +772,16 @@
       scroller.setAttribute("role", "group");
       if (this.fade || scroller.querySelector(FOCUSABLE)) scroller.removeAttribute("tabindex");
       else scroller.tabIndex = 0;
+      const position = this.getAttribute("position-text");
+      const slideRole = roleDescription(this.getAttribute("slide-roledescription-text"), "slide");
       slides.forEach((slide2, at) => {
         slide2.setAttribute("role", "group");
-        slide2.setAttribute("aria-roledescription", "slide");
+        slide2.setAttribute("aria-roledescription", slideRole);
         slide2.setAttribute("data-carousel-slide", "");
         const label = slide2.getAttribute("aria-label");
         const authored = slide2.hasAttribute("aria-labelledby") || label !== null && label !== this.named.get(slide2);
         if (authored) return;
-        const name = slideName(at, slides.length);
+        const name = slideName(at, slides.length, position);
         slide2.setAttribute("aria-label", name);
         this.named.set(slide2, name);
       });
@@ -827,7 +839,7 @@
       this.picker.setAttribute("aria-label", this.getAttribute("picker-text") || "Choose slide to display");
       const word = this.getAttribute("slide-text") || "Slide";
       this.slides.forEach((slide2, at) => {
-        const marker = this.control("data-carousel-marker", word + " " + (at + 1), id);
+        const marker = this.control("data-carousel-marker", markerName(word, at), id);
         marker.textContent = String(at + 1);
         this.picker.append(marker);
       });
@@ -1334,6 +1346,10 @@
   function focusAfterRemoval(count, index) {
     return index < count - 1 ? index : -1;
   }
+  function removeName(verb, label) {
+    if (verb.indexOf("{label}") === -1) return verb + " " + label;
+    return verb.replace(/\{label\}/g, () => label);
+  }
   var comboboxCount = 0;
   function el(tag, className) {
     const node = document.createElement(tag);
@@ -1602,7 +1618,7 @@
           const remove = el("button", "combobox-elemental-chip-remove");
           remove.type = "button";
           remove.disabled = disabled;
-          remove.setAttribute("aria-label", this.removeText + " " + option.text);
+          remove.setAttribute("aria-label", removeName(this.removeText, option.text));
           chip.append(label, remove);
           this.chips.append(chip);
         }
@@ -3550,8 +3566,8 @@
     if (query === last) return "idle";
     return "query";
   }
-  function searchStatus(state, count, labels) {
-    const strings = labels || {};
+  function searchStatus(state, count, texts) {
+    const strings = texts || {};
     if (state === "results") {
       if (strings.results) return strings.results.replace(/\{n\}/g, count);
       return count === 1 ? "1 result" : count + " results";
@@ -3559,6 +3575,11 @@
     if (state === "empty") return strings.empty || "No results";
     if (state === "error") return strings.error || "Search failed";
     return "";
+  }
+  function searchOpen(state, filled) {
+    if (state === "results") return true;
+    if (state === "empty") return !!filled;
+    return false;
   }
   function readNumber(raw, fallback) {
     if (raw == null || raw.trim() === "") return fallback;
@@ -3590,11 +3611,11 @@
       return readNumber(this.getAttribute("min"), MIN_LENGTH);
     }
     /** What the live region says, in the page's own words where it gave any. */
-    get labels() {
+    get texts() {
       return {
-        results: this.getAttribute("results-label"),
-        empty: this.getAttribute("empty-label"),
-        error: this.getAttribute("error-label")
+        results: this.getAttribute("results-text"),
+        empty: this.getAttribute("empty-text"),
+        error: this.getAttribute("error-text")
       };
     }
     connectedCallback() {
@@ -3683,8 +3704,20 @@
       return Array.from(this.querySelectorAll("a[href]")).filter((link) => !link.closest("form")).length;
     }
     /**
-     * A search has finished: show it, open the panel if there is anything in it, say what
-     * happened.
+     * Whether the panel has anything in it at all, which is a different question from how
+     * many answers are in it.
+     *
+     * Text rather than a selector, because an empty state is whatever the page wrote - a
+     * `<li>`, a paragraph, a line about what to try instead - and a list of shapes to match
+     * would be this element having an opinion about markup it does not own. An empty `<ul>`
+     * has no text; anything a reader could read does.
+     */
+    get filled() {
+      const panel = this.panel;
+      return !!panel && panel.textContent.trim() !== "";
+    }
+    /**
+     * A search has finished: show it, open or close the panel, say what happened.
      *
      * @param {"idle"|"results"|"empty"|"error"} state
      * @param {number} count
@@ -3692,8 +3725,8 @@
     settle(state, count) {
       this.mark(state);
       const panel = this.panel;
-      if (panel) panel.toggleAttribute("open", state === "results");
-      this.announce(searchStatus(state, count, this.labels));
+      if (panel) panel.toggleAttribute("open", searchOpen(state, this.filled));
+      this.announce(searchStatus(state, count, this.texts));
     }
     /** Settle from whatever ended up in the panel. */
     settleFromPanel() {

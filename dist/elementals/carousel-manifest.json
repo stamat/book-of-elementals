@@ -190,13 +190,86 @@
           "name": "slideName",
           "parameters": [
             {
-              "name": "index"
+              "name": "index",
+              "description": "Which slide, from zero.",
+              "type": {
+                "text": "number"
+              }
             },
             {
-              "name": "count"
+              "name": "count",
+              "description": "How many slides there are.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "template",
+              "description": "`position-text`, with `{n}` and `{total}` in it.",
+              "optional": true,
+              "type": {
+                "text": "string|null"
+              }
             }
           ],
-          "description": "The name a slide gets when the markup gave it none: its place in the set."
+          "description": "The name a slide gets when the markup gave it none: its place in the set.\n\n`1 of 10` is English, and it is the name a screen reader reads out for every slide in the\ncarousel - so leaving it as the only string on this element a page cannot reach is\nleaving the most-read one. `position-text` is the whole template rather than the word\nbetween the numbers, because \"of\" between them is English's shape too: Japanese counts\nthe other way round, `10 中の 3`.\n\nAn empty attribute falls back rather than being honoured. It would otherwise write\n`aria-label=\"\"`, and a slide with no name at all is worse than a slide named in the\nwrong language.",
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "markerName",
+          "parameters": [
+            {
+              "name": "word",
+              "description": "`slide-text`, with or without `{n}` in it.",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "index",
+              "description": "Which slide, from zero.",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "description": "A picker button's accessible name: `slide-text` with the slide's number in it.\n\n`Slide 3` is English's order, and putting the number after the word is a decision this\nelement has no business making for a language it cannot read. Hungarian writes `3. dia`,\nJapanese `3枚目`. A `slide-text` holding `{n}` says where the number goes and the element\nonly fills it in; one that does not gets the number appended, which is what every\n`slide-text` written before this did.",
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "roleDescription",
+          "parameters": [
+            {
+              "name": "raw",
+              "description": "The attribute, as authored.",
+              "type": {
+                "text": "string|null"
+              }
+            },
+            {
+              "name": "fallback",
+              "description": "The English word to use when it said nothing usable.",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "description": "The word a screen reader says in place of the role: `carousel` here, `slide` on each of\nthem.\n\n`aria-roledescription` is author-localized by definition - it overrides the name assistive\ntechnology has for a role, in whatever language that technology had it in, so \"the value\nshould be translated when a page is localized\"\n([MDN](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-roledescription)).\nEnglish baked into the element is a Serbian page whose slides announce themselves in\nEnglish, and there is nothing the page can do about it.\n\nWhitespace is refused rather than written, which the same page asks for: the value must be\n\"not empty and contains more than just whitespace characters\". Honouring `\" \"` would\noverride the role announcement with nothing at all, so a reader stops hearing \"group\" and\nhears nothing in its place - worse than the English it replaced.",
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          }
         },
         {
           "kind": "function",
@@ -644,9 +717,33 @@
               "type": {
                 "text": "string"
               },
-              "description": "The word in front of the number on a picker button. `Slide 3`.",
+              "description": "The word in front of the number on a picker button. `Slide 3`. Holding `{n}` it says where the number goes instead: `{n}. dia`.",
               "name": "slide-text",
               "default": "Slide"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "The name a slide gets where the markup gave it none. `{n}` is its number, `{total}` how many there are.",
+              "name": "position-text",
+              "default": "{n} of {total}"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "The word a screen reader says for the element instead of \"group\". Whitespace is refused, since a role announcement overridden with nothing is worse than one in the wrong language.",
+              "name": "roledescription-text",
+              "default": "carousel"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "The same for each slide, instead of \"group\". Whitespace is refused for the same reason.",
+              "name": "slide-roledescription-text",
+              "default": "slide"
             },
             {
               "type": {
@@ -719,6 +816,22 @@
           "name": "slideName",
           "declaration": {
             "name": "slideName",
+            "module": "src/elementals/carousel/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "markerName",
+          "declaration": {
+            "name": "markerName",
+            "module": "src/elementals/carousel/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "roleDescription",
+          "declaration": {
+            "name": "roleDescription",
             "module": "src/elementals/carousel/index.js"
           }
         },

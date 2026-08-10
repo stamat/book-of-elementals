@@ -74,6 +74,10 @@
   function focusAfterRemoval(count, index) {
     return index < count - 1 ? index : -1;
   }
+  function removeName(verb, label) {
+    if (verb.indexOf("{label}") === -1) return verb + " " + label;
+    return verb.replace(/\{label\}/g, () => label);
+  }
   var comboboxCount = 0;
   function el(tag, className) {
     const node = document.createElement(tag);
@@ -342,7 +346,7 @@
           const remove = el("button", "combobox-elemental-chip-remove");
           remove.type = "button";
           remove.disabled = disabled;
-          remove.setAttribute("aria-label", this.removeText + " " + option.text);
+          remove.setAttribute("aria-label", removeName(this.removeText, option.text));
           chip.append(label, remove);
           this.chips.append(chip);
         }

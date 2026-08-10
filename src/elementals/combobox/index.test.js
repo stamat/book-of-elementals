@@ -10,7 +10,7 @@
 // than against a DOM - the roles, the keyboard and the popup are checked in a browser
 // against the docs page, and against the APG combobox pattern it claims to implement.
 
-import { flipsUp, focusAfterRemoval } from './index.js';
+import { flipsUp, focusAfterRemoval, removeName } from './index.js';
 
 test('the popup opens downwards while there is room for it', () => {
   const field = { top: 100, bottom: 130 };
@@ -39,4 +39,34 @@ test('removing the last chip hands focus back to the input, which is `-1`', () =
   // on the document body - which is where a keyboard reader loses the control entirely.
   expect(focusAfterRemoval(3, 2)).toBe(-1);
   expect(focusAfterRemoval(1, 0)).toBe(-1);
+});
+
+test('a chip remove button is named for the verb and the option it would remove', () => {
+  expect(removeName('Remove', 'React')).toBe('Remove React');
+  expect(removeName('Ukloni', 'React')).toBe('Ukloni React');
+});
+
+// Verb then noun is English's order. German puts the verb last - `React entfernen` - and a
+// `remove-text` the element then concatenates in front of the label can only ever produce
+// `entfernen React`. `{label}` is what lets the page write the order its language uses.
+test('a verb holding {label} says where the option goes, for the languages that put it first', () => {
+  expect(removeName('{label} entfernen', 'React')).toBe('React entfernen');
+  expect(removeName('{label} を削除', 'React')).toBe('React を削除');
+});
+
+// The label is the `<option>`'s own text and lands in `aria-label`, which is a plain string
+// - but a page that writes `{label}` into its option text should get it back, not have it
+// read as a second placeholder to fill.
+test('a placeholder inside the option text is text, not another placeholder', () => {
+  expect(removeName('Remove {label}', '{label}')).toBe('Remove {label}');
+});
+
+// `String.replace` reads `$&`, `$'` and `` $` `` in the *replacement* as references back into
+// the match, so an option named `C$&C` substituted the plain way comes out as `C{label}C`.
+// The option's text is whatever the page's data had in it, which makes this the hostile
+// input this element actually sees.
+test('a dollar sign in an option name is a dollar sign, not a reference back into the match', () => {
+  expect(removeName('{label} entfernen', 'C$&C')).toBe('C$&C entfernen');
+  expect(removeName('{label} entfernen', "a$'b")).toBe("a$'b entfernen");
+  expect(removeName('{label} entfernen', 'net$$')).toBe('net$$ entfernen');
 });

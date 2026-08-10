@@ -36,6 +36,11 @@ wrong:
         <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.499 4.499 0 1 0-8.997 0A4.499 4.499 0 0 0 11.5 7Z"/>
       </svg>
       <input type="search" id="q" name="q" autocomplete="off" placeholder="type two letters">
+      <button type="button" class="clear" aria-label="Clear the search">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+          <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"/>
+        </svg>
+      </button>
     </form>
   </search>
 
@@ -56,8 +61,15 @@ search-elemental { max-width: 22rem; margin-block-end: 12rem; }
    control turns out to have */
 search-elemental form { display: grid; }
 search-elemental label { grid-row: 1; margin-block-end: 0.35rem; font-size: 0.875rem; }
-search-elemental svg, search-elemental input { grid-row: 2; grid-column: 1; }
-search-elemental svg {
+/* `form >` and not `search-elemental >`: the `<search>` landmark sits in between, and a
+   child combinator counting on it not to be there is a glyph that vanishes the day someone
+   adds the landmark. Direct child of the form, which is also what leaves the button's own
+   glyph alone */
+search-elemental form > svg, search-elemental input, search-elemental .clear {
+  grid-row: 2;
+  grid-column: 1;
+}
+search-elemental form > svg {
   place-self: center start;
   /* the two share a cell and the field is painted after, so the glyph needs lifting out
      from under its background — and taking out of the way of the click that focuses it */
@@ -72,8 +84,7 @@ search-elemental svg {
 search-elemental input {
   width: 100%;
   box-sizing: border-box;
-  padding: 0.5rem 0.75rem;
-  padding-inline-start: 2.25rem;
+  padding: 0.5rem 2.25rem;
   font: inherit;
   color: CanvasText;
   background: Canvas;
@@ -81,6 +92,37 @@ search-elemental input {
   border-radius: 0.375rem;
 }
 search-elemental input:focus-visible { outline: 2px solid CanvasText; outline-offset: 1px; }
+
+/* Chrome and Safari draw their own clear widget here; Firefox draws none. The one they do
+   draw is mouse-only and not in the accessibility tree, so it is taken off and replaced
+   with a button that is both */
+search-elemental input::-webkit-search-cancel-button { appearance: none; }
+search-elemental .clear {
+  place-self: center end;
+  z-index: 1;
+  display: grid;
+  margin-inline-end: 0.4rem;
+  padding: 0.25rem;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+search-elemental .clear svg { fill: color-mix(in srgb, CanvasText 55%, transparent); }
+search-elemental .clear:hover svg { fill: CanvasText; }
+/* the same ring the field gets: it is a tab stop, and a tab stop you cannot see you have
+   landed on is a control only a mouse can find — which was the whole complaint about the
+   native cross this replaced */
+search-elemental .clear:focus-visible {
+  outline: 2px solid CanvasText;
+  outline-offset: 1px;
+}
+search-elemental .clear:focus-visible svg { fill: CanvasText; }
+/* nothing to clear, so nothing to press — `visibility` and not `display`, because it also
+   takes the button out of the tab order rather than leaving an empty stop in it */
+search-elemental input:placeholder-shown ~ .clear { visibility: hidden; }
+
 search-elemental suggest-elemental { margin-block-start: 0.25rem; }
 small { display: block; opacity: 0.65; }
 ```
@@ -101,6 +143,16 @@ const PAGES = [
 ];
 
 const list = document.querySelector("suggest-elemental ul");
+
+// The clear button is the page's, and so is telling anyone it was pressed: setting `.value`
+// from script fires no `input` event, and without one the element never hears that the
+// query is gone — the panel would sit there answering a field that is now empty.
+const field = document.getElementById("q");
+document.querySelector(".clear").addEventListener("click", () => {
+  field.value = "";
+  field.dispatchEvent(new Event("input", { bubbles: true }));
+  field.focus();
+});
 
 // Escaped where it is interpolated, once, because a title with a quote in it would
 // otherwise close the attribute it sits in.
@@ -124,6 +176,35 @@ a preview is a frame with no url of its own, so a submit inside it would pull th
 site into a box a few hundred pixels tall. On your page they are an ordinary form and
 ordinary links.
 
+**The clear button is a real `<button>`, and that is not decoration.** `<input type="search">`
+gets a cross of its own in Chrome, Safari and Edge, and none at all in Firefox — and the one
+it gets is drawn by
+[`::-webkit-search-cancel-button`](https://developer.mozilla.org/en-US/docs/Web/CSS/::-webkit-search-cancel-button),
+which MDN marks non-standard and advises against in production. Checked in Chromium rather
+than assumed: the field reports to the accessibility tree as a single `searchbox` with no
+button inside it, and <kbd>Tab</kbd> from the field lands on the next control — so that cross
+is mouse-only and a screen reader is never told it is there. Styling it would put a nicer
+glyph on the browsers that already have one and leave the rest exactly as they were.
+
+A `<button>` with an `aria-label` is the same glyph plus a name, a tab stop, and Firefox. The
+sample takes the native one off with `appearance: none` so there are not two, and hides its
+own with `visibility: hidden` while the field is empty, which drops it out of the tab order
+along with the way it looks — a tab stop that clears an already-empty field is a keystroke
+that does nothing, and `visibility` is the one way to hide it that takes both away at once.
+
+Being a tab stop is the point, so it is drawn like one: `:focus-visible` gets the same ring
+as the field. A control you can reach and cannot see you have reached is
+[2.4.7 Focus Visible](https://www.w3.org/WAI/WCAG22/Understanding/focus-visible.html) unmet,
+and it would leave the replacement no better than the mouse-only cross it was put there to
+fix. Note that <kbd>Escape</kbd> empties a `type="search"` field in Chromium, so the button
+disappears in the same keystroke that closes the panel; that is the browser, not the element.
+
+The one part worth copying carefully is the last line of the handler: **setting `.value` from
+script fires no `input` event.** The element listens for `input` and nothing else, so a clear
+button that only empties the field leaves the panel open over a query that no longer exists.
+Dispatching one is what tells it. The same is true of `form.reset()` and a
+`<button type="reset">`, which fire `reset` and never `input`.
+
 ## The markup
 
 Three things, and you have written all of them before:
@@ -144,7 +225,9 @@ Three things, and you have written all of them before:
 - **The `<form>` is the degradation.** With no script, or before it arrives, <kbd>Enter</kbd>
   submits to `action` and the reader gets a search page. That is also what <kbd>Enter</kbd>
   does *with* the script when no row is under the cursor, so the fast path never stops
-  working.
+  working. No submit button, because one field does not need one — [the rule that makes that
+  true, and when it stops being true](#without-script), is worth knowing before you add a
+  second field.
 - **`<search>` is the landmark**, [Baseline since October
   2023](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/search) and
   worth exactly one line: it is `role="search"` without the attribute. It is optional here
@@ -190,6 +273,11 @@ theme's spinner until the promise settles either way.
         <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.499 4.499 0 1 0-8.997 0A4.499 4.499 0 0 0 11.5 7Z"/>
       </svg>
       <input type="search" id="pkg" name="q" autocomplete="off" placeholder="try: elemental">
+      <button type="button" class="clear" aria-label="Clear the search">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+          <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"/>
+        </svg>
+      </button>
     </form>
   </search>
 
@@ -203,12 +291,23 @@ theme's spinner until the promise settles either way.
 /* room for the whole panel: eight rows with a description each fill the 20rem the panel
    scrolls at, which is taller than the previous sample needs — a margin and not padding,
    because this box is the panel's containing block and padding would push it down too */
-search-elemental { max-width: 26rem; margin-block-end: 22rem; }
+/* the spinner moves in off the edge to leave the end of the field to the clear button: the
+   button is the one a reader reaches for and the one that has to hold still, so the thing
+   that comes and goes gets the inside lane */
+search-elemental {
+  max-width: 26rem;
+  margin-block-end: 22rem;
+  --search-elemental-spinner-inset-inline: 2.25rem;
+}
 
 search-elemental form { display: grid; }
 search-elemental label { grid-row: 1; margin-block-end: 0.35rem; font-size: 0.875rem; }
-search-elemental svg, search-elemental input { grid-row: 2; grid-column: 1; }
-search-elemental svg {
+/* `form >` and not `search-elemental >`: the `<search>` landmark sits in between */
+search-elemental form > svg, search-elemental input, search-elemental .clear {
+  grid-row: 2;
+  grid-column: 1;
+}
+search-elemental form > svg {
   place-self: center start;
   z-index: 1;
   margin-inline-start: 0.75rem;
@@ -219,9 +318,9 @@ search-elemental svg {
 search-elemental input {
   width: 100%;
   box-sizing: border-box;
-  /* room at the end for the spinner, which is drawn over the field and not inside it, and
-     at the start for the glyph sharing the cell */
-  padding: 0.5rem 2.25rem;
+  /* room at the start for the glyph, and at the end for two things sharing that side: the
+     clear button, and the spinner drawn over the field behind it */
+  padding: 0.5rem 4rem 0.5rem 2.25rem;
   font: inherit;
   color: CanvasText;
   background: Canvas;
@@ -229,6 +328,32 @@ search-elemental input {
   border-radius: 0.375rem;
 }
 search-elemental input:focus-visible { outline: 2px solid CanvasText; outline-offset: 1px; }
+
+search-elemental input::-webkit-search-cancel-button { appearance: none; }
+search-elemental .clear {
+  place-self: center end;
+  z-index: 1;
+  display: grid;
+  margin-inline-end: 0.4rem;
+  padding: 0.25rem;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+search-elemental .clear svg { fill: color-mix(in srgb, CanvasText 55%, transparent); }
+search-elemental .clear:hover svg { fill: CanvasText; }
+/* the same ring the field gets: it is a tab stop, and a tab stop you cannot see you have
+   landed on is a control only a mouse can find — which was the whole complaint about the
+   native cross this replaced */
+search-elemental .clear:focus-visible {
+  outline: 2px solid CanvasText;
+  outline-offset: 1px;
+}
+search-elemental .clear:focus-visible svg { fill: CanvasText; }
+search-elemental input:placeholder-shown ~ .clear { visibility: hidden; }
+
 search-elemental suggest-elemental { margin-block-start: 0.25rem; }
 small { display: block; opacity: 0.65; }
 
@@ -244,6 +369,15 @@ const API = "https://registry.npmjs.org/-/v1/search?size=8&text=";
 
 const search = document.querySelector("search-elemental");
 const list = document.querySelector("suggest-elemental ul");
+
+const field = document.getElementById("pkg");
+document.querySelector(".clear").addEventListener("click", () => {
+  field.value = "";
+  // `.value` from script fires nothing, and the element only listens for `input` — without
+  // this the panel keeps answering a query the reader has just thrown away
+  field.dispatchEvent(new Event("input", { bubbles: true }));
+  field.focus();
+});
 
 const escapeText = (value) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 
@@ -401,9 +535,32 @@ when no row is under the cursor.
 ## Without script
 
 A labelled search field in a form that submits. Nothing is authored `hidden` and nothing is
-`disabled`, so the page a reader lands on with no JavaScript is the page they would have got
-by pressing the button — which is why `action` is not optional in practice, however little
-the element cares about it.
+`disabled`, so the page a reader lands on with no JavaScript is the search page — which is
+why `action` is not optional in practice, however little the element cares about it.
+
+**No submit button is required, and one field is why.** The samples here have none because
+[implicit submission](https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#implicit-submission)
+covers them: a form with no submit button submits on <kbd>Enter</kbd> unless it holds *more
+than one* field that blocks implicit submission — `text`, `search`, `url`, `tel`, `email`,
+`password`, `date`, `month`, `week`, `time`, `datetime-local` or `number`. One search field
+is one such field, so <kbd>Enter</kbd> works.
+
+Add a second one — a second text box, a site filter, a password — and <kbd>Enter</kbd> stops
+submitting, with no error and nothing in the console. At that point a
+`<button type="submit">` is not decoration: it is the only way left to submit, both for a
+reader with no JavaScript and for anyone reaching the form by keyboard. Nothing in WCAG asks
+for the button; the HTML rule above is what decides whether you need one.
+
+The list is the spec's, and browsers do not all keep to it. Measured in Chromium 151, a
+`date`, `month`, `week`, `time` or `datetime-local` beside the search field does **not**
+block — <kbd>Enter</kbd> still submits, though the spec says it should not. `text`, `url`,
+`tel`, `email`, `password` and `number` behave as written. Read that as one more reason to
+add the button once the form grows past one field rather than to work out which second field
+is safe: the button is the same in every browser.
+
+The element has no opinion either way. It never touches <kbd>Enter</kbd> — that is
+`<suggest-elemental>`, which takes it only while a row is under the cursor and hands it back
+the rest of the time.
 
 ## What it will not do
 

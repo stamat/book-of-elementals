@@ -406,13 +406,86 @@
           "name": "slideName",
           "parameters": [
             {
-              "name": "index"
+              "name": "index",
+              "description": "Which slide, from zero.",
+              "type": {
+                "text": "number"
+              }
             },
             {
-              "name": "count"
+              "name": "count",
+              "description": "How many slides there are.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "template",
+              "description": "`position-text`, with `{n}` and `{total}` in it.",
+              "optional": true,
+              "type": {
+                "text": "string|null"
+              }
             }
           ],
-          "description": "The name a slide gets when the markup gave it none: its place in the set."
+          "description": "The name a slide gets when the markup gave it none: its place in the set.\n\n`1 of 10` is English, and it is the name a screen reader reads out for every slide in the\ncarousel - so leaving it as the only string on this element a page cannot reach is\nleaving the most-read one. `position-text` is the whole template rather than the word\nbetween the numbers, because \"of\" between them is English's shape too: Japanese counts\nthe other way round, `10 中の 3`.\n\nAn empty attribute falls back rather than being honoured. It would otherwise write\n`aria-label=\"\"`, and a slide with no name at all is worse than a slide named in the\nwrong language.",
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "markerName",
+          "parameters": [
+            {
+              "name": "word",
+              "description": "`slide-text`, with or without `{n}` in it.",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "index",
+              "description": "Which slide, from zero.",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "description": "A picker button's accessible name: `slide-text` with the slide's number in it.\n\n`Slide 3` is English's order, and putting the number after the word is a decision this\nelement has no business making for a language it cannot read. Hungarian writes `3. dia`,\nJapanese `3枚目`. A `slide-text` holding `{n}` says where the number goes and the element\nonly fills it in; one that does not gets the number appended, which is what every\n`slide-text` written before this did.",
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "roleDescription",
+          "parameters": [
+            {
+              "name": "raw",
+              "description": "The attribute, as authored.",
+              "type": {
+                "text": "string|null"
+              }
+            },
+            {
+              "name": "fallback",
+              "description": "The English word to use when it said nothing usable.",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "description": "The word a screen reader says in place of the role: `carousel` here, `slide` on each of\nthem.\n\n`aria-roledescription` is author-localized by definition - it overrides the name assistive\ntechnology has for a role, in whatever language that technology had it in, so \"the value\nshould be translated when a page is localized\"\n([MDN](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-roledescription)).\nEnglish baked into the element is a Serbian page whose slides announce themselves in\nEnglish, and there is nothing the page can do about it.\n\nWhitespace is refused rather than written, which the same page asks for: the value must be\n\"not empty and contains more than just whitespace characters\". Honouring `\" \"` would\noverride the role announcement with nothing at all, so a reader stops hearing \"group\" and\nhears nothing in its place - worse than the English it replaced.",
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          }
         },
         {
           "kind": "function",
@@ -860,9 +933,33 @@
               "type": {
                 "text": "string"
               },
-              "description": "The word in front of the number on a picker button. `Slide 3`.",
+              "description": "The word in front of the number on a picker button. `Slide 3`. Holding `{n}` it says where the number goes instead: `{n}. dia`.",
               "name": "slide-text",
               "default": "Slide"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "The name a slide gets where the markup gave it none. `{n}` is its number, `{total}` how many there are.",
+              "name": "position-text",
+              "default": "{n} of {total}"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "The word a screen reader says for the element instead of \"group\". Whitespace is refused, since a role announcement overridden with nothing is worse than one in the wrong language.",
+              "name": "roledescription-text",
+              "default": "carousel"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "The same for each slide, instead of \"group\". Whitespace is refused for the same reason.",
+              "name": "slide-roledescription-text",
+              "default": "slide"
             },
             {
               "type": {
@@ -935,6 +1032,22 @@
           "name": "slideName",
           "declaration": {
             "name": "slideName",
+            "module": "src/elementals/carousel/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "markerName",
+          "declaration": {
+            "name": "markerName",
+            "module": "src/elementals/carousel/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "roleDescription",
+          "declaration": {
+            "name": "roleDescription",
             "module": "src/elementals/carousel/index.js"
           }
         },
@@ -1209,6 +1322,32 @@
             }
           ],
           "description": "Which chip takes focus after the one at `index` is removed, or `-1` for the input.\n\n`count` is how many there were before the removal, so every index below the last one\nhands focus to whatever slid into its place, and removing the last one has nothing to\nslide - focus goes back to the input rather than to the document body, which is where\na keyboard reader loses the control entirely."
+        },
+        {
+          "kind": "function",
+          "name": "removeName",
+          "parameters": [
+            {
+              "name": "verb",
+              "description": "`remove-text`, with or without `{label}` in it.",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "label",
+              "description": "The option's own text.",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "description": "A chip remove button's accessible name: `remove-text` with the option it would remove.\n\nVerb then noun is English's order, and a `remove-text` the element concatenates in front\nof the label can only ever produce that one. German puts the verb last - `React\nentfernen` - so a page translating this had a verb and no way to move it. A `remove-text`\nholding `{label}` says where the option goes and the element only fills it in; one that\ndoes not gets the label appended, which is what every `remove-text` written before this\ndid.\n\nThe replacement is a function rather than the label itself, because `String.replace`\nreads `$&` and `$'` in a plain replacement as references back into the match - and the\nlabel is `<option>` text, which is whatever the page's data had in it.",
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          }
         },
         {
           "kind": "class",
@@ -1549,7 +1688,7 @@
               "type": {
                 "text": "string"
               },
-              "description": "The verb in a chip's remove button, in front of the option's label.",
+              "description": "The verb in a chip's remove button, in front of the option's label. Holding `{label}` it says where the label goes instead: `{label} entfernen`.",
               "default": "Remove"
             }
           ],
@@ -1575,6 +1714,14 @@
           "name": "focusAfterRemoval",
           "declaration": {
             "name": "focusAfterRemoval",
+            "module": "src/elementals/combobox/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "removeName",
+          "declaration": {
+            "name": "removeName",
             "module": "src/elementals/combobox/index.js"
           }
         },
@@ -3622,16 +3769,41 @@
               }
             },
             {
-              "name": "labels",
+              "name": "texts",
               "type": {
                 "text": "{results?: string|null, empty?: string|null, error?: string|null}"
               }
             }
           ],
-          "description": "What a settled search says in the live region.\n\n[WCAG 2.2 4.1.3 Status Messages](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html)\nis the whole reason this string exists: results appearing in a panel is a change a\nsighted reader sees and a screen reader user is told nothing about, and a search that\nfound nothing is the one they most need to hear.\n\nA search still in flight says nothing. The loader is for the eye - a polite region\nannouncing \"Searching…\" on every keystroke is a reader listening to their own typing,\nand the answer is a second or so behind it anyway.\n\nThe default is English and handles the one plural English has, because \"1 results\" is\nthe bug this exists not to ship. Any other language sets the labels, and `{n}` is\nsubstituted wherever it appears - a language whose plural needs more than one form\nwants a label set per query from JS, which is why this takes the strings rather than\nowning them.",
+          "description": "What a settled search says in the live region.\n\n[WCAG 2.2 4.1.3 Status Messages](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html)\nis the whole reason this string exists: results appearing in a panel is a change a\nsighted reader sees and a screen reader user is told nothing about, and a search that\nfound nothing is the one they most need to hear.\n\nA search still in flight says nothing. The loader is for the eye - a polite region\nannouncing \"Searching…\" on every keystroke is a reader listening to their own typing,\nand the answer is a second or so behind it anyway.\n\nThe default is English and handles the one plural English has, because \"1 results\" is\nthe bug this exists not to ship. Any other language sets the strings, and `{n}` is\nsubstituted wherever it appears - a language whose plural needs more than one form\nwants a string set per query from JS, which is why this takes them rather than owning\nthem.",
           "return": {
             "type": {
               "text": "string"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "searchOpen",
+          "parameters": [
+            {
+              "name": "state",
+              "type": {
+                "text": "\"idle\"|\"results\"|\"empty\"|\"error\""
+              }
+            },
+            {
+              "name": "filled",
+              "description": "Whether the panel has anything in it.",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "Whether the panel should be showing, for a settled state and a panel that does or does\nnot have something in it.\n\nAnswers are the obvious half. The other half is the empty search, and it has two right\nanswers depending on what the page did: a panel emptied out has nothing to show and\nclosing it is the only honest thing to do, but a page that put \"No packages match wombat\"\nin there has written the answer and hiding it would throw the answer away. So `empty`\nfollows the panel rather than the count - which is also the rule that keeps this element\nout of writing markup it does not own.\n\n`error` closes either way, and that is the asymmetry worth naming: what is in the panel\nafter a failed request is the *last* query's results, still sitting there because nothing\nreplaced them. Leaving those up under an error is the one outcome worse than showing\nnothing.",
+          "return": {
+            "type": {
+              "text": "boolean"
             }
           }
         },
@@ -3720,7 +3892,7 @@
             },
             {
               "kind": "field",
-              "name": "labels",
+              "name": "texts",
               "description": "What the live region says, in the page's own words where it gave any.",
               "readonly": true
             },
@@ -3759,6 +3931,12 @@
               "readonly": true
             },
             {
+              "kind": "field",
+              "name": "filled",
+              "description": "Whether the panel has anything in it at all, which is a different question from how\nmany answers are in it.\n\nText rather than a selector, because an empty state is whatever the page wrote - a\n`<li>`, a paragraph, a line about what to try instead - and a list of shapes to match\nwould be this element having an opinion about markup it does not own. An empty `<ul>`\nhas no text; anything a reader could read does.",
+              "readonly": true
+            },
+            {
               "kind": "method",
               "name": "settle",
               "parameters": [
@@ -3775,7 +3953,7 @@
                   }
                 }
               ],
-              "description": "A search has finished: show it, open the panel if there is anything in it, say what\nhappened."
+              "description": "A search has finished: show it, open or close the panel, say what happened."
             },
             {
               "kind": "method",
@@ -3831,14 +4009,14 @@
                 "text": "string"
               },
               "description": "What the live region announces on a hit. `{n}` is the count. Default: `5 results`, `1 result`.",
-              "name": "results-label"
+              "name": "results-text"
             },
             {
               "type": {
                 "text": "string"
               },
               "description": "What it announces when nothing matched.",
-              "name": "empty-label",
+              "name": "empty-text",
               "default": "No results"
             },
             {
@@ -3846,7 +4024,7 @@
                 "text": "string"
               },
               "description": "What it announces when the request failed.",
-              "name": "error-label",
+              "name": "error-text",
               "default": "Search failed"
             }
           ],
@@ -3872,6 +4050,14 @@
           "name": "searchStatus",
           "declaration": {
             "name": "searchStatus",
+            "module": "src/elementals/search/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "searchOpen",
+          "declaration": {
+            "name": "searchOpen",
             "module": "src/elementals/search/index.js"
           }
         },

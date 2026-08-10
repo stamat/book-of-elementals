@@ -135,13 +135,68 @@ instead, because a landmark with no name is one more unnamed stop in the landmar
 | `next-text`   | string  | `Next slide`              | The next button's accessible name.                              |
 | `play-text`   | string  | `Start slide rotation`    | The rotation control's name while stopped.                      |
 | `pause-text`  | string  | `Stop slide rotation`     | The rotation control's name while rotating.                     |
-| `slide-text`  | string  | `Slide`                   | The word in front of the number on a picker button — `Slide 3`. |
+| `slide-text`  | string  | `Slide`                   | The word in front of the number on a picker button — `Slide 3`. Holding `{n}` it says where the number goes instead, for a language that does not put it last — `{n}. dia`. |
 | `picker-text` | string  | `Choose slide to display` | The picker group's accessible name.                             |
+| `position-text` | string | `{n} of {total}`        | The name a slide gets where the markup gave it none. `{n}` is its number, `{total}` how many there are — the whole sentence, because `of` between two numbers is English's shape as much as its word: `{total} 中の {n}`. |
+| `roledescription-text` | string | `carousel`       | The word a screen reader says for the element instead of "group". |
+| `slide-roledescription-text` | string | `slide`    | The same for each slide. Whitespace is refused in both, since a role announcement overridden with nothing is worse than one in the wrong language. |
 
 There is no attribute for which slide is showing, and that is the design rather than an
 omission: the scroll position is the state. An index attribute would be a second copy of it,
 and a reader's thumb can change one of the two without telling the other. `fade` is the one
 mode where there is nothing to scroll, and there the element holds the index itself.
+
+### In another language
+
+Every word this element says out loud is an attribute — the nine `*-text` ones above, and no
+string left in the code for a page to be stuck with. None of them is visible; all of them are
+what a screen reader reads, which is exactly why it is easy to ship a page that is Serbian to
+the eye and English to the ear.
+
+<!-- demo carousel -->
+
+```html
+<carousel-elemental
+  aria-label="Planine"
+  roledescription-text="karusel"
+  slide-roledescription-text="slajd"
+  position-text="{n} od {total}"
+  prev-text="Prethodni slajd"
+  next-text="Sledeći slajd"
+  slide-text="Slajd"
+  picker-text="Izaberite slajd">
+  <ul>
+    <li><h3>Kopaonik</h3></li>
+    <li><h3>Đerdap</h3></li>
+    <li><h3>Tara</h3></li>
+  </ul>
+</carousel-elemental>
+```
+
+```css demo
+carousel-elemental li {
+  display: grid;
+  align-content: center;
+  padding: 1.5rem;
+  min-block-size: 7rem;
+  background: color-mix(in srgb, CanvasText 8%, Canvas);
+}
+h3 {
+  margin: 0;
+}
+```
+
+`roledescription-text` and `slide-roledescription-text` are the two that override
+`aria-roledescription`, which is
+[author-localized by definition](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-roledescription):
+it replaces the name assistive technology has for a role, in whatever language that
+technology had it in, so the value "should be translated when a page is localized". Set
+either to nothing but whitespace and it is refused rather than written — MDN asks that the
+value contain "more than just whitespace characters", and a role announcement overridden
+with nothing at all is worse than one in the wrong language.
+
+`autoplay` adds two more, `play-text` and `pause-text`. `aria-label` on the element is
+yours as it always was: the element cannot invent a name and does not try.
 
 ### Properties
 
@@ -188,9 +243,9 @@ lies about where it is would be the worse default.
 
 | Element        | Attributes                                                                                                                                                                                                                                                                                    |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| the element    | `aria-roledescription="carousel"`, `role="region"` (named) or `role="group"` (not), `data-carousel-at-start` / `data-carousel-at-end` while there is nowhere left to go that way, and `data-carousel-rotating` with an inline `--carousel-elemental-tick` while the timer is actually running |
+| the element    | `aria-roledescription="carousel"` — `roledescription-text` —, `role="region"` (named) or `role="group"` (not), `data-carousel-at-start` / `data-carousel-at-end` while there is nowhere left to go that way, and `data-carousel-rotating` with an inline `--carousel-elemental-tick` while the timer is actually running |
 | the list       | `role="group"`, `data-carousel-slides`, an `id` if it had none, `tabindex="0"` if nothing inside is focusable, and `aria-live` in `fade` only                                                                                                                                                 |
-| each `<li>`    | `role="group"`, `aria-roledescription="slide"`, `aria-label="3 of 10"` if it had no name, `data-carousel-slide`, and `data-carousel-current` on the one showing                                                                                                                               |
+| each `<li>`    | `role="group"`, `aria-roledescription="slide"` — `slide-roledescription-text` —, `aria-label="3 of 10"` — `position-text` — if it had no name, `data-carousel-slide`, and `data-carousel-current` on the one showing                                                                          |
 | the controls   | a `<div data-carousel-controls>` appended, holding the previous button, the picker and the next button                                                                                                                                                                                        |
 | previous, next | an Octicon chevron, and `aria-disabled` at the end it cannot pass                                                                                                                                                                                                                             |
 | the picker     | `role="group"`, `aria-label`, one `<button data-carousel-marker>` per slide with `aria-disabled="true"` on the current one                                                                                                                                                                    |

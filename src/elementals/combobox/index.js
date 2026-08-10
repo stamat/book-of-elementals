@@ -31,6 +31,32 @@ export function focusAfterRemoval(count, index) {
   return index < count - 1 ? index : -1;
 }
 
+/**
+ * A chip remove button's accessible name: `remove-text` with the option it would remove.
+ *
+ * Verb then noun is English's order, and a `remove-text` the element concatenates in front
+ * of the label can only ever produce that one. German puts the verb last - `React
+ * entfernen` - so a page translating this had a verb and no way to move it. A `remove-text`
+ * holding `{label}` says where the option goes and the element only fills it in; one that
+ * does not gets the label appended, which is what every `remove-text` written before this
+ * did.
+ *
+ * The replacement is a function rather than the label itself, because `String.replace`
+ * reads `$&` and `$'` in a plain replacement as references back into the match - and the
+ * label is `<option>` text, which is whatever the page's data had in it.
+ *
+ * @param {string} verb - `remove-text`, with or without `{label}` in it.
+ * @param {string} label - The option's own text.
+ * @returns {string}
+ * @example
+ * removeName('Remove', 'React') // => 'Remove React'
+ * removeName('{label} entfernen', 'React') // => 'React entfernen'
+ */
+export function removeName(verb, label) {
+  if (verb.indexOf('{label}') === -1) return verb + ' ' + label;
+  return verb.replace(/\{label\}/g, () => label);
+}
+
 /** Monotonic counter, so the listbox and its options have `id`s to be pointed at. */
 let comboboxCount = 0;
 
@@ -89,7 +115,7 @@ function el(tag, className) {
  * @attr {boolean} [open=false] - Whether the popup is showing. Reflected, so `[open]` is a styling hook.
  * @attr {string} placeholder - The field's placeholder. Single select falls back to the label of the option whose value is empty.
  * @attr {string} [empty-text=No matches] - What the popup says when the query matches nothing.
- * @attr {string} [remove-text=Remove] - The verb in a chip's remove button, in front of the option's label.
+ * @attr {string} [remove-text=Remove] - The verb in a chip's remove button, in front of the option's label. Holding `{label}` it says where the label goes instead: `{label} entfernen`.
  *
  * @cssprop {<length>} [--combobox-elemental-radius=0.375rem] - Corners of the field and the popup.
  * @cssprop {<length>} [--combobox-elemental-inset=0.5rem] - The one padding unit: inside the field, before the caret, and down the side of every option - and nowhere else, so the field's text and the popup's line up.
@@ -447,7 +473,7 @@ export class ComboboxElemental extends ElementBase {
         const remove = el('button', 'combobox-elemental-chip-remove');
         remove.type = 'button';
         remove.disabled = disabled;
-        remove.setAttribute('aria-label', this.removeText + ' ' + option.text);
+        remove.setAttribute('aria-label', removeName(this.removeText, option.text));
         chip.append(label, remove);
         this.chips.append(chip);
       }

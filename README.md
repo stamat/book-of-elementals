@@ -303,7 +303,7 @@ each. Wrap the `<select>` you would have written anyway; nothing else is read:
 | `open`        | boolean | `false`      | Whether the popup is showing. Reflected — it tracks the live state. |
 | `placeholder` | string  | —            | The field's placeholder. Single select falls back to the label of the option whose value is empty. |
 | `empty-text`  | string  | `No matches` | What the popup says when the query matches nothing.                |
-| `remove-text` | string  | `Remove`     | The verb in a chip's remove button, before the option's label.     |
+| `remove-text` | string  | `Remove`     | The verb in a chip's remove button, before the option's label — or holding `{label}`, wherever the language puts it: `{label} entfernen`. |
 
 Everything else is the `<select>`'s — `multiple`, `required`, `disabled`, `name`, and
 the options — because the `<select>` is still the control. It holds the value, submits,

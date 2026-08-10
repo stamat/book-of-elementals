@@ -15,7 +15,7 @@
 // `swipe()` in book-of-spells now, tested there. What stays here is the half that is the
 // carousel's own - which way `left` points when the reader reads right to left.
 
-import { currentSlide, rotationInterval, scrollEdges, slideName, startInset, stepSlide, swapHeight, swipeStep } from './index.js';
+import { currentSlide, markerName, roleDescription, rotationInterval, scrollEdges, slideName, startInset, stepSlide, swapHeight, swipeStep } from './index.js';
 
 test('next moves on by one, and stops at the end rather than wrapping', () => {
   // The buttons dim at the ends, and a control that looks spent and then jumps you back to
@@ -134,6 +134,56 @@ test('with nothing to measure the carousel stays where it was', () => {
 test('a slide with no name of its own is named by its place in the set', () => {
   expect(slideName(0, 10)).toBe('1 of 10');
   expect(slideName(9, 10)).toBe('10 of 10');
+});
+
+// `1 of 10` was English with no way out of it - the one string on this element a page could
+// not translate, and it is the name a screen reader reads for every slide.
+test('a page writes that place in its own language, with {n} and {total} for the two numbers', () => {
+  expect(slideName(2, 10, '{n} od {total}')).toBe('3 od 10');
+  expect(slideName(2, 10, '{total} 中の {n}')).toBe('10 中の 3');
+  expect(slideName(0, 4, 'slide {n}')).toBe('slide 1');
+});
+
+// An attribute set to nothing is not a page asking for slides with no name at all - which is
+// what an empty `aria-label` would leave, and worse than the English it replaced.
+test('a position text set to nothing falls back rather than leaving the slide nameless', () => {
+  expect(slideName(0, 3, '')).toBe('1 of 3');
+  expect(slideName(0, 3, '   ')).toBe('1 of 3');
+  expect(slideName(0, 3, null)).toBe('1 of 3');
+});
+
+// What a screen reader says instead of "group": "carousel", "slide". English until the page
+// says otherwise, and the page saying otherwise is the whole point - the value is
+// author-localized, so it is the page's to translate and not this element's to keep.
+test('the words a screen reader says for the carousel and its slides are the page\'s', () => {
+  expect(roleDescription('karusel', 'carousel')).toBe('karusel');
+  expect(roleDescription(null, 'carousel')).toBe('carousel');
+});
+
+// MDN asks that the value be "not empty and contains more than just whitespace characters",
+// and an `aria-roledescription=" "` is worse than the default it replaced: it is a role
+// announcement overridden with nothing, so a screen reader stops saying "group" and says
+// nothing in its place.
+// https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-roledescription
+test('a role description of nothing but space is refused, not written', () => {
+  expect(roleDescription('', 'slide')).toBe('slide');
+  expect(roleDescription('   ', 'slide')).toBe('slide');
+  expect(roleDescription('\t\n', 'slide')).toBe('slide');
+});
+
+test('a picker button is named by the word in front of its number', () => {
+  expect(markerName('Slide', 0)).toBe('Slide 1');
+  expect(markerName('Slajd', 2)).toBe('Slajd 3');
+});
+
+// A word and a space in front of a number is English's order and only English's. Hungarian
+// puts the number first with a full stop on it, Japanese puts a counter after it, and no
+// value of `slide-text` reaches either while the element is the one deciding where the
+// number goes. `{n}` is how the page takes that decision back.
+test('a word holding {n} says where the number goes, in languages that do not put it last', () => {
+  expect(markerName('{n}. dia', 2)).toBe('3. dia');
+  expect(markerName('{n}枚目', 2)).toBe('3枚目');
+  expect(markerName('{n} of {n}', 0)).toBe('1 of 1');
 });
 
 test('the interval is however many milliseconds the attribute says', () => {
