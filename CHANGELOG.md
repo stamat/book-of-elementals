@@ -15,6 +15,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-08-10
+
 ### Fixed
 
 - **Tapping an option on iOS Safari now picks it.** `<combobox-elemental>` and
