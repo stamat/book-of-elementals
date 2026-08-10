@@ -15,6 +15,10 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Fixes
+
+- Docs search listbox click fix from v0.7.2 now propagates through poops-docs-theme v4.0.2
+
 ## [0.7.2] - 2026-08-10
 
 ### Fixed
