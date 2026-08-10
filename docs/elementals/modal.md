@@ -51,7 +51,7 @@ What is left over is this element:
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
 | **an exit animation**       | a closing dialog leaves the top layer in the same frame, so it vanishes mid-fade. Deferring that is the [`overlay`](https://developer.mozilla.org/en-US/docs/Web/CSS/overlay) property — Chromium only, [no Firefox, no Safari](https://caniuse.com/mdn-css_properties_overlay) | holds the dialog open until its animation ends, then closes it    |
 | **a click on the backdrop** | [`closedby="any"`](https://caniuse.com/mdn-html_elements_dialog_closedby) is Chrome 134, Firefox 141, and not in Safari or iOS at all                                                                            | the same three values, implemented here, in every browser         |
-| **the page not scrolling**  | `inert` stops a click and a <kbd>Tab</kbd>. It never stopped a wheel                                                                                                                                             | `overflow: hidden` on the root while any modal is open            |
+| **the page not scrolling**  | `inert` stops a click and a <kbd>Tab</kbd>. It never stopped a wheel                                                                                                                                             | `overflow: hidden` on the root while any modal is open, and a reserved gutter so the page does not jump when the scrollbar goes |
 | **stacked backdrops**       | every modal paints its own, so three open is three sheets of dim                                                                                                                                                | numbers them, and only the bottom one dims                        |
 | **a name on the dialog**    | a `<dialog>` takes no name from its contents, so an unlabelled one is announced as "dialog" and nothing more                                                                                                     | points `aria-labelledby` at the first heading inside              |
 | **a close button**          | the APG [strongly recommends a visible one](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/); HTML gives you `<form method="dialog">` and leaves the rest                                                 | writes the cross in the corner, unless `closedby="none"`          |
@@ -509,6 +509,40 @@ the page, and a piece of the page a reader cannot get to is a piece of the page 
 > still be dragged. `overscroll-behavior: contain` on the dialog and its backdrop is what
 > closes that, and it is in `style.scss` already — Chrome 144 was the first to honour it
 > there, and the rest will follow.
+
+## The page does not jump when a modal opens
+
+Locking the scroll takes the scrollbar away with it, and on every platform that draws a
+classic one — Windows, most Linux, macOS set to _always show_ — the page behind is handed
+that width back as content and shifts sideways under the backdrop. The old fix was to
+measure the scrollbar in script and pad the body by it. `style.scss` reserves the space in
+CSS instead:
+
+```css
+html:has(modal-elemental) {
+  scrollbar-gutter: stable;
+}
+```
+
+[`scrollbar-gutter: stable`](https://developer.mozilla.org/en-US/docs/Web/CSS/scrollbar-gutter)
+holds the gutter whether the box overflows or not, and holds it under `overflow: hidden` as
+well, so opening a modal changes no width at all. It is on the page from the first paint
+rather than added with the modal, because a gutter that arrives on open is the same jump in
+the other direction on a page too short to have had a scrollbar — and it is scoped to a page
+that has a `<modal-elemental>` in it, so a page that can never lock keeps its layout
+untouched.
+
+What it costs: on those same classic-scrollbar platforms a page short enough not to scroll
+still shows the empty gutter. That is the trade — a strip that is always there against a
+layout that moves — and if you would rather have neither, `html { scrollbar-gutter: auto }`
+in your own stylesheet puts the jump back.
+
+Two things worth knowing. Safari before 18.2 does not implement the property and shifts as
+it always did; its scrollbars overlay the content by default, so there is usually nothing
+there to shift. And a `<modal-elemental>` **appended to the page later** brings the gutter
+with it, which is one jump at insertion instead of one at open — put the dialog in the
+markup, or set `scrollbar-gutter: stable` on `html` yourself, if a page builds its modals
+on the fly.
 
 ## API
 

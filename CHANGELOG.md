@@ -223,6 +223,20 @@ may already be targeting**, since neither shows up in a function signature.
   the reader reads right to left is the carousel's question; how far a finger has to travel is
   not.
 
+- **A page with a `<modal-elemental>` on it reserves the scrollbar gutter, so opening a modal
+  no longer shifts the page behind it.** Locking the scroll takes the scrollbar away with it,
+  and on a platform that draws a classic one the layout behind the backdrop is handed that
+  width back as content and jumps sideways. The usual fix measures the scrollbar in script and
+  pads the body by it, which is JavaScript for a question CSS now answers.
+
+  **CSS:** `style.scss` adds `html:has(modal-elemental) { scrollbar-gutter: stable }` — from
+  the first paint rather than with the open dialog, because a gutter that arrives with the
+  modal is the same jump in the other direction on a page too short to have had a scrollbar.
+  A page short enough not to scroll now shows an empty gutter where it showed none; `html {
+  scrollbar-gutter: auto }` in your own stylesheet takes it back, along with the shift. Safari
+  before 18.2 does not implement the property and behaves as it did before — its scrollbars
+  overlay the content, so there is rarely anything there to shift.
+
 ### Fixed
 
 - **The first `<suggest-elemental>` sample no longer loads the docs site into its own

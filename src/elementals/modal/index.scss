@@ -95,6 +95,20 @@ html:has(modal-elemental > dialog[data-depth]) {
   overflow: hidden;
 }
 
+// The lock above takes the scrollbar with it, and the page behind is handed that width back
+// as content: every centred layout jumps sideways the moment a modal opens. `stable` holds
+// the gutter whether the box overflows or not, and holds it under `overflow: hidden` too, so
+// the width never moves and nothing has to measure a scrollbar in script.
+// Deliberately not folded into the rule above: a gutter that arrives with the modal is the
+// same jump in the other direction on a page too short to have had a scrollbar.
+// Scoped to a page that has a modal at all, because a permanent gutter on a page that can
+// never lock is a stylesheet redecorating a page it was not asked about.
+// Safari before 18.2 ignores it; its scrollbars overlay the content, so there was less there
+// to shift in the first place.
+html:has(modal-elemental) {
+  scrollbar-gutter: stable;
+}
+
 // Before the element upgrades - and for good, if the script never arrives - a dialog is
 // `display: none` and everything in it is out of reach. A link to its `id` is what gets it
 // back: the fragment shows it in the flow of the page, unstyled and not modal, which is a
