@@ -217,11 +217,44 @@ combobox-elemental {
 
   // The group's name, and the only line in the popup that is not an option. Its `<span>`
   // is `aria-hidden`, so this is drawing for the eye what `aria-label` already says.
+
+  // Stuck to the top of the scroller while any of its own options are still on screen, and
+  // pushed off by the next group's - a name that scrolls away leaves the reader in a list of
+  // options belonging to a heading they can no longer see. It sticks inside its `<li>`, which
+  // is the group, so it is never the wrong name. `z-index` because an option a page positions
+  // for a badge of its own would otherwise paint over the name covering it.
+  // Opaque, or the rows would scroll through visibly behind it.
+  // Weight rather than a line above it: a divider is a second thing to keep in step with the
+  // indent below, and one that has to be suppressed at the top of the popup and after a
+  // filter hides everything above a group. Bold says heading on its own, at any width, and
+  // survives forced-colors where a hairline is repainted or dropped.
+  // The padding is lopsided on purpose - most of it above, almost none below - so the name
+  // sits with the options it belongs to rather than floating between two groups.
   .combobox-elemental-group-label {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 1;
     display: block;
-    padding: 0.35rem var(--combobox-elemental-inset);
-    font-size: 0.85em;
-    opacity: 0.7;
+    padding: 0.6em var(--combobox-elemental-inset) 0.15em;
+    font-weight: 700;
+    background: var(--combobox-elemental-surface);
+  }
+
+  // The members sit in from their name, which is what the native `<select>` does with an
+  // `<optgroup>` and the only part of the grouping a reader gets for free anywhere else.
+  // Padding and not a margin: the row is the target, and a margin would take the tint and
+  // the cursor off the part of it the indent moved.
+  .combobox-elemental-group .combobox-elemental-option {
+    padding-inline-start: calc(var(--combobox-elemental-inset) * 2.5);
+  }
+
+  // Where the group ends. Nothing is drawn under the last member, which is the native
+  // `<select>`'s answer too, and it leaves a loose option after one reading as one more
+  // member - `Pear` under `Citrus` is a claim about a pear. The indent is what says
+  // otherwise, and this gap is what keeps the un-indented row from arriving too close
+  // behind to read as the change it is.
+  .combobox-elemental-group {
+    padding-block-end: 0.35rem;
   }
 
   @media (forced-colors: active) {

@@ -47,8 +47,10 @@ on.
 The gallery is a list of buttons. `command` and `commandfor` open the dialog — that is the
 platform's own invoker, not something this book invented — and `data-index` is the page's own
 note of which picture the button belongs to. `fade` is the carousel's other mode: the slides
-stack in one cell and cross-fade instead of scrolling past each other, which is what a
-lightbox wants — nobody opening the fourth picture asked to watch the three before it go by.
+stack and cross-fade instead of scrolling past each other, which is what a lightbox wants —
+nobody opening the fourth picture asked to watch the three before it go by. The dialog then
+grows and shrinks with the picture showing, since a stack takes the height of the slide it is
+on rather than of the tallest one.
 
 ```html
 <ul class="gallery">

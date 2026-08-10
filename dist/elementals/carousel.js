@@ -165,6 +165,9 @@
     const inset = parseFloat(rtl ? styles.scrollPaddingRight : styles.scrollPaddingLeft);
     return Number.isFinite(inset) ? inset : 0;
   }
+  function swapHeight(from, to, reduced) {
+    return !reduced && from !== to;
+  }
   function slideName(index, count) {
     return index + 1 + " of " + count;
   }
@@ -177,14 +180,39 @@
   }
   var FOCUSABLE = "a[href], button, input, select, textarea, summary, iframe, [tabindex], [contenteditable]";
   var carouselCount = 0;
-  var CHEVRON = {
-    prev: "M9.78 12.78a.75.75 0 0 1-1.06 0L4.47 8.53a.75.75 0 0 1 0-1.06l4.25-4.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L6.06 8l3.72 3.72a.75.75 0 0 1 0 1.06Z",
-    next: "M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z"
+  var ICON = {
+    prev: {
+      d: "M9.78 12.78a.75.75 0 0 1-1.06 0L4.47 8.53a.75.75 0 0 1 0-1.06l4.25-4.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L6.06 8l3.72 3.72a.75.75 0 0 1 0 1.06Z",
+      box: "0 0 16 16"
+    },
+    next: {
+      d: "M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z",
+      box: "0 0 16 16"
+    },
+    // `play-24` is two paths, a triangle inside a ring, and this is the triangle: the button it
+    // goes in is already a circle with a countdown ring around it, and the icon's own would be
+    // the third concentric circle inside 28 pixels. `triangle-right-16` is the shape that looks
+    // like the obvious answer and is not - it is drawn as a disclosure twisty, 3.8 units wide
+    // against 7.1 tall, where a play triangle is nearly as wide as it is high.
+    //
+    // The box is cropped to 13.5 of the 24 it is drawn in, which renders the triangle at the
+    // height of the chevrons it is read beside, and sits half a unit left of the shape's centre.
+    // That half unit is the correction every play button wants and no geometry gives you: a
+    // triangle carries its area behind its point, so one centred on its bounding box reads as
+    // too far left. The square is symmetrical and keeps the box it came with.
+    play: {
+      d: "M9.5 15.584V8.416a.5.5 0 0 1 .77-.42l5.576 3.583a.5.5 0 0 1 0 .842l-5.576 3.584a.5.5 0 0 1-.77-.42Z",
+      box: "5.47 5.25 13.5 13.5"
+    },
+    stop: {
+      d: "M7.75 6h8.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 16.25 18h-8.5A1.75 1.75 0 0 1 6 16.25v-8.5C6 6.784 6.784 6 7.75 6Z",
+      box: "0 0 24 24"
+    }
   };
-  function chevron(d) {
+  function icon({ d, box }) {
     const ns = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(ns, "svg");
-    svg.setAttribute("viewBox", "0 0 16 16");
+    svg.setAttribute("viewBox", box);
     svg.setAttribute("width", "16");
     svg.setAttribute("height", "16");
     svg.setAttribute("fill", "currentColor");
@@ -250,6 +278,7 @@
       this.onIntersect = this.onIntersect.bind(this);
       this.onScroll = this.onScroll.bind(this);
       this.onSwipe = this.onSwipe.bind(this);
+      this.onHeightEnd = this.onHeightEnd.bind(this);
       this.suspend = this.suspend.bind(this);
       this.resume = this.resume.bind(this);
       this.onFocusOut = this.onFocusOut.bind(this);
@@ -259,6 +288,7 @@
       this.settling = null;
       this.settleTimer = null;
       this.swipes = null;
+      this.heights = null;
       this.named = /* @__PURE__ */ new WeakMap();
       this.addEventListener("click", this.onClick);
       this.addEventListener("mouseenter", this.suspend);
@@ -297,6 +327,7 @@
       if (this.scrolls) this.scrolls.removeEventListener("scroll", this.onScroll);
       this.scrolls = null;
       this.unswipe();
+      this.unpin();
       this.arrived();
       this.removeControls();
       this.painted = false;
@@ -364,9 +395,13 @@
       if (this.scrolls) this.scrolls.removeEventListener("scroll", this.onScroll);
       this.scrolls = null;
       this.unswipe();
+      this.unpin();
       this.arrived();
       if (this.fade) {
         this.swipes = swipe(scroller, { callback: this.onSwipe, threshold: SWIPE, mouse: false });
+        scroller.addEventListener("transitionend", this.onHeightEnd);
+        scroller.addEventListener("transitioncancel", this.onHeightEnd);
+        this.heights = scroller;
       } else {
         this.observer = new IntersectionObserver(this.onIntersect, {
           root: scroller,
@@ -399,7 +434,7 @@
       this.controls = document.createElement("div");
       this.controls.setAttribute("data-carousel-controls", "");
       this.prevButton = this.control("data-carousel-prev", this.getAttribute("prev-text") || "Previous slide", id);
-      this.prevButton.append(chevron(CHEVRON.prev));
+      this.prevButton.append(icon(ICON.prev));
       this.picker = document.createElement("div");
       this.picker.setAttribute("data-carousel-markers", "");
       this.picker.setAttribute("role", "group");
@@ -411,7 +446,7 @@
         this.picker.append(marker);
       });
       this.nextButton = this.control("data-carousel-next", this.getAttribute("next-text") || "Next slide", id);
-      this.nextButton.append(chevron(CHEVRON.next));
+      this.nextButton.append(icon(ICON.next));
       this.controls.append(this.prevButton, this.picker, this.nextButton);
       this.append(this.controls);
     }
@@ -445,7 +480,7 @@
       const stop = this.getAttribute("pause-text") || "Stop slide rotation";
       const start = this.getAttribute("play-text") || "Start slide rotation";
       this.rotateButton.setAttribute("aria-label", this.rotating ? stop : start);
-      this.rotateButton.textContent = this.rotating ? "\u23F8" : "\u25B6";
+      this.rotateButton.replaceChildren(icon(this.rotating ? ICON.stop : ICON.play));
     }
     /**
      * Where the row is now, read off the layout.
@@ -503,15 +538,18 @@
       this.index = at;
       this.applyEdges();
       if (!moved && this.painted) return;
+      const swap = this.fade && this.painted && moved;
       this.painted = true;
       this.markers.forEach((marker, index) => {
         if (index === at) marker.setAttribute("aria-disabled", "true");
         else marker.removeAttribute("aria-disabled");
       });
+      const from = swap ? this.scroller.getBoundingClientRect().height : 0;
       this.slides.forEach((slide, index) => {
         if (index === at) slide.setAttribute("data-carousel-current", "");
         else slide.removeAttribute("data-carousel-current");
       });
+      if (swap) this.resize(from);
       if (!moved) return;
       this.dispatchEvent(new CustomEvent("carousel-change", {
         bubbles: true,
@@ -535,6 +573,29 @@
       this.toggleAttribute("data-carousel-at-end", at.end);
       if (this.prevButton) this.prevButton.setAttribute("aria-disabled", String(at.start));
       if (this.nextButton) this.nextButton.setAttribute("aria-disabled", String(at.end));
+    }
+    /**
+     * Carry the stack's height from the slide that left to the slide that arrived.
+     *
+     * A transition needs two numbers and `auto` is neither of them, so the height the box had a
+     * moment ago is written back on, read once so the browser takes it as a start, and replaced
+     * with the height it is going to. `transitionend` hands the box back to `auto` as soon as it
+     * lands - which is what leaves a resize, a font arriving or an image that finally loaded to
+     * the layout, instead of to a pixel count taken before any of them happened.
+     *
+     * Measured off the scroller rather than off the slide, so whatever padding or `box-sizing`
+     * the page gave the list is inside both numbers instead of neither.
+     *
+     * @param {number} from The height the stack had before the current marker moved.
+     */
+    resize(from) {
+      const scroller = this.scroller;
+      scroller.style.height = "";
+      const to = scroller.getBoundingClientRect().height;
+      if (!swapHeight(from, to, reducedMotion())) return;
+      scroller.style.height = from + "px";
+      scroller.getBoundingClientRect();
+      scroller.style.height = to + "px";
     }
     /**
      * Show a slide: scroll it to the start of the row, or cross-fade to it.
@@ -628,13 +689,28 @@
       }
       scroller.setAttribute("aria-live", this.rotating ? "off" : "polite");
     }
+    /**
+     * Start the clock, and say so on the element.
+     *
+     * `data-carousel-rotating` is the timer and not `rotating`: the two part company every time
+     * a pointer crosses the row, where the rotation is held but the button still says `Stop`.
+     * A theme drawing a countdown off `rotating` would be one that keeps counting while nothing
+     * is moving - so the hook is written where the clock is, out of the same two calls that
+     * start and stop it, and cannot say otherwise. `--carousel-elemental-tick` goes with it for
+     * the same reason: an animation is only honest at the length of the interval it is drawing,
+     * and only this knows what that is.
+     */
     tick() {
       this.clearTimer();
       this.timer = setInterval(() => this.advance(), this.interval);
+      this.style.setProperty("--carousel-elemental-tick", this.interval + "ms");
+      this.setAttribute("data-carousel-rotating", "");
     }
     clearTimer() {
       if (this.timer) clearInterval(this.timer);
       this.timer = null;
+      this.removeAttribute("data-carousel-rotating");
+      this.style.removeProperty("--carousel-elemental-tick");
     }
     /**
      * A finger has come up on a stacked slide, having travelled far enough across to have meant
@@ -655,6 +731,21 @@
     unswipe() {
       if (this.swipes) this.swipes.destroy();
       this.swipes = null;
+    }
+    /** Give the stack its height back, and stop listening for the swap that pinned it. The
+     * inline height is this element's own writing, so leaving one behind is leaving the list a
+     * size the page never asked for. */
+    unpin() {
+      if (!this.heights) return;
+      this.heights.removeEventListener("transitionend", this.onHeightEnd);
+      this.heights.removeEventListener("transitioncancel", this.onHeightEnd);
+      this.heights.style.height = "";
+      this.heights = null;
+    }
+    /** The end of the height the swap pinned - or the end of any hope of one. */
+    onHeightEnd(e) {
+      if (e.target !== this.heights || e.propertyName !== "height") return;
+      this.heights.style.height = "";
     }
     /** Rotation held while the pointer or the focus is in the carousel - still rotating as far
      * as the button's name is concerned, because it will be again on the way out. */

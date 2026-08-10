@@ -97,7 +97,7 @@
               "type": {
                 "text": "<length>"
               },
-              "description": "The one padding unit: down the side of every option, and inside the popup's ends.",
+              "description": "The one padding unit: down the side of every option, and three quarters of it above and below the text.",
               "name": "--suggest-elemental-inset",
               "default": "0.5rem"
             },

@@ -64,15 +64,20 @@ carousel-elemental > [data-carousel-slides] > [data-carousel-slide] {
 }
 
 // ---- Fade ----
-// The other mode: no row, no scrolling. Every slide is in one grid cell and the current one
-// is faded up over the rest, which is why the element writes `data-carousel-current` - with
-// nothing to scroll there is nothing for the observer to read, and the index becomes the
-// element's own state. The height is the tallest slide's, because that is what a grid with
-// everything in one cell does, and it is the one honest answer for a stack: a box that
-// resizes between two slides of different lengths is a page that jumps every time it changes.
+// The other mode: no row, no scrolling. The slides are stacked and the current one is faded
+// up over the rest, which is why the element writes `data-carousel-current` - with nothing to
+// scroll there is nothing for the observer to read, and the index becomes the element's own
+// state.
+// The stack is as tall as the slide *showing*, not as the tallest one: the current slide is
+// the only one left in flow and the rest are taken out of it, so the box is the one slide's
+// own height. A stack sized to its tallest slide is a column of white space under every short
+// one, and the jump the other answer avoids is bought back by animating the height rather than
+// by padding out every slide to the longest - see `resize()`.
 carousel-elemental[fade] > [data-carousel-slides] {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  // The box the slides taken out of flow are positioned against. The element and not the
+  // scroller would be the wrong box the moment a page puts padding on the list.
+  position: relative;
+  display: block;
   gap: 0;
   overflow: visible;
   scroll-snap-type: none;
@@ -89,13 +94,19 @@ carousel-elemental[fade] > [data-carousel-slides] {
 // what takes the hidden slides out of the accessibility tree and out of the tab order, which
 // `opacity: 0` alone does not. That is the cost of this mode, and why it is the one that
 // gets a live region: stacked, one slide really is all there is.
+// Out of flow as well, which is what leaves the box the height of the one slide in it. The
+// slide on its way out is out of flow from the first frame, so it fades where it stood while
+// the box travels to the height of the one arriving.
 carousel-elemental[fade] > [data-carousel-slides] > [data-carousel-slide] {
-  grid-area: 1 / 1;
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
   visibility: hidden;
   opacity: 0;
 }
 
 carousel-elemental[fade] > [data-carousel-slides] > [data-carousel-current] {
+  position: relative;
   visibility: visible;
   opacity: 1;
 }
@@ -104,6 +115,14 @@ carousel-elemental[fade] > [data-carousel-slides] > [data-carousel-current] {
 // coming in it does not wait at all. Without it the slide vanishes on the first frame and
 // there is nothing left to fade.
 @media (prefers-reduced-motion: no-preference) {
+  // The height the element pins for the length of one swap and then hands back. Here rather
+  // than in the theme, and inside this query, because the pin is written only where there is
+  // a transition to spend it - `resize()` reads the same preference and does not pin at all
+  // when it is set, which would otherwise leave a fixed height on the box for good.
+  carousel-elemental[fade] > [data-carousel-slides] {
+    transition: height var(--carousel-elemental-fade, 400ms) ease;
+  }
+
   carousel-elemental[fade] > [data-carousel-slides] > [data-carousel-slide] {
     transition:
       opacity var(--carousel-elemental-fade, 400ms) ease,

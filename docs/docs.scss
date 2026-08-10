@@ -188,6 +188,27 @@ navbar-elemental {
   margin-block: 1rem;
 }
 
+// A list an element built is not a list someone is reading: the theme spaces `<li>` for
+// prose, and an in-page sample - unlike the `<code-preview>` ones, which are a bare
+// document in a frame - inherits that inside the popup the element writes, where a row is
+// a target and the gap between two of them is dead space the pointer falls into.
+// `li[role]` and not every `li`: a row an element marked is the element's, and a row it
+// left alone is the author's - the checkbox group's sample is a list of real labels, and
+// they want the reading rhythm the theme gives them. Two classes deep so it beats
+// `.prose li` whatever order the stylesheets land in.
+.prose :is(.demo-row, .demo-block) li[role] {
+  margin-block: 0;
+}
+
+// A hand-built sample and the markup under it are one sample, so nothing is spent between
+// them. The `<code-preview>` demos on the same pages are a single box for exactly this
+// reason, and two loose blocks with a gap between them read as two things that happen to be
+// near each other - the sample ends up closer to the prose above it than to its own code.
+.demo-row + .code-wrap,
+.demo-block + .code-wrap {
+  margin-block-start: 0;
+}
+
 // Demo-only: state text beside the switch, the Carbon arrangement - the accessible name
 // stays still and the *word* for the state sits outside it, `aria-hidden` because
 // `aria-checked` has already said it. The reflected `checked` attribute does the swap,

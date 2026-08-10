@@ -6,14 +6,16 @@
 // IntersectionObserver. This project's tests run in Node with no DOM, and a scroller
 // faked in jsdom has no layout, so it would answer every question with zero and prove
 // nothing. The roles, the focus order and the rotation control are checked by
-// `script/a11y` over the built demos, in a real browser.
+// `script/a11y` over the built demos, in a real browser. `fade`'s travelling height is here
+// as the rule that decides whether to pin one at all - the two measurements it decides on are
+// layout, and belong to the same paragraph as everything else above.
 //
 // Nor how far a finger has to travel to have meant it, nor that a gesture more down the page
 // than across it is the page scrolling: those left with the hand-rolled gesture, and are
 // `swipe()` in book-of-spells now, tested there. What stays here is the half that is the
 // carousel's own - which way `left` points when the reader reads right to left.
 
-import { currentSlide, rotationInterval, scrollEdges, slideName, startInset, stepSlide, swipeStep } from './index.js';
+import { currentSlide, rotationInterval, scrollEdges, slideName, startInset, stepSlide, swapHeight, swipeStep } from './index.js';
 
 test('next moves on by one, and stops at the end rather than wrapping', () => {
   // The buttons dim at the ends, and a control that looks spent and then jumps you back to
@@ -151,4 +153,21 @@ test('a rotation faster than a second is slowed to one', () => {
   // Below that it is a strobe, and it is also shorter than the smooth scroll it would be
   // interrupting - the carousel would never finish arriving anywhere.
   expect(rotationInterval('50')).toBe(1000);
+});
+
+test('a fading stack travels between two slides of different heights', () => {
+  expect(swapHeight(120, 260, false)).toBe(true);
+});
+
+test('two slides of the same height leave the box alone, so nothing is left pinned to a number', () => {
+  // The pin is taken back off when the transition ends, and a transition between one value
+  // and the same value never starts - so pinning here would fix the height for good, and the
+  // stack would answer the next resize with a measurement taken before it.
+  expect(swapHeight(200, 200, false)).toBe(false);
+});
+
+test('and so does a reader who asked for less movement', () => {
+  // Same trap by the other road: under that preference the stylesheet drops the transition,
+  // so there is again no end for the pin to come off at. The height changes at once instead.
+  expect(swapHeight(120, 260, true)).toBe(false);
 });

@@ -13,7 +13,6 @@ suggest-elemental {
   --suggest-elemental-surface: Canvas;
   --suggest-elemental-active: color-mix(in srgb, currentcolor 12%, transparent);
 
-  padding-block: calc(var(--suggest-elemental-inset) * 0.5);
   color: CanvasText;
   background: var(--suggest-elemental-surface);
   border: 1px solid color-mix(in srgb, currentcolor 25%, transparent);
@@ -27,10 +26,6 @@ suggest-elemental {
   // The panel is as wide as whatever wraps the field, not as wide as its longest row: a
   // popup that grows past the control it belongs to reads as a second, unrelated thing.
   inline-size: 100%;
-
-  [role="option"] {
-    border-radius: calc(var(--suggest-elemental-radius) - 2px);
-  }
 
   // Forced-colors mode overrides author backgrounds, which would take the cursor with it -
   // the one thing marking where Enter lands. The system keywords are honoured there, so

@@ -21,26 +21,83 @@ arrows, Enter and Escape behave the way the pattern says.
 ```html
 <div class="field">
   <label for="jump">Jump to</label>
-  <input type="search" id="jump" autocomplete="off" placeholder="press ↓">
+  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+    <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.499 4.499 0 1 0-8.997 0A4.499 4.499 0 0 0 11.5 7Z"/>
+  </svg>
+  <input type="search" id="jump" autocomplete="off" placeholder="type, or press ↓">
   <suggest-elemental for="jump">
     <ul>
-      <li><a href="accordion.html">Accordion</a></li>
-      <li><a href="combobox.html">Combobox</a></li>
-      <li><a href="disclosure.html">Disclosure</a></li>
-      <li><a href="menu.html">Menu</a></li>
-      <li><a href="modal.html">Modal</a></li>
+      <li><a href="accordion.html" target="_blank">Accordion</a></li>
+      <li><a href="combobox.html" target="_blank">Combobox</a></li>
+      <li><a href="disclosure.html" target="_blank">Disclosure</a></li>
+      <li><a href="menu.html" target="_blank">Menu</a></li>
+      <li><a href="modal.html" target="_blank">Modal</a></li>
     </ul>
   </suggest-elemental>
 </div>
-
-<style>
-  .field { position: relative; max-width: 20rem; }
-  .field input { width: 100%; }
-</style>
 ```
 
-_Press ↓ in the field. The caret never leaves it — the cursor moving down the list is
-`aria-activedescendant`, not focus, which is what lets you keep typing while you look._
+```css demo
+/* the panel is absolutely positioned, so it adds no height to anything — the bottom margin
+   is what keeps it inside this preview, and is not part of the pattern. A margin and not
+   padding: the panel's containing block is this box, so padding here would push the panel
+   down with it */
+.field { position: relative; display: grid; max-width: 22rem; margin-block-end: 12rem; }
+
+/* the icon and the field share one grid cell rather than being positioned over it, so the
+   glyph is centred on whatever height the control turns out to have */
+.field svg, .field input { grid-row: 2; grid-column: 1; }
+.field svg {
+  place-self: center start;
+  /* the two share a cell, and the field is painted after — so the glyph needs lifting out
+     from under its background, and taking out of the way of the click that focuses it */
+  z-index: 1;
+  margin-inline-start: 0.75rem;
+  fill: color-mix(in srgb, CanvasText 55%, transparent);
+  pointer-events: none;
+}
+
+/* the look of the control is the page's: the theme draws the panel and nothing else, on the
+   reasoning that a field is what a design system already owns */
+.field input {
+  padding: 0.5rem 0.75rem;
+  padding-inline-start: 2.25rem;
+  font: inherit;
+  color: CanvasText;
+  background: Canvas;
+  border: 1px solid color-mix(in srgb, CanvasText 30%, transparent);
+  border-radius: 0.375rem;
+}
+.field input:focus-visible { outline: 2px solid CanvasText; outline-offset: 1px; }
+.field label { margin-block-end: 0.35rem; font-size: 0.875rem; }
+
+/* clear of the field rather than welded to it — the panel is a separate surface */
+.field suggest-elemental { margin-block-start: 0.25rem; }
+```
+
+```js demo
+// the element never sees the query: it is handed a list, and this is the page deciding what
+// goes in it. `replaceChildren` moves the original rows, so there is no markup to build and
+// nothing to escape
+const field = document.getElementById("jump");
+const panel = document.querySelector("suggest-elemental");
+const rows = [...panel.querySelectorAll("li")];
+
+field.addEventListener("input", () => {
+  const query = field.value.trim().toLowerCase();
+  const hits = rows.filter((row) => row.textContent.toLowerCase().includes(query));
+  panel.querySelector("ul").replaceChildren(...hits);
+  panel.open = query !== "" && hits.length > 0;
+});
+```
+
+_Type, or press ↓. The caret never leaves the field — the cursor moving down the list is
+`aria-activedescendant`, not focus, which is what lets you keep typing while you look. The
+filtering is the sample's own JS; the element never sees the query._
+
+The rows open in a new tab, which is this preview's need and not the element's — a row is a
+link and a link in a frame with no history of its own has nowhere to come back from. On your
+page they are ordinary links.
 
 The panel is positioned against whatever the page has made the containing block, which is
 why the sample gives the wrapper `position: relative`. The element writes `data-side` and
@@ -126,7 +183,7 @@ set — a panel with no answer must never cost a second press to get out of.
 ## Completing a token
 
 The panel does not need a field whose whole value is the query. In a comment box the query
-is one token under the caret — `@nik` for a person, `:fi` for an emoji — and the page owns
+is one token under the caret — `@sta` for a person, `:fi` for an emoji — and the page owns
 the parsing, the matching and what an accepted row does to the text. The element still owns
 the popup, the arrows, `aria-activedescendant` and the ARIA on the field.
 
@@ -146,31 +203,56 @@ the popup, the arrows, `aria-activedescendant` and the ARIA on the field.
 /* the panel is absolutely positioned, so it adds no height to anything — the bottom padding
    is what keeps it inside this preview, and is not part of the pattern */
 .composer { position: relative; padding-block-end: 9rem; }
-.composer textarea { display: block; width: 100%; box-sizing: border-box; font: inherit; padding: 0.5rem; }
+/* `resize: vertical` and not `both`: a field dragged wider than its column takes the panel
+   anchored to it off the edge with it */
+.composer textarea {
+  display: block; width: 100%; box-sizing: border-box; resize: vertical;
+  padding: 0.5rem; font: inherit; color: inherit;
+  background: none;
+  border: 1px solid color-mix(in srgb, currentcolor 20%, transparent);
+  border-radius: 0.375rem;
+}
 
 /* the panel hangs off a box of no size that the page moves to the caret, so the element's
    own `inset-block-start: 100%` resolves against the caret's line and not the field's
    bottom edge */
 .at-caret { position: absolute; inset-block-start: 0; inset-inline-start: 0; width: 0; height: 0; }
-.at-caret suggest-elemental { min-width: 12rem; }
+/* `width: max-content` because the anchor above is a box of no size: an absolutely
+   positioned panel shrinks to fit its containing block, and a containing block of zero
+   width wraps every row. The max-height is capped under the element's own 20rem so the
+   emoji list scrolls inside the space this sample reserves below the field */
+.at-caret suggest-elemental {
+  min-width: 12rem; width: max-content; max-width: 20rem;
+  --suggest-elemental-max-height: 10rem;
+}
 .at-caret small { opacity: 0.65; margin-inline-start: 0.4rem; }
 ```
 
 ```js demo
+// Shortcode to glyph, because that is the shape this data has everywhere else — the rows the
+// panel wants are built off it below.
+const EMOJI = {
+  tada: "🎉", fire: "🔥", rocket: "🚀", sparkles: "✨", bug: "🐛", eyes: "👀",
+  joy: "😂", smile: "😄", wink: "😉", thinking: "🤔", sob: "😭", rage: "😡",
+  sunglasses: "😎", heart: "❤️", thumbsup: "👍", thumbsdown: "👎", clap: "👏",
+  pray: "🙏", muscle: "💪", wave: "👋", ok_hand: "👌", brain: "🧠", skull: "💀",
+  ghost: "👻", robot: "🤖", poop: "💩", star: "⭐", zap: "⚡", boom: "💥",
+  rainbow: "🌈", coffee: "☕", beer: "🍺", pizza: "🍕", cake: "🎂", gift: "🎁",
+  bell: "🔔", lock: "🔒", key: "🔑", hammer: "🔨", wrench: "🔧", gear: "⚙️",
+  package: "📦", books: "📚", memo: "📝", chart: "📈", calendar: "📅", mag: "🔍",
+  warning: "⚠️", construction: "🚧", white_check_mark: "✅", x: "❌",
+  question: "❓", snake: "🐍", whale: "🐳", cat: "🐱", dog: "🐶", unicorn: "🦄",
+  penguin: "🐧"
+};
+
 const ROWS = {
   "@": [
-    { value: "@nikola", hint: "Nikola Stamatović" },
-    { value: "@nina", hint: "Nina Nikolić" },
-    { value: "@ana", hint: "Ana Anić" },
-    { value: "@marko", hint: "Marko Marković" }
+    { value: "@stamat", hint: "Nikola Stamatović" },
+    { value: "@koyev", hint: "Marko Jević" },
+    { value: "@msavin", hint: "Max Savin" },
+    { value: "@jesussandreas", hint: "Jesus Sandrea" }
   ],
-  ":": [
-    { value: "🎉", hint: ":tada:" },
-    { value: "✨", hint: ":sparkles:" },
-    { value: "🔥", hint: ":fire:" },
-    { value: "🐛", hint: ":bug:" },
-    { value: "🚀", hint: ":rocket:" }
-  ]
+  ":": Object.entries(EMOJI).map(([name, glyph]) => ({ value: glyph, hint: `:${name}:` }))
 };
 
 const field = document.getElementById("note");
@@ -324,7 +406,7 @@ styles your `<input>`**: that control is yours, and styling it is what a design 
 | Custom property | Default | What it does |
 | --- | --- | --- |
 | `--suggest-elemental-radius` | `0.375rem` | Corners of the panel |
-| `--suggest-elemental-inset` | `0.5rem` | The one padding unit, down the side of every row |
+| `--suggest-elemental-inset` | `0.5rem` | The one padding unit: down the side of every row, three quarters of it above and below the text |
 | `--suggest-elemental-max-height` | `20rem` | How tall the panel gets before it scrolls |
 | `--suggest-elemental-surface` | `Canvas` | What the panel is painted on |
 | `--suggest-elemental-active` | `color-mix(in srgb, currentcolor 12%, transparent)` | The row under the cursor |

@@ -9,8 +9,23 @@ carousel-elemental {
   --carousel-elemental-current: CanvasText;
   --carousel-elemental-radius: 999px;
   --carousel-elemental-fade: 400ms;
+  --carousel-elemental-chip: Canvas;
+  --carousel-elemental-ring: 3px;
 }
 
+@property --carousel-elemental-sweep {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes carousel-elemental-sweep {
+  from {
+    --carousel-elemental-sweep: 0deg;
+  }
+  to {
+    --carousel-elemental-sweep: 360deg;
+  }
+}
 carousel-elemental > [data-carousel-controls] {
   display: flex;
   align-items: center;
@@ -39,11 +54,11 @@ carousel-elemental button[aria-controls] {
   border: 1px solid var(--carousel-elemental-border);
   border-radius: var(--carousel-elemental-radius);
 }
-carousel-elemental button[aria-controls]:hover {
+carousel-elemental button[aria-controls]:not([data-carousel-rotate]):hover {
   background: var(--carousel-elemental-hover);
 }
 
-carousel-elemental :is([data-carousel-prev], [data-carousel-next]) > svg {
+carousel-elemental :is([data-carousel-prev], [data-carousel-next], [data-carousel-rotate]) > svg {
   inline-size: 1em;
   block-size: 1em;
 }
@@ -72,14 +87,26 @@ carousel-elemental [data-carousel-marker][aria-disabled=true]:hover {
     border-color: Highlight;
   }
 }
-carousel-elemental > [data-carousel-rotate] {
+carousel-elemental > button[data-carousel-rotate] {
   position: absolute;
   z-index: 1;
   inset-block-start: var(--carousel-elemental-controls-gap);
   inset-inline-end: var(--carousel-elemental-controls-gap);
-  background: Canvas;
+  color: CanvasText;
+  box-sizing: border-box;
+  background: linear-gradient(var(--carousel-elemental-chip), var(--carousel-elemental-chip)) padding-box, conic-gradient(currentcolor var(--carousel-elemental-sweep), var(--carousel-elemental-border) 0) border-box var(--carousel-elemental-chip);
+  border: var(--carousel-elemental-ring) solid transparent;
+  box-shadow: 0 0 0 2px var(--carousel-elemental-chip);
+}
+carousel-elemental > button[data-carousel-rotate]:hover {
+  --carousel-elemental-chip: color-mix(in srgb, CanvasText 10%, Canvas);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  carousel-elemental[data-carousel-rotating] > [data-carousel-rotate] {
+    animation: carousel-elemental-sweep var(--carousel-elemental-tick, 5000ms) linear infinite;
+  }
+}
 carousel-elemental > [data-carousel-slides][tabindex]:focus-visible {
   outline: 2px solid var(--carousel-elemental-control);
   outline-offset: 2px;

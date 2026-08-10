@@ -24,6 +24,35 @@ carousel-elemental {
   --carousel-elemental-current: CanvasText;
   --carousel-elemental-radius: 999px;
   --carousel-elemental-fade: 400ms;
+
+  // Behind the rotation control, and its own property because that is the one control not
+  // drawn on the page's background - see the rule that uses it.
+  --carousel-elemental-chip: Canvas;
+
+  // How thick the countdown ring is. A hairline is a countdown nobody reads at a glance, which
+  // is the whole of what it is for; this is a ninth of the control's diameter, and turning one
+  // without the other is what this property is here for.
+  --carousel-elemental-ring: 3px;
+}
+
+// How far round the rotation control's countdown ring has swept. Registered rather than left
+// as a plain custom property, because an unregistered one is an untyped token to the browser:
+// it has no idea `0deg` and `360deg` are numbers with something in between, so it swaps them
+// at the halfway mark and the ring jumps instead of travelling.
+@property --carousel-elemental-sweep {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes carousel-elemental-sweep {
+  from {
+    --carousel-elemental-sweep: 0deg;
+  }
+
+  to {
+    --carousel-elemental-sweep: 360deg;
+  }
 }
 
 carousel-elemental > [data-carousel-controls] {
@@ -56,14 +85,16 @@ carousel-elemental button[aria-controls] {
   border: 1px solid var(--carousel-elemental-border);
   border-radius: var(--carousel-elemental-radius);
 
-  &:hover {
+  // Every control but the rotation one: that button is a chip over a photograph rather than a
+  // tint over the page, and it draws its own hover into the fill this would replace.
+  &:not([data-carousel-rotate]):hover {
     background: var(--carousel-elemental-hover);
   }
 }
 
-// The chevrons are drawn on a 16 viewBox and sized in `em`, so they follow the button's text
+// The icons are drawn on a 16 viewBox and sized in `em`, so they follow the button's text
 // size the way the digits in the picker do and the row reads as one set of controls.
-carousel-elemental :is([data-carousel-prev], [data-carousel-next]) > svg {
+carousel-elemental :is([data-carousel-prev], [data-carousel-next], [data-carousel-rotate]) > svg {
   inline-size: 1em;
   block-size: 1em;
 }
@@ -113,12 +144,65 @@ carousel-elemental [data-carousel-marker][aria-disabled="true"] {
 // rest, because the markup has it first - the APG wants it at the head of the tab sequence,
 // and a control drawn a long way from where it is read is a tab order that lies. Over the
 // corner is close enough to both.
-carousel-elemental > [data-carousel-rotate] {
+// `button` in the selector is load-bearing rather than decoration: the shared rule above is
+// `carousel-elemental button[aria-controls]`, and a selector without the element name here is
+// one step short of it - the fill below would lose to that rule's `background: none` and this
+// button would be transparent over whatever the slide behind it happens to be.
+carousel-elemental > button[data-carousel-rotate] {
   position: absolute;
   z-index: 1;
   inset-block-start: var(--carousel-elemental-controls-gap);
   inset-inline-end: var(--carousel-elemental-controls-gap);
-  background: Canvas;
+
+  // The one control not drawn on the page's own background: it sits over a slide, which is
+  // usually a photograph. `CanvasText` and not `currentcolor`, which is the same trap the
+  // current picker button is in by the other road - `currentcolor` here is whatever the slide
+  // it happens to be over inherited to its caption, and a white icon on a white sky is a
+  // control nobody can see. `CanvasText` on `Canvas` follows `color-scheme` instead, so the
+  // pair carries the page's own contrast whatever the picture does.
+  color: CanvasText;
+
+  // The countdown ring is the border. The conic gradient is clipped to the border box and the
+  // chip's own fill to the padding box, so the sweep shows in the collar and the middle stays
+  // opaque - which is what keeps the icon legible and is also why the ring needs no mask, no
+  // extra element and no pseudo-element to live in. `box-sizing`, because a border on a button
+  // sized in `inline-size` otherwise grows it past the picker buttons it is read beside.
+  // The chip a third time, as the colour under every layer: the ring's unswept track is 20% of
+  // `CanvasText` and the rest of it is transparent, so without something opaque behind the
+  // border box the countdown is drawn on the photograph, and over a night shot there is no
+  // track to see the sweep against.
+  box-sizing: border-box;
+  background:
+    linear-gradient(var(--carousel-elemental-chip), var(--carousel-elemental-chip)) padding-box,
+    conic-gradient(
+      currentcolor var(--carousel-elemental-sweep),
+      var(--carousel-elemental-border) 0
+    ) border-box var(--carousel-elemental-chip);
+  border: var(--carousel-elemental-ring) solid transparent;
+
+  // And a collar of it outside the ring, which is the other half of the same problem: the
+  // sweep is `CanvasText`, and a black arc against a dark slide is an edge nobody can find.
+  // The control carries its own contrast out past the ring rather than the picture owing it
+  // any - and this is the cheap half of that, since a shadow costs no layout and the ring
+  // stays the size the rest of the controls are measured against.
+  box-shadow: 0 0 0 2px var(--carousel-elemental-chip);
+
+  // The fill and not the whole background, so the hover does not paint over the ring.
+  &:hover {
+    --carousel-elemental-chip: color-mix(in srgb, CanvasText 10%, Canvas);
+  }
+}
+
+// The ring runs off `data-carousel-rotating`, which the element writes with the timer itself
+// and takes off with it - a pointer resting on the row holds the rotation while the button
+// still says `Stop`, and a ring sweeping there would be counting down to nothing. `linear`,
+// infinite, and exactly the interval long: any other duration is a countdown that lies.
+// Held back from a reader who asked for less movement, like every other animation here - the
+// rotation control is still there, and still says which way it will go.
+@media (prefers-reduced-motion: no-preference) {
+  carousel-elemental[data-carousel-rotating] > [data-carousel-rotate] {
+    animation: carousel-elemental-sweep var(--carousel-elemental-tick, 5000ms) linear infinite;
+  }
 }
 
 // A scroller given a tab stop of its own - the element does that only when there is nothing

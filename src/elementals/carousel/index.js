@@ -113,6 +113,26 @@ export function startInset(styles, rtl) {
   return Number.isFinite(inset) ? inset : 0;
 }
 
+/**
+ * Whether a swap in `fade` has a height worth travelling between.
+ *
+ * Both refusals are the same bug approached from opposite sides: a pinned height comes back
+ * off when the transition it was written for ends, so a pin with no transition behind it is
+ * one nothing ever takes off - and from then on the stack answers a resize, a font arriving
+ * or a picture that finally loaded with a pixel count taken before any of them happened.
+ * Reduced motion is one road there, because the stylesheet drops the transition under it;
+ * two slides that measure the same is the other, because a transition between one value and
+ * the same value never starts and so never ends.
+ *
+ * @param {number} from - The height the stack had before the current marker moved.
+ * @param {number} to - The height it has now.
+ * @param {boolean} reduced - Whether the reader asked for less movement.
+ * @returns {boolean}
+ */
+export function swapHeight(from, to, reduced) {
+  return !reduced && from !== to;
+}
+
 /** The name a slide gets when the markup gave it none: its place in the set. */
 export function slideName(index, count) {
   return (index + 1) + ' of ' + count;
@@ -159,30 +179,62 @@ const FOCUSABLE = 'a[href], button, input, select, textarea, summary, iframe, [t
 let carouselCount = 0;
 
 /**
- * The chevrons on the previous and next buttons: `chevron-left-16` and `chevron-right-16`
- * from [Octicons](https://primer.style/foundations/icons/), MIT, © GitHub Inc.
+ * The icons on the controls: `chevron-left-16`, `chevron-right-16`, `play-24` and
+ * `square-fill-24` from [Octicons](https://primer.style/foundations/icons/), MIT, © GitHub Inc.
  *
- * Two path strings rather than a dependency - this is the whole of what the package would
- * have been imported for, and a build step to tree-shake an icon set down to two shapes is a
+ * Four path strings rather than a dependency - this is the whole of what the package would
+ * have been imported for, and a build step to tree-shake an icon set down to four shapes is a
  * build step this project promises its users they will not need.
  *
  * Drawn rather than typed, which is the point: a glyph is centred wherever the font's
  * designer put it inside the em box, and in a round button an off-centre chevron is visible
- * at a glance. A path is centred on its own viewBox, in every font and on every platform.
+ * at a glance. A path is centred on its own viewBox, in every font and on every platform -
+ * which `▶` and `⏸` are not: the pause glyph is missing from enough system fonts to come out
+ * as a box, and where it is present it is often the emoji face rather than the shape.
+ *
+ * The box travels with the path, because these are not all drawn to one grid. Octicons sizes
+ * a shape for the icon it is on its own, and two of these are cropped out of a bigger drawing
+ * - which is the viewBox's job and needs no path edited, so there is nothing here to drift
+ * from what Octicons ships.
  */
-const CHEVRON = {
-  prev: 'M9.78 12.78a.75.75 0 0 1-1.06 0L4.47 8.53a.75.75 0 0 1 0-1.06l4.25-4.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L6.06 8l3.72 3.72a.75.75 0 0 1 0 1.06Z',
-  next: 'M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z'
+const ICON = {
+  prev: {
+    d: 'M9.78 12.78a.75.75 0 0 1-1.06 0L4.47 8.53a.75.75 0 0 1 0-1.06l4.25-4.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L6.06 8l3.72 3.72a.75.75 0 0 1 0 1.06Z',
+    box: '0 0 16 16'
+  },
+  next: {
+    d: 'M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z',
+    box: '0 0 16 16'
+  },
+  // `play-24` is two paths, a triangle inside a ring, and this is the triangle: the button it
+  // goes in is already a circle with a countdown ring around it, and the icon's own would be
+  // the third concentric circle inside 28 pixels. `triangle-right-16` is the shape that looks
+  // like the obvious answer and is not - it is drawn as a disclosure twisty, 3.8 units wide
+  // against 7.1 tall, where a play triangle is nearly as wide as it is high.
+  //
+  // The box is cropped to 13.5 of the 24 it is drawn in, which renders the triangle at the
+  // height of the chevrons it is read beside, and sits half a unit left of the shape's centre.
+  // That half unit is the correction every play button wants and no geometry gives you: a
+  // triangle carries its area behind its point, so one centred on its bounding box reads as
+  // too far left. The square is symmetrical and keeps the box it came with.
+  play: {
+    d: 'M9.5 15.584V8.416a.5.5 0 0 1 .77-.42l5.576 3.583a.5.5 0 0 1 0 .842l-5.576 3.584a.5.5 0 0 1-.77-.42Z',
+    box: '5.47 5.25 13.5 13.5'
+  },
+  stop: {
+    d: 'M7.75 6h8.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 16.25 18h-8.5A1.75 1.75 0 0 1 6 16.25v-8.5C6 6.784 6.784 6 7.75 6Z',
+    box: '0 0 24 24'
+  }
 };
 
-/** One chevron, as an element. `aria-hidden`, because the button is already named. */
-function chevron(d) {
+/** One icon, as an element. `aria-hidden`, because the button is already named. */
+function icon({ d, box }) {
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
-  svg.setAttribute('viewBox', '0 0 16 16');
+  svg.setAttribute('viewBox', box);
   // Sized in the markup as well as the viewBox, because an `<svg>` with neither is laid out
   // at the replaced-element default - 300 by 150 - and a page that took the script without
-  // the stylesheet would get a chevron the size of a paragraph. The theme sizes it in `em`
+  // the stylesheet would get an icon the size of a paragraph. The theme sizes it in `em`
   // over the top of this.
   svg.setAttribute('width', '16');
   svg.setAttribute('height', '16');
@@ -245,7 +297,7 @@ function reducedMotion() {
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/carousel/
  *
  * @tag carousel-elemental
- * @attr {boolean} [fade=false] - Cross-fade one slide at a time in place, instead of scrolling a row. The slides stack, so the row is as tall as the tallest, and a touch swipe across them moves one slide.
+ * @attr {boolean} [fade=false] - Cross-fade one slide at a time in place, instead of scrolling a row. The slides stack, the box takes the height of the slide showing - animated, over the same duration as the fade - and a touch swipe across them moves one slide.
  * @attr {boolean} [autoplay=false] - Rotate on a timer, and write the control that stops it. Ignored at upgrade when the reader asked for reduced motion - the control is still there to start it.
  * @attr {number} [interval=5000] - Milliseconds between slides while rotating. Under 1000 is treated as 1000.
  * @attr {string} [prev-text=Previous slide] - The previous button's accessible name.
@@ -257,13 +309,15 @@ function reducedMotion() {
  *
  * @cssprop {<length-percentage>} [--carousel-elemental-slide-size=100%] - How wide one slide is. This is how many slides fit: `50%` for two, `33.333%` for three, or any expression - it is the flex basis.
  * @cssprop {<length>} [--carousel-elemental-gap=0px] - Between the slides. Nothing in `fade`, where they are stacked.
- * @cssprop {<time>} [--carousel-elemental-fade=400ms] - How long the cross-fade takes in `fade`. Zero under reduced motion, whatever this says.
+ * @cssprop {<time>} [--carousel-elemental-fade=400ms] - How long the cross-fade takes in `fade`, and how long the box takes to travel between two slides' heights. Zero under reduced motion, whatever this says.
  * @cssprop {<length>} [--carousel-elemental-controls-gap=0.5rem] - Between the controls under the row.
  * @cssprop {<length>} [--carousel-elemental-marker-size=1.75rem] - Diameter of a picker button.
  * @cssprop {<color>} [--carousel-elemental-control=currentcolor] - Text and border of the controls.
  * @cssprop {<color>} [--carousel-elemental-border=color-mix(in srgb, currentcolor 20%, transparent)] - Border of a control that is not the current slide's.
  * @cssprop {<color>} [--carousel-elemental-hover=color-mix(in srgb, currentcolor 10%, transparent)] - Control background under the pointer.
  * @cssprop {<color>} [--carousel-elemental-current=currentcolor] - Fill of the picker button for the slide on screen.
+ * @cssprop {<color>} [--carousel-elemental-chip=Canvas] - Fill behind the rotation control - the one control drawn over a slide rather than over the page, which is why it is opaque and does not follow `currentcolor`.
+ * @cssprop {<length>} [--carousel-elemental-ring=3px] - How thick the rotation control's countdown ring is. A hairline is a countdown nobody reads at a glance.
  * @cssprop {<length-percentage>} [--carousel-elemental-radius=999px] - Corner radius of the controls.
  *
  * @fires carousel-change - `detail.index` is the slide now on screen, `detail.slide` the element itself.
@@ -341,6 +395,7 @@ export class CarouselElemental extends ElementBase {
     this.onIntersect = this.onIntersect.bind(this);
     this.onScroll = this.onScroll.bind(this);
     this.onSwipe = this.onSwipe.bind(this);
+    this.onHeightEnd = this.onHeightEnd.bind(this);
     this.suspend = this.suspend.bind(this);
     this.resume = this.resume.bind(this);
     this.onFocusOut = this.onFocusOut.bind(this);
@@ -354,6 +409,8 @@ export class CarouselElemental extends ElementBase {
     this.settleTimer = null;
     // The handle `swipe()` gives back, so the gesture can be taken off again.
     this.swipes = null;
+    // The scroller whose height this element has pinned, and which it owes back.
+    this.heights = null;
     // The name this element gave each slide, so a later `wire()` renumbers its own labels
     // and keeps its hands off the ones the markup wrote. The name and not just the slide,
     // because a page is free to name a slide *after* the upgrade - and a label that no
@@ -411,6 +468,7 @@ export class CarouselElemental extends ElementBase {
     if (this.scrolls) this.scrolls.removeEventListener('scroll', this.onScroll);
     this.scrolls = null;
     this.unswipe();
+    this.unpin();
     this.arrived();
 
     this.removeControls();
@@ -507,6 +565,7 @@ export class CarouselElemental extends ElementBase {
     if (this.scrolls) this.scrolls.removeEventListener('scroll', this.onScroll);
     this.scrolls = null;
     this.unswipe();
+    this.unpin();
     // A move that was in flight was aimed at a row that has since changed.
     this.arrived();
 
@@ -514,6 +573,12 @@ export class CarouselElemental extends ElementBase {
       // The gesture the other mode gets from the platform. Stacked slides are not a scroll
       // container, so nothing here is being doubled up on - see `swipeStep`.
       this.swipes = swipe(scroller, { callback: this.onSwipe, threshold: SWIPE, mouse: false });
+      // `cancel` as well as `end`: a stack taken off the screen mid-swap - a dialog closing
+      // over it - ends no transition, and the pinned height would be the box's answer for the
+      // rest of the page's life.
+      scroller.addEventListener('transitionend', this.onHeightEnd);
+      scroller.addEventListener('transitioncancel', this.onHeightEnd);
+      this.heights = scroller;
     } else {
       // A spread rather than one threshold: this observer is a layout-change notifier now, and
       // a single value only fires when a slide happens to cross that exact ratio. A resize
@@ -561,7 +626,7 @@ export class CarouselElemental extends ElementBase {
     // An element and not a background image, so a page that loaded the script but not the
     // stylesheet still has a button with something in it. The chevron is a shape and reads as
     // nothing, which is what the label is for.
-    this.prevButton.append(chevron(CHEVRON.prev));
+    this.prevButton.append(icon(ICON.prev));
 
     this.picker = document.createElement('div');
     this.picker.setAttribute('data-carousel-markers', '');
@@ -579,7 +644,7 @@ export class CarouselElemental extends ElementBase {
     });
 
     this.nextButton = this.control('data-carousel-next', this.getAttribute('next-text') || 'Next slide', id);
-    this.nextButton.append(chevron(CHEVRON.next));
+    this.nextButton.append(icon(ICON.next));
 
     this.controls.append(this.prevButton, this.picker, this.nextButton);
     this.append(this.controls);
@@ -617,7 +682,10 @@ export class CarouselElemental extends ElementBase {
     const stop = this.getAttribute('pause-text') || 'Stop slide rotation';
     const start = this.getAttribute('play-text') || 'Start slide rotation';
     this.rotateButton.setAttribute('aria-label', this.rotating ? stop : start);
-    this.rotateButton.textContent = this.rotating ? '⏸' : '▶';
+    // The icon says the same thing the name does, and swaps with it: what pressing will do.
+    // Not whether the timer is ticking - hovering the row holds it without the button meaning
+    // anything different, and that is what the ring around it is for.
+    this.rotateButton.replaceChildren(icon(this.rotating ? ICON.stop : ICON.play));
   }
 
   /**
@@ -691,6 +759,10 @@ export class CarouselElemental extends ElementBase {
     // `data-carousel-current` - so skipping the first write because nothing changed leaves a
     // stack of slides with none of them shown.
     if (!moved && this.painted) return;
+    // A swap, rather than the first paint: the height travels between two slides, and on the
+    // pass that puts the first slide up there is no height to travel from - the stack is empty
+    // until this loop runs, so animating that would be every carousel unfolding on load.
+    const swap = this.fade && this.painted && moved;
     this.painted = true;
     this.markers.forEach((marker, index) => {
       // `aria-disabled` rather than `disabled`: the button for the slide you are on has
@@ -699,12 +771,16 @@ export class CarouselElemental extends ElementBase {
       if (index === at) marker.setAttribute('aria-disabled', 'true');
       else marker.removeAttribute('aria-disabled');
     });
+    // Read before the marker moves, because moving it is what changes the height: the slide
+    // leaving goes out of flow and the one arriving comes into it, both in the same frame.
+    const from = swap ? this.scroller.getBoundingClientRect().height : 0;
     // The hook the fade mode is drawn from, and a styling hook for the scrolled one - which
     // is why it is written in both, rather than only where the CSS needs it.
     this.slides.forEach((slide, index) => {
       if (index === at) slide.setAttribute('data-carousel-current', '');
       else slide.removeAttribute('data-carousel-current');
     });
+    if (swap) this.resize(from);
     // The event is the other half: an element settling onto the slide it opened on has not
     // changed anything, and a page listening for a change is owed silence.
     if (!moved) return;
@@ -742,6 +818,35 @@ export class CarouselElemental extends ElementBase {
     this.toggleAttribute('data-carousel-at-end', at.end);
     if (this.prevButton) this.prevButton.setAttribute('aria-disabled', String(at.start));
     if (this.nextButton) this.nextButton.setAttribute('aria-disabled', String(at.end));
+  }
+
+  /**
+   * Carry the stack's height from the slide that left to the slide that arrived.
+   *
+   * A transition needs two numbers and `auto` is neither of them, so the height the box had a
+   * moment ago is written back on, read once so the browser takes it as a start, and replaced
+   * with the height it is going to. `transitionend` hands the box back to `auto` as soon as it
+   * lands - which is what leaves a resize, a font arriving or an image that finally loaded to
+   * the layout, instead of to a pixel count taken before any of them happened.
+   *
+   * Measured off the scroller rather than off the slide, so whatever padding or `box-sizing`
+   * the page gave the list is inside both numbers instead of neither.
+   *
+   * @param {number} from The height the stack had before the current marker moved.
+   */
+  resize(from) {
+    const scroller = this.scroller;
+    // Whatever a swap left pinned mid-flight, so `to` below is the layout's own answer and not
+    // a number this method wrote.
+    scroller.style.height = '';
+    const to = scroller.getBoundingClientRect().height;
+    if (!swapHeight(from, to, reducedMotion())) return;
+    scroller.style.height = from + 'px';
+    // Not a tidy-up and not dead: the read forces the layout the browser would otherwise fold
+    // into the next one. Without it both writes land in the same frame, and a transition given
+    // one value has nothing to travel between.
+    scroller.getBoundingClientRect();
+    scroller.style.height = to + 'px';
   }
 
   /**
@@ -857,14 +962,29 @@ export class CarouselElemental extends ElementBase {
     scroller.setAttribute('aria-live', this.rotating ? 'off' : 'polite');
   }
 
+  /**
+   * Start the clock, and say so on the element.
+   *
+   * `data-carousel-rotating` is the timer and not `rotating`: the two part company every time
+   * a pointer crosses the row, where the rotation is held but the button still says `Stop`.
+   * A theme drawing a countdown off `rotating` would be one that keeps counting while nothing
+   * is moving - so the hook is written where the clock is, out of the same two calls that
+   * start and stop it, and cannot say otherwise. `--carousel-elemental-tick` goes with it for
+   * the same reason: an animation is only honest at the length of the interval it is drawing,
+   * and only this knows what that is.
+   */
   tick() {
     this.clearTimer();
     this.timer = setInterval(() => this.advance(), this.interval);
+    this.style.setProperty('--carousel-elemental-tick', this.interval + 'ms');
+    this.setAttribute('data-carousel-rotating', '');
   }
 
   clearTimer() {
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
+    this.removeAttribute('data-carousel-rotating');
+    this.style.removeProperty('--carousel-elemental-tick');
   }
 
   /**
@@ -889,6 +1009,25 @@ export class CarouselElemental extends ElementBase {
   unswipe() {
     if (this.swipes) this.swipes.destroy();
     this.swipes = null;
+  }
+
+  /** Give the stack its height back, and stop listening for the swap that pinned it. The
+   * inline height is this element's own writing, so leaving one behind is leaving the list a
+   * size the page never asked for. */
+  unpin() {
+    if (!this.heights) return;
+    this.heights.removeEventListener('transitionend', this.onHeightEnd);
+    this.heights.removeEventListener('transitioncancel', this.onHeightEnd);
+    this.heights.style.height = '';
+    this.heights = null;
+  }
+
+  /** The end of the height the swap pinned - or the end of any hope of one. */
+  onHeightEnd(e) {
+    // The box's own height and nothing else: every slide's opacity transition bubbles through
+    // here on its way up, and one of those ending says nothing about the height.
+    if (e.target !== this.heights || e.propertyName !== 'height') return;
+    this.heights.style.height = '';
   }
 
   /** Rotation held while the pointer or the focus is in the carousel - still rotating as far

@@ -370,6 +370,39 @@
         },
         {
           "kind": "function",
+          "name": "swapHeight",
+          "parameters": [
+            {
+              "name": "from",
+              "description": "The height the stack had before the current marker moved.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "to",
+              "description": "The height it has now.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "reduced",
+              "description": "Whether the reader asked for less movement.",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "Whether a swap in `fade` has a height worth travelling between.\n\nBoth refusals are the same bug approached from opposite sides: a pinned height comes back\noff when the transition it was written for ends, so a pin with no transition behind it is\none nothing ever takes off - and from then on the stack answers a resize, a font arriving\nor a picture that finally loaded with a pixel count taken before any of them happened.\nReduced motion is one road there, because the stylesheet drops the transition under it;\ntwo slides that measure the same is the other, because a transition between one value and\nthe same value never starts and so never ends.",
+          "return": {
+            "type": {
+              "text": "boolean"
+            }
+          }
+        },
+        {
+          "kind": "function",
           "name": "slideName",
           "parameters": [
             {
@@ -439,7 +472,7 @@
               "type": {
                 "text": "<time>"
               },
-              "description": "How long the cross-fade takes in `fade`. Zero under reduced motion, whatever this says.",
+              "description": "How long the cross-fade takes in `fade`, and how long the box takes to travel between two slides' heights. Zero under reduced motion, whatever this says.",
               "name": "--carousel-elemental-fade",
               "default": "400ms"
             },
@@ -490,6 +523,22 @@
               "description": "Fill of the picker button for the slide on screen.",
               "name": "--carousel-elemental-current",
               "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Fill behind the rotation control - the one control drawn over a slide rather than over the page, which is why it is opaque and does not follow `currentcolor`.",
+              "name": "--carousel-elemental-chip",
+              "default": "Canvas"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "How thick the rotation control's countdown ring is. A hairline is a countdown nobody reads at a glance.",
+              "name": "--carousel-elemental-ring",
+              "default": "3px"
             },
             {
               "type": {
@@ -618,6 +667,20 @@
             },
             {
               "kind": "method",
+              "name": "resize",
+              "parameters": [
+                {
+                  "name": "from",
+                  "description": "The height the stack had before the current marker moved.",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ],
+              "description": "Carry the stack's height from the slide that left to the slide that arrived.\n\nA transition needs two numbers and `auto` is neither of them, so the height the box had a\nmoment ago is written back on, read once so the browser takes it as a start, and replaced\nwith the height it is going to. `transitionend` hands the box back to `auto` as soon as it\nlands - which is what leaves a resize, a font arriving or an image that finally loaded to\nthe layout, instead of to a pixel count taken before any of them happened.\n\nMeasured off the scroller rather than off the slide, so whatever padding or `box-sizing`\nthe page gave the list is inside both numbers instead of neither."
+            },
+            {
+              "kind": "method",
               "name": "to",
               "parameters": [
                 {
@@ -661,7 +724,8 @@
             },
             {
               "kind": "method",
-              "name": "tick"
+              "name": "tick",
+              "description": "Start the clock, and say so on the element.\n\n`data-carousel-rotating` is the timer and not `rotating`: the two part company every time\na pointer crosses the row, where the rotation is held but the button still says `Stop`.\nA theme drawing a countdown off `rotating` would be one that keeps counting while nothing\nis moving - so the hook is written where the clock is, out of the same two calls that\nstart and stop it, and cannot say otherwise. `--carousel-elemental-tick` goes with it for\nthe same reason: an animation is only honest at the length of the interval it is drawing,\nand only this knows what that is."
             },
             {
               "kind": "method",
@@ -681,6 +745,21 @@
               "kind": "method",
               "name": "unswipe",
               "description": "Every swipe listener comes back off, and the half-finished gesture with it."
+            },
+            {
+              "kind": "method",
+              "name": "unpin",
+              "description": "Give the stack its height back, and stop listening for the swap that pinned it. The\ninline height is this element's own writing, so leaving one behind is leaving the list a\nsize the page never asked for."
+            },
+            {
+              "kind": "method",
+              "name": "onHeightEnd",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "The end of the height the swap pinned - or the end of any hope of one."
             },
             {
               "kind": "method",
@@ -742,7 +821,7 @@
               "type": {
                 "text": "boolean"
               },
-              "description": "Cross-fade one slide at a time in place, instead of scrolling a row. The slides stack, so the row is as tall as the tallest, and a touch swipe across them moves one slide.",
+              "description": "Cross-fade one slide at a time in place, instead of scrolling a row. The slides stack, the box takes the height of the slide showing - animated, over the same duration as the fade - and a touch swipe across them moves one slide.",
               "default": "false"
             },
             {
@@ -840,6 +919,14 @@
           "name": "startInset",
           "declaration": {
             "name": "startInset",
+            "module": "src/elementals/carousel/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "swapHeight",
+          "declaration": {
+            "name": "swapHeight",
             "module": "src/elementals/carousel/index.js"
           }
         },
@@ -3756,7 +3843,7 @@
               "type": {
                 "text": "<length>"
               },
-              "description": "The one padding unit: down the side of every option, and inside the popup's ends.",
+              "description": "The one padding unit: down the side of every option, and three quarters of it above and below the text.",
               "name": "--suggest-elemental-inset",
               "default": "0.5rem"
             },

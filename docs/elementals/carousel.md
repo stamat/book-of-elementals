@@ -39,7 +39,18 @@ carousel-elemental li {
   align-content: center;
   padding: 1.5rem;
   min-block-size: 9rem;
-  background: color-mix(in srgb, currentcolor 8%, transparent);
+}
+/* a hue per slide, mixed into the page's own background rather than set flat: 20% of a
+   colour over Canvas is a tint in light mode and the same tint in dark, and the text on it
+   is still CanvasText — a flat pastel would be one theme's slide and the other's contrast bug */
+carousel-elemental li:nth-child(3n + 1) {
+  background: color-mix(in srgb, #e5484d 20%, Canvas);
+}
+carousel-elemental li:nth-child(3n + 2) {
+  background: color-mix(in srgb, #0090ff 20%, Canvas);
+}
+carousel-elemental li:nth-child(3n + 3) {
+  background: color-mix(in srgb, #30a46c 20%, Canvas);
 }
 h3 {
   margin: 0 0 0.5rem;
@@ -53,6 +64,22 @@ That markup is the page you would have had anyway: a list. The element adds the
 roles and appends the controls — so before it upgrades, and if it never does, the same list
 is a scroll-snapping row you can swipe, drag the scrollbar of, or reach with the keyboard,
 with every slide in the page and in reading order.
+
+## Prior art
+
+Two came before it, both now archived, and this element is what replaced them:
+
+|                                                      | What it was                                                                                    | Why it is not this                                                                                                                                                                                                                                                    |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [slidescroll](https://github.com/stamat/slidescroll) | a scroll-snapping row moved by `scrollIntoView`, one dependency, never published               | 216 lines with no `role`, no `aria-*` and no key handler — it scrolls beautifully with a mouse and is invisible to everyone else                                                                                                                                      |
+| [slideswap](https://github.com/stamat/slideswap)     | a fade slideshow on npm: adaptive height, infinite loop, swipe, your own prev and next buttons | `aria-hidden` and `tabindex` on the slides, and nothing else; keyboard navigation and bullet navigation were still on its TODO list when it was archived. Its markup is its own vocabulary — `.slideswap-slide` inside `.slideswap-slides`, wired up by a constructor |
+
+The idea both were right about carried over: the browser owns the position, so there is no
+resize listener here either — [the scroller is the state](#at-the-ends). What did not is the
+shape. These took a selector and an options object; this upgrades the list you already wrote,
+and the APG roles, the picker and the keyboard are the part that was missing rather than a
+setting. [`fade`](#fade) is slideswap's stack with all of that on it, minus
+[the infinite loop](#the-infinite-loop-that-is-not-here), which was measured and refused.
 
 ## Usage
 
@@ -103,7 +130,7 @@ instead, because a landmark with no name is one more unnamed stop in the landmar
 | ------------- | ------- | ------------------------- | --------------------------------------------------------------- |
 | `fade`        | boolean | `false`                   | Cross-fade one slide in place instead of scrolling a row.       |
 | `autoplay`    | boolean | `false`                   | Rotate on a timer, and write the control that stops it.         |
-| `interval`    | number  | `5000`                    | Milliseconds between slides. Under `1000` is treated as `1000`.  |
+| `interval`    | number  | `5000`                    | Milliseconds between slides. Under `1000` is treated as `1000`. |
 | `prev-text`   | string  | `Previous slide`          | The previous button's accessible name.                          |
 | `next-text`   | string  | `Next slide`              | The next button's accessible name.                              |
 | `play-text`   | string  | `Start slide rotation`    | The rotation control's name while stopped.                      |
@@ -118,21 +145,21 @@ mode where there is nothing to scroll, and there the element holds the index its
 
 ### Properties
 
-| Property     | Type        | Description                                        |
-| ------------ | ----------- | -------------------------------------------------- |
+| Property     | Type        | Description                                                             |
+| ------------ | ----------- | ----------------------------------------------------------------------- |
 | `index`      | number      | Which slide is on screen. Assigning it does not scroll — that is `to()` |
-| `slides`     | `Element[]` | Read-only, in order.                               |
-| `scroller`   | `Element`   | Read-only. The list.                               |
-| `autoplay`   | boolean     | Get/set. Writes the attribute.                     |
-| `interval`   | number      | Get/set. Milliseconds.                             |
-| `fade`       | boolean     | Get/set. Writes the attribute.                     |
-| `to(index)`  | —           | Show a slide: scroll it to the start of the row, or cross-fade to it |
-| `next()`     | —           | One on. Does nothing at the end, where the button is dim |
-| `previous()` | —           | One back. Does nothing at the start.               |
-| `advance()`  | —           | One on, wrapping at the end. What the rotation calls |
-| `play()`     | —           | Start rotating.                                    |
-| `pause()`    | —           | Stop.                                              |
-| `wire()`     | —           | Re-read the markup, [see below](#slides-that-change). |
+| `slides`     | `Element[]` | Read-only, in order.                                                    |
+| `scroller`   | `Element`   | Read-only. The list.                                                    |
+| `autoplay`   | boolean     | Get/set. Writes the attribute.                                          |
+| `interval`   | number      | Get/set. Milliseconds.                                                  |
+| `fade`       | boolean     | Get/set. Writes the attribute.                                          |
+| `to(index)`  | —           | Show a slide: scroll it to the start of the row, or cross-fade to it    |
+| `next()`     | —           | One on. Does nothing at the end, where the button is dim                |
+| `previous()` | —           | One back. Does nothing at the start.                                    |
+| `advance()`  | —           | One on, wrapping at the end. What the rotation calls                    |
+| `play()`     | —           | Start rotating.                                                         |
+| `pause()`    | —           | Stop.                                                                   |
+| `wire()`     | —           | Re-read the markup, [see below](#slides-that-change).                   |
 
 Those methods are the whole way in from outside. There is no `command`/`commandfor`
 vocabulary here the way there is on [`<modal-elemental>`](modal.html) —
@@ -159,15 +186,15 @@ lies about where it is would be the worse default.
 
 ### What it writes
 
-| Element       | Attributes                                                                                |
-| ------------- | ----------------------------------------------------------------------------------------- |
-| the element   | `aria-roledescription="carousel"`, `role="region"` (named) or `role="group"` (not), and `data-carousel-at-start` / `data-carousel-at-end` while there is nowhere left to go that way |
-| the list      | `role="group"`, `data-carousel-slides`, an `id` if it had none, `tabindex="0"` if nothing inside is focusable, and `aria-live` in `fade` only |
-| each `<li>`   | `role="group"`, `aria-roledescription="slide"`, `aria-label="3 of 10"` if it had no name, `data-carousel-slide`, and `data-carousel-current` on the one showing |
-| the controls  | a `<div data-carousel-controls>` appended, holding the previous button, the picker and the next button |
-| previous, next | an Octicon chevron, and `aria-disabled` at the end it cannot pass                          |
-| the picker    | `role="group"`, `aria-label`, one `<button data-carousel-marker>` per slide with `aria-disabled="true"` on the current one |
-| the rotation  | a `<button data-carousel-rotate>` prepended, only with `autoplay`                          |
+| Element        | Attributes                                                                                                                                                                                                                                                                                    |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| the element    | `aria-roledescription="carousel"`, `role="region"` (named) or `role="group"` (not), `data-carousel-at-start` / `data-carousel-at-end` while there is nowhere left to go that way, and `data-carousel-rotating` with an inline `--carousel-elemental-tick` while the timer is actually running |
+| the list       | `role="group"`, `data-carousel-slides`, an `id` if it had none, `tabindex="0"` if nothing inside is focusable, and `aria-live` in `fade` only                                                                                                                                                 |
+| each `<li>`    | `role="group"`, `aria-roledescription="slide"`, `aria-label="3 of 10"` if it had no name, `data-carousel-slide`, and `data-carousel-current` on the one showing                                                                                                                               |
+| the controls   | a `<div data-carousel-controls>` appended, holding the previous button, the picker and the next button                                                                                                                                                                                        |
+| previous, next | an Octicon chevron, and `aria-disabled` at the end it cannot pass                                                                                                                                                                                                                             |
+| the picker     | `role="group"`, `aria-label`, one `<button data-carousel-marker>` per slide with `aria-disabled="true"` on the current one                                                                                                                                                                    |
+| the rotation   | a `<button data-carousel-rotate>` prepended, only with `autoplay`, holding an Octicon play triangle or stop square                                                                                                                                                                            |
 
 The controls are the element's to write rather than yours, and that is the progressive
 enhancement working rather than a preference: a previous button authored in the markup is a
@@ -177,13 +204,20 @@ button that does nothing until the script lands.
 arrow at the end of the row — because a `disabled` button taken out from under the focus that
 just pressed it drops the reader back to the top of the page.
 
-The chevrons are `chevron-left-16` and `chevron-right-16` from
-[Octicons](https://primer.style/foundations/icons/) (MIT, © GitHub Inc.), inlined as two path
-strings rather than pulled in as a package: that is the whole of what the dependency would be
-for, and a build step to shake an icon set down to two shapes is the build step this project
+The icons are `chevron-left-16`, `chevron-right-16`, `play-24` and `square-fill-24` from
+[Octicons](https://primer.style/foundations/icons/) (MIT, © GitHub Inc.), inlined as four
+path strings rather than pulled in as a package: that is the whole of what the dependency would
+be for, and a build step to shake an icon set down to four shapes is the build step this project
 promises you will not need. They are drawn and not typed for a reason you can see — a text
 chevron sits wherever the font's designer centred it inside the em box, which in a round
-button is visibly high.
+button is visibly high, and `⏸`, which the rotation control used to be, is missing from
+enough system fonts to come out as an empty box on the machine you did not test on.
+
+Two of them are cropped rather than resized, which the viewBox does and no edited path has to:
+`play-24` ships as a triangle inside a ring and only its triangle is here, since the button is
+already a circle with a countdown ring around it, and the crop that brings the triangle up to
+the chevrons' height sits half a unit left of the shape's centre — a triangle carries its area
+behind its point, so one centred on its bounding box reads as leaning left.
 
 The list stops being a list. Its children are slides — `role="group"`, which is what the
 pattern asks of them — and a list whose children are not list items is a broken list to a
@@ -210,11 +244,11 @@ full of links already has stops enough.
 
 ### Keyboard
 
-| Key                                 | Action                                                     |
-| ----------------------------------- | ----------------------------------------------------------- |
-| <kbd>Tab</kbd>                      | Through the controls, and into the slides                   |
-| <kbd>Enter</kbd> / <kbd>Space</kbd> | Press the control under the focus                           |
-| <kbd>←</kbd> <kbd>→</kbd>           | Scroll the row, when the focus is on it                     |
+| Key                                 | Action                                    |
+| ----------------------------------- | ----------------------------------------- |
+| <kbd>Tab</kbd>                      | Through the controls, and into the slides |
+| <kbd>Enter</kbd> / <kbd>Space</kbd> | Press the control under the focus         |
+| <kbd>←</kbd> <kbd>→</kbd>           | Scroll the row, when the focus is on it   |
 
 The arrows are the browser's, not the element's. A focused scroll container already answers
 to them, and to <kbd>Home</kbd>, <kbd>End</kbd> and the page keys, in every browser this
@@ -281,19 +315,21 @@ not, because they are dim there, and a control that looks spent must not still a
 <p class="demo-credit">Photographs by Caroline Sada, Dorothy Lin, Kenneth Thewissen, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a> — convenient for docs, wrong for a site you ship: self-host yours.</p>
 
 ```html
-<carousel-elemental aria-label="Rotating places" autoplay interval="4000">…</carousel-elemental>
+<carousel-elemental aria-label="Rotating places" autoplay interval="4000"
+  >…</carousel-elemental
+>
 ```
 
 Everything the pattern asks of a moving carousel is in there:
 
-| Rule                                                          | How it behaves                                                             |
-| ------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| A control that stops and restarts it                          | Prepended to the element, so it is the **first** tab stop inside            |
-| Its name says what pressing it will do                        | `Stop slide rotation` / `Start slide rotation`, and no `aria-pressed`       |
-| Hovering the carousel pauses it                               | Resumes when the pointer leaves                                             |
-| Moving focus into it pauses it                                | Resumes when focus leaves — moving between two controls is focus that never left |
-| Rotation the reader started by hand is theirs                 | Hover and focus are then ignored until the same button stops it             |
-| `prefers-reduced-motion: reduce`                              | `autoplay` is not obeyed at upgrade. The control is still there to start it |
+| Rule                                          | How it behaves                                                                   |
+| --------------------------------------------- | -------------------------------------------------------------------------------- |
+| A control that stops and restarts it          | Prepended to the element, so it is the **first** tab stop inside                 |
+| Its name says what pressing it will do        | `Stop slide rotation` / `Start slide rotation`, and no `aria-pressed`            |
+| Hovering the carousel pauses it               | Resumes when the pointer leaves                                                  |
+| Moving focus into it pauses it                | Resumes when focus leaves — moving between two controls is focus that never left |
+| Rotation the reader started by hand is theirs | Hover and focus are then ignored until the same button stops it                  |
+| `prefers-reduced-motion: reduce`              | `autoplay` is not obeyed at upgrade. The control is still there to start it      |
 
 That last row is the one worth reading twice. The preference switches off motion nobody
 asked for; it does not take away a control from a reader who wants it.
@@ -301,6 +337,25 @@ asked for; it does not take away a control from a reader who wants it.
 The rotation control is drawn over the top corner of the row rather than down in the bar with
 the other controls. It has to be first in the tab order, and a control drawn a long way from
 where it is read is a tab order that lies — so it is drawn where it sits.
+
+That corner is also the one place in the element where a control is not on the page's own
+background but on a photograph, so this button is the one that does not follow
+`currentcolor`: an opaque `--carousel-elemental-chip` behind a `CanvasText` icon, which is
+the page's own contrast wherever the picture goes light or dark. `currentcolor` there is
+whatever the slide's own text inherited, and a white icon on a white sky is a control nobody
+can find.
+
+Around it is the countdown: a ring that sweeps once per `interval`, so the next slide is not
+a surprise and the reader can see how long they have. It is drawn as the button's border —
+a conic gradient clipped to the border box over a fill clipped to the padding box — so it
+costs no extra element and nothing over the icon. The chip is under that gradient and again
+in a collar outside it, which is not decoration: the sweep is `CanvasText` and the track it
+runs on is 20% of the same colour, so over a night photograph a ring drawn straight onto the
+slide would be a black arc on black with nothing behind it. The theme animates it off
+`data-carousel-rotating`, which the element writes **with the timer and not with the
+button**: the two part company every time a pointer crosses the row, where the rotation is
+held but the control still says `Stop`. A ring sweeping there would be counting down to
+nothing. Under `prefers-reduced-motion: reduce` there is no sweep at all, only the track.
 
 > [!NOTE]
 > `interval` under 1000 is treated as 1000. Below that it is a strobe, and it is also
@@ -354,23 +409,60 @@ how a slide arrives.
 ```html
 <carousel-elemental aria-label="Fading places" fade autoplay interval="4000">
   <ul>
-    <li><h3>Kopaonik</h3><p>Mist over the ridge.</p></li>
-    <li><h3>Đerdap</h3><p>The river, and rock on both sides of it.</p></li>
-    <li><h3>Tara</h3><p>A lake, and nothing growing above it.</p></li>
+    <li>
+      <h3>Kopaonik</h3>
+      <p>Mist over the ridge.</p>
+    </li>
+    <li>
+      <h3>Đerdap</h3>
+      <p>
+        The river, and rock on both sides of it. The gorge runs for a hundred
+        kilometres, and the road along it is cut into the rock the whole way —
+        which is a longer slide than the one before it, on purpose: watch the
+        box travel.
+      </p>
+    </li>
+    <li>
+      <h3>Tara</h3>
+      <p>A lake, and nothing growing above it.</p>
+    </li>
   </ul>
 </carousel-elemental>
 ```
 
 ```css demo
-carousel-elemental li {
-  display: grid;
-  align-content: center;
-  padding: 1.5rem;
-  min-block-size: 8rem;
-  background: color-mix(in srgb, currentcolor 8%, transparent);
+/* preview-only, and not part of the pattern: this sample runs in an iframe the docs size to
+   the document inside it, and that measurement deliberately will not chase a height changing
+   every frame — it moves in 2px hops behind a one-pixel dead band, which leaves the document
+   taller than the frame on alternate frames and flickers the iframe's own scrollbar through
+   the whole fade. Reserving the tallest state holds the document still and the box travels
+   inside it. A floor, so a narrow enough column wraps past it and the flicker is back */
+body {
+  min-block-size: 13rem;
 }
-h3 { margin: 0 0 0.5rem; }
-p { margin: 0; }
+
+/* no centring and no minimum height, unlike the scrolling demos above: both slides are on
+   screen at once during the cross-fade, so content centred in boxes of two different heights
+   is the same words in two places, and the eye reads the swap as a wobble. Anchored to the
+   top, the heading of the slide arriving is where the heading of the slide leaving was */
+carousel-elemental li {
+  padding: 1.5rem;
+}
+carousel-elemental li:nth-child(3n + 1) {
+  background: color-mix(in srgb, #e5484d 20%, Canvas);
+}
+carousel-elemental li:nth-child(3n + 2) {
+  background: color-mix(in srgb, #0090ff 20%, Canvas);
+}
+carousel-elemental li:nth-child(3n + 3) {
+  background: color-mix(in srgb, #30a46c 20%, Canvas);
+}
+h3 {
+  margin: 0 0 0.5rem;
+}
+p {
+  margin: 0;
+}
 ```
 
 This is the one mode where the scroller is not the state. Stacked slides have nothing to
@@ -378,23 +470,37 @@ scroll, so the element holds the index itself and the stylesheet draws from
 `data-carousel-current`. Two things follow from that, and both are the reason it is an
 attribute rather than the default:
 
-| Scrolling                                     | `fade`                                                            |
-| --------------------------------------------- | ------------------------------------------------------------------ |
-| Every slide in the accessibility tree         | Only the current one — the rest are `visibility: hidden`           |
-| No live region needed                         | `aria-live`, `polite` when pressed and `off` while rotating         |
-| Find-in-page searches every slide             | Finds only the slide showing                                        |
-| Swipe, scrollbar, arrow keys on the scroller  | Swipe, the buttons and the picker — no scrollbar, no arrow keys     |
-| Without script: a scrolling row               | Without script: every slide stacked on top of the last              |
+| Scrolling                                    | `fade`                                                          |
+| -------------------------------------------- | --------------------------------------------------------------- |
+| Every slide in the accessibility tree        | Only the current one — the rest are `visibility: hidden`        |
+| No live region needed                        | `aria-live`, `polite` when pressed and `off` while rotating     |
+| Find-in-page searches every slide            | Finds only the slide showing                                    |
+| Swipe, scrollbar, arrow keys on the scroller | Swipe, the buttons and the picker — no scrollbar, no arrow keys |
+| Without script: a scrolling row              | Without script: every slide stacked on top of the last          |
 
 `visibility` and not `opacity` alone, because a slide at `opacity: 0` is still focusable and
 still read — a tab stop in a slide nobody can see is worse than no fade at all. The delay on
 the way out is what leaves the fade something to fade: going out `visibility` waits for the
 transition, coming in it does not wait at all.
 
-The height is the tallest slide's, since everything is in one grid cell — which is the
-adaptive height a fading slideshow needs, without a box that resizes under the reader between
-two slides of different lengths. `--carousel-elemental-fade` sets the duration, and
-`prefers-reduced-motion: reduce` cuts it to nothing whatever it says.
+The height is the showing slide's, not the tallest one's. Only the current slide is left in
+flow — the rest are taken out of it — so a stack of slides of different lengths is not a
+column of white space under every short one. The box travels between the two heights over the
+same `--carousel-elemental-fade` the cross-fade takes, which is what keeps that from being a
+page that jumps every time a slide changes: the element pins the height it had, hands it the
+height it is going to, and gives the box back to the layout the moment the travel lands. So a
+window resized after the fade, a font that arrived late, a picture that finally loaded are all
+answered by the layout rather than by a measurement taken before them.
+
+`prefers-reduced-motion: reduce` cuts both to nothing whatever the property says — and there
+the height is not pinned at all, since a pin is taken back off when its transition ends and a
+transition that never runs never ends.
+
+**Anchor the content to the top of the slide.** Both slides are on screen for the length of
+the cross-fade, so content centred inside boxes of two different heights is the same heading
+drawn in two places at once, and the swap reads as a wobble rather than as a fade. Centring is
+right where every slide is the same height — the scrolling demos above do it — and wrong the
+moment the box travels.
 
 ### The swipe
 
@@ -407,13 +513,13 @@ few pixels whether the slide is a phone wide or a thumbnail.
 
 What it deliberately does not do is the part worth reading:
 
-| Not this                              | Because                                                                                     |
-| ------------------------------------- | --------------------------------------------------------------------------------------------- |
-| The mouse                             | [Still refused](#what-it-does-not-do). Touch and pen only, and the check is on `pointerType`   |
-| Follow the finger                     | There is nothing to translate — the fade runs at its full duration once the gesture commits    |
-| Wrap at the ends                      | The arrow is dim there, and a gesture that still moved would disagree with the element's own controls |
-| Catch a scroll down the page          | `touch-action: pan-y pinch-zoom`, and a gesture more vertical than horizontal is not a swipe. Zooming stays the browser's |
-| Follow the link the finger landed on  | A touch ending on a link fires a `click`, and a committed swipe swallows exactly one of them   |
+| Not this                             | Because                                                                                                                   |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| The mouse                            | [Still refused](#what-it-does-not-do). Touch and pen only, and the check is on `pointerType`                              |
+| Follow the finger                    | There is nothing to translate — the fade runs at its full duration once the gesture commits                               |
+| Wrap at the ends                     | The arrow is dim there, and a gesture that still moved would disagree with the element's own controls                     |
+| Catch a scroll down the page         | `touch-action: pan-y pinch-zoom`, and a gesture more vertical than horizontal is not a swipe. Zooming stays the browser's |
+| Follow the link the finger landed on | A touch ending on a link fires a `click`, and a committed swipe swallows exactly one of them                              |
 
 ## Slides that change
 
@@ -421,9 +527,7 @@ Nothing watches the markup. Add a slide, remove one, reorder them, and `wire()` 
 call that says so:
 
 ```javascript
-carousel
-  .querySelector("ul")
-  .insertAdjacentHTML("beforeend", "<li>…</li>");
+carousel.querySelector("ul").insertAdjacentHTML("beforeend", "<li>…</li>");
 carousel.wire();
 ```
 
@@ -451,18 +555,20 @@ those away and there is nothing to scroll and nothing to observe, which is why t
 in the theme. `theme.scss` is the look and is optional; it draws all four controls as one set
 of round buttons, mixed out of `currentcolor` so they sit in whatever palette the page has:
 
-| Property                              | Default               | Description                                        |
-| ------------------------------------- | --------------------- | -------------------------------------------------- |
-| `--carousel-elemental-slide-size`     | `100%`                | How wide one slide is — this is how many fit        |
-| `--carousel-elemental-gap`            | `1rem`                | Between the slides                                  |
-| `--carousel-elemental-controls-gap`   | `0.5rem`              | Between the controls under the row                  |
-| `--carousel-elemental-marker-size`    | `1.75rem`             | Diameter of a control                               |
-| `--carousel-elemental-control`        | `currentcolor`        | Text and border of the controls                     |
-| `--carousel-elemental-border`         | 20% of `currentcolor` | Border of a control                                 |
-| `--carousel-elemental-hover`          | 10% of `currentcolor` | Control background under the pointer                |
-| `--carousel-elemental-current`        | `currentcolor`        | Fill of the picker button for the slide on screen   |
-| `--carousel-elemental-radius`         | `999px`               | Corner radius of the controls                       |
-| `--carousel-elemental-fade`           | `400ms`               | How long the cross-fade takes in `fade`             |
+| Property                            | Default               | Description                                                                                               |
+| ----------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------- |
+| `--carousel-elemental-slide-size`   | `100%`                | How wide one slide is — this is how many fit                                                              |
+| `--carousel-elemental-gap`          | `1rem`                | Between the slides                                                                                        |
+| `--carousel-elemental-controls-gap` | `0.5rem`              | Between the controls under the row                                                                        |
+| `--carousel-elemental-marker-size`  | `1.75rem`             | Diameter of a control                                                                                     |
+| `--carousel-elemental-control`      | `currentcolor`        | Text and border of the controls                                                                           |
+| `--carousel-elemental-border`       | 20% of `currentcolor` | Border of a control                                                                                       |
+| `--carousel-elemental-hover`        | 10% of `currentcolor` | Control background under the pointer                                                                      |
+| `--carousel-elemental-current`      | `currentcolor`        | Fill of the picker button for the slide on screen                                                         |
+| `--carousel-elemental-chip`         | `Canvas`              | Fill behind the rotation control, which sits over a slide rather than over the page                       |
+| `--carousel-elemental-ring`         | `3px`                 | How thick the rotation control's countdown ring is                                                        |
+| `--carousel-elemental-radius`       | `999px`               | Corner radius of the controls                                                                             |
+| `--carousel-elemental-fade`         | `400ms`               | How long the cross-fade takes in `fade`, and how long the box takes to travel between two slides' heights |
 
 Turn them in the **Options** tab and copy the rule out of the bottom of the panel — the same
 table, with the values live:
@@ -484,7 +590,15 @@ carousel-elemental li {
   display: grid;
   place-items: center;
   min-block-size: 8rem;
-  background: color-mix(in srgb, currentcolor 10%, transparent);
+}
+carousel-elemental li:nth-child(3n + 1) {
+  background: color-mix(in srgb, #e5484d 20%, Canvas);
+}
+carousel-elemental li:nth-child(3n + 2) {
+  background: color-mix(in srgb, #0090ff 20%, Canvas);
+}
+carousel-elemental li:nth-child(3n + 3) {
+  background: color-mix(in srgb, #30a46c 20%, Canvas);
 }
 ```
 
@@ -501,9 +615,10 @@ After the upgrade the buttons and the picker are that way, and a scrollbar under
 second one nobody uses. The wheel, the trackpad and the arrow keys are unaffected either way.
 
 Under `forced-colors` the current picker button is repainted in `Highlight`, since a fill is
-the only thing telling it apart. The one piece of motion in the element is the scroll itself,
-and it is switched off by `prefers-reduced-motion` in `style.scss` — one media query, because
-every way the row moves goes through the same `scrollLeft`.
+the only thing telling it apart. Motion is two things and both answer to
+`prefers-reduced-motion`: the scroll itself, switched off in `style.scss` by one media query
+because every way the row moves goes through the same `scrollLeft`, and the countdown ring in
+the theme, which is not drawn moving at all under that preference.
 
 ### Styling hooks
 
@@ -512,6 +627,8 @@ carousel-elemental[autoplay] {
 } /* the host, while rotation is on offer */
 carousel-elemental[data-carousel-at-end] {
 } /* nowhere left to scroll that way */
+carousel-elemental[data-carousel-rotating] {
+} /* the timer is running right now */
 carousel-elemental > [data-carousel-slides] {
 } /* the scroller */
 carousel-elemental > [data-carousel-slides] > [data-carousel-slide] {
@@ -540,23 +657,23 @@ carousel-elemental:not(:defined) {
 
 A carousel is where features breed, so the refusals are part of the element:
 
-| Not here            | Why, and what to do instead                                                                 |
-| ------------------- | ------------------------------------------------------------------------------------------- |
-| Infinite loop       | [Measured below](#the-infinite-loop-that-is-not-here). The rotation wraps; the arrows stop    |
-| Drag with the mouse | A desktop pointer has the buttons, the picker and the keyboard, and reading a drag off it costs the page its text selection, its image dragging and its link clicks. Touch swipes either mode — natively when it scrolls, [written here](#the-swipe) when it fades |
-| Vertical            | The same code with the block properties, and nothing has asked for one                      |
-| Adaptive height     | CSS. It is already the tallest slide either way — `align-items: start` on the scroller for ragged ones |
-| `slides-per-page`   | `--carousel-elemental-slide-size`, which a breakpoint can change and an attribute cannot     |
-| `command` triggers  | The modal takes `command`/`commandfor` because those are the platform's own — a `<dialog>` opens from them with this script absent, and the element only steps in to animate it. A carousel command would be a name invented here, so the button would sit dead until the module lands, which is the thing [the controls exist to avoid](#what-it-writes). An outside control is a line of script: `carousel.to(2)`. The platform is coming for this one too — [declarative scroll commands](https://github.com/danielsakhapov/declarative-scroll-commands-for-html-explainer) would give a scroll container `command="page-inline-end"` with snapping honoured, and that is a better answer than a name from this book |
+| Not here                   | Why, and what to do instead                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Infinite loop              | [Measured below](#the-infinite-loop-that-is-not-here). The rotation wraps; the arrows stop                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Drag with the mouse        | A desktop pointer has the buttons, the picker and the keyboard, and reading a drag off it costs the page its text selection, its image dragging and its link clicks. Touch swipes either mode — natively when it scrolls, [written here](#the-swipe) when it fades                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Vertical                   | The same code with the block properties, and nothing has asked for one                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Adaptive height, scrolling | CSS, and a row is the tallest slide either way — `align-items: start` on the scroller for ragged ones. [`fade` is the mode that has one](#fade), since a stack shows a single slide and the box can follow it                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `slides-per-page`          | `--carousel-elemental-slide-size`, which a breakpoint can change and an attribute cannot                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `command` triggers         | The modal takes `command`/`commandfor` because those are the platform's own — a `<dialog>` opens from them with this script absent, and the element only steps in to animate it. A carousel command would be a name invented here, so the button would sit dead until the module lands, which is the thing [the controls exist to avoid](#what-it-writes). An outside control is a line of script: `carousel.to(2)`. The platform is coming for this one too — [declarative scroll commands](https://github.com/danielsakhapov/declarative-scroll-commands-for-html-explainer) would give a scroll container `command="page-inline-end"` with snapping honoured, and that is a better answer than a name from this book |
 
 ### The infinite loop that is not here
 
 Not refused on principle — tried, in Chromium, and both ways of doing it cost something this
 element will not spend:
 
-| How you would do it                                            | What it costs                                                                          |
-| -------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Clone the slides either side of the real ones                  | Every slide exists two or three times over for a screen reader, and the clones need `aria-hidden`, which is the bug that hides focusable links |
+| How you would do it                                                                                  | What it costs                                                                                                                                                                                                                                                                                                                                                                                    |
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Clone the slides either side of the real ones                                                        | Every slide exists two or three times over for a screen reader, and the clones need `aria-hidden`, which is the bug that hides focusable links                                                                                                                                                                                                                                                   |
 | Rotate the DOM at the end — move the first slide to the back and pull `scrollLeft` back by its width | Loops perfectly, and `scrollWidth` never grows. But after three wraps the DOM order is `4 5 1 2 3`, so the reading order no longer matches the carousel, the `N of M` labels are wrong until they are rewritten, and **a slide holding the focus loses it the moment it moves** — `document.activeElement` is back to `<body>`, which is a keyboard user thrown to the top of the page every lap |
 
 The second one is the tempting one, because it looks seamless. It is seamless for the eye and

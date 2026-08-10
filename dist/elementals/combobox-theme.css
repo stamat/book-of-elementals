@@ -133,10 +133,19 @@ combobox-elemental .combobox-elemental-empty {
   opacity: 0.5;
 }
 combobox-elemental .combobox-elemental-group-label {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
   display: block;
-  padding: 0.35rem var(--combobox-elemental-inset);
-  font-size: 0.85em;
-  opacity: 0.7;
+  padding: 0.6em var(--combobox-elemental-inset) 0.15em;
+  font-weight: 700;
+  background: var(--combobox-elemental-surface);
+}
+combobox-elemental .combobox-elemental-group .combobox-elemental-option {
+  padding-inline-start: calc(var(--combobox-elemental-inset) * 2.5);
+}
+combobox-elemental .combobox-elemental-group {
+  padding-block-end: 0.35rem;
 }
 @media (forced-colors: active) {
   combobox-elemental {

@@ -115,7 +115,7 @@ let suggestCount = 0;
  * @attr {boolean} [tab-completes=false] - Tab takes the row under the cursor instead of leaving. For a completer whose rows are text about to be typed; wrong for a list of links, which is why it is opt-in.
  *
  * @cssprop {<length>} [--suggest-elemental-radius=0.375rem] - Corners of the popup.
- * @cssprop {<length>} [--suggest-elemental-inset=0.5rem] - The one padding unit: down the side of every option, and inside the popup's ends.
+ * @cssprop {<length>} [--suggest-elemental-inset=0.5rem] - The one padding unit: down the side of every option, and three quarters of it above and below the text.
  * @cssprop {<length>} [--suggest-elemental-max-height=20rem] - How tall the popup gets before it scrolls.
  * @cssprop {<color>} [--suggest-elemental-surface=Canvas] - What the popup is painted on.
  * @cssprop {<color>} [--suggest-elemental-active=color-mix(in srgb, currentcolor 12%, transparent)] - The option the cursor is on - where Enter would land, and what the pointer moves.

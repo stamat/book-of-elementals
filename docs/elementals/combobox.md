@@ -170,6 +170,44 @@ There is no caret on a `multiple`. A caret is the mark of a control holding one 
 of a list, and a field full of tags has already said what this one holds — so the element
 does not write the indicator at all rather than style it away.
 
+### When the tags outgrow one row
+
+The chips are flex items of the field rather than a box inside it, so they wrap into rows
+with the input and the field grows downwards to hold them. The popup rides along, hanging
+off the field's own bottom edge however many rows that edge has moved down by.
+
+Nothing caps that growth: forty tags is a field forty tags tall, and everything under it on
+the page moves down. If your form cannot take that shape, cap it yourself — the field is
+one of the classes you are meant to target:
+
+```css
+combobox-elemental .combobox-elemental-field {
+  max-block-size: 6rem;
+  overflow-y: auto;
+}
+```
+
+There is no custom property for it, because it is one declaration and the number depends
+entirely on the form. Note what you are buying: with a cap, the chip a reader just added can
+land below the fold of a box they now have to scroll.
+
+A chip is not truncated either. Its label wraps where it can, but a single long word has
+nothing to break on and no maximum width to stop at, so it runs past the field's edge. Trim
+the option text, or spend an ellipsis on it:
+
+```css
+combobox-elemental .combobox-elemental-chip-label {
+  max-inline-size: 12ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+```
+
+That costs the sighted reader the end of the label and nobody else — the remove button's
+name is `Remove` plus the option's full text either way — so it is worth a `title` on the
+chip if the labels are long enough to collide after twelve characters.
+
 ## Searching
 
 The query matches **anywhere** in an option's label, not only at its start, and both sides
@@ -472,8 +510,10 @@ on it.
 ## Where the popup goes
 
 Under the field, unless it does not fit there and fits better above — measured when it
-opens and again when the window resizes, and written onto the popup as
-`data-side="block-end"` or `"block-start"` for the stylesheet to act on. Below wins ties,
+opens, again when the window resizes, and on a `multiple` after every pick, because a tag
+that wraps onto a new row moves the edge the popup is hanging off. The answer is written
+onto the popup as `data-side="block-end"` or `"block-start"` for the stylesheet to act on.
+Below wins ties,
 because the popup scrolls: "nowhere it fits" is a choice between two cramped corners
 rather than a failure, and the corner the reader expects is the one under the field.
 

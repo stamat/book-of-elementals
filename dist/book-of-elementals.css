@@ -55,8 +55,8 @@ carousel-elemental > [data-carousel-slides] > [data-carousel-slide] {
   }
 }
 carousel-elemental[fade] > [data-carousel-slides] {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  position: relative;
+  display: block;
   gap: 0;
   overflow: visible;
   scroll-snap-type: none;
@@ -64,17 +64,23 @@ carousel-elemental[fade] > [data-carousel-slides] {
 }
 
 carousel-elemental[fade] > [data-carousel-slides] > [data-carousel-slide] {
-  grid-area: 1/1;
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
   visibility: hidden;
   opacity: 0;
 }
 
 carousel-elemental[fade] > [data-carousel-slides] > [data-carousel-current] {
+  position: relative;
   visibility: visible;
   opacity: 1;
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  carousel-elemental[fade] > [data-carousel-slides] {
+    transition: height var(--carousel-elemental-fade, 400ms) ease;
+  }
   carousel-elemental[fade] > [data-carousel-slides] > [data-carousel-slide] {
     transition: opacity var(--carousel-elemental-fade, 400ms) ease, visibility 0s linear var(--carousel-elemental-fade, 400ms);
   }

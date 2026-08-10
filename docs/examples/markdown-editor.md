@@ -14,8 +14,8 @@ no markdown parser.
 The glue is about a hundred lines, and two thirds of it is the completion panel — the token
 regex, the caret measuring, the ranking — which is
 [covered on the suggest page](../elementals/suggest.html#completing-a-token) and repeated
-here so the sample runs on its own. The toolbar's share is the twenty lines under
-`wrap` and `prefix`.
+here so the sample runs on its own. The toolbar's share is the twenty-odd lines under
+`wrap`, `prefix` and `insert`.
 
 <!-- demo toolbar suggest tooltip -->
 
@@ -63,6 +63,21 @@ here so the sample runs on its own. The toolbar's share is the twenty lines unde
         <span>Bulleted list</span>
       </tooltip-elemental>
     </div>
+
+    <div role="group" aria-label="Insert">
+      <tooltip-elemental>
+        <button type="button" title="Mention" data-insert="@">
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M8 .5a7.499 7.499 0 0 1 7.499 7.462l.002.038v1.164a2.612 2.612 0 0 1-4.783 1.454A3.763 3.763 0 0 1 8 11.776 3.776 3.776 0 1 1 11.776 8v1.164a1.112 1.112 0 0 0 2.225 0L14 8a6 6 0 1 0-3.311 5.365.75.75 0 0 1 .673 1.341A7.5 7.5 0 1 1 8 .5Zm0 5.225a2.275 2.275 0 1 0 0 4.552 2.275 2.275 0 0 0 0-4.552Z"/></svg>
+        </button>
+        <span>Mention</span>
+      </tooltip-elemental>
+      <tooltip-elemental>
+        <button type="button" title="Emoji" data-insert=":">
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm3.82 1.636a.75.75 0 0 1 1.038.175l.007.009c.103.118.22.222.35.31.264.178.683.37 1.285.37.602 0 1.02-.192 1.285-.371.13-.088.247-.192.35-.31l.007-.008a.75.75 0 0 1 1.222.87l-.022-.015c.02.013.021.015.021.015v.001l-.001.002-.002.003-.005.007-.014.019a2.066 2.066 0 0 1-.184.213c-.16.166-.338.316-.53.445-.63.418-1.37.638-2.127.629-.946 0-1.652-.308-2.126-.63a3.331 3.331 0 0 1-.715-.657l-.014-.02-.005-.006-.002-.003v-.002h-.001l.613-.432-.614.43a.75.75 0 0 1 .183-1.044ZM12 7a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM5 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm5.25 2.25.592.416a97.71 97.71 0 0 0-.592-.416Z"/></svg>
+        </button>
+        <span>Emoji</span>
+      </tooltip-elemental>
+    </div>
   </toolbar-elemental>
 
   <div class="composer">
@@ -82,11 +97,26 @@ here so the sample runs on its own. The toolbar's share is the twenty lines unde
 .editor toolbar-elemental button { padding: 0.4rem; }
 .editor toolbar-elemental svg { display: block; fill: currentcolor; }
 .composer { position: relative; padding-block-end: 9rem; }
-.composer textarea { display: block; width: 100%; box-sizing: border-box; font: inherit; padding: 0.5rem; }
+/* the same rim and corner the toolbar theme draws above it, so the bar and the field read
+   as one composer rather than two boxes that happen to be stacked */
+.composer textarea {
+  display: block; width: 100%; box-sizing: border-box; resize: vertical;
+  padding: 0.5rem; font: inherit; color: inherit;
+  background: none;
+  border: 1px solid color-mix(in srgb, currentcolor 20%, transparent);
+  border-radius: 0.375rem;
+}
 
 /* the panel hangs off a box of no size that the page moves to the caret */
 .at-caret { position: absolute; inset-block-start: 0; inset-inline-start: 0; width: 0; height: 0; }
-.at-caret suggest-elemental { min-width: 12rem; }
+/* `width: max-content` because the anchor above is a box of no size: an absolutely
+   positioned panel shrinks to fit its containing block, and a containing block of zero
+   width wraps every row. The max-height is capped under the element's own 20rem so the
+   emoji list scrolls inside the space this sample reserves below the field */
+.at-caret suggest-elemental {
+  min-width: 12rem; width: max-content; max-width: 20rem;
+  --suggest-elemental-max-height: 10rem;
+}
 .at-caret small { opacity: 0.65; margin-inline-start: 0.4rem; }
 
 .visually-hidden {
@@ -135,24 +165,47 @@ function prefix(mark) {
   type(value.slice(from, to).split("\n").map((line) => mark + line).join("\n"));
 }
 
+// Mention, Emoji: plant the trigger the panel watches for and let the `input` event that
+// `insertText` fires open it, same as typing the character would. The space is the part a
+// button has to add and a reader never does: the token only counts at a word start, so a
+// click with the caret against a word would otherwise write an `@` that nothing completes.
+function insert(trigger) {
+  const before = field.value.slice(0, field.selectionStart);
+  type(/\S$/.test(before) ? " " + trigger : trigger);
+}
+
 bar.addEventListener("click", (event) => {
   const button = event.target.closest("button");
   if (!button) return;
   if (button.dataset.wrap) wrap(button.dataset.wrap);
   else if (button.dataset.prefix) prefix(button.dataset.prefix);
+  else if (button.dataset.insert) insert(button.dataset.insert);
 });
+
+// Shortcode to glyph, because that is the shape this data has everywhere else — the rows the
+// panel wants are built off it below.
+const EMOJI = {
+  tada: "🎉", fire: "🔥", rocket: "🚀", sparkles: "✨", bug: "🐛", eyes: "👀",
+  joy: "😂", smile: "😄", wink: "😉", thinking: "🤔", sob: "😭", rage: "😡",
+  sunglasses: "😎", heart: "❤️", thumbsup: "👍", thumbsdown: "👎", clap: "👏",
+  pray: "🙏", muscle: "💪", wave: "👋", ok_hand: "👌", brain: "🧠", skull: "💀",
+  ghost: "👻", robot: "🤖", poop: "💩", star: "⭐", zap: "⚡", boom: "💥",
+  rainbow: "🌈", coffee: "☕", beer: "🍺", pizza: "🍕", cake: "🎂", gift: "🎁",
+  bell: "🔔", lock: "🔒", key: "🔑", hammer: "🔨", wrench: "🔧", gear: "⚙️",
+  package: "📦", books: "📚", memo: "📝", chart: "📈", calendar: "📅", mag: "🔍",
+  warning: "⚠️", construction: "🚧", white_check_mark: "✅", x: "❌",
+  question: "❓", snake: "🐍", whale: "🐳", cat: "🐱", dog: "🐶", unicorn: "🦄",
+  penguin: "🐧"
+};
 
 const ROWS = {
   "@": [
-    { value: "@nikola", hint: "Nikola Stamatović" },
-    { value: "@nina", hint: "Nina Nikolić" },
-    { value: "@ana", hint: "Ana Anić" }
+    { value: "@stamat", hint: "Nikola Stamatović" },
+    { value: "@koyev", hint: "Marko Jević" },
+    { value: "@msavin", hint: "Max Savin" },
+    { value: "@jesussandreas", hint: "Jesus Sandrea" }
   ],
-  ":": [
-    { value: "🎉", hint: ":tada:" },
-    { value: "🔥", hint: ":fire:" },
-    { value: "🚀", hint: ":rocket:" }
-  ]
+  ":": Object.entries(EMOJI).map(([name, glyph]) => ({ value: glyph, hint: `:${name}:` }))
 };
 
 const escapeText = (value) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
@@ -212,13 +265,14 @@ panel.addEventListener("click", (event) => {
 });
 ```
 
-Select a word and press **Bold**. Type `@ni` or `:fi` in the field. Then press
+Select a word and press **Bold**. Type `@sta` or `:fi` in the field, or press **Mention** or
+**Emoji** and let the panel open on an empty query. Then press
 <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Z</kbd> — every one of those undoes, in order, because
 none of this ever assigned to `value`.
 
 ## The bar is one tab stop
 
-Six buttons above a field is six presses of <kbd>Tab</kbd> between the reader and the field
+Eight buttons above a field is eight presses of <kbd>Tab</kbd> between the reader and the field
 they came to write in. [`<toolbar-elemental>`](../elementals/toolbar.html) makes it one:
 <kbd>Tab</kbd> enters the bar, <kbd>←</kbd> and <kbd>→</kbd> walk it, <kbd>Tab</kbd> again
 lands in the `<textarea>`.
@@ -241,11 +295,11 @@ sometimes a lie is worse than no state at all. These are actions: they insert ma
 
 ## Groups divide, they do not stop
 
-The two `role="group"`s split text marks from block marks. That is a real division — a
-screen reader announces the group and its label on entering it — and it is **not** a stop the
-keyboard has to get into and out of. The arrows run straight through: six controls, one
-sequence, <kbd>←</kbd> from the first heading button lands on the code button in the group
-before it.
+The three `role="group"`s split text marks from block marks from the two buttons that open
+the completion panel. That is a real division — a screen reader announces the group and its
+label on entering it — and it is **not** a stop the keyboard has to get into and out of. The
+arrows run straight through: eight controls, one sequence, <kbd>←</kbd> from the first
+heading button lands on the code button in the group before it.
 
 The theme draws the rule between them off `[role="group"] + [role="group"]`, so the line
 appears between groups and never hangs off either end of the bar.
@@ -299,6 +353,12 @@ against a supported call that loses a reader's work.
 `aria-activedescendant`. Everything about *what* completes is here: which character triggers
 it, what the query is, how rows are ranked, and what an accepted row does to the text. The
 element never sees the `@`.
+
+**Mention** and **Emoji** are that same seam from the other side. The button writes the
+trigger character with `insertText`, the `input` event that follows opens the panel, and no
+part of the completion knows a button was involved rather than a keystroke. The one thing the
+button owes the reader is the space in front of it: the token only counts at a word start, so
+a click with the caret against a word would otherwise plant an `@` that nothing completes.
 
 The mechanics of that — the caret-following panel, the automatic selection of the first row,
 and why the rows are `<a href="#">` — are covered on

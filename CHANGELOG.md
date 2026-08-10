@@ -91,6 +91,84 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Changed
 
+- **`<carousel-elemental>`'s rotation control is drawn, opaque, and counts down.** It was `▶`
+  and `⏸` typed as text on a button whose fill lost a specificity fight — three faults in one
+  corner. The pause glyph is missing from enough system fonts to come out as an empty box; a
+  typed glyph sits wherever its designer centred it inside the em box, which in a round button
+  is visibly off; and the `Canvas` fill meant to keep the control off the photograph behind it
+  never applied at all, because the rule under it was one selector step short of the one that
+  styles all four controls. A white icon over a white sky is a control nobody can find.
+
+  It is now `play-24` — its triangle, without the ring it ships inside, since the button is one
+  already — and `square-fill-24` from
+  [Octicons](https://primer.style/foundations/icons/), on an opaque fill behind a `CanvasText`
+  icon — the page's own contrast, whatever the slide does, and following `color-scheme` under a
+  theme switch. Around it a ring sweeps once per `interval`, so the next slide is not a
+  surprise and there is something to read the wait against.
+
+  **DOM and CSS:** the rotation control holds an `<svg>` where it held a character. The element
+  writes `data-carousel-rotating` on itself while the timer is running — with the timer and not
+  with the button, since a pointer resting on the row holds the rotation while the control
+  still says `Stop` — along with an inline `--carousel-elemental-tick` carrying the interval,
+  which is the length the ring is animated over. The ring itself is the button's border, a
+  conic gradient clipped to the border box over a fill clipped to the padding box, so it needs
+  no element and no mask — with that same fill under the gradient and in a collar outside it,
+  since a `CanvasText` sweep on a 20% track drawn straight onto a night photograph is a black
+  arc on black. The new `--carousel-elemental-chip` is that fill and
+  `--carousel-elemental-ring` its thickness, and the theme's shared hover no longer reaches
+  this button, which draws its own. Under
+  `prefers-reduced-motion: reduce` the ring does not sweep, and the control is still there.
+
+- **`<combobox-elemental>` groups its options with weight and an indent instead of a
+  hairline.** The optional theme drew a group's name small, dimmed and under a rule, with
+  its members flush against every ungrouped row — so the only thing saying where a group
+  started was a line, and the only thing saying where it stopped was a gap. The name is now
+  bold at the list's own size, and its members sit in from it by `2.5 ×
+  --combobox-elemental-inset`, which is what the native `<select>` does with an `<optgroup>`.
+  A loose option after a group is told apart by coming back out to the edge.
+
+  **CSS:** `.combobox-elemental-group-label` no longer sets `font-size` or `color` and is
+  `font-weight: 700`; the rule that drew `border-block-start` on the first visible group is
+  gone, and `.combobox-elemental-group .combobox-elemental-option` now carries a
+  `padding-inline-start`. A page that wants the line back sets the border itself — the
+  classes are unchanged, and none of this touches the markup or the ARIA.
+
+  The line was also the fiddliest thing in the file: it had to be suppressed at the top of
+  the popup, and again whenever the filter hid every row above a group, which is a sibling
+  selector that has to stay in step with how filtering hides things. Weight and indent need
+  neither, and both survive forced-colors, where a hairline is repainted or dropped.
+
+- **A `fade` carousel is as tall as the slide showing, and travels between the two heights.**
+  It used to be as tall as the tallest slide, because every slide sat in one grid cell — which
+  meant a stack of slides of different lengths carried a column of white space under every
+  short one, for the whole life of the page, to avoid a box that jumped when the slide changed.
+  Animating the height buys the second thing without paying the first.
+
+  **DOM and CSS:** the slides are no longer a grid. The current slide is the only one left in
+  flow; the rest are `position: absolute` at the top of the scroller, which is now
+  `position: relative`. During a swap the element writes an inline `height` on the scroller and
+  takes it back off the moment the transition lands, so a resize, a late font or a picture that
+  finally loaded are answered by the layout and not by a measurement taken before them. A page
+  that wants the old behaviour gives its slides a `min-block-size`.
+
+  `--carousel-elemental-fade` is the duration for both, and under
+  `prefers-reduced-motion: reduce` neither runs — the height changes at once, and is not pinned
+  at all, since a pin comes off when its transition ends and a transition that never runs never
+  ends. `swapHeight` is exported, which is that rule on its own.
+
+- **`<optgroup>` reads as a group in `<combobox-elemental>`'s popup.** The name used to be one
+  dimmed line among the options, with nothing marking where the set began or ended — a `Pear`
+  under a `Citrus` heading was a claim about a pear. It now carries a rule above it, sits
+  closer to its own options than to the group before them, and sticks to the top of the popup
+  while any of its options are still on screen, so a reader scrolling a long list can always
+  see which group they are in.
+
+  Theme only: `.combobox-elemental-group` and `.combobox-elemental-group-label` are the same
+  two elements they were, and `style.scss` is untouched. The numbers follow the ones the
+  platform and the field already use — WebKit's UA stylesheet draws a customizable `<select>`'s
+  `optgroup` label at `0.85em` in 70% of `currentcolor` with a rule above every group but the
+  first, and MUI's grouped listbox makes the same heading sticky.
+
 - **`<tooltip-elemental>` centres its bubble on the trigger at every width, and never
   outside the viewport.** It used to centre only on a control *wider* than the bubble and
   align to an edge otherwise, on the grounds that a small button centred under a long
@@ -146,6 +224,39 @@ may already be targeting**, since neither shows up in a function signature.
   not.
 
 ### Fixed
+
+- **The first `<suggest-elemental>` sample no longer loads the docs site into its own
+  preview.** Its rows were relative urls, and a preview is a `srcdoc` frame with no url of
+  its own: `accordion.html` resolved against the page around it, so following a row pulled
+  the entire site into a frame a few hundred pixels tall, with no history behind it to come
+  back from. The rows now carry `target="_blank"`, and the page says that is the preview's
+  need rather than the element's — every other demo in the book uses a `#` fragment, which
+  the frame already cancels, but this one is a "jump to" list and rows that go nowhere would
+  be teaching the wrong thing.
+
+  The sample also filters as you type, and reserves room below itself for the open panel.
+  Typing did nothing before — correct for an element that does not filter, and impossible to
+  tell from a broken one on first contact; the query now belongs to a few lines of the page's
+  own JS, which is the division the page spends the rest of its length explaining.
+  The room is a `margin-block-end` and not padding: the wrapper is the panel's containing
+  block, so padding there pushes the panel down with it and back out of the frame.
+
+  The field itself is drawn now — a border, a radius and an
+  [Octicon](https://primer.style/octicons/) magnifier — because the sample was the one place
+  a reader could see what the theme means by "nothing here styles your `<input>`", and an
+  unstyled control next to a drawn panel read as an element that had forgotten half its job.
+  The look is the sample's own CSS, out of the same system colours the theme uses, so it
+  follows the page's light and dark like everything else. Docs only — nothing about the
+  package changes.
+
+- **The in-page samples no longer space an element's own rows like prose.** The docs theme
+  gives every `<li>` `0.25rem` of margin, which is right for something being read and wrong
+  inside a popup, where a row is a target and the gap between two of them is dead space the
+  pointer falls into — the combobox at the top of its page had it, and so did the menus. The
+  `<code-preview>` demos never did: those are a bare document in a frame, which is the whole
+  reason this only showed on the samples written straight into the page. The rule keys off
+  `li[role]`, so the rows an element marked lose the margin and the rows an author wrote —
+  the checkbox group's list of real labels — keep it. Docs only.
 
 - **`<tooltip-elemental>` no longer paints the bubble before it upgrades, in the `title`
   shape.** A trigger with a `title` and a matching bubble had its words on screen twice

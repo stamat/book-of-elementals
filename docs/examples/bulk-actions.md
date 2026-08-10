@@ -81,7 +81,14 @@ which is the point of this example. Here is the assembly.
 ```
 
 ```css demo
-body { margin: 0; padding: 1rem; --line: color-mix(in srgb, currentcolor 15%, transparent); }
+/* two tints, not one: `--line` is an edge you are meant to see, `--fill` a backdrop you are
+   not — a hover painted at the strength of the borders around it reads as a second button
+   appearing rather than as the one under the pointer lighting up */
+body {
+  margin: 0; padding: 1rem;
+  --line: color-mix(in srgb, currentcolor 15%, transparent);
+  --fill: color-mix(in srgb, currentcolor 4%, transparent);
+}
 
 .bulk {
   display: flex; align-items: center; gap: 0.5rem;
@@ -93,7 +100,7 @@ body { margin: 0; padding: 1rem; --line: color-mix(in srgb, currentcolor 15%, tr
   padding: 0.3rem 0.7rem; border: 1px solid var(--line); border-radius: 0.375rem;
   background: none;
 }
-.bulk button:hover:not(:disabled) { background: var(--line); }
+.bulk button:hover:not(:disabled) { background: var(--fill); }
 /* out of reach *and* out of the tab order, because a toolbar of dead buttons is a set of
    tab stops that do nothing — `disabled` is the attribute that does both */
 .bulk button:disabled { opacity: 0.45; cursor: not-allowed; }
