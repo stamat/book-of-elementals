@@ -22,7 +22,11 @@ export default {
       ignore: [
         'css3-cursors',
         'css3-cursors-grab',
-        'css-scrollbar'
+        'css-scrollbar',
+        // caniuse marks this "n" for desktop Safari and "y" for iOS Safari
+        // since 13. It only ever governs touch gestures, so the one platform
+        // reported as missing it is the one with no touch input to govern.
+        'css-touch-action'
       ]
     }]
   }
