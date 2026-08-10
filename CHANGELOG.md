@@ -15,6 +15,11 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Fixed
+
+- Update poops-docs-theme to 4.0.1 which carries the search results rendering issue fix from the
+  previous release v0.7.1
+
 ## [0.7.1] - 2026-08-10
 
 ### Fixed
@@ -125,7 +130,7 @@ may already be targeting**, since neither shows up in a function signature.
   could not translate. `position-text="{n} od {total}"` makes it `3 od 10`.
 
   The whole sentence rather than the word between the numbers, because `of` between two
-  numbers is English's *shape* as much as its word: Japanese counts the other way round,
+  numbers is English's _shape_ as much as its word: Japanese counts the other way round,
   `{total} 中の {n}`. Set to nothing it falls back to the English rather than being honoured,
   since the alternative is `aria-label=""` and a slide with no name at all is worse than one
   named in the wrong language.
@@ -246,7 +251,7 @@ may already be targeting**, since neither shows up in a function signature.
   its members flush against every ungrouped row — so the only thing saying where a group
   started was a line, and the only thing saying where it stopped was a gap. The name is now
   bold at the list's own size, and its members sit in from it by `2.5 ×
-  --combobox-elemental-inset`, which is what the native `<select>` does with an `<optgroup>`.
+--combobox-elemental-inset`, which is what the native `<select>` does with an `<optgroup>`.
   A loose option after a group is told apart by coming back out to the edge.
 
   **CSS:** `.combobox-elemental-group-label` no longer sets `font-size` or `color` and is
@@ -292,7 +297,7 @@ may already be targeting**, since neither shows up in a function signature.
   first, and MUI's grouped listbox makes the same heading sticky.
 
 - **`<tooltip-elemental>` centres its bubble on the trigger at every width, and never
-  outside the viewport.** It used to centre only on a control *wider* than the bubble and
+  outside the viewport.** It used to centre only on a control _wider_ than the bubble and
   align to an edge otherwise, on the grounds that a small button centred under a long
   sentence leaves most of that sentence beside the thing it describes. An icon button under
   a one-word bubble is what breaks that rule — barely narrower, and plainly wrong sitting off
@@ -355,7 +360,7 @@ may already be targeting**, since neither shows up in a function signature.
   the first paint rather than with the open dialog, because a gutter that arrives with the
   modal is the same jump in the other direction on a page too short to have had a scrollbar.
   A page short enough not to scroll now shows an empty gutter where it showed none; `html {
-  scrollbar-gutter: auto }` in your own stylesheet takes it back, along with the shift. Safari
+scrollbar-gutter: auto }` in your own stylesheet takes it back, along with the shift. Safari
   before 18.2 does not implement the property and behaves as it did before — its scrollbars
   overlay the content, so there is rarely anything there to shift.
 
@@ -469,7 +474,7 @@ may already be targeting**, since neither shows up in a function signature.
   region and no `aria-hidden` on anything, because every slide is in the tree the whole time.
 
   **`fade` also reads a touch swipe**, which is the one gesture this element handles itself. A
-  scrolling row swipes because it *is* a scroll container; a stack is not one, so on a phone
+  scrolling row swipes because it _is_ a scroll container; a stack is not one, so on a phone
   `fade` had the buttons and the picker and nothing else. Forty pixels across, and further
   across than down, moves one slide — touch and pen, never the mouse, which keeps its text
   selection, its image dragging and its link clicks. It does not follow the finger (there is
@@ -528,7 +533,7 @@ may already be targeting**, since neither shows up in a function signature.
   snap edge rather than from "the earliest slide more than half in view": in a bleed layout
   the slide you just left sits in that padding still two thirds on screen, so the index never
   advanced and the next button stopped doing anything after one press. The observer's job is
-  now purely *when* to look, which is also what keeps this element free of a resize listener.
+  now purely _when_ to look, which is also what keeps this element free of a resize listener.
 
   **The current slide is re-read on scroll as well as on layout change.** The observer alone
   was not enough once the answer came from geometry: it fires when a slide crosses one of its
@@ -557,7 +562,7 @@ may already be targeting**, since neither shows up in a function signature.
   [slideswap](https://github.com/stamat/slideswap), which will be archived.
 
 - **A versioning section in the README**, which the file had gone without. Semantic
-  versioning is the easy half; the half worth writing down is what the version is *about*,
+  versioning is the easy half; the half worth writing down is what the version is _about_,
   because nothing here is called from your code. The markup an element writes and the hooks a
   stylesheet reaches for are what a major is spent on, and the themes are explicitly not:
   they are one look meant to be replaced, so the custom properties they read are covered and
@@ -762,7 +767,9 @@ may already be targeting**, since neither shows up in a function signature.
 
   ```html
   <form class="checkbox-elemental">…</form>
-  <label class="checkbox-elemental"><input type="checkbox" /> Remember me</label>
+  <label class="checkbox-elemental"
+    ><input type="checkbox" /> Remember me</label
+  >
   ```
 
   ```scss
@@ -1019,8 +1026,8 @@ may already be targeting**, since neither shows up in a function signature.
   is — scrolled halfway down a page, the drawer is shorter than it needed to be.
 
   **CSS:** the drawer is clipped along its own top edge (`clip-path: inset(0 -100vmax
-  -100vmax)`). A drop shadow spreads in every direction, and this one was landing *on the
-  bar* — a smear along the header that appeared the moment the drawer opened. The same
+-100vmax)`). A drop shadow spreads in every direction, and this one was landing _on the
+  bar_ — a smear along the header that appeared the moment the drawer opened. The same
   property is the open and close animation: the bottom inset walks from `100%` to `0`, so the
   drawer is uncovered from under the bar rather than travelling over it. If you were painting
   something out of the drawer's own box on purpose, that is the one case that changes.
@@ -1039,7 +1046,7 @@ may already be targeting**, since neither shows up in a function signature.
 - **On a page with no global `box-sizing` reset, `<navbar-elemental>` and `<menu-elemental>`
   items overhung the box they sit in.** Both optional themes size an item with `width: 100%`
   — which is what makes a `<button>` fill the row a link already fills — and then pad it.
-  Under the default `content-box` that is the row's own width *plus* a rem, so in the navbar
+  Under the default `content-box` that is the row's own width _plus_ a rem, so in the navbar
   each label ran a rem into the one after it, and in the menu every item hung out of the
   panel with its hover backdrop: a tinted bar sticking out of a rounded frame. The navbar had
   it worse than it looked, too — the copy being measured overhung as well, so the row was
@@ -1126,7 +1133,10 @@ may already be targeting**, since neither shows up in a function signature.
   rather than a `matchMedia` listener per page.
 
   ```html
-  <disclosure-elemental for="sidebar" media="(min-width: 60rem)">
+  <disclosure-elemental
+    for="sidebar"
+    media="(min-width: 60rem)"
+  ></disclosure-elemental>
   ```
 
   Same spelling as `media` on `<navbar-elemental>` and `<menu-elemental>`. The query is
@@ -1150,8 +1160,12 @@ may already be targeting**, since neither shows up in a function signature.
   number in a language that cannot check it:
 
   ```css
-  .sidebar { /* the rail */ }
-  .sidebar[data-mode="free"] { position: fixed; /* the drawer */ }
+  .sidebar {
+    /* the rail */
+  }
+  .sidebar[data-mode="free"] {
+    position: fixed; /* the drawer */
+  }
   ```
 
   Which also makes such a stylesheet shippable, since it carries no breakpoint of its own.
@@ -1182,7 +1196,9 @@ may already be targeting**, since neither shows up in a function signature.
   ```
 
   ```css demo
-  #sidebar { transition: transform 0.2s ease; }
+  #sidebar {
+    transition: transform 0.2s ease;
+  }
   ```
   ````
 
@@ -1204,7 +1220,7 @@ may already be targeting**, since neither shows up in a function signature.
 
   A sample opts in with `<!-- demo switch -->` in the markdown, and `script/demos.js` does the
   wrapping after the markup stage. The marker rather than the fence's info string, because it
-  introduces a *group* — the fences under it — and because a setting like
+  introduces a _group_ — the fences under it — and because a setting like
   `viewport-widths="375 768"` has spaces in its value, which an info string cannot carry. The
   sample stays an ordinary fence in `docs/`, so it is still one block of real HTML to read and
   copy, still highlighted at build time, and still in `llms.txt` and the search index.
@@ -1276,7 +1292,10 @@ may already be targeting**, since neither shows up in a function signature.
           </ul>
         </li>
 
-        <li data-navbar-more><button>More</button><ul></ul></li>
+        <li data-navbar-more>
+          <button>More</button>
+          <ul></ul>
+        </li>
       </ul>
     </div>
 
