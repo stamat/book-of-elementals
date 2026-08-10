@@ -15,6 +15,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-08-10
+
 ### Fixed
 
 - **`<navbar-elemental>` no longer takes over a list another custom element wrote.** The row
