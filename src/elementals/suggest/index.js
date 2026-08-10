@@ -180,13 +180,13 @@ export class SuggestElemental extends ElementBase {
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onFocusOut = this.onFocusOut.bind(this);
     this.onPointerMove = this.onPointerMove.bind(this);
-    this.onPointerDown = this.onPointerDown.bind(this);
+    this.onMouseDown = this.onMouseDown.bind(this);
     this.onClick = this.onClick.bind(this);
 
     control.addEventListener('keydown', this.onKeyDown);
     control.addEventListener('focusout', this.onFocusOut);
     this.addEventListener('pointermove', this.onPointerMove);
-    this.addEventListener('pointerdown', this.onPointerDown);
+    this.addEventListener('mousedown', this.onMouseDown);
     this.addEventListener('click', this.onClick);
 
     // Whatever fills this list is not required to tell the element it did. An observer
@@ -207,7 +207,7 @@ export class SuggestElemental extends ElementBase {
     this.observer = null;
 
     this.removeEventListener('pointermove', this.onPointerMove);
-    this.removeEventListener('pointerdown', this.onPointerDown);
+    this.removeEventListener('mousedown', this.onMouseDown);
     this.removeEventListener('click', this.onClick);
 
     const control = this.control;
@@ -365,7 +365,7 @@ export class SuggestElemental extends ElementBase {
   }
 
   onFocusOut(e) {
-    // Focus moving inside the popup is not focus leaving - though `onPointerDown` means it
+    // Focus moving inside the popup is not focus leaving - though `onMouseDown` means it
     // rarely happens - and a popup that closed on it would close under the click it was
     // being given.
     if (e.relatedTarget && this.contains(e.relatedTarget)) return;
@@ -382,9 +382,15 @@ export class SuggestElemental extends ElementBase {
     this.applyCursor();
   }
 
-  onPointerDown(e) {
+  onMouseDown(e) {
     // Keeps the caret in the field. Without this the press moves focus out of the control,
     // `focusout` closes the popup, and the click lands on nothing.
+    //
+    // `mousedown` and not `pointerdown`, which reads as the modern spelling and breaks
+    // touch: cancelling `pointerdown` suppresses the compatibility mouse events, and on
+    // iOS the tap's `click` is the last of that same synthesised run - so the press keeps
+    // the caret and takes the tap with it. The compatibility `mousedown` arrives before
+    // the focus change and before `click`, so cancelling that one costs nothing.
     e.preventDefault();
   }
 

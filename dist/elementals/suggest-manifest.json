@@ -217,7 +217,7 @@
             },
             {
               "kind": "method",
-              "name": "onPointerDown",
+              "name": "onMouseDown",
               "parameters": [
                 {
                   "name": "e"

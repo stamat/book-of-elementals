@@ -1430,7 +1430,7 @@
       this.query = "";
       this.onInput = this.onInput.bind(this);
       this.onKeyDown = this.onKeyDown.bind(this);
-      this.onPointerDown = this.onPointerDown.bind(this);
+      this.onMouseDown = this.onMouseDown.bind(this);
       this.onClick = this.onClick.bind(this);
       this.onFocusOut = this.onFocusOut.bind(this);
       this.onDocumentClick = this.onDocumentClick.bind(this);
@@ -1442,7 +1442,7 @@
       this.sync = this.sync.bind(this);
       this.build();
       this.addEventListener("keydown", this.onKeyDown);
-      this.addEventListener("pointerdown", this.onPointerDown);
+      this.addEventListener("mousedown", this.onMouseDown);
       this.addEventListener("pointerover", this.onPointerOver);
       this.addEventListener("click", this.onClick);
       this.addEventListener("focusout", this.onFocusOut);
@@ -1460,7 +1460,7 @@
     disconnectedCallback() {
       if (!this.initialized) return;
       this.removeEventListener("keydown", this.onKeyDown);
-      this.removeEventListener("pointerdown", this.onPointerDown);
+      this.removeEventListener("mousedown", this.onMouseDown);
       this.removeEventListener("pointerover", this.onPointerOver);
       this.removeEventListener("click", this.onClick);
       this.removeEventListener("focusout", this.onFocusOut);
@@ -1809,8 +1809,14 @@
      * A pointer press inside the popup would blur the field before the click landed, and a
      * combobox whose field loses focus is one whose popup has just closed. The press is
      * cancelled instead; the click that follows still arrives.
+     *
+     * `mousedown` and not `pointerdown`, which reads as the modern spelling and breaks
+     * touch: cancelling `pointerdown` suppresses the compatibility mouse events, and on iOS
+     * the tap's `click` is the last of that same synthesised run - so the press keeps the
+     * field's focus and takes the tap with it. The compatibility `mousedown` arrives before
+     * the focus change and before `click`, so cancelling that one costs nothing.
      */
-    onPointerDown(e) {
+    onMouseDown(e) {
       if (this.list.contains(e.target)) e.preventDefault();
     }
     /**
@@ -3941,12 +3947,12 @@
       this.onKeyDown = this.onKeyDown.bind(this);
       this.onFocusOut = this.onFocusOut.bind(this);
       this.onPointerMove = this.onPointerMove.bind(this);
-      this.onPointerDown = this.onPointerDown.bind(this);
+      this.onMouseDown = this.onMouseDown.bind(this);
       this.onClick = this.onClick.bind(this);
       control.addEventListener("keydown", this.onKeyDown);
       control.addEventListener("focusout", this.onFocusOut);
       this.addEventListener("pointermove", this.onPointerMove);
-      this.addEventListener("pointerdown", this.onPointerDown);
+      this.addEventListener("mousedown", this.onMouseDown);
       this.addEventListener("click", this.onClick);
       this.observer = new MutationObserver(() => this.mark());
       this.observer.observe(this, { childList: true, subtree: true });
@@ -3959,7 +3965,7 @@
       if (this.observer) this.observer.disconnect();
       this.observer = null;
       this.removeEventListener("pointermove", this.onPointerMove);
-      this.removeEventListener("pointerdown", this.onPointerDown);
+      this.removeEventListener("mousedown", this.onMouseDown);
       this.removeEventListener("click", this.onClick);
       const control = this.control;
       if (!control) return;
@@ -4097,7 +4103,7 @@
       this.active = option;
       this.applyCursor();
     }
-    onPointerDown(e) {
+    onMouseDown(e) {
       e.preventDefault();
     }
     onClick(e) {

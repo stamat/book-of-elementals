@@ -326,13 +326,13 @@
             },
             {
               "kind": "method",
-              "name": "onPointerDown",
+              "name": "onMouseDown",
               "parameters": [
                 {
                   "name": "e"
                 }
               ],
-              "description": "A pointer press inside the popup would blur the field before the click landed, and a\ncombobox whose field loses focus is one whose popup has just closed. The press is\ncancelled instead; the click that follows still arrives."
+              "description": "A pointer press inside the popup would blur the field before the click landed, and a\ncombobox whose field loses focus is one whose popup has just closed. The press is\ncancelled instead; the click that follows still arrives.\n\n`mousedown` and not `pointerdown`, which reads as the modern spelling and breaks\ntouch: cancelling `pointerdown` suppresses the compatibility mouse events, and on iOS\nthe tap's `click` is the last of that same synthesised run - so the press keeps the\nfield's focus and takes the tap with it. The compatibility `mousedown` arrives before\nthe focus change and before `click`, so cancelling that one costs nothing."
             },
             {
               "kind": "method",

@@ -105,12 +105,12 @@
       this.onKeyDown = this.onKeyDown.bind(this);
       this.onFocusOut = this.onFocusOut.bind(this);
       this.onPointerMove = this.onPointerMove.bind(this);
-      this.onPointerDown = this.onPointerDown.bind(this);
+      this.onMouseDown = this.onMouseDown.bind(this);
       this.onClick = this.onClick.bind(this);
       control.addEventListener("keydown", this.onKeyDown);
       control.addEventListener("focusout", this.onFocusOut);
       this.addEventListener("pointermove", this.onPointerMove);
-      this.addEventListener("pointerdown", this.onPointerDown);
+      this.addEventListener("mousedown", this.onMouseDown);
       this.addEventListener("click", this.onClick);
       this.observer = new MutationObserver(() => this.mark());
       this.observer.observe(this, { childList: true, subtree: true });
@@ -123,7 +123,7 @@
       if (this.observer) this.observer.disconnect();
       this.observer = null;
       this.removeEventListener("pointermove", this.onPointerMove);
-      this.removeEventListener("pointerdown", this.onPointerDown);
+      this.removeEventListener("mousedown", this.onMouseDown);
       this.removeEventListener("click", this.onClick);
       const control = this.control;
       if (!control) return;
@@ -261,7 +261,7 @@
       this.active = option;
       this.applyCursor();
     }
-    onPointerDown(e) {
+    onMouseDown(e) {
       e.preventDefault();
     }
     onClick(e) {

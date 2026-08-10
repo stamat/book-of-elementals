@@ -17,6 +17,15 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Fixed
 
+- **Tapping an option on iOS Safari now picks it.** `<combobox-elemental>` and
+  `<suggest-elemental>` — and with it `<search-elemental>`, whose panel is a suggest — cancelled
+  `pointerdown` inside the popup to keep the caret in the field while the click landed. That is
+  the right trade on a mouse and the wrong one on a touchscreen: cancelling `pointerdown`
+  suppresses the compatibility mouse events, and on iOS the tap's `click` is the last of that
+  same synthesised run, so the popup kept focus and swallowed every tap. The press is cancelled
+  on `mousedown` instead, which arrives before the focus change and before `click`, so the caret
+  still stays put and the tap arrives.
+
 - Update poops-docs-theme to 4.0.1 which carries the search results rendering issue fix from the
   previous release v0.7.1
 
