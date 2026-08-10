@@ -3172,6 +3172,25 @@
         },
         {
           "kind": "function",
+          "name": "ownsRow",
+          "parameters": [
+            {
+              "name": "ancestors",
+              "description": "Tag names between the list and the navbar, neither end included.",
+              "type": {
+                "text": "string[]"
+              }
+            }
+          ],
+          "description": "Whether the first list found inside a navbar is the navbar's own row.\n\nThe row is \"the first `<ul>` or `<menu>` in the element\", which holds right up until the bar\ncarries something that writes a list of its own - a `<suggest-elemental>` results panel, a\nnested navbar. Adopting one of those is not a cosmetic mistake: the row's parent becomes the\nrail, so the other element's box is handed `display: grid`, `overflow: clip` and a copy of\nitself to measure, and its list is laid out as a bar.\n\nA custom element between the two is the line, because that is what \"somebody else owns this\"\nlooks like in markup. A page that wraps its row in one gets no navbar rather than a hijacked\npanel - the links are still there, still a list, which is the degradation the element\npromises anyway.",
+          "return": {
+            "type": {
+              "text": "boolean"
+            }
+          }
+        },
+        {
+          "kind": "function",
           "name": "hoverIntent",
           "parameters": [
             {
@@ -3300,7 +3319,7 @@
             {
               "kind": "field",
               "name": "row",
-              "description": "The row: the first list in the element. A nested `<navbar-elemental>` keeps its own.",
+              "description": "The row: the first list in the element that no other custom element between them owns. A\nnested `<navbar-elemental>` keeps its own, and so does anything else on the bar that\nwrites a list - see `ownsRow`.",
               "readonly": true
             },
             {
@@ -3693,6 +3712,14 @@
           "name": "probeState",
           "declaration": {
             "name": "probeState",
+            "module": "src/elementals/navbar/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ownsRow",
+          "declaration": {
+            "name": "ownsRow",
             "module": "src/elementals/navbar/index.js"
           }
         },

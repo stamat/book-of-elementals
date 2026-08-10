@@ -15,6 +15,22 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`<navbar-elemental>` no longer takes over a list another custom element wrote.** The row
+  was "the first `<ul>` or `<menu>` in the element", and a header carrying a search field but
+  no links of its own has exactly one list in it: the `<suggest-elemental>` results panel.
+  Adopted as the row, its element became the rail — `display: grid`, `overflow: clip`, a
+  hidden copy of the panel appended beside it to measure — and the results were laid out as a
+  bar, `flex-wrap: nowrap`, one row per line, no wrapping. The rule now is ownership: a list
+  with another custom element between it and the navbar belongs to that element.
+
+  **DOM/CSS:** a navbar whose only list is inside another custom element now writes nothing at
+  all — no `data-mode` on the element, no `data-navbar-rail`, no `[data-navbar-probe]` copy —
+  where before it wrote all three onto the wrong box. A page that wrapped its row in a custom
+  element of its own is no longer upgraded; move the wrapper inside the row's box, or make it
+  a plain element.
+
 ## [0.7.0] - 2026-08-10
 
 ### Added

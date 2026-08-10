@@ -23,6 +23,9 @@
   function probeState(hasPanel) {
     return hasPanel ? { "aria-expanded": "false" } : null;
   }
+  function ownsRow(ancestors) {
+    return !ancestors.some((tag) => tag.includes("-"));
+  }
   function hoverIntent(branch, trigger) {
     if (!branch) return null;
     return { except: branch, open: trigger || null };
@@ -36,11 +39,18 @@
       return ["media", "min-bar-items", "open"];
     }
     /**
-     * The row: the first list in the element. A nested `<navbar-elemental>` keeps its own.
+     * The row: the first list in the element that no other custom element between them owns. A
+     * nested `<navbar-elemental>` keeps its own, and so does anything else on the bar that
+     * writes a list - see `ownsRow`.
      */
     get row() {
       const list = this.querySelector("ul, menu");
-      return list && list.closest("navbar-elemental") === this ? list : null;
+      if (!list) return null;
+      const ancestors = [];
+      for (let node = list.parentElement; node && node !== this; node = node.parentElement) {
+        ancestors.push(node.localName);
+      }
+      return ownsRow(ancestors) ? list : null;
     }
     /**
      * The box the row is measured inside, which is whatever the page put the row in. The copy

@@ -67,6 +67,27 @@ export function probeState(hasPanel) {
 }
 
 /**
+ * Whether the first list found inside a navbar is the navbar's own row.
+ *
+ * The row is "the first `<ul>` or `<menu>` in the element", which holds right up until the bar
+ * carries something that writes a list of its own - a `<suggest-elemental>` results panel, a
+ * nested navbar. Adopting one of those is not a cosmetic mistake: the row's parent becomes the
+ * rail, so the other element's box is handed `display: grid`, `overflow: clip` and a copy of
+ * itself to measure, and its list is laid out as a bar.
+ *
+ * A custom element between the two is the line, because that is what "somebody else owns this"
+ * looks like in markup. A page that wraps its row in one gets no navbar rather than a hijacked
+ * panel - the links are still there, still a list, which is the degradation the element
+ * promises anyway.
+ *
+ * @param {string[]} ancestors - Tag names between the list and the navbar, neither end included.
+ * @returns {boolean} Whether the navbar may take it.
+ */
+export function ownsRow(ancestors) {
+  return !ancestors.some(tag => tag.includes('-'));
+}
+
+/**
  * What a pointer arriving somewhere means for the panels that are open.
  *
  * `branch` is the row's own item the pointer is inside, however deep - not the control under
@@ -166,11 +187,18 @@ export class NavbarElemental extends ElementBase {
   }
 
   /**
-   * The row: the first list in the element. A nested `<navbar-elemental>` keeps its own.
+   * The row: the first list in the element that no other custom element between them owns. A
+   * nested `<navbar-elemental>` keeps its own, and so does anything else on the bar that
+   * writes a list - see `ownsRow`.
    */
   get row() {
     const list = this.querySelector('ul, menu');
-    return list && list.closest('navbar-elemental') === this ? list : null;
+    if (!list) return null;
+    const ancestors = [];
+    for (let node = list.parentElement; node && node !== this; node = node.parentElement) {
+      ancestors.push(node.localName);
+    }
+    return ownsRow(ancestors) ? list : null;
   }
 
   /**

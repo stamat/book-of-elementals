@@ -1,4 +1,4 @@
-import { hoverIntent, navbarMode, probeState, stepIndex } from './index.js';
+import { hoverIntent, navbarMode, ownsRow, probeState, stepIndex } from './index.js';
 
 test('arrows step one way or the other, whichever axis they are on', () => {
   expect(stepIndex(0, 'ArrowRight', 4)).toBe(1);
@@ -64,6 +64,20 @@ test('a threshold taller than the bar has links makes it a drawer at every width
 test('a nonsense threshold is one, which is what the element has always done', () => {
   expect(navbarMode(true, 3, 4, 0)).toBe('bar');
   expect(navbarMode(true, 4, 4, Number.NaN)).toBe('stack');
+});
+
+test('the row may sit as deep in the page markup as the page likes', () => {
+  expect(ownsRow([])).toBe(true);
+  expect(ownsRow(['nav', 'div', 'header'])).toBe(true);
+});
+
+test('a list another custom element wrote is that element\'s, not the bar\'s', () => {
+  // The bug this exists for: a header with no links of its own still has a search field in it,
+  // and the first list in the element is then the results panel. Taken as the row, its own box
+  // becomes the rail - grid, clipped, with a copy of the panel measured beside it - and the
+  // results are laid out as a bar that never wraps.
+  expect(ownsRow(['suggest-elemental', 'search-elemental', 'div'])).toBe(false);
+  expect(ownsRow(['ul', 'li', 'navbar-elemental'])).toBe(false);
 });
 
 test('a copy of a trigger is measured as a trigger, caret and all', () => {

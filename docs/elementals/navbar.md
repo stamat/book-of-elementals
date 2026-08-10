@@ -123,6 +123,12 @@ for that a plain navigation would not already have. It could not be created for 
 element would have to wrap your list in it, and then every selector you had written
 against the list's parent would be pointing at the wrong element.
 
+**The row is the first list in the element that nothing else owns.** A `<ul>` inside
+another custom element — a [`<suggest-elemental>`](suggest.html) results panel, a nested
+`<navbar-elemental>` — belongs to that element and is left alone. So a header carrying a
+search field and no links of its own upgrades to nothing at all: no rail, no drawer, and
+the panel laid out as its own element wrote it.
+
 ## API
 
 ### Attributes
