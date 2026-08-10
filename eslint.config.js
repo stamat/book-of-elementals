@@ -8,6 +8,7 @@ const browserGlobals = {
   HTMLElement: 'readonly',
   customElements: 'readonly',
   navigator: 'readonly',
+  AbortController: 'readonly',
   IntersectionObserver: 'readonly',
   MutationObserver: 'readonly',
   decodeURIComponent: 'readonly',

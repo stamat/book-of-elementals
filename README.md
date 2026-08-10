@@ -33,6 +33,7 @@ holds the JavaScript helpers, this one holds the elements.
 | `<toolbar-elemental>`    | [APG Toolbar](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/) — a row of buttons the arrows walk and Tab passes in one step |
 | `<tooltip-elemental>`    | [APG Tooltip](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/) as far as it has consensus — a description on hover and focus, still on the page without script |
 | `<copy-elemental>`       | No APG pattern — a `<button>`, the clipboard write behind it, and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-changes.html) every copy button forgets |
+| `<search-elemental>`     | No APG pattern — the query half of a search field: the debounce, the abort, the loading state and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html) a panel filling itself does not make |
 
 ## Docs
 
@@ -641,6 +642,54 @@ knob parked on the first segment, and the selected label still takes its colour,
 because that comes from `label:has(> input:checked)` and needs nobody's help. The
 only ARIA it writes is `role="group"`, and only when you have given the element an
 `aria-label` that would otherwise be read by nothing.
+
+## `<search-elemental>`
+
+The query half of a search field, and the other side of `<suggest-elemental>`'s seam: it
+decides when to ask, hands you an `AbortSignal`, and turns what comes back into a state your
+CSS can draw and a sentence a screen reader hears. It does not fetch.
+
+```html
+<search-elemental min="2">
+  <search>
+    <form action="/search/">
+      <label for="q">Search</label>
+      <input type="search" id="q" name="q" autocomplete="off" />
+    </form>
+  </search>
+  <suggest-elemental for="q"><ul></ul></suggest-elemental>
+</search-elemental>
+```
+
+```js
+search.addEventListener('search-query', (e) => {
+  e.detail.wait(
+    fetch(url + encodeURIComponent(e.detail.query), { signal: e.detail.signal })
+      .then((r) => r.json())
+      .then((rows) => list.replaceChildren(...rows.map(toRow)))
+  );
+});
+```
+
+| Attribute       | Type   | Default        | Description                                                     |
+| --------------- | ------ | -------------- | ---------------------------------------------------------------- |
+| `delay`         | number | `200`          | Milliseconds the field has to stop changing before a query goes out. |
+| `min`           | number | `1`            | Characters needed before one goes out at all. `0` sends the empty query too. |
+| `results-label` | string | `5 results`    | Announced on a hit. `{n}` is the count.                          |
+| `empty-label`   | string | `No results`   | Announced when nothing matched.                                  |
+| `error-label`   | string | `Search failed`| Announced when the request failed.                               |
+
+One request per pause instead of one per keystroke, one `AbortController` per query, and a
+sequence number that drops the slow answer arriving after the fast one — the bug that leaves
+results for `car` on screen under a field reading `carousel`. `data-state` runs
+`idle` → `pending` → `results` / `empty` / `error`, `aria-busy` goes on the panel, and the
+count is announced through a `role="status"` region the element appends, which is
+[WCAG 2.2 4.1.3](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html) met rather
+than skipped.
+
+`wait()` is what buys the loading state; a page filtering a list it already has never calls
+it and never gets a spinner nothing will stop. With no script the `<form>` submits and the
+reader gets a search page.
 
 ## `<suggest-elemental>`
 

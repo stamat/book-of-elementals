@@ -12,6 +12,9 @@
     if (/^\s*-?\d+\s*$/.test(str)) return parseInt(str);
     if (/^\s*-?\d+\.\d+\s*$/.test(str)) return parseFloat(str);
   }
+  function isObject(o) {
+    return typeof o === "object" && !Array.isArray(o) && o !== null;
+  }
   function isFunction(o) {
     return typeof o === "function";
   }
@@ -106,6 +109,98 @@
     if (durations.hasOwnProperty("all")) return durations.all;
     return 0;
   }
+  function swipe(element, callback, threshold = 150, timeThreshold = 0) {
+    let mouse = true;
+    let start = null;
+    let swiped = false;
+    if (isObject(callback)) {
+      const options = callback;
+      callback = options.callback;
+      threshold = options.threshold || threshold;
+      timeThreshold = options.timeThreshold || timeThreshold;
+      if (options.mouse === false) mouse = false;
+    }
+    if (!element) return null;
+    const handleStart = function(e) {
+      swiped = false;
+      if (start || !mouse && e.pointerType === "mouse") {
+        start = null;
+        return;
+      }
+      start = { id: e.pointerId, x: e.clientX, y: e.clientY, time: Date.now() };
+      if (element.setPointerCapture) {
+        try {
+          element.setPointerCapture(e.pointerId);
+        } catch {
+        }
+      }
+      element.dispatchEvent(new CustomEvent("swipestart", { detail: { target: element, startX: start.x, startY: start.y, startTime: start.time } }));
+    };
+    const handleEnd = function(e) {
+      const from = start;
+      start = null;
+      if (!from || e.pointerId !== from.id) return;
+      const endX = e.clientX;
+      const endY = e.clientY;
+      const endTime = Date.now();
+      const deltaX = Math.abs(endX - from.x);
+      const deltaY = Math.abs(endY - from.y);
+      const left = endX < from.x;
+      const up = endY < from.y;
+      const horizontal = deltaX > deltaY && deltaX > threshold;
+      const vertical = deltaY > deltaX && deltaY > threshold;
+      const timeElapsed = endTime - from.time;
+      if (horizontal || vertical) {
+        if (!timeThreshold || timeElapsed <= timeThreshold) {
+          const res = {
+            target: element,
+            deltaX,
+            deltaY,
+            startX: from.x,
+            startY: from.y,
+            endX,
+            endY,
+            threshold,
+            horizontal,
+            vertical,
+            horizontalDirection: left ? "left" : "right",
+            verticalDirection: up ? "up" : "down",
+            direction: horizontal ? left ? "left" : "right" : up ? "up" : "down",
+            timeElapsed,
+            timeThreshold
+          };
+          swiped = true;
+          if (isFunction(callback)) callback(res);
+          element.dispatchEvent(new CustomEvent("swipe", { detail: res }));
+        }
+      }
+      element.dispatchEvent(new CustomEvent("swipeend", { detail: { target: element, startX: from.x, startY: from.y, startTime: from.time, endX, endY, endTime } }));
+    };
+    const handleCancel = function() {
+      start = null;
+    };
+    const handleClick = function(e) {
+      if (!swiped) return;
+      swiped = false;
+      if (!e.detail) return;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    element.addEventListener("pointerdown", handleStart);
+    element.addEventListener("pointerup", handleEnd);
+    element.addEventListener("pointercancel", handleCancel);
+    element.addEventListener("click", handleClick, true);
+    return {
+      destroy: function() {
+        element.removeEventListener("pointerdown", handleStart);
+        element.removeEventListener("pointerup", handleEnd);
+        element.removeEventListener("pointercancel", handleCancel);
+        element.removeEventListener("click", handleClick, true);
+        start = null;
+        swiped = false;
+      }
+    };
+  }
 
   // node_modules/book-of-spells/src/browser.mjs
   function mediaMatcher(query, callback) {
@@ -181,6 +276,12 @@
       default:
         return null;
     }
+  }
+  function stepIndex(current, key, length) {
+    if (length === 0) return null;
+    const to = key === "ArrowDown" || key === "ArrowRight" ? current + 1 : key === "ArrowUp" || key === "ArrowLeft" ? current - 1 : key === "Home" ? 0 : key === "End" ? length - 1 : null;
+    if (to === null || to < 0 || to >= length) return null;
+    return to;
   }
   function typeAheadIndex(labels, current, buffer) {
     if (!buffer) return null;
@@ -427,6 +528,660 @@
     }
   };
   define("accordion-elemental", AccordionElemental);
+
+  // src/elementals/carousel/index.js
+  function rotationInterval(value, fallback = 5e3) {
+    const ms = Number(value);
+    if (!Number.isFinite(ms) || ms <= 0) return fallback;
+    return Math.max(ms, 1e3);
+  }
+  function stepSlide(current, delta, count) {
+    if (count <= 0) return 0;
+    return Math.min(Math.max(current + delta, 0), count - 1);
+  }
+  var SWIPE = 40;
+  function swipeStep(direction, rtl) {
+    return direction === (rtl ? "right" : "left") ? 1 : -1;
+  }
+  function scrollEdges(offset, visible, total) {
+    const at = Math.abs(offset);
+    return { start: at <= 1, end: at + visible >= total - 1 };
+  }
+  function startInset(styles, rtl) {
+    const inset = parseFloat(rtl ? styles.scrollPaddingRight : styles.scrollPaddingLeft);
+    return Number.isFinite(inset) ? inset : 0;
+  }
+  function swapHeight(from, to, reduced) {
+    return !reduced && from !== to;
+  }
+  function slideName(index, count) {
+    return index + 1 + " of " + count;
+  }
+  function currentSlide(starts, inset, fallback) {
+    if (!starts.length) return fallback;
+    for (let i = 0; i < starts.length; i++) {
+      if (starts[i] >= inset - 1) return i;
+    }
+    return starts.length - 1;
+  }
+  var FOCUSABLE = "a[href], button, input, select, textarea, summary, iframe, [tabindex], [contenteditable]";
+  var carouselCount = 0;
+  var ICON = {
+    prev: {
+      d: "M9.78 12.78a.75.75 0 0 1-1.06 0L4.47 8.53a.75.75 0 0 1 0-1.06l4.25-4.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L6.06 8l3.72 3.72a.75.75 0 0 1 0 1.06Z",
+      box: "0 0 16 16"
+    },
+    next: {
+      d: "M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z",
+      box: "0 0 16 16"
+    },
+    // `play-24` is two paths, a triangle inside a ring, and this is the triangle: the button it
+    // goes in is already a circle with a countdown ring around it, and the icon's own would be
+    // the third concentric circle inside 28 pixels. `triangle-right-16` is the shape that looks
+    // like the obvious answer and is not - it is drawn as a disclosure twisty, 3.8 units wide
+    // against 7.1 tall, where a play triangle is nearly as wide as it is high.
+    //
+    // The box is cropped to 13.5 of the 24 it is drawn in, which renders the triangle at the
+    // height of the chevrons it is read beside, and sits half a unit left of the shape's centre.
+    // That half unit is the correction every play button wants and no geometry gives you: a
+    // triangle carries its area behind its point, so one centred on its bounding box reads as
+    // too far left. The square is symmetrical and keeps the box it came with.
+    play: {
+      d: "M9.5 15.584V8.416a.5.5 0 0 1 .77-.42l5.576 3.583a.5.5 0 0 1 0 .842l-5.576 3.584a.5.5 0 0 1-.77-.42Z",
+      box: "5.47 5.25 13.5 13.5"
+    },
+    stop: {
+      d: "M7.75 6h8.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 16.25 18h-8.5A1.75 1.75 0 0 1 6 16.25v-8.5C6 6.784 6.784 6 7.75 6Z",
+      box: "0 0 24 24"
+    }
+  };
+  function icon({ d, box }) {
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", box);
+    svg.setAttribute("width", "16");
+    svg.setAttribute("height", "16");
+    svg.setAttribute("fill", "currentColor");
+    svg.setAttribute("aria-hidden", "true");
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute("d", d);
+    svg.append(path);
+    return svg;
+  }
+  function reducedMotion() {
+    return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+  var CarouselElemental = class extends ElementBase {
+    static get observedAttributes() {
+      return ["autoplay", "interval", "fade"];
+    }
+    /** The scroller: the first list in the element. A carousel inside a slide keeps its own. */
+    get scroller() {
+      const list = this.querySelector("ul, ol, menu");
+      return list && list.closest("carousel-elemental") === this ? list : null;
+    }
+    /** The slides, in order. What the list holds, so a list inside a slide is not one. */
+    get slides() {
+      const list = this.scroller;
+      return list ? Array.from(list.querySelectorAll(":scope > li")) : [];
+    }
+    /** The picker buttons, in slide order. */
+    get markers() {
+      return this.picker ? Array.from(this.picker.children) : [];
+    }
+    /**
+     * Cross-fade in place rather than scroll a row.
+     *
+     * The one mode where the scroller is not the state: stacked slides have nothing to scroll,
+     * so the index is what this element holds and the stylesheet reads through
+     * `data-carousel-current`. Everything above it - the controls, the picker, the rotation,
+     * the events - is the same code either way.
+     */
+    get fade() {
+      return this.hasAttribute("fade");
+    }
+    set fade(value) {
+      this.toggleAttribute("fade", !!value);
+    }
+    /** Rotate on a timer. Reflected, so `[autoplay]` is a styling hook too. */
+    get autoplay() {
+      return this.hasAttribute("autoplay");
+    }
+    set autoplay(value) {
+      this.toggleAttribute("autoplay", !!value);
+    }
+    /** Milliseconds between slides while rotating. */
+    get interval() {
+      return rotationInterval(this.getAttribute("interval"));
+    }
+    set interval(value) {
+      this.setAttribute("interval", value);
+    }
+    connectedCallback() {
+      if (this.initialized) return;
+      if (!this.scroller) return;
+      this.onClick = this.onClick.bind(this);
+      this.onIntersect = this.onIntersect.bind(this);
+      this.onScroll = this.onScroll.bind(this);
+      this.onSwipe = this.onSwipe.bind(this);
+      this.onHeightEnd = this.onHeightEnd.bind(this);
+      this.suspend = this.suspend.bind(this);
+      this.resume = this.resume.bind(this);
+      this.onFocusOut = this.onFocusOut.bind(this);
+      this.index = 0;
+      this.inset = 0;
+      this.painted = false;
+      this.settling = null;
+      this.settleTimer = null;
+      this.swipes = null;
+      this.heights = null;
+      this.named = /* @__PURE__ */ new WeakMap();
+      this.addEventListener("click", this.onClick);
+      this.addEventListener("mouseenter", this.suspend);
+      this.addEventListener("mouseleave", this.resume);
+      this.addEventListener("focusin", this.suspend);
+      this.addEventListener("focusout", this.onFocusOut);
+      this.initialized = true;
+      this.wire();
+      if (this.autoplay && this.slides.length > 1 && !reducedMotion()) this.play();
+    }
+    disconnectedCallback() {
+      if (!this.initialized) return;
+      this.clearTimer();
+      this.rotating = false;
+      this.pinned = false;
+      this.removeEventListener("click", this.onClick);
+      this.removeEventListener("mouseenter", this.suspend);
+      this.removeEventListener("mouseleave", this.resume);
+      this.removeEventListener("focusin", this.suspend);
+      this.removeEventListener("focusout", this.onFocusOut);
+      this.strip();
+      this.initialized = false;
+    }
+    /**
+     * Take the pattern back off, leaving the markup the page wrote: a list.
+     *
+     * Two callers, which are the same event approached from opposite sides - a carousel leaving
+     * the document, and one whose page has taken its slides away. Everything written comes back
+     * off in both, because a `role="group"` with `aria-roledescription="slide"` on a row nothing
+     * is driving is a carousel announced to a screen reader that no longer has controls, and a
+     * scroller left with a tab stop is a stop onto nothing.
+     */
+    strip() {
+      if (this.observer) this.observer.disconnect();
+      this.observer = null;
+      if (this.scrolls) this.scrolls.removeEventListener("scroll", this.onScroll);
+      this.scrolls = null;
+      this.unswipe();
+      this.unpin();
+      this.arrived();
+      this.removeControls();
+      this.painted = false;
+      this.removeAttribute("data-carousel-at-start");
+      this.removeAttribute("data-carousel-at-end");
+      this.removeAttribute("aria-roledescription");
+      const scroller = this.scroller;
+      if (scroller) {
+        scroller.removeAttribute("data-carousel-slides");
+        scroller.removeAttribute("role");
+        scroller.removeAttribute("tabindex");
+        scroller.removeAttribute("aria-live");
+      }
+      for (const slide2 of this.slides) {
+        slide2.removeAttribute("role");
+        slide2.removeAttribute("aria-roledescription");
+        slide2.removeAttribute("data-carousel-slide");
+        slide2.removeAttribute("data-carousel-current");
+        if (slide2.getAttribute("aria-label") === this.named.get(slide2)) slide2.removeAttribute("aria-label");
+      }
+    }
+    /**
+     * Read the markup and put the pattern on it - the roles, the controls, the observer that
+     * watches the row - then push the current state onto the controls.
+     *
+     * Public and idempotent, because the slides are the page's to change: add one, remove one,
+     * reorder them, and this is the one call that says so. Nothing observes the markup on the
+     * element's behalf, which would be a `MutationObserver` running on every page that never
+     * touches its slides to save this one line on the pages that do.
+     */
+    wire() {
+      const scroller = this.scroller;
+      if (!scroller) return;
+      const slides = this.slides;
+      if (slides.length < 2) {
+        this.strip();
+        return;
+      }
+      this.setAttribute("aria-roledescription", "carousel");
+      if (!this.hasAttribute("role")) {
+        const named = this.hasAttribute("aria-label") || this.hasAttribute("aria-labelledby");
+        this.setAttribute("role", named ? "region" : "group");
+      }
+      if (!scroller.id) scroller.id = "carousel-elemental-slides-" + ++carouselCount;
+      scroller.setAttribute("data-carousel-slides", "");
+      scroller.setAttribute("role", "group");
+      if (this.fade || scroller.querySelector(FOCUSABLE)) scroller.removeAttribute("tabindex");
+      else scroller.tabIndex = 0;
+      slides.forEach((slide2, at) => {
+        slide2.setAttribute("role", "group");
+        slide2.setAttribute("aria-roledescription", "slide");
+        slide2.setAttribute("data-carousel-slide", "");
+        const label = slide2.getAttribute("aria-label");
+        const authored = slide2.hasAttribute("aria-labelledby") || label !== null && label !== this.named.get(slide2);
+        if (authored) return;
+        const name = slideName(at, slides.length);
+        slide2.setAttribute("aria-label", name);
+        this.named.set(slide2, name);
+      });
+      this.writeControls();
+      this.painted = false;
+      this.applyLive();
+      if (this.observer) this.observer.disconnect();
+      this.observer = null;
+      if (this.scrolls) this.scrolls.removeEventListener("scroll", this.onScroll);
+      this.scrolls = null;
+      this.unswipe();
+      this.unpin();
+      this.arrived();
+      if (this.fade) {
+        this.swipes = swipe(scroller, { callback: this.onSwipe, threshold: SWIPE, mouse: false });
+        scroller.addEventListener("transitionend", this.onHeightEnd);
+        scroller.addEventListener("transitioncancel", this.onHeightEnd);
+        this.heights = scroller;
+      } else {
+        this.observer = new IntersectionObserver(this.onIntersect, {
+          root: scroller,
+          threshold: [0, 0.25, 0.5, 0.75, 1]
+        });
+        for (const slide2 of slides) this.observer.observe(slide2);
+        scroller.addEventListener("scroll", this.onScroll, { passive: true });
+        this.scrolls = scroller;
+      }
+      this.apply(Math.min(this.index, Math.max(slides.length - 1, 0)));
+    }
+    /**
+     * Write the controls, or write them again after the slides changed.
+     *
+     * The rotation control is a child of the element rather than of the control bar, and it is
+     * first: the APG asks for it at the head of the tab sequence inside the carousel, so that
+     * a reader who lands in a moving carousel can stop it before reading anything. Putting it
+     * in the bar under the row and moving it visually would be a tab order that disagrees with
+     * the page, which is the trade this project does not make - so it is drawn where it sits,
+     * over the top corner of the row.
+     */
+    writeControls() {
+      this.removeControls();
+      const id = this.scroller.id;
+      if (this.autoplay) {
+        this.rotateButton = this.control("data-carousel-rotate", "", id);
+        this.prepend(this.rotateButton);
+        this.labelRotation();
+      }
+      this.controls = document.createElement("div");
+      this.controls.setAttribute("data-carousel-controls", "");
+      this.prevButton = this.control("data-carousel-prev", this.getAttribute("prev-text") || "Previous slide", id);
+      this.prevButton.append(icon(ICON.prev));
+      this.picker = document.createElement("div");
+      this.picker.setAttribute("data-carousel-markers", "");
+      this.picker.setAttribute("role", "group");
+      this.picker.setAttribute("aria-label", this.getAttribute("picker-text") || "Choose slide to display");
+      const word = this.getAttribute("slide-text") || "Slide";
+      this.slides.forEach((slide2, at) => {
+        const marker = this.control("data-carousel-marker", word + " " + (at + 1), id);
+        marker.textContent = String(at + 1);
+        this.picker.append(marker);
+      });
+      this.nextButton = this.control("data-carousel-next", this.getAttribute("next-text") || "Next slide", id);
+      this.nextButton.append(icon(ICON.next));
+      this.controls.append(this.prevButton, this.picker, this.nextButton);
+      this.append(this.controls);
+    }
+    /** One control button: named, typed, and pointed at the row it drives. */
+    control(flag, label, id) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.setAttribute(flag, "");
+      button.setAttribute("aria-controls", id);
+      if (label) button.setAttribute("aria-label", label);
+      return button;
+    }
+    /** Take the controls back out, so `wire()` and `disconnectedCallback` leave the markup as
+     * they found it. */
+    removeControls() {
+      if (this.rotateButton) this.rotateButton.remove();
+      if (this.controls) this.controls.remove();
+      this.rotateButton = null;
+      this.controls = null;
+      this.picker = null;
+      this.prevButton = null;
+      this.nextButton = null;
+    }
+    /**
+     * The rotation control's name says what pressing it will do, and it has no `aria-pressed`.
+     * That is the APG's own answer for this button: a name that changes and a state that does
+     * not, rather than both, which would have a screen reader read the two against each other.
+     */
+    labelRotation() {
+      if (!this.rotateButton) return;
+      const stop = this.getAttribute("pause-text") || "Stop slide rotation";
+      const start = this.getAttribute("play-text") || "Start slide rotation";
+      this.rotateButton.setAttribute("aria-label", this.rotating ? stop : start);
+      this.rotateButton.replaceChildren(icon(this.rotating ? ICON.stop : ICON.play));
+    }
+    /**
+     * Where the row is now, read off the layout.
+     *
+     * Called from both of the things that can move it, which is not belt and braces: the
+     * observer fires when a slide crosses one of its thresholds, and a press that shifts the row
+     * by less than that - the last step into a clamped end, or any step at all on a row of wide
+     * slides - crosses nothing and would leave the index behind. A stale index is not a cosmetic
+     * problem: the next press is measured from it, so previous appears to work once and then do
+     * nothing at all, and next jumps several slides at a time.
+     */
+    readIndex() {
+      const scroller = this.scroller;
+      if (!scroller || !scroller.clientWidth) return;
+      const edge = scroller.getBoundingClientRect().left;
+      const starts = this.slides.map((slide2) => slide2.getBoundingClientRect().left - edge);
+      this.apply(currentSlide(starts, this.inset, this.index));
+    }
+    /**
+     * The observer's whole job: notice that the layout changed and re-read it.
+     *
+     * A resize, a container query flipping how many slides fit, a webfont landing - none of
+     * them fire a scroll event, and this is the callback that would otherwise have to be a
+     * resize listener. The `scroll-padding` is re-read here rather than on every scroll,
+     * because a media query is the only thing that changes it and this is where layout changes
+     * arrive.
+     */
+    onIntersect() {
+      const scroller = this.scroller;
+      if (!scroller) return;
+      const styles = getComputedStyle(scroller);
+      this.inset = startInset(styles, styles.direction === "rtl");
+      this.readIndex();
+    }
+    /** Scrolled: the edges are the scroller's to report, and they change without the set of
+     * visible slides changing. */
+    onScroll() {
+      const scroller = this.scroller;
+      if (this.settling !== null && scroller && Math.abs(scroller.scrollLeft - this.settling) <= 1) {
+        this.arrived();
+      }
+      this.readIndex();
+    }
+    /** The programmatic scroll is over: the scroller speaks for itself again. */
+    arrived() {
+      if (this.settleTimer) clearTimeout(this.settleTimer);
+      this.settleTimer = null;
+      this.settling = null;
+    }
+    /**
+     * Push the current slide onto the picker and the slides, and tell the page when it moved.
+     */
+    apply(at) {
+      const moved = at !== this.index;
+      this.index = at;
+      this.applyEdges();
+      if (!moved && this.painted) return;
+      const swap = this.fade && this.painted && moved;
+      this.painted = true;
+      this.markers.forEach((marker, index) => {
+        if (index === at) marker.setAttribute("aria-disabled", "true");
+        else marker.removeAttribute("aria-disabled");
+      });
+      const from = swap ? this.scroller.getBoundingClientRect().height : 0;
+      this.slides.forEach((slide2, index) => {
+        if (index === at) slide2.setAttribute("data-carousel-current", "");
+        else slide2.removeAttribute("data-carousel-current");
+      });
+      if (swap) this.resize(from);
+      if (!moved) return;
+      this.dispatchEvent(new CustomEvent("carousel-change", {
+        bubbles: true,
+        detail: { index: at, slide: this.slides[at] || null }
+      }));
+    }
+    /**
+     * Whether there is anywhere left to go, either way - onto the two buttons as `aria-disabled`
+     * and onto the element as a styling hook.
+     *
+     * Both at once is a row short enough to fit, and both buttons go dim: a carousel with
+     * nothing to scroll is a list, and two live buttons over a list that cannot move is the
+     * kind of thing that gets pressed twice and then distrusted.
+     */
+    applyEdges() {
+      const scroller = this.scroller;
+      if (!scroller) return;
+      const offset = this.settling === null || this.settling === void 0 ? scroller.scrollLeft : this.settling;
+      const at = this.fade ? { start: this.index <= 0, end: this.index >= this.slides.length - 1 } : scrollEdges(offset, scroller.clientWidth, scroller.scrollWidth);
+      this.toggleAttribute("data-carousel-at-start", at.start);
+      this.toggleAttribute("data-carousel-at-end", at.end);
+      if (this.prevButton) this.prevButton.setAttribute("aria-disabled", String(at.start));
+      if (this.nextButton) this.nextButton.setAttribute("aria-disabled", String(at.end));
+    }
+    /**
+     * Carry the stack's height from the slide that left to the slide that arrived.
+     *
+     * A transition needs two numbers and `auto` is neither of them, so the height the box had a
+     * moment ago is written back on, read once so the browser takes it as a start, and replaced
+     * with the height it is going to. `transitionend` hands the box back to `auto` as soon as it
+     * lands - which is what leaves a resize, a font arriving or an image that finally loaded to
+     * the layout, instead of to a pixel count taken before any of them happened.
+     *
+     * Measured off the scroller rather than off the slide, so whatever padding or `box-sizing`
+     * the page gave the list is inside both numbers instead of neither.
+     *
+     * @param {number} from The height the stack had before the current marker moved.
+     */
+    resize(from) {
+      const scroller = this.scroller;
+      scroller.style.height = "";
+      const to = scroller.getBoundingClientRect().height;
+      if (!swapHeight(from, to, reducedMotion())) return;
+      scroller.style.height = from + "px";
+      scroller.getBoundingClientRect();
+      scroller.style.height = to + "px";
+    }
+    /**
+     * Show a slide: scroll it to the start of the row, or cross-fade to it.
+     *
+     * The delta comes from the two boxes rather than from `offsetLeft`, which is measured
+     * against whichever ancestor happens to be positioned and is a different number for the
+     * slide and the scroller as soon as a page positions one of them. Assigning `scrollLeft`
+     * rather than calling `scrollTo` leaves the smoothness to CSS, where the reduced-motion
+     * query already lives - see `index.scss`.
+     */
+    to(at) {
+      const slide2 = this.slides[at];
+      if (!slide2) return;
+      if (this.fade) {
+        this.apply(at);
+        return;
+      }
+      const scroller = this.scroller;
+      const styles = getComputedStyle(scroller);
+      this.inset = startInset(styles, styles.direction === "rtl");
+      const delta = slide2.getBoundingClientRect().left - scroller.getBoundingClientRect().left - this.inset;
+      const wanted = scroller.scrollLeft + delta;
+      const reach = Math.max(scroller.scrollWidth - scroller.clientWidth, 0);
+      this.settling = Math.sign(wanted) * Math.min(Math.abs(wanted), reach);
+      if (this.settleTimer) clearTimeout(this.settleTimer);
+      this.settleTimer = setTimeout(() => {
+        this.arrived();
+        this.applyEdges();
+      }, 1e3);
+      scroller.scrollLeft += delta;
+      this.applyEdges();
+    }
+    /** One on, stopping at the end - where the button is dim and says so. */
+    next() {
+      if (this.hasAttribute("data-carousel-at-end")) return;
+      this.to(stepSlide(this.index, 1, this.slides.length));
+    }
+    previous() {
+      if (this.hasAttribute("data-carousel-at-start")) return;
+      this.to(stepSlide(this.index, -1, this.slides.length));
+    }
+    /**
+     * One on for the rotation, which is the only thing here that wraps.
+     *
+     * A carousel that rotates to its last slide and stops is a carousel that quietly died, so
+     * the end goes back to the beginning. The buttons do not, because they are dim there and a
+     * control that looks spent must not still act.
+     */
+    advance() {
+      if (this.hasAttribute("data-carousel-at-end")) this.to(0);
+      else this.to(stepSlide(this.index, 1, this.slides.length));
+    }
+    /**
+     * Start rotating.
+     *
+     * `pinned` is what the rotation control sets, and it is the APG's rule that a rotation the
+     * reader asked for by hand is not stopped again by a stray mouse crossing the row: hover
+     * and focus are ignored until the same button stops it.
+     */
+    play(pinned) {
+      this.rotating = true;
+      this.pinned = !!pinned;
+      this.tick();
+      this.labelRotation();
+      this.applyLive();
+    }
+    pause() {
+      this.rotating = false;
+      this.pinned = false;
+      this.clearTimer();
+      this.labelRotation();
+      this.applyLive();
+    }
+    /**
+     * The live region, and only in `fade`.
+     *
+     * Stacked, one slide is all there is, so a reader who cannot see the cross-fade is owed the
+     * announcement - `polite` when the slides move because somebody pressed something. `off`
+     * while it rotates, which is the half people leave out: a carousel announcing itself every
+     * five seconds interrupts whatever else is being read, forever.
+     *
+     * Scrolling there is no region at all. Every slide is in the tree the whole time, so there
+     * is nothing to announce that the reader cannot already reach.
+     */
+    applyLive() {
+      const scroller = this.scroller;
+      if (!scroller) return;
+      if (!this.fade) {
+        scroller.removeAttribute("aria-live");
+        return;
+      }
+      scroller.setAttribute("aria-live", this.rotating ? "off" : "polite");
+    }
+    /**
+     * Start the clock, and say so on the element.
+     *
+     * `data-carousel-rotating` is the timer and not `rotating`: the two part company every time
+     * a pointer crosses the row, where the rotation is held but the button still says `Stop`.
+     * A theme drawing a countdown off `rotating` would be one that keeps counting while nothing
+     * is moving - so the hook is written where the clock is, out of the same two calls that
+     * start and stop it, and cannot say otherwise. `--carousel-elemental-tick` goes with it for
+     * the same reason: an animation is only honest at the length of the interval it is drawing,
+     * and only this knows what that is.
+     */
+    tick() {
+      this.clearTimer();
+      this.timer = setInterval(() => this.advance(), this.interval);
+      this.style.setProperty("--carousel-elemental-tick", this.interval + "ms");
+      this.setAttribute("data-carousel-rotating", "");
+    }
+    clearTimer() {
+      if (this.timer) clearInterval(this.timer);
+      this.timer = null;
+      this.removeAttribute("data-carousel-rotating");
+      this.style.removeProperty("--carousel-elemental-tick");
+    }
+    /**
+     * A finger has come up on a stacked slide, having travelled far enough across to have meant
+     * it. The ends hold, exactly as they do for the buttons: the arrow is dim there, and a
+     * gesture that still moved would be the carousel disagreeing with its own controls.
+     *
+     * A gesture more down the page than across it is the page scrolling and never arrives here -
+     * `swipe` reports the axis it travelled furthest along, and only that one.
+     */
+    onSwipe(e) {
+      const scroller = this.scroller;
+      if (!e.horizontal || !scroller) return;
+      const step = swipeStep(e.horizontalDirection, getComputedStyle(scroller).direction === "rtl");
+      if (step > 0) this.next();
+      else this.previous();
+    }
+    /** Every swipe listener comes back off, and the half-finished gesture with it. */
+    unswipe() {
+      if (this.swipes) this.swipes.destroy();
+      this.swipes = null;
+    }
+    /** Give the stack its height back, and stop listening for the swap that pinned it. The
+     * inline height is this element's own writing, so leaving one behind is leaving the list a
+     * size the page never asked for. */
+    unpin() {
+      if (!this.heights) return;
+      this.heights.removeEventListener("transitionend", this.onHeightEnd);
+      this.heights.removeEventListener("transitioncancel", this.onHeightEnd);
+      this.heights.style.height = "";
+      this.heights = null;
+    }
+    /** The end of the height the swap pinned - or the end of any hope of one. */
+    onHeightEnd(e) {
+      if (e.target !== this.heights || e.propertyName !== "height") return;
+      this.heights.style.height = "";
+    }
+    /** Rotation held while the pointer or the focus is in the carousel - still rotating as far
+     * as the button's name is concerned, because it will be again on the way out. */
+    suspend() {
+      if (this.rotating && !this.pinned) this.clearTimer();
+    }
+    resume() {
+      if (this.rotating && !this.pinned && !this.timer) this.tick();
+    }
+    /** Focus moving between two controls is focus that never left. */
+    onFocusOut(e) {
+      if (!this.contains(e.relatedTarget)) this.resume();
+    }
+    onClick(e) {
+      const button = e.target.closest && e.target.closest("button");
+      if (!button || button.closest("carousel-elemental") !== this) return;
+      if (button === this.rotateButton) {
+        if (this.rotating) this.pause();
+        else this.play(true);
+        return;
+      }
+      if (button === this.prevButton) {
+        this.previous();
+        return;
+      }
+      if (button === this.nextButton) {
+        this.next();
+        return;
+      }
+      const at = this.markers.indexOf(button);
+      if (at >= 0) this.to(at);
+    }
+    attributeChangedCallback(name, previous, current) {
+      if (!this.initialized || previous === current) return;
+      if (name === "fade") {
+        this.wire();
+        this.applyLive();
+        return;
+      }
+      if (name === "autoplay") {
+        this.writeControls();
+        this.apply(this.index);
+        if (this.autoplay && !reducedMotion()) this.play();
+        else this.pause();
+        return;
+      }
+      if (this.rotating && this.timer) this.tick();
+    }
+  };
+  define("carousel-elemental", CarouselElemental);
 
   // src/elementals/checkbox-group/index.js
   function classify(states) {
@@ -2786,6 +3541,228 @@
   };
   define("navbar-elemental", NavbarElemental);
 
+  // src/elementals/search/index.js
+  var DELAY_MS = 200;
+  var MIN_LENGTH = 1;
+  function searchAction(value, min, last) {
+    const query = String(value == null ? "" : value).trim();
+    if (query.length < min) return "clear";
+    if (query === last) return "idle";
+    return "query";
+  }
+  function searchStatus(state, count, labels) {
+    const strings = labels || {};
+    if (state === "results") {
+      if (strings.results) return strings.results.replace(/\{n\}/g, count);
+      return count === 1 ? "1 result" : count + " results";
+    }
+    if (state === "empty") return strings.empty || "No results";
+    if (state === "error") return strings.error || "Search failed";
+    return "";
+  }
+  function readNumber(raw, fallback) {
+    if (raw == null || raw.trim() === "") return fallback;
+    const value = Number(raw);
+    return Number.isFinite(value) && value >= 0 ? value : fallback;
+  }
+  var SearchElemental = class extends ElementBase {
+    /** The field being typed in: the first `<input>` inside. */
+    get field() {
+      return this.querySelector("input");
+    }
+    /** Where results land. Counting the links in it is how the element knows what to
+     * announce, so this is a DOM query and not a call into the other element - a page that
+     * loaded this bundle and not that one still gets its states and its announcement. */
+    get panel() {
+      return this.querySelector("suggest-elemental");
+    }
+    /** The live region. Added at upgrade, because a live region only announces text that
+     * lands in one already in the document. */
+    get status() {
+      return this.querySelector(":scope > .search-elemental-status");
+    }
+    /** Milliseconds the field has to stop changing before a query goes out. */
+    get delay() {
+      return readNumber(this.getAttribute("delay"), DELAY_MS);
+    }
+    /** Characters needed before one goes out at all. */
+    get min() {
+      return readNumber(this.getAttribute("min"), MIN_LENGTH);
+    }
+    /** What the live region says, in the page's own words where it gave any. */
+    get labels() {
+      return {
+        results: this.getAttribute("results-label"),
+        empty: this.getAttribute("empty-label"),
+        error: this.getAttribute("error-label")
+      };
+    }
+    connectedCallback() {
+      if (this.initialized) return;
+      const field = this.field;
+      if (!field) return;
+      this.initialized = true;
+      this.sequence = 0;
+      this.last = null;
+      if (!this.status) {
+        const status = document.createElement("span");
+        status.className = "search-elemental-status";
+        status.setAttribute("role", "status");
+        this.appendChild(status);
+      }
+      this.onInput = this.onInput.bind(this);
+      field.addEventListener("input", this.onInput);
+      this.dataset.state = "idle";
+    }
+    disconnectedCallback() {
+      if (!this.initialized) return;
+      this.initialized = false;
+      const field = this.field;
+      if (field) field.removeEventListener("input", this.onInput);
+      this.cancel();
+      clearTimeout(this.announceTimer);
+      const panel = this.panel;
+      if (panel) panel.removeAttribute("aria-busy");
+    }
+    /** Stop whatever is in flight: the query that has not gone out yet, and the one that
+     * has. Both, because a keystroke lands in one of those two windows and never says
+     * which. */
+    cancel() {
+      clearTimeout(this.timer);
+      if (this.controller) this.controller.abort();
+      this.controller = null;
+    }
+    /**
+     * Write the state onto the element, and onto the panel where it is the panel's to
+     * report.
+     *
+     * `data-state` is the whole of the loading API: `[data-state="pending"]` is what a
+     * spinner hangs off, and there is no second way to ask. `aria-busy` goes on the panel
+     * rather than here because the panel is the region whose contents are being fetched.
+     *
+     * @param {"idle"|"pending"|"results"|"empty"|"error"} name
+     */
+    mark(name) {
+      this.dataset.state = name;
+      const panel = this.panel;
+      if (!panel) return;
+      if (name === "pending") panel.setAttribute("aria-busy", "true");
+      else panel.removeAttribute("aria-busy");
+    }
+    /**
+     * Say something in the live region.
+     *
+     * A live region announces a *change*, so the same message set twice in a row is silent -
+     * which would make the second search for the same number of hits say nothing. Cleared
+     * first and set back in a later task, so the two writes cannot coalesce into no change
+     * at all.
+     */
+    announce(message) {
+      const status = this.status;
+      if (!status) return;
+      status.textContent = "";
+      clearTimeout(this.announceTimer);
+      if (!message) return;
+      this.announceTimer = setTimeout(() => {
+        status.textContent = message;
+      }, 0);
+    }
+    /**
+     * How many answers landed. Links only, which is the rule the panel itself counts an
+     * option by.
+     *
+     * The panel where there is one, and otherwise the element's own links with the form's
+     * left out - a search whose results are a list in the page rather than a popup still has
+     * a count to announce, and the "advanced search" link beside the field is not one of
+     * them. Results rendered outside the element are outside what it can count, and it says
+     * so rather than guessing.
+     */
+    get count() {
+      const panel = this.panel;
+      if (panel) return panel.querySelectorAll("a[href]").length;
+      return Array.from(this.querySelectorAll("a[href]")).filter((link) => !link.closest("form")).length;
+    }
+    /**
+     * A search has finished: show it, open the panel if there is anything in it, say what
+     * happened.
+     *
+     * @param {"idle"|"results"|"empty"|"error"} state
+     * @param {number} count
+     */
+    settle(state, count) {
+      this.mark(state);
+      const panel = this.panel;
+      if (panel) panel.toggleAttribute("open", state === "results");
+      this.announce(searchStatus(state, count, this.labels));
+    }
+    /** Settle from whatever ended up in the panel. */
+    settleFromPanel() {
+      const count = this.count;
+      this.settle(count > 0 ? "results" : "empty", count);
+    }
+    /**
+     * Ask the page for results, and take whatever it does with that.
+     *
+     * The sequence number is the bug this element exists to fix: two requests in flight
+     * settle in whatever order the network feels like, and the slow answer to the query
+     * before last is the one that ends up on screen. `signal` asks the page to abort the
+     * old one and the number makes sure it does not matter whether it did.
+     *
+     * @param {string} query
+     */
+    run(query) {
+      this.cancel();
+      this.last = query;
+      const controller = typeof AbortController === "function" ? new AbortController() : null;
+      this.controller = controller;
+      const mine = ++this.sequence;
+      let waited = null;
+      this.dispatchEvent(new CustomEvent("search-query", {
+        bubbles: true,
+        detail: {
+          query,
+          signal: controller ? controller.signal : null,
+          wait: (promise) => {
+            waited = promise;
+          }
+        }
+      }));
+      if (!waited) {
+        this.settleFromPanel();
+        return;
+      }
+      this.mark("pending");
+      Promise.resolve(waited).then(
+        () => {
+          if (mine === this.sequence) this.settleFromPanel();
+        },
+        (error) => {
+          if (mine !== this.sequence) return;
+          if (error && error.name === "AbortError") {
+            this.settle("idle", 0);
+            return;
+          }
+          this.settle("error", 0);
+        }
+      );
+    }
+    onInput() {
+      const field = this.field;
+      if (!field) return;
+      const action = searchAction(field.value, this.min, this.last);
+      if (action === "idle") return;
+      if (action === "clear") {
+        this.cancel();
+        this.last = null;
+        this.settle("idle", 0);
+        return;
+      }
+      clearTimeout(this.timer);
+      this.timer = setTimeout(() => this.run(field.value.trim()), this.delay);
+    }
+  };
+  define("search-elemental", SearchElemental);
+
   // src/elementals/segmented/index.js
   function checkedIndex(inputs) {
     for (let i = 0; i < inputs.length; i++) {
@@ -2854,6 +3831,239 @@
     }
   };
   define("segmented-elemental", SegmentedElemental);
+
+  // src/elementals/suggest/index.js
+  function suggestAction(key, altKey, open, cursor, tabCompletes) {
+    if (!open) {
+      if (key === "ArrowDown") return altKey ? "open" : "open-first";
+      if (key === "ArrowUp") return "open-last";
+      return null;
+    }
+    if (key === "ArrowUp" && altKey) return "close";
+    if (key === "ArrowDown" || key === "ArrowUp") return "move";
+    if (key === "Home" && cursor) return "first";
+    if (key === "End" && cursor) return "last";
+    if (key === "Enter") return "activate";
+    if (key === "Escape") return "close";
+    if (key === "Tab") return cursor && tabCompletes ? "activate" : "leave";
+    return null;
+  }
+  function suggestState(open, activeId) {
+    return {
+      expanded: open ? "true" : "false",
+      hidden: !open,
+      activedescendant: open && activeId ? activeId : null
+    };
+  }
+  var suggestCount = 0;
+  var SuggestElemental = class extends ElementBase {
+    static get observedAttributes() {
+      return ["open"];
+    }
+    /** The text field driving this popup - what `for` names. */
+    get control() {
+      const id = this.dataset.for != null ? this.dataset.for : this.getAttribute("for");
+      return id ? document.getElementById(id) : null;
+    }
+    /** The options, in document order. Links only: an `<a>` with no `href` is not a
+     * destination, and a listbox option that goes nowhere is a dead row on the list. */
+    get options() {
+      return Array.from(this.querySelectorAll("a[href]"));
+    }
+    /** Whether the popup is showing. Reflected, so `[open]` is a styling hook too. */
+    get open() {
+      return this.hasAttribute("open");
+    }
+    set open(value) {
+      this.toggleAttribute("open", !!value);
+    }
+    /** Whether Tab takes the row under the cursor rather than leaving the field. */
+    get tabCompletes() {
+      return this.hasAttribute("tab-completes");
+    }
+    set tabCompletes(value) {
+      this.toggleAttribute("tab-completes", !!value);
+    }
+    connectedCallback() {
+      if (this.initialized) return;
+      const control = this.control;
+      if (!control) return;
+      this.initialized = true;
+      if (!this.id) this.id = "suggest-elemental-" + ++suggestCount;
+      this.setAttribute("role", "listbox");
+      control.setAttribute("role", "combobox");
+      control.setAttribute("aria-controls", this.id);
+      control.setAttribute("aria-autocomplete", "list");
+      control.setAttribute("aria-expanded", "false");
+      this.onKeyDown = this.onKeyDown.bind(this);
+      this.onFocusOut = this.onFocusOut.bind(this);
+      this.onPointerMove = this.onPointerMove.bind(this);
+      this.onPointerDown = this.onPointerDown.bind(this);
+      this.onClick = this.onClick.bind(this);
+      control.addEventListener("keydown", this.onKeyDown);
+      control.addEventListener("focusout", this.onFocusOut);
+      this.addEventListener("pointermove", this.onPointerMove);
+      this.addEventListener("pointerdown", this.onPointerDown);
+      this.addEventListener("click", this.onClick);
+      this.observer = new MutationObserver(() => this.mark());
+      this.observer.observe(this, { childList: true, subtree: true });
+      this.mark();
+      this.apply();
+    }
+    disconnectedCallback() {
+      if (!this.initialized) return;
+      this.initialized = false;
+      if (this.observer) this.observer.disconnect();
+      this.observer = null;
+      this.removeEventListener("pointermove", this.onPointerMove);
+      this.removeEventListener("pointerdown", this.onPointerDown);
+      this.removeEventListener("click", this.onClick);
+      const control = this.control;
+      if (!control) return;
+      control.removeEventListener("keydown", this.onKeyDown);
+      control.removeEventListener("focusout", this.onFocusOut);
+      control.removeAttribute("role");
+      control.removeAttribute("aria-controls");
+      control.removeAttribute("aria-autocomplete");
+      control.removeAttribute("aria-expanded");
+      control.removeAttribute("aria-activedescendant");
+    }
+    /**
+     * Give the current children the roles and `id`s the pattern needs.
+     *
+     * A `listbox` may only own `option`s, and the markup between them here is a `<ul>` and
+     * an `<li>` per row - both of which carry list semantics of their own. `presentation`
+     * takes those off without taking the boxes away, so the options are owned by the listbox
+     * directly and the CSS still has its list to lay out.
+     */
+    mark() {
+      const rows = this.querySelectorAll("ul, ol, li");
+      for (const row of rows) row.setAttribute("role", "presentation");
+      const options = this.options;
+      for (let i = 0; i < options.length; i++) {
+        const option = options[i];
+        option.setAttribute("role", "option");
+        if (!option.id) option.id = this.id + "-option-" + i;
+      }
+      this.active = null;
+      this.applyCursor();
+    }
+    /** Push `open` onto the popup and its control. */
+    apply() {
+      const control = this.control;
+      if (!control) return;
+      const { expanded, hidden } = suggestState(this.open, null);
+      control.setAttribute("aria-expanded", expanded);
+      this.hidden = hidden;
+      if (this.open) this.place();
+      this.applyCursor();
+    }
+    /** Write the cursor - `aria-activedescendant` on the control, a marker on the option. */
+    applyCursor() {
+      const control = this.control;
+      if (!control) return;
+      for (const option of this.options) {
+        if (option === this.active) option.setAttribute("data-active", "");
+        else option.removeAttribute("data-active");
+      }
+      const { activedescendant } = suggestState(this.open, this.active ? this.active.id : null);
+      if (activedescendant) control.setAttribute("aria-activedescendant", activedescendant);
+      else control.removeAttribute("aria-activedescendant");
+    }
+    /**
+     * Move the cursor to an index, and scroll it into view.
+     *
+     * `nearest` rather than `center`: the cursor usually moves one row at a time, and a
+     * popup that re-centres on every arrow key slides the whole list under the reader when
+     * only one line needed to come into view.
+     *
+     * @param {number|null} index
+     */
+    moveTo(index) {
+      const options = this.options;
+      this.active = index === null ? null : options[index];
+      if (this.active) this.active.scrollIntoView({ block: "nearest" });
+      this.applyCursor();
+    }
+    /**
+     * Put the popup where there is room for it, as two attributes for the CSS to key off.
+     *
+     * The element does not write coordinates: a light-DOM popup lives in the page's own
+     * stacking and layout, and an element setting `top` and `left` on it is an element
+     * fighting whatever the page already decided. `data-side` and `data-align` say which
+     * corner won, and the stylesheet spends them.
+     */
+    place() {
+      const control = this.control;
+      if (!control) return;
+      const placement = placeFlyout(
+        control.getBoundingClientRect(),
+        { width: this.offsetWidth, height: this.offsetHeight },
+        { width: window.innerWidth, height: window.innerHeight },
+        getComputedStyle(this).direction === "rtl"
+      );
+      this.dataset.side = placement.side;
+      this.dataset.align = placement.align;
+    }
+    attributeChangedCallback(name, previous, current) {
+      if (!this.initialized || previous === current) return;
+      this.apply();
+      this.dispatchEvent(new CustomEvent("suggest-toggle", {
+        bubbles: true,
+        detail: { open: this.open }
+      }));
+    }
+    onKeyDown(e) {
+      const action = suggestAction(e.key, e.altKey, this.open, !!this.active, this.tabCompletes);
+      if (!action) return;
+      const options = this.options;
+      if (action === "close" || action === "leave") {
+        if (!this.open) return;
+        if (action === "close") e.preventDefault();
+        this.open = false;
+        return;
+      }
+      if (action === "activate") {
+        if (!this.active) return;
+        e.preventDefault();
+        this.active.click();
+        this.open = false;
+        return;
+      }
+      if (!options.length) return;
+      e.preventDefault();
+      if (action === "first" || action === "last") {
+        this.moveTo(action === "first" ? 0 : options.length - 1);
+        return;
+      }
+      if (action === "move") {
+        this.moveTo(nextIndex(options.indexOf(this.active), e.key, options.length));
+        return;
+      }
+      this.open = true;
+      if (action === "open-first") this.moveTo(0);
+      else if (action === "open-last") this.moveTo(options.length - 1);
+    }
+    onFocusOut(e) {
+      if (e.relatedTarget && this.contains(e.relatedTarget)) return;
+      this.open = false;
+    }
+    onPointerMove(e) {
+      const option = e.target.closest ? e.target.closest('[role="option"]') : null;
+      if (!option || option === this.active) return;
+      this.active = option;
+      this.applyCursor();
+    }
+    onPointerDown(e) {
+      e.preventDefault();
+    }
+    onClick(e) {
+      const option = e.target.closest ? e.target.closest('[role="option"]') : null;
+      if (!option) return;
+      this.open = false;
+    }
+  };
+  define("suggest-elemental", SuggestElemental);
 
   // src/elementals/switch/index.js
   function formValue(checked, disabled, value) {
@@ -3068,7 +4278,7 @@
     if (!(at > 0)) return 0;
     return Math.min(at, Math.max(length - 1, 0));
   }
-  var FOCUSABLE = "a[href], button, input, select, textarea, summary, iframe, [tabindex], [contenteditable]";
+  var FOCUSABLE2 = "a[href], button, input, select, textarea, summary, iframe, [tabindex], [contenteditable]";
   function fragment(hash) {
     const raw = hash.slice(1);
     try {
@@ -3247,7 +4457,7 @@
           return;
         }
         panel.removeAttribute("hidden");
-        if (panel.querySelector(FOCUSABLE)) panel.removeAttribute("tabindex");
+        if (panel.querySelector(FOCUSABLE2)) panel.removeAttribute("tabindex");
         else panel.tabIndex = 0;
       });
     }
@@ -3321,6 +4531,97 @@
   };
   define("tabs-elemental", TabsElemental);
 
+  // src/elementals/toolbar/index.js
+  function toolbarKey(key, vertical) {
+    if (key === "Home" || key === "End") return key;
+    if (key === (vertical ? "ArrowDown" : "ArrowRight")) return key;
+    if (key === (vertical ? "ArrowUp" : "ArrowLeft")) return key;
+    return null;
+  }
+  var CONTROLS = "button, a[href]";
+  var ToolbarElemental = class extends ElementBase {
+    static get observedAttributes() {
+      return ["vertical"];
+    }
+    /** Whether the bar runs down the page. Reflected, so `[vertical]` is a styling hook. */
+    get vertical() {
+      return this.hasAttribute("vertical");
+    }
+    set vertical(value) {
+      this.toggleAttribute("vertical", !!value);
+    }
+    /**
+     * The controls the arrows walk, in document order.
+     *
+     * A `disabled` button is left out because the platform will not focus one, and a cursor
+     * that lands where focus cannot follow is a bar that stops moving. Keeping such a control
+     * reachable is `aria-disabled` on it instead - still focusable, still announced, and this
+     * list still has it.
+     */
+    get controls() {
+      return Array.from(this.querySelectorAll(CONTROLS)).filter((control) => !control.disabled);
+    }
+    connectedCallback() {
+      if (this.initialized) return;
+      if (!this.controls.length) return;
+      this.initialized = true;
+      this.setAttribute("role", "toolbar");
+      this.onKeyDown = this.onKeyDown.bind(this);
+      this.onFocusIn = this.onFocusIn.bind(this);
+      this.addEventListener("keydown", this.onKeyDown);
+      this.addEventListener("focusin", this.onFocusIn);
+      this.observer = new MutationObserver(() => this.wire());
+      this.observer.observe(this, { childList: true, subtree: true, attributeFilter: ["disabled"] });
+      this.wire();
+    }
+    disconnectedCallback() {
+      if (!this.initialized) return;
+      this.initialized = false;
+      if (this.observer) this.observer.disconnect();
+      this.observer = null;
+      this.removeEventListener("keydown", this.onKeyDown);
+      this.removeEventListener("focusin", this.onFocusIn);
+      this.removeAttribute("role");
+      this.removeAttribute("aria-orientation");
+      for (const control of this.controls) control.removeAttribute("tabindex");
+    }
+    /**
+     * Put the axis on the bar and the single tab stop inside it.
+     *
+     * The stop follows focus where there is any, so a bar entered by clicking its last button
+     * is a bar the arrows carry on from there rather than one that jumps back to the start.
+     */
+    wire() {
+      if (this.vertical) this.setAttribute("aria-orientation", "vertical");
+      else this.removeAttribute("aria-orientation");
+      const controls = this.controls;
+      if (!controls.length) return;
+      const focused = controls.find((control) => control === document.activeElement);
+      const held = controls.find((control) => control.getAttribute("tabindex") === "0");
+      const stop = focused || held || controls[0];
+      for (const control of controls) control.tabIndex = control === stop ? 0 : -1;
+    }
+    attributeChangedCallback(name, previous, current) {
+      if (!this.initialized || previous === current) return;
+      this.wire();
+    }
+    onFocusIn() {
+      this.wire();
+    }
+    onKeyDown(e) {
+      const key = toolbarKey(e.key, this.vertical);
+      if (!key) return;
+      const controls = this.controls;
+      const at = controls.indexOf(e.target);
+      if (at === -1) return;
+      const to = stepIndex(at, key, controls.length);
+      if (to === null) return;
+      e.preventDefault();
+      controls[to].focus();
+    }
+  };
+  define("toolbar-elemental", ToolbarElemental);
+
   // src/elementals/tooltip/index.js
   function titleRole(trigger) {
     const named = trigger.text && trigger.text.trim() || trigger.ariaLabel || trigger.ariaLabelledby;
@@ -3365,14 +4666,14 @@
     const at = centred ? (start + end) / 2 - size / 2 : toStart ? start : end - size;
     return Math.min(Math.max(at, 0), Math.max(limit - size, 0));
   }
-  var FOCUSABLE2 = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+  var FOCUSABLE3 = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
   var CLOSE_DELAY = 120;
   var FALLBACK_GAP = 6;
   var sequence = 0;
   var TooltipElemental = class extends ElementBase {
     /** The control being described: what the element wraps, or what `for` names. */
     get trigger() {
-      const own = this.querySelector(`:scope > ${FOCUSABLE2}`);
+      const own = this.querySelector(`:scope > ${FOCUSABLE3}`);
       if (own) return own;
       const id = this.getAttribute("for");
       return id ? document.getElementById(id) : null;
@@ -3380,7 +4681,7 @@
     /** The words. A direct child that is not the trigger, or - when `for` named the trigger
      * from somewhere else on the page - this element itself. */
     get bubble() {
-      const own = this.querySelector(`:scope > ${FOCUSABLE2}`);
+      const own = this.querySelector(`:scope > ${FOCUSABLE3}`);
       if (!own) return this;
       return [...this.children].find((child) => child !== own) || null;
     }

@@ -1,0 +1,324 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/search/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "searchAction",
+          "parameters": [
+            {
+              "name": "value",
+              "description": "What is in the field.",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "min",
+              "description": "How many characters a query needs. `0` sends the empty one.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "last",
+              "description": "The query already answered, or `null` for none.",
+              "type": {
+                "text": "string|null"
+              }
+            }
+          ],
+          "description": "What the field's current contents mean: send a query, do nothing, or take the results\ndown.\n\nThree answers rather than two, because \"nothing to send\" splits. A query identical to\nthe one already answered is `idle` - the results on screen are its answer, and sending\nit again would replace them with themselves. A query under the minimum is `clear` - the\nreader has deleted what those results were for, and a panel left standing is an answer\nto a question no longer being asked.\n\nThe ends are trimmed before anything is measured or compared: trailing whitespace is not\na new query, and a space is not a character worth searching for.",
+          "return": {
+            "type": {
+              "text": "\"query\"|\"idle\"|\"clear\""
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "searchStatus",
+          "parameters": [
+            {
+              "name": "state",
+              "type": {
+                "text": "\"idle\"|\"pending\"|\"results\"|\"empty\"|\"error\""
+              }
+            },
+            {
+              "name": "count",
+              "description": "How many answers landed.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "labels",
+              "type": {
+                "text": "{results?: string|null, empty?: string|null, error?: string|null}"
+              }
+            }
+          ],
+          "description": "What a settled search says in the live region.\n\n[WCAG 2.2 4.1.3 Status Messages](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html)\nis the whole reason this string exists: results appearing in a panel is a change a\nsighted reader sees and a screen reader user is told nothing about, and a search that\nfound nothing is the one they most need to hear.\n\nA search still in flight says nothing. The loader is for the eye - a polite region\nannouncing \"Searching…\" on every keystroke is a reader listening to their own typing,\nand the answer is a second or so behind it anyway.\n\nThe default is English and handles the one plural English has, because \"1 results\" is\nthe bug this exists not to ship. Any other language sets the labels, and `{n}` is\nsubstituted wherever it appears - a language whose plural needs more than one form\nwants a label set per query from JS, which is why this takes the strings rather than\nowning them.",
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<search-elemental>` custom element.\n\nThe query half of a search field: the debounce, the abort, the loading state and the\nannouncement. [`<suggest-elemental>`](../suggest/) owns the panel those results land in\nand says outright that it has no opinion about where they came from - this is the other\nside of that seam, and it has no opinion about the results either.\n\nThere is no APG pattern here, because there is no widget. The panel is a\n[combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) and belongs to the other\nelement; what is left is the part every search field re-implements and gets subtly\nwrong: a debounce, one `AbortController` per query, the sequence number that drops the\nslow answer arriving after the fast one, and\n[WCAG 2.2 4.1.3 Status Messages](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html),\nwhich a panel silently filling itself does not meet.\n\n**It does not fetch.** The page does, and hands back the promise:\n\n```js\nsearch.addEventListener('search-query', (e) => {\n  e.detail.wait(\n    fetch(url + encodeURIComponent(e.detail.query), { signal: e.detail.signal })\n      .then((response) => response.json())\n      .then((rows) => list.replaceChildren(...rows.map(toRow)))\n  );\n});\n```\n\n`wait()` is what buys the loading state: without it the element settles the moment the\nlistener returns, which is right for a page filtering an index it already has, and there\nis nothing to draw a spinner for. That is the degradation and it is honest in both\ndirections - a page that never calls it is never left with a spinner nothing will stop.\n\nLight DOM, no shadow root. One node is added, the live region, because a live region has\nto be in the document before the text lands in it. With no script the `<form>` inside\nsubmits to its `action` and the reader gets a search page - which is why the markup is a\nform and not a bare input.\n\nponytail: no `src`, no result-shape mapping, no cache, no keyboard shortcut to focus the\nfield. Owning a wire format is owning an escaping boundary and someone else's API; `⌘K`\nis a page-level binding and belongs to the page that knows what else is bound.",
+          "name": "SearchElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Both axes of the spinner the theme draws while a query is out.",
+              "name": "--search-elemental-spinner-size",
+              "default": "1rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "How far the spinner sits from the inline end of the element.",
+              "name": "--search-elemental-spinner-inset-inline",
+              "default": "0.75rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "How far it sits from the block end, which is the bottom of the field.",
+              "name": "--search-elemental-spinner-inset-block",
+              "default": "0.75rem"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The moving part of it; the track is the same colour at a third of that.",
+              "name": "--search-elemental-spinner-color",
+              "default": "currentcolor at 45%"
+            },
+            {
+              "type": {
+                "text": "<time>"
+              },
+              "description": "One turn. `prefers-reduced-motion` replaces the turning with a fade.",
+              "name": "--search-elemental-spinner-duration",
+              "default": "0.7s"
+            }
+          ],
+          "slots": [
+            {
+              "description": "The `<form>` holding the field, and the `<suggest-elemental>` its results go into.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "field",
+              "description": "The field being typed in: the first `<input>` inside.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "panel",
+              "description": "Where results land. Counting the links in it is how the element knows what to\nannounce, so this is a DOM query and not a call into the other element - a page that\nloaded this bundle and not that one still gets its states and its announcement.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "status",
+              "description": "The live region. Added at upgrade, because a live region only announces text that\nlands in one already in the document.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "delay",
+              "description": "Milliseconds the field has to stop changing before a query goes out.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "min",
+              "description": "Characters needed before one goes out at all.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "labels",
+              "description": "What the live region says, in the page's own words where it gave any.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "cancel",
+              "description": "Stop whatever is in flight: the query that has not gone out yet, and the one that\nhas. Both, because a keystroke lands in one of those two windows and never says\nwhich."
+            },
+            {
+              "kind": "method",
+              "name": "mark",
+              "parameters": [
+                {
+                  "name": "name",
+                  "type": {
+                    "text": "\"idle\"|\"pending\"|\"results\"|\"empty\"|\"error\""
+                  }
+                }
+              ],
+              "description": "Write the state onto the element, and onto the panel where it is the panel's to\nreport.\n\n`data-state` is the whole of the loading API: `[data-state=\"pending\"]` is what a\nspinner hangs off, and there is no second way to ask. `aria-busy` goes on the panel\nrather than here because the panel is the region whose contents are being fetched."
+            },
+            {
+              "kind": "method",
+              "name": "announce",
+              "parameters": [
+                {
+                  "name": "message"
+                }
+              ],
+              "description": "Say something in the live region.\n\nA live region announces a *change*, so the same message set twice in a row is silent -\nwhich would make the second search for the same number of hits say nothing. Cleared\nfirst and set back in a later task, so the two writes cannot coalesce into no change\nat all."
+            },
+            {
+              "kind": "field",
+              "name": "count",
+              "description": "How many answers landed. Links only, which is the rule the panel itself counts an\noption by.\n\nThe panel where there is one, and otherwise the element's own links with the form's\nleft out - a search whose results are a list in the page rather than a popup still has\na count to announce, and the \"advanced search\" link beside the field is not one of\nthem. Results rendered outside the element are outside what it can count, and it says\nso rather than guessing.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "settle",
+              "parameters": [
+                {
+                  "name": "state",
+                  "type": {
+                    "text": "\"idle\"|\"results\"|\"empty\"|\"error\""
+                  }
+                },
+                {
+                  "name": "count",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ],
+              "description": "A search has finished: show it, open the panel if there is anything in it, say what\nhappened."
+            },
+            {
+              "kind": "method",
+              "name": "settleFromPanel",
+              "description": "Settle from whatever ended up in the panel."
+            },
+            {
+              "kind": "method",
+              "name": "run",
+              "parameters": [
+                {
+                  "name": "query",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ],
+              "description": "Ask the page for results, and take whatever it does with that.\n\nThe sequence number is the bug this element exists to fix: two requests in flight\nsettle in whatever order the network feels like, and the slow answer to the query\nbefore last is the one that ends up on screen. `signal` asks the page to abort the\nold one and the number makes sure it does not matter whether it did."
+            },
+            {
+              "kind": "method",
+              "name": "onInput"
+            }
+          ],
+          "events": [
+            {
+              "name": "search-query",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "`detail.query` is what to search for, `detail.signal` an `AbortSignal` that fires when a newer query replaces this one, and `detail.wait(promise)` hands the element the work so it can show a loading state."
+            }
+          ],
+          "attributes": [
+            {
+              "type": {
+                "text": "number"
+              },
+              "description": "Milliseconds the field has to stop changing before a query goes out.",
+              "name": "delay",
+              "default": "200"
+            },
+            {
+              "type": {
+                "text": "number"
+              },
+              "description": "Characters needed before one goes out at all. `0` sends the empty query too, which is what a field cleared back to nothing sends.",
+              "name": "min",
+              "default": "1"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "What the live region announces on a hit. `{n}` is the count. Default: `5 results`, `1 result`.",
+              "name": "results-label"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "What it announces when nothing matched.",
+              "name": "empty-label",
+              "default": "No results"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "What it announces when the request failed.",
+              "name": "error-label",
+              "default": "Search failed"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "search-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "searchAction",
+          "declaration": {
+            "name": "searchAction",
+            "module": "src/elementals/search/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "searchStatus",
+          "declaration": {
+            "name": "searchStatus",
+            "module": "src/elementals/search/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "SearchElemental",
+          "declaration": {
+            "name": "SearchElemental",
+            "module": "src/elementals/search/index.js"
+          }
+        }
+      ]
+    }
+  ]
+}

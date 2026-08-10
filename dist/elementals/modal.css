@@ -47,6 +47,10 @@ html:has(modal-elemental > dialog[data-depth]) {
   overflow: hidden;
 }
 
+html:has(modal-elemental) {
+  scrollbar-gutter: stable;
+}
+
 modal-elemental:not(:defined) > dialog:target {
   display: block;
   position: static;

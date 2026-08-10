@@ -1,0 +1,51 @@
+// The optional look, and it is one thing: the spinner that says a query is out. Everything
+// else this element does is state, and state has no appearance of its own - the field is
+// the page's and the panel is `<suggest-elemental>`'s.
+
+$spinner: var(--search-elemental-spinner-color, color-mix(in srgb, currentcolor 45%, transparent));
+
+search-elemental {
+  // Pinned to the block *end* of the element, which is the bottom of the field: the panel
+  // is absolutely positioned and adds no height, so the last thing in flow here is the
+  // control. Measuring from the end rather than the start is what makes a label above the
+  // field cost nothing - from the start, every label height would need a nudge. A form with
+  // a submit button under the field is the layout that does need one, and the two insets
+  // are it.
+  &[data-state="pending"]::after {
+    content: "";
+    position: absolute;
+    inset-block-end: var(--search-elemental-spinner-inset-block, 0.75rem);
+    inset-inline-end: var(--search-elemental-spinner-inset-inline, 0.75rem);
+    width: var(--search-elemental-spinner-size, 1rem);
+    height: var(--search-elemental-spinner-size, 1rem);
+    box-sizing: border-box;
+    border: 2px solid color-mix(in srgb, #{$spinner} 33%, transparent);
+
+    // One quarter of the ring in full strength is what makes the turn visible; a ring of
+    // one colour spinning is a ring standing still.
+    border-block-start-color: $spinner;
+    border-radius: 50%;
+    animation: search-elemental-spin var(--search-elemental-spinner-duration, 0.7s) linear infinite;
+
+    // It sits over the field, and a search field you cannot click into is worse than no
+    // spinner at all.
+    pointer-events: none;
+  }
+}
+
+@keyframes search-elemental-spin {
+  to { transform: rotate(1turn); }
+}
+
+// A fade rather than nothing at all. `animation: none` here would leave a static ring with
+// one darker quarter, which reads as an icon and says nothing about waiting - and the
+// setting asks for no *motion*, which a change in opacity is not.
+@keyframes search-elemental-pulse {
+  50% { opacity: 0.3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  search-elemental[data-state="pending"]::after {
+    animation: search-elemental-pulse var(--search-elemental-spinner-duration, 0.7s) ease-in-out infinite;
+  }
+}

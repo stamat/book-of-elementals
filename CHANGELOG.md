@@ -17,6 +17,49 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Added
 
+- **`<search-elemental>`** — the query half of a search field: the debounce, the abort, the
+  loading state and the announcement.
+
+  `<suggest-elemental>` says outright that it has no opinion about where the results came
+  from, which leaves the other half to every page that uses it — and it is the half that goes
+  wrong quietly. A request per keystroke. The slow answer to `car` landing after the fast one
+  to `carousel` and staying on screen under a field that reads `carousel`. A spinner started
+  in one branch and stopped in only one of the two it can end in. And nothing said out loud
+  at all, which is [WCAG 2.2 4.1.3 Status
+  Messages](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html) unmet: the
+  panel filling itself is a change a sighted reader watches happen and a screen reader user
+  is told nothing about.
+
+  There is no APG pattern, because there is no widget — the combobox is next door, and every
+  key still belongs to it. This is one debounce, one `AbortController` per query, a sequence
+  number that drops any answer a newer query has already replaced, and one `role="status"`
+  region.
+
+  **It does not fetch.** `search-query` carries `detail.query`, `detail.signal` and
+  `detail.wait(promise)`; the page fetches, fills the panel, and hands the promise back.
+  Calling `wait()` is what buys the loading state, so a page filtering a list it already has
+  goes straight to its answer and is never left with a spinner nothing will stop. Owning a
+  `src` would mean owning a response shape, an escaping boundary and an opinion about
+  someone else's API — the listener in the docs is shorter than the configuration that would
+  replace it.
+
+  Attributes are `delay` (200ms), `min` (1 character, `0` to send the empty query too), and the
+  three strings the live region reads: `results-label` with `{n}` for the count,
+  `empty-label`, `error-label`. The English default handles the one plural English has,
+  because "1 results" is the bug it exists not to ship.
+
+  DOM it writes: `data-state` on itself, running `idle` → `pending` → `results`/`empty`/
+  `error`; `aria-busy` on the `<suggest-elemental>` inside it while a query is out; `open` on
+  that same panel when answers landed and off when they did not; and one appended
+  `<span role="status" class="search-elemental-status">`, clipped out of sight. CSS it
+  claims: `display: block` and `position: relative` on itself, which is the containing block
+  the panel needs and the `position: relative` every page pairing the two was writing on a
+  wrapper by hand. The theme adds one thing, a spinner on `[data-state="pending"]`, drawn
+  over the element box and moved with `--search-elemental-spinner-inset-inline` /
+  `-block`; `prefers-reduced-motion` fades it instead of turning it. With scripting off it is
+  a labelled field in a `<form>` that submits to its `action` — the search page, which is
+  also what `Enter` does with the script when no row is under the cursor.
+
 - **`<toolbar-elemental>`** — a row of buttons the arrow keys walk and `Tab` passes in one
   step, per the [APG Toolbar pattern](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/).
 
@@ -238,6 +281,14 @@ may already be targeting**, since neither shows up in a function signature.
   overlay the content, so there is rarely anything there to shift.
 
 ### Fixed
+
+- **The `<script>`-tag bundle was missing three of the elements it claims to hold.**
+  `dist/book-of-elementals.js` is documented as the whole book, and `src/iife.js` had never
+  been extended past the elements that existed when it was written — `<carousel-elemental>`,
+  `<suggest-elemental>` and `<toolbar-elemental>` were in the ES-module entry and in the
+  stylesheets, and silently absent from the bundle. A page including it got the markup back
+  as plain markup: a list of slides, a list of links, a row of buttons. Anyone loading the
+  per-element bundles was unaffected.
 
 - **The first `<suggest-elemental>` sample no longer loads the docs site into its own
   preview.** Its rows were relative urls, and a preview is a `srcdoc` frame with no url of

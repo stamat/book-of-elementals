@@ -46,6 +46,7 @@ that is fine.
 | Element                        | What it is instead                                                                                                                                                               |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`<copy-elemental>`](copy.html) | No APG pattern, because there is no widget — a `<button>`, the clipboard write behind it, and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-changes.html) every copy button forgets |
+| [`<search-elemental>`](search.html) | No APG pattern, because the widget is next door — the query half of a search field: the debounce, the abort, the loading state, and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html) a panel filling itself does not make |
 
 ## Not in the book
 

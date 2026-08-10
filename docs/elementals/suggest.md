@@ -395,7 +395,9 @@ goes into a form; reach for this when the answer is somewhere to go.
 
 No fetching, no filtering, no ranking, no match highlighting, and no result count announced
 — the last one because "5 results" is the language of whatever built the list, not of the
-list. Pair it with something that owns the query.
+list. Pair it with something that owns the query: a few lines of your own, as above, or
+[`<search-elemental>`](search.html), which is that half — the debounce, the abort, the
+loading state and the count.
 
 ## Styling
 
