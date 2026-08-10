@@ -44,13 +44,21 @@ may already be targeting**, since neither shows up in a function signature.
   replace it.
 
   Attributes are `delay` (200ms), `min` (1 character, `0` to send the empty query too), and the
-  three strings the live region reads: `results-label` with `{n}` for the count,
-  `empty-label`, `error-label`. The English default handles the one plural English has,
+  three strings the live region reads: `results-text` with `{n}` for the count,
+  `empty-text`, `error-text`. The English default handles the one plural English has,
   because "1 results" is the bug it exists not to ship.
+
+  **The empty search is the page's call.** A search that matched nothing closes the panel if
+  the panel is empty and leaves it open if there is anything in it — so writing your own
+  `No packages match “wombat”` row shows it, and writing nothing shows nothing. The element
+  never writes that row: the message is your copy in your language, and a row that is not an
+  `<a href>` is not an option, so the arrow keys walk past it and `Enter` still submits.
+  `error` is the one state the panel's contents get no vote in, because what is in it after a
+  failed request is the query before last.
 
   DOM it writes: `data-state` on itself, running `idle` → `pending` → `results`/`empty`/
   `error`; `aria-busy` on the `<suggest-elemental>` inside it while a query is out; `open` on
-  that same panel when answers landed and off when they did not; and one appended
+  that same panel when there is something to show and off when there is not; and one appended
   `<span role="status" class="search-elemental-status">`, clipped out of sight. CSS it
   claims: `display: block` and `position: relative` on itself, which is the containing block
   the panel needs and the `position: relative` every page pairing the two was writing on a

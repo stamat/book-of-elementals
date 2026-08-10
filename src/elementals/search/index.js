@@ -48,22 +48,22 @@ export function searchAction(value, min, last) {
  * and the answer is a second or so behind it anyway.
  *
  * The default is English and handles the one plural English has, because "1 results" is
- * the bug this exists not to ship. Any other language sets the labels, and `{n}` is
+ * the bug this exists not to ship. Any other language sets the strings, and `{n}` is
  * substituted wherever it appears - a language whose plural needs more than one form
- * wants a label set per query from JS, which is why this takes the strings rather than
- * owning them.
+ * wants a string set per query from JS, which is why this takes them rather than owning
+ * them.
  *
  * @param {"idle"|"pending"|"results"|"empty"|"error"} state
  * @param {number} count How many answers landed.
- * @param {{results?: string|null, empty?: string|null, error?: string|null}} labels
+ * @param {{results?: string|null, empty?: string|null, error?: string|null}} texts
  * @returns {string} The announcement, or `''` for the states that make none.
  * @example
  * searchStatus('results', 5, {}) // => '5 results'
  * searchStatus('results', 1, {}) // => '1 result'
  * searchStatus('results', 3, { results: '{n} rezultata' }) // => '3 rezultata'
  */
-export function searchStatus(state, count, labels) {
-  const strings = labels || {};
+export function searchStatus(state, count, texts) {
+  const strings = texts || {};
   if (state === 'results') {
     if (strings.results) return strings.results.replace(/\{n\}/g, count);
     return count === 1 ? '1 result' : count + ' results';
@@ -71,6 +71,37 @@ export function searchStatus(state, count, labels) {
   if (state === 'empty') return strings.empty || 'No results';
   if (state === 'error') return strings.error || 'Search failed';
   return '';
+}
+
+/**
+ * Whether the panel should be showing, for a settled state and a panel that does or does
+ * not have something in it.
+ *
+ * Answers are the obvious half. The other half is the empty search, and it has two right
+ * answers depending on what the page did: a panel emptied out has nothing to show and
+ * closing it is the only honest thing to do, but a page that put "No packages match wombat"
+ * in there has written the answer and hiding it would throw the answer away. So `empty`
+ * follows the panel rather than the count - which is also the rule that keeps this element
+ * out of writing markup it does not own.
+ *
+ * `error` closes either way, and that is the asymmetry worth naming: what is in the panel
+ * after a failed request is the *last* query's results, still sitting there because nothing
+ * replaced them. Leaving those up under an error is the one outcome worse than showing
+ * nothing.
+ *
+ * @param {"idle"|"results"|"empty"|"error"} state
+ * @param {boolean} filled Whether the panel has anything in it.
+ * @returns {boolean}
+ * @example
+ * searchOpen('results', true) // => true
+ * searchOpen('empty', true) // => true, the page wrote its own empty state
+ * searchOpen('empty', false) // => false, there is nothing to show
+ * searchOpen('error', true) // => false, that content answers the query before last
+ */
+export function searchOpen(state, filled) {
+  if (state === 'results') return true;
+  if (state === 'empty') return !!filled;
+  return false;
 }
 
 /**
@@ -131,9 +162,9 @@ function readNumber(raw, fallback) {
  * @tag search-elemental
  * @attr {number} [delay=200] - Milliseconds the field has to stop changing before a query goes out.
  * @attr {number} [min=1] - Characters needed before one goes out at all. `0` sends the empty query too, which is what a field cleared back to nothing sends.
- * @attr {string} [results-label] - What the live region announces on a hit. `{n}` is the count. Default: `5 results`, `1 result`.
- * @attr {string} [empty-label=No results] - What it announces when nothing matched.
- * @attr {string} [error-label=Search failed] - What it announces when the request failed.
+ * @attr {string} [results-text] - What the live region announces on a hit. `{n}` is the count. Default: `5 results`, `1 result`.
+ * @attr {string} [empty-text=No results] - What it announces when nothing matched.
+ * @attr {string} [error-text=Search failed] - What it announces when the request failed.
  *
  * @cssprop {<length>} [--search-elemental-spinner-size=1rem] - Both axes of the spinner the theme draws while a query is out.
  * @cssprop {<length>} [--search-elemental-spinner-inset-inline=0.75rem] - How far the spinner sits from the inline end of the element.
@@ -175,11 +206,11 @@ export class SearchElemental extends ElementBase {
   }
 
   /** What the live region says, in the page's own words where it gave any. */
-  get labels() {
+  get texts() {
     return {
-      results: this.getAttribute('results-label'),
-      empty: this.getAttribute('empty-label'),
-      error: this.getAttribute('error-label')
+      results: this.getAttribute('results-text'),
+      empty: this.getAttribute('empty-text'),
+      error: this.getAttribute('error-text')
     };
   }
 
@@ -284,8 +315,21 @@ export class SearchElemental extends ElementBase {
   }
 
   /**
-   * A search has finished: show it, open the panel if there is anything in it, say what
-   * happened.
+   * Whether the panel has anything in it at all, which is a different question from how
+   * many answers are in it.
+   *
+   * Text rather than a selector, because an empty state is whatever the page wrote - a
+   * `<li>`, a paragraph, a line about what to try instead - and a list of shapes to match
+   * would be this element having an opinion about markup it does not own. An empty `<ul>`
+   * has no text; anything a reader could read does.
+   */
+  get filled() {
+    const panel = this.panel;
+    return !!panel && panel.textContent.trim() !== '';
+  }
+
+  /**
+   * A search has finished: show it, open or close the panel, say what happened.
    *
    * @param {"idle"|"results"|"empty"|"error"} state
    * @param {number} count
@@ -295,8 +339,8 @@ export class SearchElemental extends ElementBase {
     const panel = this.panel;
     // The attribute rather than the property, so this works whether or not the panel's own
     // bundle has loaded - `open` is what that element reads either way.
-    if (panel) panel.toggleAttribute('open', state === 'results');
-    this.announce(searchStatus(state, count, this.labels));
+    if (panel) panel.toggleAttribute('open', searchOpen(state, this.filled));
+    this.announce(searchStatus(state, count, this.texts));
   }
 
   /** Settle from whatever ended up in the panel. */

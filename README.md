@@ -675,9 +675,9 @@ search.addEventListener('search-query', (e) => {
 | --------------- | ------ | -------------- | ---------------------------------------------------------------- |
 | `delay`         | number | `200`          | Milliseconds the field has to stop changing before a query goes out. |
 | `min`           | number | `1`            | Characters needed before one goes out at all. `0` sends the empty query too. |
-| `results-label` | string | `5 results`    | Announced on a hit. `{n}` is the count.                          |
-| `empty-label`   | string | `No results`   | Announced when nothing matched.                                  |
-| `error-label`   | string | `Search failed`| Announced when the request failed.                               |
+| `results-text`  | string | `5 results`    | Announced on a hit. `{n}` is the count.                          |
+| `empty-text`    | string | `No results`   | Announced when nothing matched.                                  |
+| `error-text`    | string | `Search failed`| Announced when the request failed.                               |
 
 One request per pause instead of one per keystroke, one `AbortController` per query, and a
 sequence number that drops the slow answer arriving after the fast one — the bug that leaves

@@ -1,13 +1,14 @@
-// The two decisions this element makes that are not the browser's: whether what is in the
-// field is worth sending anywhere, and what a settled search says out loud. Debouncing,
-// aborting and the sequence number that drops a stale answer are the wiring around them.
+// The three decisions this element makes that are not the browser's: whether what is in the
+// field is worth sending anywhere, what a settled search says out loud, and whether the
+// panel has anything worth showing. Debouncing, aborting and the sequence number that drops
+// a stale answer are the wiring around them.
 //
 // Deliberately not covered: that wiring. Jest runs under Node here with no jsdom, so an
 // element test would assert against a stub base class rather than a DOM - the states, the
-// live region and the panel it opens are checked in a browser against the docs page, and
-// the stale-answer drop is what the docs page's slow-response sample is for.
+// live region and the abort are checked in a browser against the docs page, where the npm
+// sample is the one that can be made to fail, go empty and go slow on demand.
 
-import { searchAction, searchStatus } from './index.js';
+import { searchAction, searchOpen, searchStatus } from './index.js';
 
 test('a field with nothing in it yet is cleared, not searched for', () => {
   expect(searchAction('', 1, null)).toBe('clear');
@@ -63,11 +64,11 @@ test('an empty answer and a failed request each say which one happened', () => {
 
 // The page's string wins whole, in whatever language it is written, and `{n}` is the only
 // thing substituted into it - anywhere in it, and as often as it appears.
-test('a label the page gave is used as written, with {n} standing in for the count', () => {
-  const labels = { results: '{n} rezultata', empty: 'Nema rezultata', error: 'Pretraga nije uspela' };
-  expect(searchStatus('results', 3, labels)).toBe('3 rezultata');
-  expect(searchStatus('empty', 0, labels)).toBe('Nema rezultata');
-  expect(searchStatus('error', 0, labels)).toBe('Pretraga nije uspela');
+test('a text the page gave is used as written, with {n} standing in for the count', () => {
+  const texts = { results: '{n} rezultata', empty: 'Nema rezultata', error: 'Pretraga nije uspela' };
+  expect(searchStatus('results', 3, texts)).toBe('3 rezultata');
+  expect(searchStatus('empty', 0, texts)).toBe('Nema rezultata');
+  expect(searchStatus('error', 0, texts)).toBe('Pretraga nije uspela');
   expect(searchStatus('results', 2, { results: '{n} of {n}' })).toBe('2 of 2');
 });
 
@@ -76,4 +77,26 @@ test('a label the page gave is used as written, with {n} standing in for the cou
 test('a search still in flight announces nothing at all', () => {
   expect(searchStatus('pending', 0, {})).toBe('');
   expect(searchStatus('idle', 0, {})).toBe('');
+});
+
+test('answers open the panel and nothing to show closes it', () => {
+  expect(searchOpen('results', true)).toBe(true);
+  expect(searchOpen('idle', true)).toBe(false);
+});
+
+// The empty search is the one with two right answers, and which one it is belongs to the
+// page: a panel emptied out has nothing to show, and a panel holding "No packages match
+// wombat" has the answer written in it. Closing that one throws the answer away, which is
+// what a reader sees as a search field that does nothing.
+test('an empty search shows the panel only if the page wrote something in it', () => {
+  expect(searchOpen('empty', true)).toBe(true);
+  expect(searchOpen('empty', false)).toBe(false);
+});
+
+// What is in the panel when a request fails is the *previous* query's results, still there
+// because nothing replaced them. Leaving those up under a failure is worse than showing
+// nothing, so this is the one state the panel's contents do not get a vote in.
+test('a failed search never leaves the query before last on screen', () => {
+  expect(searchOpen('error', true)).toBe(false);
+  expect(searchOpen('error', false)).toBe(false);
 });
