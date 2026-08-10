@@ -87,6 +87,7 @@
     "options": {
       "nav": "nav.json",
       "searchIndex": "search-index.json",
+      "lastUpdated": "meta/updates.json",
       "llms": {
         "out": "llms.txt",
         "intro": "docs/_llms/llms-intro.md",
