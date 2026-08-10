@@ -1,4 +1,4 @@
-/* book-of-elementals v0.7.1 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v0.7.2 | https://stamat.github.io/book-of-elementals/ | MIT License */
 (() => {
   var __defProp = Object.defineProperty;
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
