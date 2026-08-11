@@ -17,6 +17,11 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Fixed
 
+- **A stripped `<carousel-elemental>` gives back the `role` its upgrade wrote.** Emptied of
+  its slides or disconnected, the element took every role off the list and the slides but
+  kept its own `role="group"`/`region` — a group announced around a plain list nothing is
+  driving. A role the page authored itself is kept, as before.
+
 - **A rotating `<carousel-elemental>` no longer resumes while a reader is still in it.**
   Hover and focus each hold the rotation, but either one ending resumed it: the pointer
   crossing and leaving a carousel a keyboard reader was inside restarted the slides under

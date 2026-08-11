@@ -492,6 +492,9 @@ export class CarouselElemental extends ElementBase {
 
     this.hovering = false;
     this.focused = false;
+    // Whether the `role` on the element is this element's own writing - `wire()` only
+    // writes one where the page wrote none, and `strip()` may only take that one back.
+    this.wroteRole = false;
     this.index = 0;
     // The row's `scroll-padding` on the start side, re-read whenever the layout changes.
     this.inset = 0;
@@ -570,6 +573,9 @@ export class CarouselElemental extends ElementBase {
     this.removeAttribute('data-carousel-at-start');
     this.removeAttribute('data-carousel-at-end');
     this.removeAttribute('aria-roledescription');
+    // Only a role this element wrote: one the page authored is its own to keep.
+    if (this.wroteRole) this.removeAttribute('role');
+    this.wroteRole = false;
 
     const scroller = this.scroller;
     if (scroller) {
@@ -619,6 +625,7 @@ export class CarouselElemental extends ElementBase {
     if (!this.hasAttribute('role')) {
       const named = this.hasAttribute('aria-label') || this.hasAttribute('aria-labelledby');
       this.setAttribute('role', named ? 'region' : 'group');
+      this.wroteRole = true;
     }
 
     if (!scroller.id) scroller.id = 'carousel-elemental-slides-' + (++carouselCount);
