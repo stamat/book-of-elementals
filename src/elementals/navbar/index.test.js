@@ -1,4 +1,13 @@
+import * as book from '../../index.js';
 import { hoverIntent, navbarMode, ownsRow, probeState, stepIndex } from './index.js';
+
+test('the main entry still exports stepIndex, one binding from both modules', () => {
+  // This module once declared its own copy of core's stepper, and `src/index.js`
+  // star-exports both modules: to ES modules two declarations under one name are not an
+  // error, the name is silently dropped from the entry - so the import worked from every
+  // subpath and failed from the package itself.
+  expect(book.stepIndex).toBe(stepIndex);
+});
 
 test('arrows step one way or the other, whichever axis they are on', () => {
   expect(stepIndex(0, 'ArrowRight', 4)).toBe(1);

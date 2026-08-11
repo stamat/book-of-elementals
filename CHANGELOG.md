@@ -15,7 +15,13 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
-### Fixes
+### Fixed
+
+- **`import { stepIndex } from 'book-of-elementals'` works again.** `<navbar-elemental>`
+  declared its own copy of the stepper core already re-exports, and to ES modules two
+  declarations under one star-exported name are not an error — the name is silently dropped
+  from the entry. Every subpath import worked; the package's own never did. The navbar now
+  re-exports core's binding, which resolves the ambiguity instead of hiding it.
 
 - Docs search listbox click fix from v0.7.2 now propagates through poops-docs-theme v4.0.2
 

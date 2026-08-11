@@ -1,28 +1,14 @@
-import { ElementBase, define } from '../../core.js';
+import { ElementBase, define, stepIndex } from '../../core.js';
 
-/**
- * Where an arrow, Home or End key moves focus in a list of navigation items.
- *
- * Not `nextIndex` from core, which wraps: this is the APG's disclosure navigation, whose
- * wording for every one of these keys is "and it is not the last" - a bar has ends, and
- * running off one is how you get back to the rest of the page.
- *
- * @param {number} current - Index of the focused item, `-1` for none.
- * @param {string} key - KeyboardEvent.key value.
- * @param {number} length - Number of items in the set.
- * @returns {number|null} Target index, or null if the key is unhandled or there is nowhere
- *   to go.
- */
-export function stepIndex(current, key, length) {
-  if (length === 0) return null;
-  const to = key === 'ArrowDown' || key === 'ArrowRight' ? current + 1
-    : key === 'ArrowUp' || key === 'ArrowLeft' ? current - 1
-      : key === 'Home' ? 0
-        : key === 'End' ? length - 1
-          : null;
-  if (to === null || to < 0 || to >= length) return null;
-  return to;
-}
+// The arrows step and stop rather than wrap - the APG's disclosure navigation words every
+// key "and it is not the last", because a bar has ends and running off one is how you get
+// back to the rest of the page. That is `stepIndex` from core, not `nextIndex`.
+//
+// Re-exported rather than redeclared: it was this module's surface first, and a second
+// declaration under the same name cost the package the export - `src/index.js` star-exports
+// this module and core both, and ES modules drop an ambiguous name from the entry rather
+// than resolve it. The same binding from both sides is not ambiguous.
+export { stepIndex };
 
 /**
  * Which of the two widgets the bar is right now.
