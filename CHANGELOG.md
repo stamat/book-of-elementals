@@ -17,6 +17,12 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Fixed
 
+- **Cmd/Ctrl-click on a tab opens it in a new tab again.** `<tabs-elemental>` swallowed
+  every click on a link-shaped tab, modifier keys included, so the browser's open-in-new-tab
+  never fired — and it would have worked: the fragment the link carries is the panel's, and
+  the page that opens lands on it selected. A modified click now keeps the browser's
+  default, exactly as the arrow keys already did.
+
 - **`<tooltip-elemental>` puts the trigger back on disconnect.** In the `for` shape the
   trigger outlives the element, and it was left describing a bubble that no longer exists,
   named by an `aria-label` nothing maintains, and missing the `title` the upgrade took —

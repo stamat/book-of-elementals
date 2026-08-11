@@ -384,6 +384,10 @@ export class TabsElemental extends ElementBase {
   onClick(e) {
     const tab = this.tabFor(e);
     if (!tab) return;
+    // A modified click is asking for a new tab or window, and it works there: the fragment
+    // a link-shaped tab carries is its panel's, and `selectFromHash` lands the page that
+    // opens on that panel showing.
+    if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
     // A tab authored as a link points at its own panel, which is already on the page:
     // following it would scroll to something the reader is looking at and write a
     // fragment they did not ask for into the URL.
