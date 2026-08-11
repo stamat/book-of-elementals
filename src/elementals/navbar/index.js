@@ -284,7 +284,6 @@ export class NavbarElemental extends ElementBase {
     this.onMediaChange = this.onMediaChange.bind(this);
     this.onIntersect = this.onIntersect.bind(this);
     this.onBeforeMatch = this.onBeforeMatch.bind(this);
-    this.watched = new WeakSet();
 
     // The row's own box is the measuring box, and it gets said out loud rather than guessed at
     // by a stylesheet: the element cannot wrap the row in a box of its own without changing
@@ -342,7 +341,10 @@ export class NavbarElemental extends ElementBase {
     const bars = this.toggle && this.toggle.querySelector(':scope > [data-navbar-bars]');
     if (bars) bars.remove();
     for (const copy of this.copies || []) copy.remove();
-    for (const list of this.lists) list.removeAttribute('hidden');
+    for (const list of this.lists) {
+      list.removeEventListener('beforematch', this.onBeforeMatch);
+      list.removeAttribute('hidden');
+    }
     for (const item of this.items) item.removeAttribute('data-overflow');
     if (this.rail) this.rail.removeAttribute('data-navbar-rail');
     delete this.dataset.mode;
@@ -506,11 +508,10 @@ export class NavbarElemental extends ElementBase {
     for (const list of this.lists) {
       if (!list.id) list.id = 'navbar-elemental-' + (++navbarCount);
       // Find-in-page reveals a stacked panel on its own; this is how the button hears about
-      // it and stops disagreeing with it.
-      if (!this.watched.has(list)) {
-        list.addEventListener('beforematch', this.onBeforeMatch);
-        this.watched.add(list);
-      }
+      // it and stops disagreeing with it. Added unguarded on every pass, because the same
+      // listener registered twice for the same event is the platform's own no-op - there is
+      // nothing here to keep a record of.
+      list.addEventListener('beforematch', this.onBeforeMatch);
 
       const trigger = list === this.row ? this.toggle : this.triggerOf(list);
       if (!trigger) continue;

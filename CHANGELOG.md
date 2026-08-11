@@ -23,6 +23,11 @@ may already be targeting**, since neither shows up in a function signature.
   them, and focus leaving resumed it under a pointer still parked on a caption. Resume now
   waits for both to be gone, which is what the APG asks.
 
+- **`<navbar-elemental>` takes its `beforematch` listeners with it on disconnect.** They
+  stayed on the lists, and a navbar removed and put back added a second set — harmless in
+  effect, since the handler is idempotent, but a leak against the promise that everything
+  written comes back off.
+
 - **`import { stepIndex } from 'book-of-elementals'` works again.** `<navbar-elemental>`
   declared its own copy of the stepper core already re-exports, and to ES modules two
   declarations under one star-exported name are not an error — the name is silently dropped
