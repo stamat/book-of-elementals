@@ -119,6 +119,23 @@ export function alignOnAxis(start, end, size, limit, toStart, centred) {
   return Math.min(Math.max(at, 0), Math.max(limit - size, 0));
 }
 
+/**
+ * A token list with one token taken back out, or `null` for a list left empty - the shape
+ * `removeAttribute` wants to hear.
+ *
+ * For `aria-describedby` on teardown: the element only ever appended its bubble's `id`, so
+ * only that one comes off, and every token the page had written there is kept - order,
+ * unknown ids and all.
+ *
+ * @param {string|null} list
+ * @param {string} token
+ * @returns {string|null}
+ */
+export function withoutToken(list, token) {
+  const kept = (list || '').split(/\s+/).filter((one) => one && one !== token);
+  return kept.length ? kept.join(' ') : null;
+}
+
 /** What counts as the trigger when the element wraps one. Focusable by the platform's own
  * rules, since the description has to reach a reader who arrived on it with Tab. */
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
@@ -228,6 +245,7 @@ export class TooltipElemental extends ElementBase {
     if (!trigger) return;
 
     let bubble = this.bubble;
+    this.wroteBubble = false;
     // Nothing written for it to say, so the last place to look is the attribute the author
     // would have used if this element were not here.
     if (!bubble || bubble === this) {
@@ -237,12 +255,16 @@ export class TooltipElemental extends ElementBase {
         bubble = document.createElement('span');
         bubble.textContent = trigger.title;
         this.appendChild(bubble);
+        this.wroteBubble = true;
       } else {
         return;
       }
     }
 
     const fromTitle = trigger.title && bubble.textContent.trim() === trigger.title.trim();
+    // Remembered for teardown: the trigger outlives the element in the `for` shape, and the
+    // attribute is its to have back - the native tooltip it stands for included.
+    this.removedTitle = fromTitle ? trigger.getAttribute('title') : null;
     if (fromTitle) trigger.removeAttribute('title');
 
     this.initialized = true;
@@ -259,6 +281,7 @@ export class TooltipElemental extends ElementBase {
       ariaLabelledby: trigger.getAttribute('aria-labelledby')
     }) === 'name';
 
+    this.wroteName = names;
     if (names) {
       // The words were this control's only name. Described *and* named by the same string
       // is a screen reader saying it twice, so it is named and nothing more.
@@ -286,14 +309,34 @@ export class TooltipElemental extends ElementBase {
 
   disconnectedCallback() {
     if (!this.initialized) return;
-    for (const el of [this.triggerElement, this.bubbleElement]) {
+    const trigger = this.triggerElement;
+    const bubble = this.bubbleElement;
+    for (const el of [trigger, bubble]) {
       el.removeEventListener('pointerenter', this.onPointer);
       el.removeEventListener('pointerleave', this.onPointer);
     }
-    this.triggerElement.removeEventListener('focus', this.onFocus);
-    this.triggerElement.removeEventListener('blur', this.onBlur);
+    trigger.removeEventListener('focus', this.onFocus);
+    trigger.removeEventListener('blur', this.onBlur);
     this.stopWatching();
     clearTimeout(this.closeTimer);
+
+    // Everything written on the trigger comes back off, because in the `for` shape it
+    // outlives the element: the name this element gave goes, or the description un-points,
+    // and the `title` the upgrade took returns with the native tooltip it stood for. The
+    // bubble is unhidden and unmarked - a sentence beside the control again, which is what
+    // the markup says with no script.
+    if (this.wroteName) trigger.removeAttribute('aria-label');
+    else {
+      const described = withoutToken(trigger.getAttribute('aria-describedby'), bubble.id);
+      if (described) trigger.setAttribute('aria-describedby', described);
+      else trigger.removeAttribute('aria-describedby');
+    }
+    if (this.removedTitle !== null) trigger.setAttribute('title', this.removedTitle);
+    bubble.hidden = false;
+    bubble.removeAttribute('role');
+    // Only a bubble this element wrote out of the `title`: one the page authored is its own.
+    if (this.wroteBubble) bubble.remove();
+
     this.initialized = false;
   }
 

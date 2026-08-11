@@ -1,10 +1,27 @@
-// The two decisions `<tooltip-elemental>` makes that are not DOM plumbing: where a
-// `title`'s words belong, and what hover, focus and Escape do to each other.
+// The decisions `<tooltip-elemental>` makes that are not DOM plumbing: where a `title`'s
+// words belong, what hover, focus and Escape do to each other, and what teardown may take
+// back out of `aria-describedby`.
 //
 // Deliberately not covered here: the wiring itself - `aria-describedby`, the `hidden`
 // toggle, the fixed-position maths - which needs a document and belongs to `script/a11y`
 // and the docs demo. The placement decision is book-of-spells' `placeFlyout`, tested there.
-import { titleRole, nextTooltipState, arrowOffset, alignOnAxis } from './index.js';
+import { titleRole, nextTooltipState, arrowOffset, alignOnAxis, withoutToken } from './index.js';
+
+test('teardown takes only its own id out of aria-describedby', () => {
+  // The trigger outlives the element in the `for` shape, and a description pointing at a
+  // bubble that is gone is a description of nothing.
+  expect(withoutToken('hint tip-1', 'tip-1')).toBe('hint');
+  expect(withoutToken('tip-1 hint more', 'tip-1')).toBe('hint more');
+});
+
+test('an id this element alone appended leaves the attribute empty, so it comes off whole', () => {
+  expect(withoutToken('tip-1', 'tip-1')).toBeNull();
+  expect(withoutToken(null, 'tip-1')).toBeNull();
+});
+
+test('a describedby the page wrote keeps every token that is not the bubble\'s', () => {
+  expect(withoutToken('hint  more', 'tip-1')).toBe('hint more');
+});
 
 const CLOSED = { hovering: false, focused: false, dismissed: false, open: false };
 

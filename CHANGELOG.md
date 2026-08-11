@@ -17,6 +17,15 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Fixed
 
+- **`<tooltip-elemental>` puts the trigger back on disconnect.** In the `for` shape the
+  trigger outlives the element, and it was left describing a bubble that no longer exists,
+  named by an `aria-label` nothing maintains, and missing the `title` the upgrade took —
+  its native tooltip gone for good. Teardown now takes only the bubble's `id` out of
+  `aria-describedby` (the page's own tokens stay), removes the name only where this element
+  wrote it, restores the `title`, and unhides the bubble so the words are a plain sentence
+  again. **DOM:** a bubble generated out of a `title` is removed on disconnect; an authored
+  one stays.
+
 - **A stripped `<carousel-elemental>` gives back the `role` its upgrade wrote.** Emptied of
   its slides or disconnected, the element took every role off the list and the slides but
   kept its own `role="group"`/`region` — a group announced around a plain list nothing is
