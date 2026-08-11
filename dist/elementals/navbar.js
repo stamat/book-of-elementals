@@ -7,14 +7,14 @@
     if (typeof customElements === "undefined" || customElements.get(tag)) return;
     customElements.define(tag, ctor);
   }
-
-  // src/elementals/navbar/index.js
-  function stepIndex2(current, key, length) {
+  function stepIndex(current, key, length) {
     if (length === 0) return null;
     const to = key === "ArrowDown" || key === "ArrowRight" ? current + 1 : key === "ArrowUp" || key === "ArrowLeft" ? current - 1 : key === "Home" ? 0 : key === "End" ? length - 1 : null;
     if (to === null || to < 0 || to >= length) return null;
     return to;
   }
+
+  // src/elementals/navbar/index.js
   function navbarMode(matches, overflowed, total, minimum = 1) {
     if (!matches) return "stack";
     const floor = Number.isFinite(minimum) && minimum >= 1 ? minimum : 1;
@@ -134,7 +134,6 @@
       this.onMediaChange = this.onMediaChange.bind(this);
       this.onIntersect = this.onIntersect.bind(this);
       this.onBeforeMatch = this.onBeforeMatch.bind(this);
-      this.watched = /* @__PURE__ */ new WeakSet();
       this.rail.setAttribute("data-navbar-rail", "");
       this.copies = this.fillMore();
       this.probe = this.buildProbe();
@@ -169,7 +168,10 @@
       const bars = this.toggle && this.toggle.querySelector(":scope > [data-navbar-bars]");
       if (bars) bars.remove();
       for (const copy of this.copies || []) copy.remove();
-      for (const list of this.lists) list.removeAttribute("hidden");
+      for (const list of this.lists) {
+        list.removeEventListener("beforematch", this.onBeforeMatch);
+        list.removeAttribute("hidden");
+      }
       for (const item of this.items) item.removeAttribute("data-overflow");
       if (this.rail) this.rail.removeAttribute("data-navbar-rail");
       delete this.dataset.mode;
@@ -312,10 +314,7 @@
     wire() {
       for (const list of this.lists) {
         if (!list.id) list.id = "navbar-elemental-" + ++navbarCount;
-        if (!this.watched.has(list)) {
-          list.addEventListener("beforematch", this.onBeforeMatch);
-          this.watched.add(list);
-        }
+        list.addEventListener("beforematch", this.onBeforeMatch);
         const trigger = list === this.row ? this.toggle : this.triggerOf(list);
         if (!trigger) continue;
         if (!trigger.hasAttribute("type")) trigger.type = "button";
@@ -482,7 +481,7 @@
         }
       }
       const set = this.navigable(control);
-      const to = stepIndex2(set.indexOf(control), e.key, set.length);
+      const to = stepIndex(set.indexOf(control), e.key, set.length);
       if (to === null) {
         const list = control.closest("ul, menu");
         const inside = this.stacked || list && list !== this.row;

@@ -143,6 +143,30 @@
           }
         },
         {
+          "kind": "function",
+          "name": "withoutToken",
+          "parameters": [
+            {
+              "name": "list",
+              "type": {
+                "text": "string|null"
+              }
+            },
+            {
+              "name": "token",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "description": "A token list with one token taken back out, or `null` for a list left empty - the shape\n`removeAttribute` wants to hear.\n\nFor `aria-describedby` on teardown: the element only ever appended its bubble's `id`, so\nonly that one comes off, and every token the page had written there is kept - order,\nunknown ids and all.",
+          "return": {
+            "type": {
+              "text": "string|null"
+            }
+          }
+        },
+        {
           "kind": "class",
           "description": "`<tooltip-elemental>` custom element.\n\nA description that shows on hover and on focus, wired to the control it describes - and\nstill on the page when the script is not.\n\nThe [APG's tooltip pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/) says of\nitself that it \"is work in progress; it does not yet have task force consensus\", so this\nimplements the half every source does agree on - `aria-describedby` from the trigger to\nthe words, Escape to dismiss, hover and focus to show - and refuses the half they do\nnot. `role=\"tooltip\"` is set because the pattern says so, and\n[buys nothing on its own](https://sarahmhigley.com/writing/tooltips-in-wcag-21/):\n`aria-describedby` is what any screen reader actually reads.\n\nTwo ways to write it, and they are the same element:\n\n```html\n<tooltip-elemental>\n  <button type=\"button\">Save</button>\n  <span>Saves to your drafts, without publishing</span>\n</tooltip-elemental>\n\n<button type=\"button\" id=\"save\">Save</button>\n<tooltip-elemental for=\"save\">Saves to your drafts, without publishing</tooltip-elemental>\n```\n\nWrapping is the one to reach for. `for` exists because a bubble is sometimes written far\nfrom the button it belongs to - a table of controls, a template that emits its help text\nin one block - and it costs nothing at the markup level, since the element works out\nwhich shape it is in by whether it contains something focusable.\n\nA `title` on the trigger is read as the words when there is no other source for them,\nand the attribute is removed so the native tooltip does not double up. Where those words\nend up depends on what the trigger already had: see `titleRole`.\n\n**It is unreachable by touch, and that is not a bug to work around.** There is no hover\non a touch screen, and a tap is activation rather than focus, so pointer events from a\ntouch are ignored outright rather than half-handled. Nothing essential belongs in one.\nA control that needs its description read on every device wants visible text, and one\nthat reveals content on a press wants `<disclosure-elemental>`.\n\nLight DOM, no shadow root. Nothing is moved and nothing is wrapped: the bubble is the\nelement the author wrote, given a `role`, an `id` if it had none, and a `hidden` while\nit is not showing - which still leaves it readable, because\n[`aria-describedby` reaches hidden content](https://www.w3.org/TR/accname-1.2/).\n\nDegrades honestly: with no script the words are a sentence beside the control, which is\nwhat the markup says on its own. Nothing is hidden until there is something able to show\nit again.\n\nponytail: fixed positioning rather than the popover API, so a bubble is not clipped by a\nscrolling ancestor. Popover would put it in the top layer and take the Escape handling\nwith it; it is worth revisiting once CSS anchor positioning is in Firefox and Safari,\nwhich is the half that would then be missing.",
           "name": "TooltipElemental",
@@ -372,6 +396,14 @@
           "name": "alignOnAxis",
           "declaration": {
             "name": "alignOnAxis",
+            "module": "src/elementals/tooltip/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "withoutToken",
+          "declaration": {
+            "name": "withoutToken",
             "module": "src/elementals/tooltip/index.js"
           }
         },

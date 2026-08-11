@@ -245,6 +245,7 @@
     onClick(e) {
       const tab = this.tabFor(e);
       if (!tab) return;
+      if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
       e.preventDefault();
       this.selected = this.tabs.indexOf(tab);
     }

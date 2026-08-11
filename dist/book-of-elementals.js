@@ -554,6 +554,9 @@
   function swapHeight(from, to, reduced) {
     return !reduced && from !== to;
   }
+  function rotationHeld(hovering, focused) {
+    return hovering || focused;
+  }
   var POSITION = "{n} of {total}";
   function slideName(index, count, template) {
     const text = template == null || template.trim() === "" ? POSITION : template;
@@ -675,9 +678,13 @@
       this.onScroll = this.onScroll.bind(this);
       this.onSwipe = this.onSwipe.bind(this);
       this.onHeightEnd = this.onHeightEnd.bind(this);
-      this.suspend = this.suspend.bind(this);
-      this.resume = this.resume.bind(this);
+      this.onHoverIn = this.onHoverIn.bind(this);
+      this.onHoverOut = this.onHoverOut.bind(this);
+      this.onFocusIn = this.onFocusIn.bind(this);
       this.onFocusOut = this.onFocusOut.bind(this);
+      this.hovering = false;
+      this.focused = false;
+      this.wroteRole = false;
       this.index = 0;
       this.inset = 0;
       this.painted = false;
@@ -687,9 +694,9 @@
       this.heights = null;
       this.named = /* @__PURE__ */ new WeakMap();
       this.addEventListener("click", this.onClick);
-      this.addEventListener("mouseenter", this.suspend);
-      this.addEventListener("mouseleave", this.resume);
-      this.addEventListener("focusin", this.suspend);
+      this.addEventListener("mouseenter", this.onHoverIn);
+      this.addEventListener("mouseleave", this.onHoverOut);
+      this.addEventListener("focusin", this.onFocusIn);
       this.addEventListener("focusout", this.onFocusOut);
       this.initialized = true;
       this.wire();
@@ -701,10 +708,12 @@
       this.rotating = false;
       this.pinned = false;
       this.removeEventListener("click", this.onClick);
-      this.removeEventListener("mouseenter", this.suspend);
-      this.removeEventListener("mouseleave", this.resume);
-      this.removeEventListener("focusin", this.suspend);
+      this.removeEventListener("mouseenter", this.onHoverIn);
+      this.removeEventListener("mouseleave", this.onHoverOut);
+      this.removeEventListener("focusin", this.onFocusIn);
       this.removeEventListener("focusout", this.onFocusOut);
+      this.hovering = false;
+      this.focused = false;
       this.strip();
       this.initialized = false;
     }
@@ -730,6 +739,8 @@
       this.removeAttribute("data-carousel-at-start");
       this.removeAttribute("data-carousel-at-end");
       this.removeAttribute("aria-roledescription");
+      if (this.wroteRole) this.removeAttribute("role");
+      this.wroteRole = false;
       const scroller = this.scroller;
       if (scroller) {
         scroller.removeAttribute("data-carousel-slides");
@@ -766,6 +777,7 @@
       if (!this.hasAttribute("role")) {
         const named = this.hasAttribute("aria-label") || this.hasAttribute("aria-labelledby");
         this.setAttribute("role", named ? "region" : "group");
+        this.wroteRole = true;
       }
       if (!scroller.id) scroller.id = "carousel-elemental-slides-" + ++carouselCount;
       scroller.setAttribute("data-carousel-slides", "");
@@ -1151,11 +1163,26 @@
       if (this.rotating && !this.pinned) this.clearTimer();
     }
     resume() {
+      if (rotationHeld(this.hovering, this.focused)) return;
       if (this.rotating && !this.pinned && !this.timer) this.tick();
+    }
+    onHoverIn() {
+      this.hovering = true;
+      this.suspend();
+    }
+    onHoverOut() {
+      this.hovering = false;
+      this.resume();
+    }
+    onFocusIn() {
+      this.focused = true;
+      this.suspend();
     }
     /** Focus moving between two controls is focus that never left. */
     onFocusOut(e) {
-      if (!this.contains(e.relatedTarget)) this.resume();
+      if (this.contains(e.relatedTarget)) return;
+      this.focused = false;
+      this.resume();
     }
     onClick(e) {
       const button = e.target.closest && e.target.closest("button");
@@ -3019,12 +3046,6 @@
   define("modal-elemental", ModalElemental);
 
   // src/elementals/navbar/index.js
-  function stepIndex2(current, key, length) {
-    if (length === 0) return null;
-    const to = key === "ArrowDown" || key === "ArrowRight" ? current + 1 : key === "ArrowUp" || key === "ArrowLeft" ? current - 1 : key === "Home" ? 0 : key === "End" ? length - 1 : null;
-    if (to === null || to < 0 || to >= length) return null;
-    return to;
-  }
   function navbarMode(matches, overflowed, total, minimum = 1) {
     if (!matches) return "stack";
     const floor = Number.isFinite(minimum) && minimum >= 1 ? minimum : 1;
@@ -3144,7 +3165,6 @@
       this.onMediaChange = this.onMediaChange.bind(this);
       this.onIntersect = this.onIntersect.bind(this);
       this.onBeforeMatch = this.onBeforeMatch.bind(this);
-      this.watched = /* @__PURE__ */ new WeakSet();
       this.rail.setAttribute("data-navbar-rail", "");
       this.copies = this.fillMore();
       this.probe = this.buildProbe();
@@ -3179,7 +3199,10 @@
       const bars = this.toggle && this.toggle.querySelector(":scope > [data-navbar-bars]");
       if (bars) bars.remove();
       for (const copy of this.copies || []) copy.remove();
-      for (const list of this.lists) list.removeAttribute("hidden");
+      for (const list of this.lists) {
+        list.removeEventListener("beforematch", this.onBeforeMatch);
+        list.removeAttribute("hidden");
+      }
       for (const item of this.items) item.removeAttribute("data-overflow");
       if (this.rail) this.rail.removeAttribute("data-navbar-rail");
       delete this.dataset.mode;
@@ -3322,10 +3345,7 @@
     wire() {
       for (const list of this.lists) {
         if (!list.id) list.id = "navbar-elemental-" + ++navbarCount;
-        if (!this.watched.has(list)) {
-          list.addEventListener("beforematch", this.onBeforeMatch);
-          this.watched.add(list);
-        }
+        list.addEventListener("beforematch", this.onBeforeMatch);
         const trigger = list === this.row ? this.toggle : this.triggerOf(list);
         if (!trigger) continue;
         if (!trigger.hasAttribute("type")) trigger.type = "button";
@@ -3492,7 +3512,7 @@
         }
       }
       const set2 = this.navigable(control);
-      const to = stepIndex2(set2.indexOf(control), e.key, set2.length);
+      const to = stepIndex(set2.indexOf(control), e.key, set2.length);
       if (to === null) {
         const list = control.closest("ul, menu");
         const inside = this.stacked || list && list !== this.row;
@@ -4537,6 +4557,7 @@
     onClick(e) {
       const tab = this.tabFor(e);
       if (!tab) return;
+      if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
       e.preventDefault();
       this.selected = this.tabs.indexOf(tab);
     }
@@ -4715,6 +4736,10 @@
     const at = centred ? (start + end) / 2 - size / 2 : toStart ? start : end - size;
     return Math.min(Math.max(at, 0), Math.max(limit - size, 0));
   }
+  function withoutToken(list, token) {
+    const kept = (list || "").split(/\s+/).filter((one) => one && one !== token);
+    return kept.length ? kept.join(" ") : null;
+  }
   var FOCUSABLE3 = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
   var CLOSE_DELAY = 120;
   var FALLBACK_GAP = 6;
@@ -4739,17 +4764,20 @@
       const trigger = this.trigger;
       if (!trigger) return;
       let bubble = this.bubble;
+      this.wroteBubble = false;
       if (!bubble || bubble === this) {
         if (bubble === this && this.textContent.trim()) {
         } else if (trigger.title) {
           bubble = document.createElement("span");
           bubble.textContent = trigger.title;
           this.appendChild(bubble);
+          this.wroteBubble = true;
         } else {
           return;
         }
       }
       const fromTitle = trigger.title && bubble.textContent.trim() === trigger.title.trim();
+      this.removedTitle = fromTitle ? trigger.getAttribute("title") : null;
       if (fromTitle) trigger.removeAttribute("title");
       this.initialized = true;
       this.triggerElement = trigger;
@@ -4762,6 +4790,7 @@
         ariaLabel: trigger.getAttribute("aria-label"),
         ariaLabelledby: trigger.getAttribute("aria-labelledby")
       }) === "name";
+      this.wroteName = names;
       if (names) {
         trigger.setAttribute("aria-label", bubble.textContent.trim());
       } else {
@@ -4783,14 +4812,26 @@
     }
     disconnectedCallback() {
       if (!this.initialized) return;
-      for (const el2 of [this.triggerElement, this.bubbleElement]) {
+      const trigger = this.triggerElement;
+      const bubble = this.bubbleElement;
+      for (const el2 of [trigger, bubble]) {
         el2.removeEventListener("pointerenter", this.onPointer);
         el2.removeEventListener("pointerleave", this.onPointer);
       }
-      this.triggerElement.removeEventListener("focus", this.onFocus);
-      this.triggerElement.removeEventListener("blur", this.onBlur);
+      trigger.removeEventListener("focus", this.onFocus);
+      trigger.removeEventListener("blur", this.onBlur);
       this.stopWatching();
       clearTimeout(this.closeTimer);
+      if (this.wroteName) trigger.removeAttribute("aria-label");
+      else {
+        const described = withoutToken(trigger.getAttribute("aria-describedby"), bubble.id);
+        if (described) trigger.setAttribute("aria-describedby", described);
+        else trigger.removeAttribute("aria-describedby");
+      }
+      if (this.removedTitle !== null) trigger.setAttribute("title", this.removedTitle);
+      bubble.hidden = false;
+      bubble.removeAttribute("role");
+      if (this.wroteBubble) bubble.remove();
       this.initialized = false;
     }
     onPointer(e) {

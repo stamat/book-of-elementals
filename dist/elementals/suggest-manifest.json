@@ -256,7 +256,7 @@
               "type": {
                 "text": "string"
               },
-              "description": "`id` of the text field that drives it. Without it the element does nothing.",
+              "description": "`id` of the text field that drives it. Also read as `data-for`. Without it the element does nothing.",
               "name": "for"
             },
             {

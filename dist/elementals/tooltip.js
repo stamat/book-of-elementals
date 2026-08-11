@@ -78,6 +78,10 @@
     const at = centred ? (start + end) / 2 - size / 2 : toStart ? start : end - size;
     return Math.min(Math.max(at, 0), Math.max(limit - size, 0));
   }
+  function withoutToken(list, token) {
+    const kept = (list || "").split(/\s+/).filter((one) => one && one !== token);
+    return kept.length ? kept.join(" ") : null;
+  }
   var FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
   var CLOSE_DELAY = 120;
   var FALLBACK_GAP = 6;
@@ -102,17 +106,20 @@
       const trigger = this.trigger;
       if (!trigger) return;
       let bubble = this.bubble;
+      this.wroteBubble = false;
       if (!bubble || bubble === this) {
         if (bubble === this && this.textContent.trim()) {
         } else if (trigger.title) {
           bubble = document.createElement("span");
           bubble.textContent = trigger.title;
           this.appendChild(bubble);
+          this.wroteBubble = true;
         } else {
           return;
         }
       }
       const fromTitle = trigger.title && bubble.textContent.trim() === trigger.title.trim();
+      this.removedTitle = fromTitle ? trigger.getAttribute("title") : null;
       if (fromTitle) trigger.removeAttribute("title");
       this.initialized = true;
       this.triggerElement = trigger;
@@ -125,6 +132,7 @@
         ariaLabel: trigger.getAttribute("aria-label"),
         ariaLabelledby: trigger.getAttribute("aria-labelledby")
       }) === "name";
+      this.wroteName = names;
       if (names) {
         trigger.setAttribute("aria-label", bubble.textContent.trim());
       } else {
@@ -146,14 +154,26 @@
     }
     disconnectedCallback() {
       if (!this.initialized) return;
-      for (const el of [this.triggerElement, this.bubbleElement]) {
+      const trigger = this.triggerElement;
+      const bubble = this.bubbleElement;
+      for (const el of [trigger, bubble]) {
         el.removeEventListener("pointerenter", this.onPointer);
         el.removeEventListener("pointerleave", this.onPointer);
       }
-      this.triggerElement.removeEventListener("focus", this.onFocus);
-      this.triggerElement.removeEventListener("blur", this.onBlur);
+      trigger.removeEventListener("focus", this.onFocus);
+      trigger.removeEventListener("blur", this.onBlur);
       this.stopWatching();
       clearTimeout(this.closeTimer);
+      if (this.wroteName) trigger.removeAttribute("aria-label");
+      else {
+        const described = withoutToken(trigger.getAttribute("aria-describedby"), bubble.id);
+        if (described) trigger.setAttribute("aria-describedby", described);
+        else trigger.removeAttribute("aria-describedby");
+      }
+      if (this.removedTitle !== null) trigger.setAttribute("title", this.removedTitle);
+      bubble.hidden = false;
+      bubble.removeAttribute("role");
+      if (this.wroteBubble) bubble.remove();
       this.initialized = false;
     }
     onPointer(e) {

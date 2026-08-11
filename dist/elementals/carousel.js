@@ -168,6 +168,9 @@
   function swapHeight(from, to, reduced) {
     return !reduced && from !== to;
   }
+  function rotationHeld(hovering, focused) {
+    return hovering || focused;
+  }
   var POSITION = "{n} of {total}";
   function slideName(index, count, template) {
     const text = template == null || template.trim() === "" ? POSITION : template;
@@ -289,9 +292,13 @@
       this.onScroll = this.onScroll.bind(this);
       this.onSwipe = this.onSwipe.bind(this);
       this.onHeightEnd = this.onHeightEnd.bind(this);
-      this.suspend = this.suspend.bind(this);
-      this.resume = this.resume.bind(this);
+      this.onHoverIn = this.onHoverIn.bind(this);
+      this.onHoverOut = this.onHoverOut.bind(this);
+      this.onFocusIn = this.onFocusIn.bind(this);
       this.onFocusOut = this.onFocusOut.bind(this);
+      this.hovering = false;
+      this.focused = false;
+      this.wroteRole = false;
       this.index = 0;
       this.inset = 0;
       this.painted = false;
@@ -301,9 +308,9 @@
       this.heights = null;
       this.named = /* @__PURE__ */ new WeakMap();
       this.addEventListener("click", this.onClick);
-      this.addEventListener("mouseenter", this.suspend);
-      this.addEventListener("mouseleave", this.resume);
-      this.addEventListener("focusin", this.suspend);
+      this.addEventListener("mouseenter", this.onHoverIn);
+      this.addEventListener("mouseleave", this.onHoverOut);
+      this.addEventListener("focusin", this.onFocusIn);
       this.addEventListener("focusout", this.onFocusOut);
       this.initialized = true;
       this.wire();
@@ -315,10 +322,12 @@
       this.rotating = false;
       this.pinned = false;
       this.removeEventListener("click", this.onClick);
-      this.removeEventListener("mouseenter", this.suspend);
-      this.removeEventListener("mouseleave", this.resume);
-      this.removeEventListener("focusin", this.suspend);
+      this.removeEventListener("mouseenter", this.onHoverIn);
+      this.removeEventListener("mouseleave", this.onHoverOut);
+      this.removeEventListener("focusin", this.onFocusIn);
       this.removeEventListener("focusout", this.onFocusOut);
+      this.hovering = false;
+      this.focused = false;
       this.strip();
       this.initialized = false;
     }
@@ -344,6 +353,8 @@
       this.removeAttribute("data-carousel-at-start");
       this.removeAttribute("data-carousel-at-end");
       this.removeAttribute("aria-roledescription");
+      if (this.wroteRole) this.removeAttribute("role");
+      this.wroteRole = false;
       const scroller = this.scroller;
       if (scroller) {
         scroller.removeAttribute("data-carousel-slides");
@@ -380,6 +391,7 @@
       if (!this.hasAttribute("role")) {
         const named = this.hasAttribute("aria-label") || this.hasAttribute("aria-labelledby");
         this.setAttribute("role", named ? "region" : "group");
+        this.wroteRole = true;
       }
       if (!scroller.id) scroller.id = "carousel-elemental-slides-" + ++carouselCount;
       scroller.setAttribute("data-carousel-slides", "");
@@ -765,11 +777,26 @@
       if (this.rotating && !this.pinned) this.clearTimer();
     }
     resume() {
+      if (rotationHeld(this.hovering, this.focused)) return;
       if (this.rotating && !this.pinned && !this.timer) this.tick();
+    }
+    onHoverIn() {
+      this.hovering = true;
+      this.suspend();
+    }
+    onHoverOut() {
+      this.hovering = false;
+      this.resume();
+    }
+    onFocusIn() {
+      this.focused = true;
+      this.suspend();
     }
     /** Focus moving between two controls is focus that never left. */
     onFocusOut(e) {
-      if (!this.contains(e.relatedTarget)) this.resume();
+      if (this.contains(e.relatedTarget)) return;
+      this.focused = false;
+      this.resume();
     }
     onClick(e) {
       const button = e.target.closest && e.target.closest("button");

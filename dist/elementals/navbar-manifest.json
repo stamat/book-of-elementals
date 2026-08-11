@@ -8,39 +8,6 @@
       "declarations": [
         {
           "kind": "function",
-          "name": "stepIndex",
-          "parameters": [
-            {
-              "name": "current",
-              "description": "Index of the focused item, `-1` for none.",
-              "type": {
-                "text": "number"
-              }
-            },
-            {
-              "name": "key",
-              "description": "KeyboardEvent.key value.",
-              "type": {
-                "text": "string"
-              }
-            },
-            {
-              "name": "length",
-              "description": "Number of items in the set.",
-              "type": {
-                "text": "number"
-              }
-            }
-          ],
-          "description": "Where an arrow, Home or End key moves focus in a list of navigation items.\n\nNot `nextIndex` from core, which wraps: this is the APG's disclosure navigation, whose\nwording for every one of these keys is \"and it is not the last\" - a bar has ends, and\nrunning off one is how you get back to the rest of the page.",
-          "return": {
-            "type": {
-              "text": "number|null"
-            }
-          }
-        },
-        {
-          "kind": "function",
           "name": "navbarMode",
           "parameters": [
             {

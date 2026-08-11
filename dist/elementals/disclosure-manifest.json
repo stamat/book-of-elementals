@@ -206,7 +206,7 @@
               "type": {
                 "text": "string"
               },
-              "description": "`id` of the region. Defaults to the button's next element sibling.",
+              "description": "`id` of the region. Also read as `data-for`. Defaults to the button's next element sibling.",
               "name": "for"
             }
           ],

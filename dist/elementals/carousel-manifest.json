@@ -187,6 +187,30 @@
         },
         {
           "kind": "function",
+          "name": "rotationHeld",
+          "parameters": [
+            {
+              "name": "hovering",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "focused",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "Whether the rotation stays held: while the pointer or the keyboard is in the carousel.\n\nTwo facts rather than one flag, because either can end while the other holds - and the\nAPG asks that rotation not resume until hover *and* focus have both left. One flag is\nthe version that breaks: a mouse crossing a carousel a keyboard reader is inside leaves\nagain, and its leaving restarts the slides under someone mid-caption.",
+          "return": {
+            "type": {
+              "text": "boolean"
+            }
+          }
+        },
+        {
+          "kind": "function",
           "name": "slideName",
           "parameters": [
             {
@@ -629,6 +653,18 @@
             },
             {
               "kind": "method",
+              "name": "onHoverIn"
+            },
+            {
+              "kind": "method",
+              "name": "onHoverOut"
+            },
+            {
+              "kind": "method",
+              "name": "onFocusIn"
+            },
+            {
+              "kind": "method",
               "name": "onFocusOut",
               "parameters": [
                 {
@@ -808,6 +844,14 @@
           "name": "swapHeight",
           "declaration": {
             "name": "swapHeight",
+            "module": "src/elementals/carousel/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "rotationHeld",
+          "declaration": {
+            "name": "rotationHeld",
             "module": "src/elementals/carousel/index.js"
           }
         },
