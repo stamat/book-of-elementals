@@ -115,7 +115,7 @@ let regionCount = 0;
  *
  * @tag disclosure-elemental
  * @attr {boolean} [open=false] - Whether the region is showing. Reflected - it tracks the live state.
- * @attr {string} for - `id` of the region. Defaults to the button's next element sibling.
+ * @attr {string} for - `id` of the region. Also read as `data-for`. Defaults to the button's next element sibling.
  * @attr {string} media - A media query that owns `open`: held open while it matches, closed when it stops. Unset means the button is the only thing that opens it.
  *
  * @cssprop {<length>} [--disclosure-elemental-caret-size=1em] - Caret size, on the caret look.

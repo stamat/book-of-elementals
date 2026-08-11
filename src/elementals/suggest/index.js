@@ -110,7 +110,7 @@ let suggestCount = 0;
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/combobox/
  *
  * @tag suggest-elemental
- * @attr {string} for - `id` of the text field that drives it. Without it the element does nothing.
+ * @attr {string} for - `id` of the text field that drives it. Also read as `data-for`. Without it the element does nothing.
  * @attr {boolean} [open=false] - Whether the popup is showing. Reflected, so `[open]` is a styling hook, and settable so whatever fills the list can show it.
  * @attr {boolean} [tab-completes=false] - Tab takes the row under the cursor instead of leaving. For a completer whose rows are text about to be typed; wrong for a list of links, which is why it is opt-in.
  *

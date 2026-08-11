@@ -134,7 +134,7 @@ into the list that was on screen a moment ago points at a row that has moved or 
 
 | Attribute | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `for` | string | — | `id` of the text field that drives it. Without it the element does nothing. |
+| `for` | string | — | `id` of the text field that drives it. Also read as `data-for`. Without it the element does nothing. |
 | `open` | boolean | `false` | Whether the panel is showing. Reflected, so `[open]` is a styling hook, and settable so whatever fills the list can show it: `suggest.open = true`. |
 | `tab-completes` | boolean | `false` | <kbd>Tab</kbd> takes the row under the cursor instead of leaving the field. For a completer whose rows are text about to be typed. |
 
