@@ -15,7 +15,20 @@
 // `swipe()` in book-of-spells now, tested there. What stays here is the half that is the
 // carousel's own - which way `left` points when the reader reads right to left.
 
-import { currentSlide, markerName, roleDescription, rotationInterval, scrollEdges, slideName, startInset, stepSlide, swapHeight, swipeStep } from './index.js';
+import { currentSlide, markerName, roleDescription, rotationHeld, rotationInterval, scrollEdges, slideName, startInset, stepSlide, swapHeight, swipeStep } from './index.js';
+
+test('rotation stays held while either the pointer or the keyboard is in the carousel', () => {
+  // The APG asks for hover and focus both gone before rotation resumes. One flag is the
+  // version that breaks: a mouse crossing a carousel a keyboard reader is inside leaves
+  // again, and its leaving restarts the slides under someone mid-caption.
+  expect(rotationHeld(true, false)).toBe(true);
+  expect(rotationHeld(false, true)).toBe(true);
+  expect(rotationHeld(true, true)).toBe(true);
+});
+
+test('and resumes only once both have left', () => {
+  expect(rotationHeld(false, false)).toBe(false);
+});
 
 test('next moves on by one, and stops at the end rather than wrapping', () => {
   // The buttons dim at the ends, and a control that looks spent and then jumps you back to

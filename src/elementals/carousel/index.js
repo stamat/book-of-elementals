@@ -133,6 +133,22 @@ export function swapHeight(from, to, reduced) {
   return !reduced && from !== to;
 }
 
+/**
+ * Whether the rotation stays held: while the pointer or the keyboard is in the carousel.
+ *
+ * Two facts rather than one flag, because either can end while the other holds - and the
+ * APG asks that rotation not resume until hover *and* focus have both left. One flag is
+ * the version that breaks: a mouse crossing a carousel a keyboard reader is inside leaves
+ * again, and its leaving restarts the slides under someone mid-caption.
+ *
+ * @param {boolean} hovering
+ * @param {boolean} focused
+ * @returns {boolean}
+ */
+export function rotationHeld(hovering, focused) {
+  return hovering || focused;
+}
+
 /** The place in the set a slide is named by, where `position-text` said nothing. */
 const POSITION = '{n} of {total}';
 
@@ -469,10 +485,13 @@ export class CarouselElemental extends ElementBase {
     this.onScroll = this.onScroll.bind(this);
     this.onSwipe = this.onSwipe.bind(this);
     this.onHeightEnd = this.onHeightEnd.bind(this);
-    this.suspend = this.suspend.bind(this);
-    this.resume = this.resume.bind(this);
+    this.onHoverIn = this.onHoverIn.bind(this);
+    this.onHoverOut = this.onHoverOut.bind(this);
+    this.onFocusIn = this.onFocusIn.bind(this);
     this.onFocusOut = this.onFocusOut.bind(this);
 
+    this.hovering = false;
+    this.focused = false;
     this.index = 0;
     // The row's `scroll-padding` on the start side, re-read whenever the layout changes.
     this.inset = 0;
@@ -494,9 +513,9 @@ export class CarouselElemental extends ElementBase {
     // Hovering or tabbing into a carousel stops it rotating, which the APG asks for and a
     // reader halfway through a caption asks for louder. `mouseenter` and `mouseleave` do not
     // bubble, and do not need to: they fire here for the whole subtree.
-    this.addEventListener('mouseenter', this.suspend);
-    this.addEventListener('mouseleave', this.resume);
-    this.addEventListener('focusin', this.suspend);
+    this.addEventListener('mouseenter', this.onHoverIn);
+    this.addEventListener('mouseleave', this.onHoverOut);
+    this.addEventListener('focusin', this.onFocusIn);
     this.addEventListener('focusout', this.onFocusOut);
 
     this.initialized = true;
@@ -517,10 +536,12 @@ export class CarouselElemental extends ElementBase {
     this.pinned = false;
 
     this.removeEventListener('click', this.onClick);
-    this.removeEventListener('mouseenter', this.suspend);
-    this.removeEventListener('mouseleave', this.resume);
-    this.removeEventListener('focusin', this.suspend);
+    this.removeEventListener('mouseenter', this.onHoverIn);
+    this.removeEventListener('mouseleave', this.onHoverOut);
+    this.removeEventListener('focusin', this.onFocusIn);
     this.removeEventListener('focusout', this.onFocusOut);
+    this.hovering = false;
+    this.focused = false;
 
     this.strip();
     this.initialized = false;
@@ -1112,12 +1133,31 @@ export class CarouselElemental extends ElementBase {
   }
 
   resume() {
+    // Both holds gone, not just the one that ended - see `rotationHeld`.
+    if (rotationHeld(this.hovering, this.focused)) return;
     if (this.rotating && !this.pinned && !this.timer) this.tick();
+  }
+
+  onHoverIn() {
+    this.hovering = true;
+    this.suspend();
+  }
+
+  onHoverOut() {
+    this.hovering = false;
+    this.resume();
+  }
+
+  onFocusIn() {
+    this.focused = true;
+    this.suspend();
   }
 
   /** Focus moving between two controls is focus that never left. */
   onFocusOut(e) {
-    if (!this.contains(e.relatedTarget)) this.resume();
+    if (this.contains(e.relatedTarget)) return;
+    this.focused = false;
+    this.resume();
   }
 
   onClick(e) {

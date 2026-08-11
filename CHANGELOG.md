@@ -17,6 +17,12 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Fixed
 
+- **A rotating `<carousel-elemental>` no longer resumes while a reader is still in it.**
+  Hover and focus each hold the rotation, but either one ending resumed it: the pointer
+  crossing and leaving a carousel a keyboard reader was inside restarted the slides under
+  them, and focus leaving resumed it under a pointer still parked on a caption. Resume now
+  waits for both to be gone, which is what the APG asks.
+
 - **`import { stepIndex } from 'book-of-elementals'` works again.** `<navbar-elemental>`
   declared its own copy of the stepper core already re-exports, and to ES modules two
   declarations under one star-exported name are not an error — the name is silently dropped
