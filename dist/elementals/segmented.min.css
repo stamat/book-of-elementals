@@ -1,2 +1,2 @@
-/* book-of-elementals v0.7.2 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v0.7.3 | https://stamat.github.io/book-of-elementals/ | MIT License */
 segmented-elemental{position:relative;display:inline-grid;grid-auto-flow:column;grid-auto-columns:1fr}segmented-elemental>label{position:relative;display:flex;gap:.5em;align-items:center;justify-content:center;cursor:pointer}segmented-elemental>label>input[type=radio]{position:absolute;inline-size:1px;block-size:1px;margin:0;opacity:0}segmented-elemental>label:has(>input[type=radio]:focus-visible){outline:2px solid currentcolor;outline-offset:2px}
