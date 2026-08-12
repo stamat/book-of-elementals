@@ -15,6 +15,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-08-12
+
 ### Fixed
 
 - **Cmd/Ctrl-click on a tab opens it in a new tab again.** `<tabs-elemental>` swallowed
