@@ -15,6 +15,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-08-15
+
 ### Added
 
 - **`<slider-elemental>`** — one `<input type="range">` inside it is a slider, two is a

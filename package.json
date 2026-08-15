@@ -1,6 +1,6 @@
 {
   "name": "book-of-elementals",
-  "version": "0.7.3",
+  "version": "0.8.0",
   "description": "📓 Stamat's Book of Elementals — custom elements, accessible, light DOM.",
   "type": "module",
   "main": "src/index.js",
