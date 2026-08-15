@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Suggest
 description: A list of links a text field drives with the arrow keys — the results panel, minus any opinion about where the results came from.
-order: 10
+order: 11
 ---
 
 # `<suggest-elemental>`

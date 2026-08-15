@@ -93,8 +93,8 @@ handling are not options.
 
 ## The book so far
 
-Thirteen elements, one page each — twelve on an APG pattern, one where there is
-none to have. [**The elementals**](elementals/index.html) is the index: what
+Eighteen elements, one page each — fifteen on an APG pattern, three where there
+is none to have. [**The elementals**](elementals/index.html) is the index: what
 each one implements, and which gap in the platform it fills.
 
 Assembled into whole interface pieces, they are in

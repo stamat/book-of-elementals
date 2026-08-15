@@ -28,8 +28,8 @@
     "updated": "2026-08-06T17:55:18.737Z"
   },
   "docs/elementals/index.md": {
-    "hash": "413874fcffe342bc6f005c022341b2b7e5950b39",
-    "updated": "2026-08-10T00:25:03.839Z"
+    "hash": "59ea74fd225c854b70c16a48d521a4945e157885",
+    "updated": "2026-08-15T11:26:13.934Z"
   },
   "docs/elementals/menu.md": {
     "hash": "e54fbeb3b29e117bce4da278eb75330de0ca5381",
@@ -43,6 +43,10 @@
     "hash": "daef3cf6eed3ab62a45960b2eb2fad0b2c99a231",
     "updated": "2026-08-10T14:12:15.819Z"
   },
+  "docs/elementals/progress.md": {
+    "hash": "f86dd9228859e3ab7e785350e7745d7a933bea24",
+    "updated": "2026-08-15T13:07:33.126Z"
+  },
   "docs/elementals/search.md": {
     "hash": "c524e757aa626fc46a7e7fa6d9122b6a095a974c",
     "updated": "2026-08-10T01:40:36.588Z"
@@ -50,6 +54,10 @@
   "docs/elementals/segmented.md": {
     "hash": "a1b296c158862c56fc55962c36010013c8a460ec",
     "updated": "2026-08-09T18:55:23.424Z"
+  },
+  "docs/elementals/slider.md": {
+    "hash": "9fa840504bc8dae26a4ae60411b84f7849e25e7d",
+    "updated": "2026-08-15T12:01:30.056Z"
   },
   "docs/elementals/suggest.md": {
     "hash": "1ce615ec48dad7b1748a66be94c4a5454ad9c32e",
@@ -100,7 +108,7 @@
     "updated": "2026-08-09T21:21:16.621Z"
   },
   "docs/index.md": {
-    "hash": "5eb26840974e213e0358bc064b8ba6bf58a42db9",
-    "updated": "2026-08-10T08:07:48.164Z"
+    "hash": "28ed11dadac96d9235e941d597ab048f86898f67",
+    "updated": "2026-08-15T11:41:27.965Z"
   }
 }

@@ -1,0 +1,143 @@
+// Optional look for `<progress-elemental>`. Not part of the element's own stylesheet and
+// not in its bundle: that one styles structure only, and a light-DOM element cannot scope a
+// look away from a page that did not ask for one. Import this when you want the look, skip
+// it when you do not.
+// The three colours are mixed out of `currentcolor`, so the bar sits in whatever palette
+// the page already has with nothing to configure.
+
+// The knobs are declared on the bare element and the drawing is gated on `:defined` below,
+// rather than both together. `:defined` counts as a class, so declaring them inside it
+// would make `progress-elemental { --progress-elemental-fill: seagreen }` lose to this file
+// on specificity - an override that reads as though it should work and silently does not.
+progress-elemental {
+  --progress-elemental-height: 0.5rem;
+  --progress-elemental-radius: 999px; // a pill at any height
+  --progress-elemental-track: color-mix(in srgb, currentcolor 15%, transparent);
+  --progress-elemental-fill: currentcolor;
+
+  // Between the track and the fill in weight, because that is what it is between in
+  // meaning: further along than nothing, not as far as the value.
+  --progress-elemental-buffer-fill: color-mix(in srgb, currentcolor 35%, transparent);
+  --progress-elemental-duration: 250ms;
+  --progress-elemental-easing: ease-out;
+  --progress-elemental-indeterminate-duration: 1.4s;
+}
+
+// The drawing, and that is the whole of the degradation: until the script has run there is
+// no `--progress-elemental-value` to draw, so drawing anyway would be a themed bar frozen
+// at zero over a `<progress>` that knows the real answer. Undefined, this file draws
+// nothing at all and the browser's own bar shows through - unstyled, and right.
+progress-elemental:defined {
+  box-sizing: border-box; // so a forced-colors border is inside the height, not added to it
+  block-size: var(--progress-elemental-height);
+
+  // The fills are plain rectangles and the bar is a pill, so the corners are cut here once
+  // rather than kept in step on two pseudo-elements that each have a different width.
+  overflow: hidden;
+  background: var(--progress-elemental-track);
+  border-radius: var(--progress-elemental-radius);
+
+  // The `<progress>` stops being the drawing and stays the semantics: still rendered, still
+  // `role="progressbar"`, still carrying the value a screen reader reads - and painting
+  // nothing, because the element above it now draws that. The three vendor pseudo-elements
+  // are written out separately on purpose: combined into one selector list, a browser that
+  // does not know one of them drops the whole rule, and the bar it drops is the native one
+  // showing through underneath ours.
+  > progress {
+    position: absolute;
+    inset: 0;
+    appearance: none;
+    inline-size: 100%;
+    block-size: 100%;
+    background: transparent;
+    border: 0;
+  }
+
+  > progress::-webkit-progress-bar {
+    background: transparent;
+  }
+
+  > progress::-webkit-progress-value {
+    background: transparent;
+  }
+
+  > progress::-moz-progress-bar {
+    background: transparent;
+  }
+
+  // Buffer first, value second, so the value paints over it: both are positioned, both have
+  // `z-index: auto`, and tree order is what decides between them. The `<progress>` sits
+  // between the two and paints nothing, which is why it can.
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    transition: inline-size var(--progress-elemental-duration) var(--progress-elemental-easing);
+  }
+
+  // `0%` as the fallback rather than a bare `0`: with no buffer the element removes the
+  // property, and an unset custom property here has to come out as a bar with no width
+  // rather than as an invalid declaration that takes the rule with it.
+  &::before {
+    inline-size: var(--progress-elemental-buffer, 0%);
+    background: var(--progress-elemental-buffer-fill);
+  }
+
+  &::after {
+    inline-size: var(--progress-elemental-value, 0%);
+    background: var(--progress-elemental-fill);
+  }
+
+  // No value is no width to animate, so the fill becomes a short span sweeping the track -
+  // the one drawing that says "working, and nobody knows how far". It hangs off the
+  // attribute rather than off the missing custom property, because CSS cannot ask whether
+  // one was set.
+  &[data-indeterminate]::after {
+    inline-size: 33%;
+    animation: progress-elemental-indeterminate var(--progress-elemental-indeterminate-duration) ease-in-out infinite;
+  }
+
+  // Forced-colors mode drops author backgrounds, which here are the entire bar. System
+  // colour keywords are honoured there, so the parts are repainted in the mode's own: the
+  // value in `Highlight`, the buffer in `GrayText` because the mode guarantees it is
+  // legible and guarantees nothing about a mix, and a `CanvasText` rim so an empty bar is
+  // still a bar.
+  @media (forced-colors: active) {
+    --progress-elemental-track: Canvas;
+    --progress-elemental-fill: Highlight;
+    --progress-elemental-buffer-fill: GrayText;
+
+    border: 1px solid CanvasText;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::before,
+    &::after {
+      transition: none;
+    }
+
+    // A sweep is the one part of this bar that is motion and nothing else. Taken away, the
+    // honest still drawing of "working, length unknown" is the whole track at the buffer's
+    // weight - not an empty bar, which reads as nothing having started.
+    &[data-indeterminate]::after {
+      inline-size: 100%;
+      background: var(--progress-elemental-buffer-fill);
+      animation: none;
+    }
+  }
+}
+
+@keyframes progress-elemental-indeterminate {
+  // Percentages on `translate` are of the sweeping span's own width, which is a third of
+  // the track - so `-100%` parks it just off the leading edge and `300%` carries its
+  // leading edge just past the far one, whatever the bar is actually sized to.
+  from {
+    translate: -100%;
+  }
+
+  to {
+    translate: 300%;
+  }
+}

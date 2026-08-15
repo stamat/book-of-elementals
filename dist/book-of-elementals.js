@@ -3593,6 +3593,117 @@
   };
   define("navbar-elemental", NavbarElemental);
 
+  // src/elementals/progress/index.js
+  function percent(value, max) {
+    if (!(max > 0) || !Number.isFinite(value)) return 0;
+    if (value <= 0) return 0;
+    if (value >= max) return 100;
+    return value * 100 / max;
+  }
+  var ProgressElemental = class extends ElementBase {
+    static get observedAttributes() {
+      return ["buffer"];
+    }
+    /** The bar. Direct child, so a `<progress>` inside a card this element happens to wrap
+     * is not mistaken for the one being measured. */
+    get progress() {
+      return this.querySelector(":scope > progress");
+    }
+    /**
+     * The value, or `null` while there is none. Setting `null` takes the attribute off and
+     * puts the bar back to indeterminate, which is what
+     * [MDN says to do](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/progress)
+     * and the only way there is.
+     */
+    get value() {
+      const progress = this.progress;
+      return progress && progress.hasAttribute("value") ? progress.value : null;
+    }
+    set value(value) {
+      const progress = this.progress;
+      if (!progress) return;
+      if (value === null || value === void 0) {
+        progress.removeAttribute("value");
+        return;
+      }
+      progress.value = value;
+    }
+    /** What counts as done. The `<progress>`'s own, which is `1` when it has none. */
+    get max() {
+      const progress = this.progress;
+      return progress ? progress.max : null;
+    }
+    set max(value) {
+      const progress = this.progress;
+      if (progress) progress.max = value;
+    }
+    /** The second value, on the same scale. `null` is no buffer bar. */
+    get buffer() {
+      const value = this.getAttribute("buffer");
+      if (value === null || value === "") return null;
+      const number = parseFloat(value);
+      return Number.isFinite(number) ? number : null;
+    }
+    set buffer(value) {
+      if (value === null || value === void 0 || value === "") {
+        this.removeAttribute("buffer");
+        return;
+      }
+      this.setAttribute("buffer", value);
+    }
+    connectedCallback() {
+      if (this.initialized) return;
+      const progress = this.progress;
+      if (!progress) return;
+      this.initialized = true;
+      this.apply = this.apply.bind(this);
+      this.observer = new MutationObserver(this.apply);
+      this.observer.observe(progress, { attributes: true, attributeFilter: ["value", "max"] });
+      this.apply();
+    }
+    disconnectedCallback() {
+      if (!this.initialized) return;
+      this.observer.disconnect();
+      this.observer = null;
+      this.style.removeProperty("--progress-elemental-value");
+      this.style.removeProperty("--progress-elemental-buffer");
+      this.removeAttribute("data-indeterminate");
+      this.initialized = false;
+    }
+    attributeChangedCallback(name, previous, current) {
+      if (!this.initialized || previous === current) return;
+      this.apply();
+    }
+    /**
+     * Push the bar's state onto the element, where the CSS reads it. Public because a
+     * `<progress>` swapped out from under this element is not something the observer is
+     * watching for: replace the child and call this.
+     *
+     * `data-indeterminate` as well as the missing percentage, because CSS cannot ask whether
+     * a custom property was set - an unset one inside `calc()` is a bar sitting at zero, and
+     * a bar at zero is a claim that nothing has happened yet rather than that nobody knows.
+     */
+    apply() {
+      const progress = this.progress;
+      if (!progress) return;
+      const max = progress.max;
+      if (progress.hasAttribute("value")) {
+        this.removeAttribute("data-indeterminate");
+        this.style.setProperty("--progress-elemental-value", `${percent(progress.value, max)}%`);
+      } else {
+        this.setAttribute("data-indeterminate", "");
+        this.style.removeProperty("--progress-elemental-value");
+      }
+      const buffer = this.buffer;
+      if (buffer === null) {
+        this.style.removeProperty("--progress-elemental-buffer");
+        return;
+      }
+      this.style.setProperty("--progress-elemental-buffer", `${percent(buffer, max)}%`);
+    }
+  };
+  define("progress-elemental", ProgressElemental);
+
   // src/elementals/search/index.js
   var DELAY_MS = 200;
   var MIN_LENGTH = 1;
@@ -3900,6 +4011,197 @@
     }
   };
   define("segmented-elemental", SegmentedElemental);
+
+  // src/elementals/slider/index.js
+  function ratio(value, min, max) {
+    if (!(max > min) || !Number.isFinite(value)) return 0;
+    if (value <= min) return 0;
+    if (value >= max) return 1;
+    return (value - min) / (max - min);
+  }
+  function clampPair(start, end, gap, moved, min, max) {
+    if (end - start >= gap) return [start, end];
+    if (moved === "start") {
+      const pushed2 = end - gap;
+      if (pushed2 >= min) return [pushed2, end];
+      return [min, Math.min(min + gap, max)];
+    }
+    const pushed = start + gap;
+    if (pushed <= max) return [start, pushed];
+    return [Math.max(max - gap, min), max];
+  }
+  function stackedThumb(start, end, max) {
+    if (start !== end) return null;
+    return end >= max ? "start" : "end";
+  }
+  function nearerThumb(value, start, end) {
+    const toStart = Math.abs(value - start);
+    const toEnd = Math.abs(value - end);
+    if (toStart === toEnd) return value > end ? "end" : "start";
+    return toStart < toEnd ? "start" : "end";
+  }
+  function bound(value, fallback) {
+    const number = parseFloat(value);
+    return Number.isFinite(number) ? number : fallback;
+  }
+  var SliderElemental = class extends ElementBase {
+    static get observedAttributes() {
+      return ["gap"];
+    }
+    /** The thumbs, in document order. Direct children, so a range input inside a card this
+     * element happens to wrap is not mistaken for one of them. */
+    get inputs() {
+      return Array.from(this.querySelectorAll(':scope > input[type="range"]'));
+    }
+    /**
+     * The readouts, in document order, each following the input at the same index.
+     *
+     * Anywhere inside, unlike the inputs: a readout is nearly always wrapped in the
+     * punctuation that gives it meaning - a currency symbol, a unit, the word "to" between a
+     * pair - and a rule that only saw direct children would refuse the shape everybody
+     * writes. `closest` is what keeps a nested slider's readouts its own.
+     */
+    get outputs() {
+      return Array.from(this.querySelectorAll("output")).filter((output) => output.closest("slider-elemental") === this);
+    }
+    /** Least distance between the two thumbs, in the scale's own units. */
+    get gap() {
+      return bound(this.getAttribute("gap"), 0);
+    }
+    set gap(value) {
+      this.setAttribute("gap", value);
+    }
+    connectedCallback() {
+      if (this.initialized) return;
+      const inputs = this.inputs;
+      if (!inputs.length) return;
+      this.initialized = true;
+      this.apply = this.apply.bind(this);
+      this.onInput = this.onInput.bind(this);
+      this.onReset = this.onReset.bind(this);
+      this.onPointerDown = this.onPointerDown.bind(this);
+      this.addEventListener("input", this.onInput, true);
+      this.form = this.closest("form");
+      if (this.form) this.form.addEventListener("reset", this.onReset);
+      if (typeof window !== "undefined") window.addEventListener("pageshow", this.apply);
+      if (inputs.length > 1) {
+        this.addEventListener("pointerdown", this.onPointerDown);
+        if (!this.hasAttribute("role") && (this.hasAttribute("aria-label") || this.hasAttribute("aria-labelledby"))) {
+          this.setAttribute("role", "group");
+          this.wroteRole = true;
+        }
+      }
+      this.apply();
+    }
+    disconnectedCallback() {
+      if (!this.initialized) return;
+      this.removeEventListener("input", this.onInput, true);
+      this.removeEventListener("pointerdown", this.onPointerDown);
+      if (this.form) this.form.removeEventListener("reset", this.onReset);
+      if (typeof window !== "undefined") window.removeEventListener("pageshow", this.apply);
+      this.form = null;
+      this.style.removeProperty("--slider-elemental-start");
+      this.style.removeProperty("--slider-elemental-end");
+      this.removeAttribute("data-stacked");
+      if (this.wroteRole) this.removeAttribute("role");
+      this.wroteRole = false;
+      this.initialized = false;
+    }
+    /** A new `gap` is a new distance the thumbs may already be inside of. */
+    attributeChangedCallback(name, previous, current) {
+      if (!this.initialized || previous === current) return;
+      this.clamp("end");
+      this.apply();
+    }
+    /** A form is only put back to its defaults once the `reset` event has been dispatched,
+     * so the values are read on the next task rather than in the handler. */
+    onReset() {
+      setTimeout(this.apply);
+    }
+    onInput(e) {
+      const inputs = this.inputs;
+      const index = inputs.indexOf(e.target);
+      if (index < 0) return;
+      if (index < 2) this.clamp(index === 0 ? "start" : "end");
+      this.apply();
+    }
+    /**
+     * Stop the two thumbs crossing, and keep `gap` between them. Public because it is what
+     * catches up a pair moved by script, which fires no `input` of its own.
+     *
+     * Both inputs keep the `min` and `max` the markup gave them, rather than the low one's
+     * `max` being pulled down to the high one's value as the
+     * [multi-thumb pattern](https://www.w3.org/WAI/ARIA/apg/patterns/slider-multithumb/)
+     * describes: these are stacked native inputs, so shrinking one's scale moves every pixel
+     * on it and the two tracks stop agreeing about where a value is. The pattern's
+     * `aria-valuemin`/`aria-valuemax` go with it, and are not written for a second reason -
+     * [HTML-ARIA says authors should not put them on `input type=range`](https://www.w3.org/TR/html-aria/),
+     * where the browser computes them from `min`, `max` and `value` already.
+     */
+    clamp(moved) {
+      const inputs = this.inputs;
+      if (inputs.length < 2) return;
+      const min = bound(inputs[0].min, 0);
+      const max = bound(inputs[0].max, 100);
+      const start = bound(inputs[0].value, min);
+      const end = bound(inputs[1].value, max);
+      const clamped = clampPair(start, end, this.gap, moved, min, max);
+      if (clamped[0] !== start) inputs[0].value = clamped[0];
+      if (clamped[1] !== end) inputs[1].value = clamped[1];
+    }
+    /**
+     * Push the thumb positions onto the element, where the CSS reads them. Public because the
+     * inputs are read here: swap one out, or move it from script, and this is the one call
+     * that catches up.
+     */
+    apply() {
+      const inputs = this.inputs;
+      if (!inputs.length) return;
+      const min = bound(inputs[0].min, 0);
+      const max = bound(inputs[0].max, 100);
+      const first = bound(inputs[0].value, min);
+      const second = inputs.length > 1 ? bound(inputs[1].value, max) : null;
+      this.style.setProperty("--slider-elemental-start", second === null ? 0 : ratio(first, min, max));
+      this.style.setProperty("--slider-elemental-end", ratio(second === null ? first : second, min, max));
+      const stacked = second === null ? null : stackedThumb(first, second, max);
+      if (stacked) {
+        this.setAttribute("data-stacked", stacked);
+      } else {
+        this.removeAttribute("data-stacked");
+      }
+      const outputs = this.outputs;
+      for (let i = 0; i < outputs.length && i < inputs.length; i++) {
+        outputs[i].textContent = inputs[i].value;
+      }
+    }
+    /**
+     * A press on the track, which stacked inputs would otherwise eat: the one on top covers
+     * the whole width, so the stylesheet takes its pointer events away and leaves them on the
+     * thumbs. That is what makes both thumbs grabbable, and it is also what leaves the track
+     * dead until this runs - the nearer thumb takes the value and the focus.
+     */
+    onPointerDown(e) {
+      if (e.target !== this) return;
+      const inputs = this.inputs;
+      if (inputs.length < 2) return;
+      const rect = this.getBoundingClientRect();
+      const thumb = inputs[0].getBoundingClientRect().height;
+      const travel = rect.width - thumb;
+      if (travel <= 0) return;
+      const min = bound(inputs[0].min, 0);
+      const max = bound(inputs[0].max, 100);
+      let along = (e.clientX - rect.left - thumb / 2) / travel;
+      if (typeof getComputedStyle === "function" && getComputedStyle(this).direction === "rtl") along = 1 - along;
+      const value = min + Math.min(Math.max(along, 0), 1) * (max - min);
+      const input = inputs[nearerThumb(value, bound(inputs[0].value, min), bound(inputs[1].value, max)) === "start" ? 0 : 1];
+      input.value = value;
+      e.preventDefault();
+      input.focus();
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  };
+  define("slider-elemental", SliderElemental);
 
   // src/elementals/suggest/index.js
   function suggestAction(key, altKey, open, cursor, tabCompletes) {

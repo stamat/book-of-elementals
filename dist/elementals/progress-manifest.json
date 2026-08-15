@@ -1,0 +1,163 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/progress/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "percent",
+          "parameters": [
+            {
+              "name": "value"
+            },
+            {
+              "name": "max"
+            }
+          ],
+          "description": "How far along the bar is, as a percentage of `max`, clamped to the ends.\n\n`<progress>` has no `min` - it counts from zero by definition, which is what separates it\nfrom `<meter>`. A `max` that is zero, negative or unparseable is no scale to measure\nagainst, and zero is the honest answer there: a bar drawn full because the denominator\nwas nonsense is a bar that lies about being finished."
+        },
+        {
+          "kind": "class",
+          "description": "A native `<progress>` whose fill and buffer are readable from CSS. The prose above is the\nwhole story; these tags are the same API in the form a machine can read -\n`custom-elements.json` is generated from them, and the docs tables, editor autocomplete\nand the live options panel all come out of that one file.\n\nCurated by omission: `--progress-elemental-value` and `--progress-elemental-buffer` are\nwritten by the element and are not tagged. They are the state, not a knob to turn, and\nsetting one by hand parks the bar somewhere the `<progress>` underneath it disagrees\nwith.",
+          "name": "ProgressElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Bar thickness.",
+              "name": "--progress-elemental-height",
+              "default": "0.5rem"
+            },
+            {
+              "type": {
+                "text": "<length-percentage>"
+              },
+              "description": "Bar corners. A big number is a pill at any height.",
+              "name": "--progress-elemental-radius",
+              "default": "999px"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The part behind everything.",
+              "name": "--progress-elemental-track",
+              "default": "color-mix(in srgb, currentcolor 15%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The value.",
+              "name": "--progress-elemental-fill",
+              "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The buffer, behind the value.",
+              "name": "--progress-elemental-buffer-fill",
+              "default": "color-mix(in srgb, currentcolor 35%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<time>"
+              },
+              "description": "How long the fill takes to move.",
+              "name": "--progress-elemental-duration",
+              "default": "250ms"
+            },
+            {
+              "type": {
+                "text": "ease | ease-in | ease-out | ease-in-out | linear"
+              },
+              "description": "How the fill moves.",
+              "name": "--progress-elemental-easing",
+              "default": "ease-out"
+            },
+            {
+              "type": {
+                "text": "<time>"
+              },
+              "description": "One sweep, while there is no value.",
+              "name": "--progress-elemental-indeterminate-duration",
+              "default": "1.4s"
+            }
+          ],
+          "slots": [
+            {
+              "description": "One `<progress>`, with the `value` and `max` it would have had on its own.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "progress",
+              "description": "The bar. Direct child, so a `<progress>` inside a card this element happens to wrap\nis not mistaken for the one being measured.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "value",
+              "description": "The value, or `null` while there is none. Setting `null` takes the attribute off and\nputs the bar back to indeterminate, which is what\n[MDN says to do](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/progress)\nand the only way there is."
+            },
+            {
+              "kind": "field",
+              "name": "max",
+              "description": "What counts as done. The `<progress>`'s own, which is `1` when it has none."
+            },
+            {
+              "kind": "field",
+              "name": "buffer",
+              "description": "The second value, on the same scale. `null` is no buffer bar."
+            },
+            {
+              "kind": "method",
+              "name": "apply",
+              "description": "Push the bar's state onto the element, where the CSS reads it. Public because a\n`<progress>` swapped out from under this element is not something the observer is\nwatching for: replace the child and call this.\n\n`data-indeterminate` as well as the missing percentage, because CSS cannot ask whether\na custom property was set - an unset one inside `calc()` is a bar sitting at zero, and\na bar at zero is a claim that nothing has happened yet rather than that nobody knows."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "buffer",
+              "type": {
+                "text": "number"
+              },
+              "description": "A second value on the same `max`, drawn behind the fill. Absent is no buffer bar at all."
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "progress-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "percent",
+          "declaration": {
+            "name": "percent",
+            "module": "src/elementals/progress/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ProgressElemental",
+          "declaration": {
+            "name": "ProgressElemental",
+            "module": "src/elementals/progress/index.js"
+          }
+        }
+      ]
+    }
+  ]
+}

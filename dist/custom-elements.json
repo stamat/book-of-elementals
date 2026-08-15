@@ -3754,6 +3754,163 @@
     },
     {
       "kind": "javascript-module",
+      "path": "src/elementals/progress/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "percent",
+          "parameters": [
+            {
+              "name": "value"
+            },
+            {
+              "name": "max"
+            }
+          ],
+          "description": "How far along the bar is, as a percentage of `max`, clamped to the ends.\n\n`<progress>` has no `min` - it counts from zero by definition, which is what separates it\nfrom `<meter>`. A `max` that is zero, negative or unparseable is no scale to measure\nagainst, and zero is the honest answer there: a bar drawn full because the denominator\nwas nonsense is a bar that lies about being finished."
+        },
+        {
+          "kind": "class",
+          "description": "A native `<progress>` whose fill and buffer are readable from CSS. The prose above is the\nwhole story; these tags are the same API in the form a machine can read -\n`custom-elements.json` is generated from them, and the docs tables, editor autocomplete\nand the live options panel all come out of that one file.\n\nCurated by omission: `--progress-elemental-value` and `--progress-elemental-buffer` are\nwritten by the element and are not tagged. They are the state, not a knob to turn, and\nsetting one by hand parks the bar somewhere the `<progress>` underneath it disagrees\nwith.",
+          "name": "ProgressElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Bar thickness.",
+              "name": "--progress-elemental-height",
+              "default": "0.5rem"
+            },
+            {
+              "type": {
+                "text": "<length-percentage>"
+              },
+              "description": "Bar corners. A big number is a pill at any height.",
+              "name": "--progress-elemental-radius",
+              "default": "999px"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The part behind everything.",
+              "name": "--progress-elemental-track",
+              "default": "color-mix(in srgb, currentcolor 15%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The value.",
+              "name": "--progress-elemental-fill",
+              "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The buffer, behind the value.",
+              "name": "--progress-elemental-buffer-fill",
+              "default": "color-mix(in srgb, currentcolor 35%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<time>"
+              },
+              "description": "How long the fill takes to move.",
+              "name": "--progress-elemental-duration",
+              "default": "250ms"
+            },
+            {
+              "type": {
+                "text": "ease | ease-in | ease-out | ease-in-out | linear"
+              },
+              "description": "How the fill moves.",
+              "name": "--progress-elemental-easing",
+              "default": "ease-out"
+            },
+            {
+              "type": {
+                "text": "<time>"
+              },
+              "description": "One sweep, while there is no value.",
+              "name": "--progress-elemental-indeterminate-duration",
+              "default": "1.4s"
+            }
+          ],
+          "slots": [
+            {
+              "description": "One `<progress>`, with the `value` and `max` it would have had on its own.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "progress",
+              "description": "The bar. Direct child, so a `<progress>` inside a card this element happens to wrap\nis not mistaken for the one being measured.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "value",
+              "description": "The value, or `null` while there is none. Setting `null` takes the attribute off and\nputs the bar back to indeterminate, which is what\n[MDN says to do](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/progress)\nand the only way there is."
+            },
+            {
+              "kind": "field",
+              "name": "max",
+              "description": "What counts as done. The `<progress>`'s own, which is `1` when it has none."
+            },
+            {
+              "kind": "field",
+              "name": "buffer",
+              "description": "The second value, on the same scale. `null` is no buffer bar."
+            },
+            {
+              "kind": "method",
+              "name": "apply",
+              "description": "Push the bar's state onto the element, where the CSS reads it. Public because a\n`<progress>` swapped out from under this element is not something the observer is\nwatching for: replace the child and call this.\n\n`data-indeterminate` as well as the missing percentage, because CSS cannot ask whether\na custom property was set - an unset one inside `calc()` is a bar sitting at zero, and\na bar at zero is a claim that nothing has happened yet rather than that nobody knows."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "buffer",
+              "type": {
+                "text": "number"
+              },
+              "description": "A second value on the same `max`, drawn behind the fill. Absent is no buffer bar at all."
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "progress-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "percent",
+          "declaration": {
+            "name": "percent",
+            "module": "src/elementals/progress/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ProgressElemental",
+          "declaration": {
+            "name": "ProgressElemental",
+            "module": "src/elementals/progress/index.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/elementals/search/index.js",
       "declarations": [
         {
@@ -4286,6 +4443,286 @@
           "declaration": {
             "name": "SegmentedElemental",
             "module": "src/elementals/segmented/index.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/slider/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "ratio",
+          "parameters": [
+            {
+              "name": "value"
+            },
+            {
+              "name": "min"
+            },
+            {
+              "name": "max"
+            }
+          ],
+          "description": "Where a value sits between the ends, as `0` to `1`.\n\nA range whose ends are the same, or the wrong way round, is no scale to place anything\non - and the start of the track is the honest answer there, because it is where a native\nrange input parks its own thumb when it is given the same markup."
+        },
+        {
+          "kind": "function",
+          "name": "clampPair",
+          "parameters": [
+            {
+              "name": "start"
+            },
+            {
+              "name": "end"
+            },
+            {
+              "name": "gap"
+            },
+            {
+              "name": "moved"
+            },
+            {
+              "name": "min"
+            },
+            {
+              "name": "max"
+            }
+          ],
+          "description": "The two values with the thumbs kept apart, and which one gave way.\n\nThe thumb being moved is the one that gives way, so dragging the low thumb into the high\none stops it rather than pushing the high one along - a drag that shoves the other end of\nthe range ahead of it is a drag that changes a value nobody touched.\n\nExcept at the ends, where it cannot: `gap` may be wider than the room left between the\nmoved thumb and the bound behind it, and then the other one is what has to move. That is\nthe case a range pinned to its minimum is in every time the low thumb is dragged down."
+        },
+        {
+          "kind": "function",
+          "name": "stackedThumb",
+          "parameters": [
+            {
+              "name": "start"
+            },
+            {
+              "name": "end"
+            },
+            {
+              "name": "max"
+            }
+          ],
+          "description": "Which thumb goes on top when the two are at the same value, or `null` while they are not.\n\nStacked, one thumb is under the other and out of reach of the pointer, so the one on top\nhas to be the one that can still move. At the maximum that is the low thumb, because the\nhigh one has nowhere left to go and every drag from there is downwards; anywhere else it\nis the high thumb, so a drag away from the pile widens the range rather than refusing to.\nEither is still reachable with <kbd>Tab</kbd>, which is why this decides the pointer only."
+        },
+        {
+          "kind": "function",
+          "name": "nearerThumb",
+          "parameters": [
+            {
+              "name": "value"
+            },
+            {
+              "name": "start"
+            },
+            {
+              "name": "end"
+            }
+          ],
+          "description": "Which thumb a press on the track belongs to: the nearer one, and on a tie the one the\npress is asking to move.\n\nThe tie is not a corner case, it is the whole of the piled-up state - with both thumbs on\none value, every point on the track is exactly as far from one as from the other, so\ndistance alone would answer the same thumb every time and half the track would be dead:\nthe clamp puts a low thumb dragged past the high one straight back where it came from."
+        },
+        {
+          "kind": "class",
+          "description": "One or two native range inputs sharing a track, with the fill position CSS cannot work\nout on its own. The prose above is the whole story; these tags are the same API in the\nform a machine can read - `custom-elements.json` is generated from them, and the docs\ntables, editor autocomplete and the live options panel all come out of that one file.\n\nCurated by omission: `--slider-elemental-start`, `--slider-elemental-end` and\n`data-stacked` are written by the element and are not tagged. They are the state, not\nknobs to turn, and setting one by hand parks the fill somewhere the thumbs are not.",
+          "name": "SliderElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Thumb width and height. This is also the height of the control, and what the fill is inset by so its ends meet the thumb centres.",
+              "name": "--slider-elemental-thumb-size",
+              "default": "1rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Track thickness.",
+              "name": "--slider-elemental-track-size",
+              "default": "0.375rem"
+            },
+            {
+              "type": {
+                "text": "<length-percentage>"
+              },
+              "description": "Track corners. A big number is a pill at any height.",
+              "name": "--slider-elemental-radius",
+              "default": "999px"
+            },
+            {
+              "type": {
+                "text": "<length-percentage>"
+              },
+              "description": "Thumb shape. `50%` is a circle, `0` a square.",
+              "name": "--slider-elemental-thumb-radius",
+              "default": "50%"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The part of the track outside the selection.",
+              "name": "--slider-elemental-track",
+              "default": "color-mix(in srgb, currentcolor 20%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The part inside it.",
+              "name": "--slider-elemental-fill",
+              "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Thumb fill.",
+              "name": "--slider-elemental-thumb",
+              "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Ring around a focused thumb.",
+              "name": "--slider-elemental-focus-width",
+              "default": "3px"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Ring colour.",
+              "name": "--slider-elemental-focus-color",
+              "default": "color-mix(in srgb, currentcolor 35%, transparent)"
+            }
+          ],
+          "slots": [
+            {
+              "description": "One `<input type=\"range\">` for a slider, two for a range, and optionally an `<output>` per input to read the value back.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "inputs",
+              "description": "The thumbs, in document order. Direct children, so a range input inside a card this\nelement happens to wrap is not mistaken for one of them.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "outputs",
+              "description": "The readouts, in document order, each following the input at the same index.\n\nAnywhere inside, unlike the inputs: a readout is nearly always wrapped in the\npunctuation that gives it meaning - a currency symbol, a unit, the word \"to\" between a\npair - and a rule that only saw direct children would refuse the shape everybody\nwrites. `closest` is what keeps a nested slider's readouts its own.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "gap",
+              "description": "Least distance between the two thumbs, in the scale's own units."
+            },
+            {
+              "kind": "method",
+              "name": "onReset",
+              "description": "A form is only put back to its defaults once the `reset` event has been dispatched,\nso the values are read on the next task rather than in the handler."
+            },
+            {
+              "kind": "method",
+              "name": "onInput",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "clamp",
+              "parameters": [
+                {
+                  "name": "moved"
+                }
+              ],
+              "description": "Stop the two thumbs crossing, and keep `gap` between them. Public because it is what\ncatches up a pair moved by script, which fires no `input` of its own.\n\nBoth inputs keep the `min` and `max` the markup gave them, rather than the low one's\n`max` being pulled down to the high one's value as the\n[multi-thumb pattern](https://www.w3.org/WAI/ARIA/apg/patterns/slider-multithumb/)\ndescribes: these are stacked native inputs, so shrinking one's scale moves every pixel\non it and the two tracks stop agreeing about where a value is. The pattern's\n`aria-valuemin`/`aria-valuemax` go with it, and are not written for a second reason -\n[HTML-ARIA says authors should not put them on `input type=range`](https://www.w3.org/TR/html-aria/),\nwhere the browser computes them from `min`, `max` and `value` already."
+            },
+            {
+              "kind": "method",
+              "name": "apply",
+              "description": "Push the thumb positions onto the element, where the CSS reads them. Public because the\ninputs are read here: swap one out, or move it from script, and this is the one call\nthat catches up."
+            },
+            {
+              "kind": "method",
+              "name": "onPointerDown",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "A press on the track, which stacked inputs would otherwise eat: the one on top covers\nthe whole width, so the stylesheet takes its pointer events away and leaves them on the\nthumbs. That is what makes both thumbs grabbable, and it is also what leaves the track\ndead until this runs - the nearer thumb takes the value and the focus."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "gap",
+              "type": {
+                "text": "number"
+              },
+              "description": "Least distance between the two thumbs, in the scale's own units. Ignored with one thumb.",
+              "default": "0"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "slider-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "ratio",
+          "declaration": {
+            "name": "ratio",
+            "module": "src/elementals/slider/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "clampPair",
+          "declaration": {
+            "name": "clampPair",
+            "module": "src/elementals/slider/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "stackedThumb",
+          "declaration": {
+            "name": "stackedThumb",
+            "module": "src/elementals/slider/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "nearerThumb",
+          "declaration": {
+            "name": "nearerThumb",
+            "module": "src/elementals/slider/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "SliderElemental",
+          "declaration": {
+            "name": "SliderElemental",
+            "module": "src/elementals/slider/index.js"
           }
         }
       ]

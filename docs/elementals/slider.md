@@ -1,0 +1,408 @@
+---
+layout: poops-docs-theme/docs
+title: Slider
+description: One native range input is a slider, two are a range — the fill CSS cannot place on its own, and the clamping a second thumb needs.
+order: 10
+---
+
+# `<slider-elemental>`
+
+One `<input type="range">` inside it is a slider; two is a range, with a low thumb and a
+high one that cannot pass each other. The thumbs stay native inputs, so the whole
+[APG Slider pattern](https://www.w3.org/WAI/ARIA/apg/patterns/slider/) is the browser's.
+Light DOM, no shadow root, nothing moved or wrapped.
+
+<div class="demo-block" style="max-inline-size: 22rem">
+  <span id="price-demo-label">Price</span>
+  <slider-elemental aria-labelledby="price-demo-label" gap="50">
+    <input type="range" aria-label="Lowest price" min="0" max="1000" value="200">
+    <input type="range" aria-label="Highest price" min="0" max="1000" value="750">
+  </slider-elemental>
+</div>
+
+```html
+<span id="price-label">Price</span>
+<slider-elemental aria-labelledby="price-label" gap="50">
+  <input type="range" aria-label="Lowest price" min="0" max="1000" value="200" />
+  <input type="range" aria-label="Highest price" min="0" max="1000" value="750" />
+</slider-elemental>
+```
+
+## Usage
+
+Write the range input you would have written anyway and wrap it. Write two and it becomes
+a range — the thumb count is the markup, not an attribute. Inputs must be direct children;
+nothing else is enforced. Edit the sample and the preview above it follows as you type —
+add a second `<input type="range">` and watch it grow a thumb:
+
+<!-- demo slider -->
+
+```html
+<label for="volume">Volume</label>
+<slider-elemental>
+  <input type="range" id="volume" name="volume" min="0" max="100" value="40" />
+  <output>40</output>
+</slider-elemental>
+```
+
+```javascript
+import "book-of-elementals/slider";
+```
+
+```scss
+@use "book-of-elementals/slider/style.scss"; // structure
+@use "book-of-elementals/slider/theme.scss"; // the look, optional
+```
+
+Or the single-element bundle — no build step, no script to write:
+
+```html
+<script src="https://unpkg.com/book-of-elementals/dist/elementals/slider.min.js"></script>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/book-of-elementals/dist/elementals/slider.min.css"
+/>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/book-of-elementals/dist/elementals/slider-theme.min.css"
+/>
+```
+
+It registers itself on include and upgrades on connect. Nothing on `window`, nothing to
+instantiate, no init call to forget.
+
+## What the element does, and what the browser does
+
+Nearly all of it is the browser's, because the thumbs are real range inputs:
+
+| Behaviour                                                            | Whose        |
+| -------------------------------------------------------------------- | ------------ |
+| Arrows, <kbd>Home</kbd>, <kbd>End</kbd>, <kbd>PageUp</kbd>/<kbd>PageDown</kbd> | the browser |
+| Dragging a thumb, and touch                                           | the browser  |
+| `step`, `min`, `max`, and snapping to them                            | the browser  |
+| Announced as a slider, with its value                                 | the browser  |
+| `name` submits, and `reset`, restore and `<fieldset disabled>`        | the browser  |
+| Where the thumbs are, as something CSS can read                       | this element |
+| Two thumbs sharing one track, and not passing each other              | this element |
+| A press on the track, which stacking would otherwise eat              | this element |
+| Keeping an `<output>` in step                                         | this element |
+
+So there is no `role="slider"` written here, no `aria-valuenow`, and no event of its own —
+a range input fires `input` and `change`, and both bubble.
+
+## API
+
+### Attributes
+
+| Attribute | Type   | Default | Description                                                              |
+| --------- | ------ | ------- | ------------------------------------------------------------------------ |
+| `gap`     | number | `0`     | Least distance between the two thumbs, in the scale's own units. Ignored with one thumb. |
+
+### What it writes on itself
+
+| What                        | Value                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------ |
+| `--slider-elemental-start`  | Where the low thumb is, `0` to `1`. Always `0` with one thumb                  |
+| `--slider-elemental-end`    | Where the high — or only — thumb is, `0` to `1`                                |
+| `data-stacked`              | `start` or `end` while the two are on the same value: which one is on top      |
+| `role="group"`              | Two thumbs, and only if you gave it a name, [see below](#naming-it)            |
+
+They are ratios rather than percentages, and that is the point —
+[see below](#why-ratios-and-not-percentages).
+
+### Properties
+
+| Property    | Type                   | Description                                                                   |
+| ----------- | ---------------------- | ----------------------------------------------------------------------------- |
+| `inputs`    | `HTMLInputElement[]`   | Read-only. The thumbs' inputs, in document order.                             |
+| `outputs`   | `HTMLOutputElement[]`  | Read-only. The readouts, in document order, from anywhere inside.             |
+| `gap`       | number                 | Get/set. Writes the attribute.                                                |
+| `clamp(moved)` | —                   | Re-apply the gap after moving a value from script. `'start'` or `'end'` says which one gives way. |
+| `apply()`   | —                      | Re-read the inputs. Call it after moving one from script, or swapping one out. |
+
+### Events
+
+None of its own. The inputs are native, so use `input` while dragging and `change` when it
+settles — both fire on the input and bubble, which means one listener on the element, or on
+the form, hears every thumb:
+
+```javascript
+const price = document.querySelector("slider-elemental");
+
+price.addEventListener("input", (e) => e.target.value); // during the drag
+price.addEventListener("change", (e) => e.target.value); // when it settles
+```
+
+The values are already clamped by the time either reaches you. The element listens in the
+capture phase for exactly that reason: in the bubble phase your handler would run first and
+read a value about to be taken back.
+
+Moving a value from script fires nothing — that is the platform's rule for every form
+control, not this element's. Call `apply()` after:
+
+```javascript
+price.inputs[1].value = 600;
+price.apply();
+```
+
+### Styling hooks
+
+| Selector                                     | What it is                                     |
+| -------------------------------------------- | ---------------------------------------------- |
+| `slider-elemental`                            | The control. Track and fill are drawn on it    |
+| `slider-elemental[data-stacked]`              | While both thumbs are on one value             |
+| `slider-elemental:not(:defined)`              | Before the script has run, or without it       |
+| `slider-elemental > input[type="range"]`      | A thumb's input                                |
+| `slider-elemental:has(> input[type="range"] ~ input[type="range"])` | Two thumbs rather than one |
+
+## One thumb, or two
+
+Nothing configures this — the element counts its inputs:
+
+```html
+<!-- a slider -->
+<slider-elemental>
+  <input type="range" name="volume" min="0" max="100" value="40" />
+</slider-elemental>
+
+<!-- a range -->
+<slider-elemental aria-label="Price">
+  <input type="range" aria-label="Lowest" min="0" max="1000" value="200" />
+  <input type="range" aria-label="Highest" min="0" max="1000" value="750" />
+</slider-elemental>
+```
+
+Two thumbs share one scale, so both inputs need the same `min`, `max` and `step` — the
+element reads them off the first, because two rulers drawn on top of each other is not a
+control anyone can use. A third input still works as a plain range input; it is not clamped
+and not drawn, because the fill is between the first two.
+
+## The gap
+
+`gap` is the least distance the two thumbs may be apart, in the scale's own units — `50` on
+a `0`–`1000` price range is fifty pounds:
+
+```html
+<slider-elemental aria-label="Price" gap="50">
+  <input type="range" aria-label="Lowest" min="0" max="1000" value="200" />
+  <input type="range" aria-label="Highest" min="0" max="1000" value="750" />
+</slider-elemental>
+```
+
+The thumb **being moved** is the one that gives way, so dragging the low thumb into the high
+one stops it rather than shoving the high one along — a drag that changes a value nobody
+touched is a drag that has misread the gesture. The exception is the ends, where it cannot:
+drag the low thumb to the floor with a gap set and the high thumb is what moves, because
+the alternative is a range that refuses to reach its own minimum.
+
+With both thumbs on one value, one is exactly on top of the other and out of the pointer's
+reach. `data-stacked` names the one that is lifted — the one with somewhere to go, which is
+the low thumb at the maximum and the high thumb everywhere else. <kbd>Tab</kbd> reaches
+either one regardless, which is why this decides the pointer only.
+
+## The value readout
+
+An `<output>` child is kept in step, matched to the input at the same index:
+
+<!-- demo slider -->
+
+```html
+<label for="quality">Quality</label>
+<slider-elemental>
+  <input type="range" id="quality" name="quality" min="1" max="10" value="7" />
+  <output>7</output>
+</slider-elemental>
+```
+
+No `<output>`, no readout — it costs nothing to leave out. The track is centred on the
+thumbs rather than on the element, so a readout under the control, a caption, or a pair of
+end labels makes the element taller without moving the track off the thumb it belongs to.
+
+The element sets the `<output>`'s **text**, so put any decoration outside it rather than
+inside, where it would be overwritten:
+
+```html
+<slider-elemental>
+  <input type="range" min="0" max="1000" value="200" aria-label="Lowest" />
+  <input type="range" min="0" max="1000" value="750" aria-label="Highest" />
+  <p>£<output>200</output> to £<output>750</output></p>
+</slider-elemental>
+```
+
+An `<output>` is a live region, so a screen reader announces it changing — which is one
+announcement too many next to a slider that is already announcing its own value on every
+arrow key. Add `aria-hidden="true"` where the readout is only there for the eye.
+
+## Naming it
+
+Each input is a slider in its own right and needs its own name. The element does not invent
+one, because a name it guessed would be in the wrong language on most of the pages that use
+it:
+
+```html
+<!-- one thumb: a <label> is enough, and it is the input that is labelled -->
+<label for="volume">Volume</label>
+<slider-elemental>
+  <input type="range" id="volume" name="volume" min="0" max="100" value="40" />
+</slider-elemental>
+
+<!-- two: one name for the pair, one for each end -->
+<span id="price-label">Price</span>
+<slider-elemental aria-labelledby="price-label">
+  <input type="range" aria-label="Lowest price" min="0" max="1000" value="200" />
+  <input type="range" aria-label="Highest price" min="0" max="1000" value="750" />
+</slider-elemental>
+```
+
+`role="group"` is written only where the element carries an `aria-label` or
+`aria-labelledby`, and only with two thumbs. An `aria-label` on an element with no role is
+read by nothing at all, and adding a role to an unnamed group is a wrapper announced for no
+reason — so both halves have to be there or neither is.
+
+## In a form
+
+Nothing to do. Each input submits under its own `name`, exactly as it would unwrapped:
+
+```html
+<form>
+  <slider-elemental aria-label="Price" gap="50">
+    <input type="range" name="min" aria-label="Lowest" min="0" max="1000" value="200" />
+    <input type="range" name="max" aria-label="Highest" min="0" max="1000" value="750" />
+  </slider-elemental>
+</form>
+```
+
+`reset` puts both back and the fill follows; a back-navigation restores them and the fill
+follows there too, on `pageshow`. A `<fieldset disabled>` takes the pair with it, because
+it takes the inputs with it.
+
+## Why ratios and not percentages
+
+A range input's thumb does not travel the full width of the control. Its centre starts half
+a thumb in and stops half a thumb short, so a fill placed at `45%` of the width sits next to
+a thumb that is not at 45% of the width — the misalignment nearly every two-input slider on
+the web has at its ends. Handing CSS a ratio instead of a percentage is what lets the
+stylesheet do the arithmetic that fixes it:
+
+```css
+slider-elemental::after {
+  inset-inline-start: calc(
+    var(--slider-elemental-start) * (100% - var(--slider-elemental-thumb-size)) +
+      var(--slider-elemental-thumb-size) / 2
+  );
+  inline-size: calc(
+    (var(--slider-elemental-end) - var(--slider-elemental-start)) *
+      (100% - var(--slider-elemental-thumb-size))
+  );
+}
+```
+
+That is the theme's own fill rule. Draw something else along the track — a tick, a tooltip
+over the thumb — with the same two lines and it lands on the thumb rather than near it.
+
+## What is not written, and why
+
+The [multi-thumb pattern](https://www.w3.org/WAI/ARIA/apg/patterns/slider-multithumb/) asks
+that a dependent thumb's `aria-valuemin` / `aria-valuemax` be updated as the other one
+moves. They are not written here, for two reasons:
+
+- The pattern is written for `div[role="slider"]`. These are stacked native inputs sharing
+  a track, and pulling the low input's `max` down to the high one's value would rescale it
+  — every pixel on that input would then mean a different value from the same pixel on the
+  other, and the two thumbs would stop agreeing about where anything is.
+- [HTML-ARIA says authors should not put `aria-valuemin` or `aria-valuemax` on
+  `input type=range`](https://www.w3.org/TR/html-aria/) at all. The browser computes both
+  from `min`, `max` and `value`, and an author's copy can only disagree with it.
+
+What a screen reader hears instead is the clamp: press <kbd>→</kbd> on the low thumb once
+it has reached the high one and the value does not change, which is what the thumb does
+visually too.
+
+## Limits
+
+Named rather than worked around:
+
+| Limit                                              | Why, and what to do                                                        |
+| -------------------------------------------------- | --------------------------------------------------------------------------- |
+| A press on the track jumps the nearer thumb but does not carry on into a drag | Two stacked inputs need their pointer events on the thumbs, so the track press is the element's rather than the input's — and the input never learns it happened. Grab the thumb to drag |
+| Two thumbs, not N                                  | The clamp is a pair. Three inputs still work as plain range inputs, unclamped and undrawn |
+| Horizontal only                                    | `writing-mode: vertical-lr` on the input is the platform's answer for one thumb; the stacking here has not been built for it |
+| The buffer-style second bar is not here            | That is [`<progress-elemental>`](progress.html), and the two compose — see [the scrubber](progress.html#a-scrubber) |
+
+## Degrading
+
+Without the script there are no ratios, so the theme draws nothing at all — that is what
+the `:defined` it hangs off is for. With `style.scss` loaded either way:
+
+| State                     | One thumb                                | Two thumbs                                                       |
+| ------------------------- | ---------------------------------------- | ----------------------------------------------------------------- |
+| No script, no theme       | The native slider, untouched             | Stacked and both grabbable, on no track, and free to pass each other |
+| No script, theme imported | The native slider again                  | The same — the theme waits for `:defined`                         |
+| Script, no theme          | Native, plus the ratios and the readout  | The same, now clamped, with the ratios written                    |
+| Both                      | The control above                        | The control above                                                 |
+
+The one thing that never happens is the theme drawing a track with the fill parked at zero
+while the browser has put the thumb somewhere else.
+
+The two things that are not optional are in `style.scss` rather than the theme: with two
+thumbs, the stacking and the pointer routing that makes both of them grabbable. A thumb
+that cannot be reached is broken rather than unstyled, and the theme is the part that may
+be skipped.
+
+## The look
+
+`theme.scss` is optional and separate. It draws the track and the fill on the element and
+takes the native track away, including Firefox's `::-moz-range-progress`, which is the one
+engine that fills the track on its own and would otherwise draw a second fill from the
+start.
+
+The rail is half a thumb short at each end, because that is where the thumb's centre starts
+and stops. A rail run the full width has a stretch at each end the thumb can never reach —
+a gap before zero and another past the maximum — and at those two values the fill and the
+rail disagree about where the track begins. The thumb overhangs the rail by half its own
+width at both extremes, which is what the inset buys.
+
+That is also the one way to get this wrong: resize the thumb through
+`--slider-elemental-thumb-size` and everything follows, but resize it by writing
+`::-webkit-slider-thumb { inline-size: … }` yourself and the rail is still inset for the
+old size, so the gaps come back at whatever the difference is.
+
+| Custom property                    | Default                                              | What it does                                        |
+| ---------------------------------- | ---------------------------------------------------- | --------------------------------------------------- |
+| `--slider-elemental-thumb-size`    | `1rem`                                               | Thumb width and height. Also the control's height, what the fill is inset by, and the strip the track is centred on |
+| `--slider-elemental-track-size`    | `0.375rem`                                           | Track thickness                                     |
+| `--slider-elemental-radius`        | `999px`                                              | Track corners. A big number is a pill               |
+| `--slider-elemental-thumb-radius`  | `50%`                                                | Thumb shape. `50%` is a circle, `0` a square        |
+| `--slider-elemental-track`         | `color-mix(in srgb, currentcolor 20%, transparent)`  | Outside the selection                               |
+| `--slider-elemental-fill`          | `currentcolor`                                       | Inside it                                           |
+| `--slider-elemental-thumb`         | `currentcolor`                                       | Thumb fill                                          |
+| `--slider-elemental-focus-width`   | `3px`                                                | Ring around a focused thumb                         |
+| `--slider-elemental-focus-color`   | `color-mix(in srgb, currentcolor 35%, transparent)`  | Ring colour                                         |
+
+The colours are mixed out of `currentcolor`, so the control takes the page's palette with
+nothing to configure:
+
+```css
+slider-elemental.brand {
+  --slider-elemental-fill: rebeccapurple;
+  --slider-elemental-thumb: rebeccapurple;
+  --slider-elemental-thumb-size: 1.25rem;
+}
+```
+
+The focus ring is a spread `box-shadow` on the thumb rather than an `outline` on the input,
+because an outline on the input is a rectangle around the whole track and the thing that
+took focus is one thumb on it. In forced-colors mode, where shadows are dropped, it goes
+back to being an outline and the fill is repainted in `Highlight`.
+
+## Slider, or something else?
+
+| You have                                     | Use                                     | Why                                                          |
+| -------------------------------------------- | --------------------------------------- | ------------------------------------------------------------ |
+| A value the reader sets along a range         | `<slider-elemental>`                    | One thumb                                                    |
+| A span the reader sets — price, dates, sizes  | `<slider-elemental>`, two inputs        | Two thumbs that cannot cross                                 |
+| A value the reader watches                    | [`<progress-elemental>`](progress.html) | Progress is read, a slider is written                        |
+| A few discrete choices                        | [`<segmented-elemental>`](segmented.html) | Radios name their options; a slider makes you count notches |
+| An exact number                               | `<input type="number">`                 | A slider is for _about here_, and a spinner is for `1247`     |
+
+<script src="{{ relativePathPrefix }}dist/elementals/slider.js"></script>

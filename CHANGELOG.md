@@ -15,6 +15,53 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Added
+
+- **`<slider-elemental>`** — one `<input type="range">` inside it is a slider, two is a
+  range whose thumbs cannot pass each other. The count is the markup rather than an
+  attribute. The thumbs stay native inputs, so the arrow keys, <kbd>Home</kbd>,
+  <kbd>End</kbd>, <kbd>PageUp</kbd>/<kbd>PageDown</kbd>, `step`, touch, submission under
+  each input's own `name`, `reset` and restore are all still the browser's — there is no
+  `role="slider"`, no `aria-valuenow` and no event of its own. What it adds is the fill
+  position no engine but Firefox will give you (`::-moz-range-progress` has no equivalent
+  anywhere else), and, with two thumbs, the three things a second range input cannot do
+  for itself: sharing one track, stopping short of each other, and a press on the track
+  that reaches the nearer thumb through the stacking.
+
+  **DOM:** `role="group"` on the element, and only with two thumbs and an `aria-label` or
+  `aria-labelledby` already on it. `data-stacked` while both thumbs sit on one value,
+  naming which of them is lifted. Nothing is moved, wrapped or inserted.
+  **CSS:** `--slider-elemental-start` and `--slider-elemental-end`, as ratios from `0` to
+  `1` rather than percentages — a thumb travels from half its own width to half a width
+  short of the far end, so `calc(var(--slider-elemental-end) * (100% -
+  var(--slider-elemental-thumb-size)))` is where the thumb actually is and a bare
+  percentage is off by half a thumb at the ends. `style.scss` stacks two thumbs and routes
+  their pointer events; `theme.scss` is optional as ever and draws nothing until
+  `:defined`, so a page that never loads the script keeps the browser's own control.
+
+  `aria-valuemin` and `aria-valuemax` are deliberately not written on the inputs, and the
+  page says why: [HTML-ARIA says authors should not](https://www.w3.org/TR/html-aria/), and
+  rescaling one input to clamp it against the other would move every pixel on it.
+
+- **`<progress-elemental>`** — a native `<progress>` that says where its fill ends, so CSS
+  can draw the bar without `::-webkit-progress-value` and `::-moz-progress-bar`, plus the
+  second value `<progress>` has never had: `buffer`, for the part that is loaded but not
+  yet played. The `<progress>` keeps `role="progressbar"`, `max`, the indeterminate state
+  and its `<label>`, so the element writes no ARIA at all.
+
+  **DOM:** `data-indeterminate` on the element while the `<progress>` has no `value`.
+  Nothing else, and nothing moved or wrapped.
+  **CSS:** `--progress-elemental-value` and `--progress-elemental-buffer`, both
+  percentages, both clamped. The value property is *removed* rather than set to `0%` while
+  indeterminate, because a bar at zero claims nothing has started and a bar with no value
+  claims nobody knows. `theme.scss` hangs off `:defined` too, so without the script the
+  browser's own bar shows with the real value on it rather than a themed bar frozen empty.
+
+  Every way of moving the bar works — `element.value`, `progress.value` and
+  `setAttribute` — because `<progress>`'s `value` and `max` are reflecting IDL attributes
+  and one `MutationObserver` on the child catches all three. It fires no event, so watching
+  it is the only way there is.
+
 ## [0.7.3] - 2026-08-12
 
 ### Fixed

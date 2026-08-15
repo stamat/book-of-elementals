@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Copy
 description: A copy-to-clipboard button that says it copied — on the screen and out loud.
-order: 15
+order: 16
 navGroup: No APG pattern
 ---
 

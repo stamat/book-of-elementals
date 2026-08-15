@@ -1,0 +1,174 @@
+// stylelint-disable no-descending-specificity
+
+// Optional look for `<slider-elemental>`. Not part of the element's own stylesheet and not
+// in its bundle: that one styles structure only, and a light-DOM element cannot scope a
+// look away from a page that did not ask for one. Import this when you want the look, skip
+// it when you do not.
+// The colours are mixed out of `currentcolor`, so the control sits in whatever palette the
+// page already has with nothing to configure.
+
+// The knobs are declared on the bare element and the drawing is gated on `:defined` below,
+// rather than both together. `:defined` counts as a class, so declaring them inside it
+// would make `slider-elemental { --slider-elemental-fill: rebeccapurple }` lose to this
+// file on specificity - an override that reads as though it should work and silently does
+// not. `style.scss` reads the thumb size too, which is the other reason it is out here.
+slider-elemental {
+  --slider-elemental-thumb-size: 1rem;
+  --slider-elemental-track-size: 0.375rem;
+  --slider-elemental-radius: 999px; // a pill at any height
+  --slider-elemental-thumb-radius: 50%;
+  --slider-elemental-track: color-mix(in srgb, currentcolor 20%, transparent);
+  --slider-elemental-fill: currentcolor;
+  --slider-elemental-thumb: currentcolor;
+  --slider-elemental-focus-width: 3px;
+  --slider-elemental-focus-color: color-mix(in srgb, currentcolor 35%, transparent);
+}
+
+// The drawing, and that is the whole of the degradation: until the script has run there are
+// no ratios to place a fill by, and a themed track with the fill parked at zero over a
+// thumb the browser has put somewhere else is worse than no theme at all. Undefined, this
+// file draws nothing and the native control shows through.
+slider-elemental:defined {
+  // Centred on the thumbs, not on this element. The thumbs are the first thing in the box
+  // and are exactly one `--slider-elemental-thumb-size` tall, so this lands on their centre
+  // line whatever else is in here - and an `<output>`, a caption or a pair of end labels is
+  // the normal case, every one of which makes the element taller than the control and would
+  // drag a track centred at `50%` down below the thumb it belongs to.
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    box-sizing: border-box;
+    inset-block-start: calc((var(--slider-elemental-thumb-size) - var(--slider-elemental-track-size)) / 2);
+    block-size: var(--slider-elemental-track-size);
+    border-radius: var(--slider-elemental-radius);
+  }
+
+  // The rail is the thumb's travel, not this element's width: half a thumb in at each end,
+  // because that is where the thumb's centre starts and stops. Run it the full width and
+  // the two ends are rail the thumb can never reach - a gap before zero and another past
+  // the maximum, which reads as a slider that will not go all the way. The thumb overhangs
+  // it by half its own width at each extreme, which is the point.
+  &::before {
+    inset-inline: calc(var(--slider-elemental-thumb-size) / 2);
+    background: var(--slider-elemental-track);
+  }
+
+  // Why the element writes ratios and not percentages. A thumb's centre travels the width
+  // of the control less its own width, starting half a width in - so this is exactly where
+  // the thumb is, at both ends and everywhere between. A bare percentage of the full width
+  // is the half-a-thumb misalignment every two-input slider on the web has at its ends.
+  // No transition on it either: the fill has to arrive with the thumb, and a thumb under
+  // the pointer with its fill still catching up is the drawing lagging the control.
+  &::after {
+    inset-inline-start: calc(var(--slider-elemental-start, 0) * (100% - var(--slider-elemental-thumb-size)) + var(--slider-elemental-thumb-size) / 2);
+    inline-size: calc((var(--slider-elemental-end, 0) - var(--slider-elemental-start, 0)) * (100% - var(--slider-elemental-thumb-size)));
+    background: var(--slider-elemental-fill);
+  }
+
+  // The native track goes, because this file has just drawn one. With one thumb that is the
+  // whole reason to touch the input at all; with two, `style.scss` has already done it and
+  // this repeats the declarations rather than depending on the other file's order.
+  > input[type="range"] {
+    appearance: none;
+    block-size: var(--slider-elemental-thumb-size);
+    background: transparent;
+  }
+
+  // One pseudo-element per rule, never a selector list - a browser that does not recognise
+  // one of them drops the whole rule, and what it drops here is a native track drawn on top
+  // of ours.
+  > input[type="range"]::-webkit-slider-runnable-track {
+    block-size: 100%;
+    background: transparent;
+    border: 0;
+  }
+
+  > input[type="range"]::-moz-range-track {
+    block-size: 100%;
+    background: transparent;
+    border: 0;
+  }
+
+  // Firefox fills the track to the left of the thumb on its own, and nothing else does.
+  // Left alone it is a second fill from the start of the track, in the wrong place on a
+  // range and doubled on a slider.
+  > input[type="range"]::-moz-range-progress {
+    background: transparent;
+  }
+
+  > input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    inline-size: var(--slider-elemental-thumb-size);
+    block-size: 100%;
+    background: var(--slider-elemental-thumb);
+    border: 0;
+    border-radius: var(--slider-elemental-thumb-radius);
+
+    // The focus ring, which cannot be an `outline`: an outline on the input is a rectangle
+    // around the whole track, and the thing that took focus is one thumb on it. A spread
+    // shadow that starts at zero is the same ring with somewhere to grow from.
+    box-shadow: 0 0 0 0 transparent;
+    transition: box-shadow 150ms ease-out;
+  }
+
+  > input[type="range"]::-moz-range-thumb {
+    appearance: none;
+    inline-size: var(--slider-elemental-thumb-size);
+    block-size: 100%;
+    background: var(--slider-elemental-thumb);
+    border: 0;
+    border-radius: var(--slider-elemental-thumb-radius);
+    box-shadow: 0 0 0 0 transparent;
+    transition: box-shadow 150ms ease-out;
+  }
+
+  // The input's own ring is the rectangle this replaces, so it goes only where a
+  // replacement is being drawn - and `:focus-visible` rather than `:focus`, so a thumb
+  // dragged with the mouse does not light up as though it had been tabbed to.
+  > input[type="range"]:focus-visible {
+    outline: none;
+  }
+
+  > input[type="range"]:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 var(--slider-elemental-focus-width) var(--slider-elemental-focus-color);
+  }
+
+  > input[type="range"]:focus-visible::-moz-range-thumb {
+    box-shadow: 0 0 0 var(--slider-elemental-focus-width) var(--slider-elemental-focus-color);
+  }
+
+  > input[type="range"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  // Forced-colors mode drops author backgrounds, which here are the track, the fill and
+  // both thumbs, and drops `box-shadow` too - so the focus ring has to go back to being an
+  // outline. System colour keywords are honoured, so the selection is repainted in the
+  // mode's own colour for one and the track keeps a rim so an empty one is still a track.
+  @media (forced-colors: active) {
+    --slider-elemental-track: Canvas;
+    --slider-elemental-fill: Highlight;
+    --slider-elemental-thumb: CanvasText;
+
+    &::before {
+      border: 1px solid CanvasText;
+    }
+
+    > input[type="range"]:focus-visible {
+      outline: 2px solid Highlight;
+      outline-offset: 2px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    > input[type="range"]::-webkit-slider-thumb {
+      transition: none;
+    }
+
+    > input[type="range"]::-moz-range-thumb {
+      transition: none;
+    }
+  }
+}

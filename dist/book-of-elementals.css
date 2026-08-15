@@ -466,6 +466,11 @@ navbar-elemental[data-mode=stack] [data-navbar-rail] > :is(ul, menu):not([data-n
   box-shadow: none;
 }
 
+progress-elemental {
+  position: relative;
+  display: block;
+}
+
 search-elemental {
   display: block;
   position: relative;
@@ -506,6 +511,62 @@ segmented-elemental > label > input[type=radio] {
 segmented-elemental > label:has(> input[type=radio]:focus-visible) {
   outline: 2px solid currentcolor;
   outline-offset: 2px;
+}
+
+slider-elemental {
+  position: relative;
+  display: block;
+}
+slider-elemental > input[type=range] {
+  position: relative;
+  z-index: 1;
+  display: block;
+  inline-size: 100%;
+  margin: 0;
+}
+slider-elemental:has(> input[type=range] ~ input[type=range]) {
+  display: grid;
+}
+slider-elemental:has(> input[type=range] ~ input[type=range]) > input[type=range] {
+  grid-area: 1/1;
+  block-size: var(--slider-elemental-thumb-size, 1rem);
+  pointer-events: none;
+  appearance: none;
+  background: transparent;
+}
+slider-elemental:has(> input[type=range] ~ input[type=range]) > input[type=range]::-webkit-slider-runnable-track {
+  block-size: 100%;
+  background: transparent;
+  border: 0;
+}
+slider-elemental:has(> input[type=range] ~ input[type=range]) > input[type=range]::-moz-range-track {
+  block-size: 100%;
+  background: transparent;
+  border: 0;
+}
+slider-elemental:has(> input[type=range] ~ input[type=range]) > input[type=range]::-moz-range-progress {
+  background: transparent;
+}
+slider-elemental:has(> input[type=range] ~ input[type=range]) > input[type=range]::-webkit-slider-thumb {
+  pointer-events: auto;
+  appearance: none;
+  inline-size: var(--slider-elemental-thumb-size, 1rem);
+  block-size: 100%;
+  background: currentcolor;
+  border: 0;
+  border-radius: var(--slider-elemental-thumb-radius, 50%);
+}
+slider-elemental:has(> input[type=range] ~ input[type=range]) > input[type=range]::-moz-range-thumb {
+  pointer-events: auto;
+  appearance: none;
+  inline-size: var(--slider-elemental-thumb-size, 1rem);
+  block-size: 100%;
+  background: currentcolor;
+  border: 0;
+  border-radius: var(--slider-elemental-thumb-radius, 50%);
+}
+slider-elemental[data-stacked=start] > input[type=range]:nth-of-type(1) {
+  z-index: 2;
 }
 
 suggest-elemental {

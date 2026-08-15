@@ -27,12 +27,14 @@ holds the JavaScript helpers, this one holds the elements.
 | `<modal-elemental>`      | [APG Modal Dialog](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) on native `<dialog>` — nested, animated out, and dismissed the way the platform says |
 | `<navbar-elemental>`     | [APG Disclosure Navigation](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/), folding itself away when the links stop fitting |
 | `<segmented-elemental>`  | [APG Radio Group](https://www.w3.org/WAI/ARIA/apg/patterns/radio/) on native radios, drawn as a track with a knob that slides |
+| `<slider-elemental>`     | [APG Slider](https://www.w3.org/WAI/ARIA/apg/patterns/slider/) on native range inputs, and [Multi-Thumb](https://www.w3.org/WAI/ARIA/apg/patterns/slider-multithumb/) when you write two — the thumb count is the markup |
 | `<suggest-elemental>`    | [APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) with a listbox popup — a list of links a text field drives with the arrow keys |
 | `<switch-elemental>`     | [APG Switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/), for a setting that takes effect at once |
 | `<tabs-elemental>`       | [APG Tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), horizontal or vertical, on a list of in-page links |
 | `<toolbar-elemental>`    | [APG Toolbar](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/) — a row of buttons the arrows walk and Tab passes in one step |
 | `<tooltip-elemental>`    | [APG Tooltip](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/) as far as it has consensus — a description on hover and focus, still on the page without script |
 | `<copy-elemental>`       | No APG pattern — a `<button>`, the clipboard write behind it, and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-changes.html) every copy button forgets |
+| `<progress-elemental>`   | No APG pattern — `<progress>` already is one, so this adds only what it has never had: where its fill ends as something CSS can draw with, and a second value for the part loaded but not played |
 | `<search-elemental>`     | No APG pattern — the query half of a search field: the debounce, the abort, the loading state and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html) a panel filling itself does not make |
 
 ## Docs
@@ -612,6 +614,32 @@ no longer. Panels stay on screen through CSS anchor positioning, with no script
 involved. Without JavaScript the whole thing is a nested list of visible links,
 which is what it was underneath all along.
 
+## `<progress-elemental>`
+
+A native `<progress>` that says where its fill ends, so CSS can draw the bar instead of
+`::-webkit-progress-value` and `::-moz-progress-bar` — and a second value beside it, for the
+part that is loaded but not yet played:
+
+```html
+<label for="upload">Uploading</label>
+<progress-elemental buffer="82">
+  <progress id="upload" value="45" max="100">45%</progress>
+</progress-elemental>
+```
+
+The `<progress>` stays a `<progress>`, which is where `role="progressbar"`, `max`, the
+indeterminate state and being labelled by a `<label>` already live — so the element writes
+no ARIA at all. What it writes is `--progress-elemental-value` and, with a `buffer`,
+`--progress-elemental-buffer`, both as percentages, plus `data-indeterminate` when there is
+no value: a bar with no value is a claim that nobody knows how far, and a bar at zero is a
+claim that nothing has started, and the two must not draw the same.
+
+`<progress>` fires no event and both its `value` and its `max` are reflecting IDL
+attributes, so one `MutationObserver` on the child catches every way of moving it —
+`bar.value = 60`, `bar.progress.value = 60` and `setAttribute` all land in the same place.
+Without the script the theme draws nothing, because it hangs off `:defined`: what shows is
+the browser's own bar with the real value on it, rather than a themed bar frozen at zero.
+
 ## `<segmented-elemental>`
 
 One choice out of a few, drawn as a track with a knob that slides under it — the
@@ -690,6 +718,40 @@ than skipped.
 `wait()` is what buys the loading state; a page filtering a list it already has never calls
 it and never gets a spinner nothing will stop. With no script the `<form>` submits and the
 reader gets a search page.
+
+## `<slider-elemental>`
+
+One `<input type="range">` inside it is a slider; two is a range whose thumbs cannot pass
+each other. The count is the markup rather than an attribute, because it already is:
+
+```html
+<span id="price-label">Price</span>
+<slider-elemental aria-labelledby="price-label" gap="50">
+  <input type="range" aria-label="Lowest price" min="0" max="1000" value="200" />
+  <input type="range" aria-label="Highest price" min="0" max="1000" value="750" />
+</slider-elemental>
+```
+
+The thumbs stay `<input type="range">`, which is where the whole
+[APG Slider pattern](https://www.w3.org/WAI/ARIA/apg/patterns/slider/) already lives —
+arrows, `Home`, `End`, `PageUp`/`PageDown`, `step`, touch, submission under each input's own
+`name`, `reset`, restore and a `<fieldset disabled>` that takes the lot. So there is no
+`role="slider"` here, no `aria-valuenow`, and no event of its own: a range input fires
+`input` and `change`, and both bubble.
+
+What is left for script is what the platform will not say. Firefox draws the filled part of
+a track with `::-moz-range-progress` and no other engine has an equivalent, so the element
+writes `--slider-elemental-start` and `--slider-elemental-end` and the fill is one box
+between them. They are ratios rather than percentages on purpose: a thumb travels from half
+its own width to half a width short of the far end, so a bare percentage is off by half a
+thumb at both ends — the misalignment nearly every two-input slider on the web has.
+
+Two thumbs add the three things a second range input cannot do for itself: they are stacked
+so they share one track, the low one is stopped at the high one's value (`gap` sets how far
+short), and a press on the track moves the nearer of them, which the stacking would
+otherwise cost. `aria-valuemin` and `aria-valuemax` are deliberately not written —
+[HTML-ARIA says authors should not put them on a range input](https://www.w3.org/TR/html-aria/),
+and rescaling one input to clamp it would move every pixel on it.
 
 ## `<suggest-elemental>`
 
