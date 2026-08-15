@@ -1,2 +1,2 @@
-/* book-of-elementals v0.7.3 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v0.8.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 :root{--accordion-elemental-duration: .25s;--accordion-elemental-easing: ease}accordion-elemental{display:block}accordion-elemental>details>summary{cursor:pointer}accordion-elemental>details>.accordion-elemental-content-wrapper{display:flow-root;margin:0;padding:0;border:0;transition:height var(--accordion-elemental-duration) var(--accordion-elemental-easing)}@media(prefers-reduced-motion:reduce){accordion-elemental>details>.accordion-elemental-content-wrapper{transition:none}}
