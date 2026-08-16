@@ -230,16 +230,21 @@ and a [`<slider-elemental>`](slider.html) over the top for the seeking:
 ```
 
 ```css demo
-/* One thumb size for both, under the name the slider already owns. It is set on each of
-   them rather than on .scrubber, because the slider's theme declares it on the element
-   itself and a declaration on the element beats anything inherited from above it. */
+/* One thumb size and one bar thickness for both, under the names the slider already owns.
+   They are set on each of them rather than on .scrubber, because both themes declare their
+   own on the element itself and a declaration on the element beats anything inherited from
+   above it. */
 .scrubber slider-elemental,
 .scrubber progress-elemental {
   --slider-elemental-thumb-size: 1rem;
+  --slider-elemental-track-size: 0.5rem;
+  --progress-elemental-height: var(--slider-elemental-track-size);
 }
 .scrubber {
   display: grid;
 }
+/* One cell, so the slider sits over the bar — and later in the markup, which is what puts
+   it on top without a z-index between them. */
 .scrubber > * {
   grid-area: 1 / 1;
   align-self: center;
@@ -250,22 +255,60 @@ and a [`<slider-elemental>`](slider.html) over the top for the seeking:
 .scrubber progress-elemental {
   margin-inline: calc(var(--slider-elemental-thumb-size) / 2);
 }
-/* The bar is the drawing, so the slider's own track and fill get out of its way. */
+/* Who draws what. The played part is the slider's fill, because that is the one that
+   arrives with the thumb — the bar's own fill eases over --progress-elemental-duration and
+   would trail behind a drag. So the bar keeps the two things the slider cannot draw, its
+   rail and its buffer, and gives up the fill; the slider gives up its rail so the bar's
+   shows through, and keeps the fill and the thumb. */
 .scrubber slider-elemental {
   --slider-elemental-track: transparent;
-  --slider-elemental-fill: transparent;
+}
+.scrubber progress-elemental {
+  --progress-elemental-fill: transparent;
 }
 ```
 
-One `--slider-elemental-thumb-size` drives both, which is the whole of the trick: the
-slider is sized by it and the bar is inset by half of it, so the bar and the slider's rail
-are the same stretch of track and the fill ends exactly under the thumb at every value,
-nought and full included. Left to itself the bar would run the full width while the thumb
-travelled a half-thumb short of each end — a gap at the start and another at the finish,
-visible only at the extremes, which is where a scrubber spends its first and last second.
+```js demo
+// The bar draws nothing of the position any more, so this is not about the drawing: the
+// <progress> is what a screen reader reads for "45%", and left behind it would announce a
+// position the control it sits under has moved away from.
+// Neither element moves the other on its own, and neither should. In a player the media is
+// what sits between them — a seek sets `video.currentTime`, and it is `timeupdate` coming
+// back that moves the bar. There is no video on this page, so this stands in for it.
+const bar = document.querySelector(".scrubber progress-elemental");
+const seek = document.querySelector(".scrubber input[type=range]");
 
-The `<progress>` is what a screen reader reads for position, the range input is what
-takes the seeking, and neither is pretending to be the other.
+seek.addEventListener("input", () => {
+  bar.value = seek.value;
+});
+```
+
+**Each element draws only what the other cannot**, which is the whole of the arrangement:
+
+| Layer | Draws | Because |
+| --- | --- | --- |
+| `<slider-elemental>`, on top | the played part and the thumb | its fill has no transition, so it arrives *with* the thumb |
+| `<progress-elemental>`, behind | the rail and the buffer | a slider has no second value, and no rail is wanted over the bar |
+
+The fill has to be the slider's. A progress bar eases over `--progress-elemental-duration`,
+which is right for a value arriving on its own and wrong under a thumb the reader is
+holding — the bar would trail the drag by a quarter of a second, every drag. So the bar
+gives up `--progress-elemental-fill` and the slider gives up `--slider-elemental-track`,
+and neither draws the same pixel twice.
+
+One `--slider-elemental-thumb-size` and one thickness drive both, which is what makes the
+two layers one control: the slider is sized by the thumb and the bar is inset by half of
+it, so the rail and the buffer behind cover exactly the stretch the fill in front travels.
+Left to itself the bar would run the full width while the thumb travelled a half-thumb
+short of each end — a gap at the start and another at the finish, visible only at the
+extremes, which is where a scrubber spends its first and last second.
+
+The `<progress>` is what a screen reader reads for position, the range input is what takes
+the seeking, and neither is pretending to be the other. That is why the last fence exists
+even now that the bar draws no position at all: **the two are not wired together by these
+elements, and a page composing them has to say what connects them** — the media in a
+player, three lines here. Leave it out and the announced position and the visible one part
+company on the first drag.
 
 ## Degrading
 

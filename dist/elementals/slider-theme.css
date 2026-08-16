@@ -6,9 +6,15 @@ slider-elemental {
   --slider-elemental-thumb-radius: 50%;
   --slider-elemental-track: color-mix(in srgb, currentcolor 20%, transparent);
   --slider-elemental-fill: currentcolor;
-  --slider-elemental-thumb: currentcolor;
+  --slider-elemental-thumb: var(--slider-elemental-fill);
   --slider-elemental-focus-width: 3px;
   --slider-elemental-focus-color: color-mix(in srgb, currentcolor 35%, transparent);
+  --slider-elemental-tooltip-gap: 0.375rem;
+  --slider-elemental-tooltip-padding-block: 0.25em;
+  --slider-elemental-tooltip-padding-inline: 0.5em;
+  --slider-elemental-tooltip-radius: 6px;
+  --slider-elemental-tooltip-surface: CanvasText;
+  --slider-elemental-tooltip-color: Canvas;
 }
 
 slider-elemental:defined::before, slider-elemental:defined::after {
@@ -32,6 +38,7 @@ slider-elemental:defined > input[type=range] {
   appearance: none;
   block-size: var(--slider-elemental-thumb-size);
   background: transparent;
+  color: var(--slider-elemental-thumb);
 }
 slider-elemental:defined > input[type=range]::-webkit-slider-runnable-track {
   block-size: 100%;
@@ -50,7 +57,7 @@ slider-elemental:defined > input[type=range]::-webkit-slider-thumb {
   appearance: none;
   inline-size: var(--slider-elemental-thumb-size);
   block-size: 100%;
-  background: var(--slider-elemental-thumb);
+  background: currentcolor;
   border: 0;
   border-radius: var(--slider-elemental-thumb-radius);
   box-shadow: 0 0 0 0 transparent;
@@ -60,7 +67,7 @@ slider-elemental:defined > input[type=range]::-moz-range-thumb {
   appearance: none;
   inline-size: var(--slider-elemental-thumb-size);
   block-size: 100%;
-  background: var(--slider-elemental-thumb);
+  background: currentcolor;
   border: 0;
   border-radius: var(--slider-elemental-thumb-radius);
   box-shadow: 0 0 0 0 transparent;
@@ -79,13 +86,27 @@ slider-elemental:defined > input[type=range]:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
+slider-elemental:defined > output[data-tooltip] {
+  padding: var(--slider-elemental-tooltip-padding-block) var(--slider-elemental-tooltip-padding-inline);
+  border-radius: var(--slider-elemental-tooltip-radius);
+  background: var(--slider-elemental-tooltip-surface);
+  color: var(--slider-elemental-tooltip-color);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: nowrap;
+}
 @media (forced-colors: active) {
   slider-elemental:defined {
     --slider-elemental-track: Canvas;
     --slider-elemental-fill: Highlight;
     --slider-elemental-thumb: CanvasText;
+    --slider-elemental-tooltip-surface: Canvas;
+    --slider-elemental-tooltip-color: CanvasText;
   }
   slider-elemental:defined::before {
+    border: 1px solid CanvasText;
+  }
+  slider-elemental:defined > output[data-tooltip] {
     border: 1px solid CanvasText;
   }
   slider-elemental:defined > input[type=range]:focus-visible {

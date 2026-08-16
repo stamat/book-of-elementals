@@ -15,6 +15,76 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Added
+
+- **`<slider-elemental tooltip>`** — a value bubble that follows the pointer: `thumb` for the
+  one it is on, `track` for the value a press anywhere else would set, `thumb track` for
+  both, and a bare `tooltip` for the thumb. The track number is put on the `step` the way the
+  input would put it — counted from `min`, ties up, and never past the last notch the scale
+  actually has, so `min="0" max="100" step="40"` reads 80 at the far end rather than a 100 the
+  input cannot hold.
+
+  One bubble and not one per thumb: a pointer is in one place at a time, so a second could
+  only ever be a box stacked on the same spot. A press pins it to the thumb being dragged
+  until the release, because a thumb snaps to notches while the pointer moves smoothly — half
+  a step out, the pointer is beside the thumb it is holding, and past either end it is off
+  the control. It follows a drag off the slider and lets go on `pointerup`. It is a hover, so
+  a touch reader and a keyboard reader never see it — which is why nothing goes in it that is
+  not already on screen or already announced, and why it is not an alternative to an
+  `<output>`.
+
+  **DOM:** with `tooltip` set, one `<output aria-hidden="true" data-tooltip="thumb|track">`
+  appended as the last child, removed again when the attribute is or when the element leaves
+  the page. `aria-hidden` because the input under it announces its own value already. It is
+  excluded from the `outputs` list, so a page's own readouts keep their thumbs.
+  **CSS:** `--slider-elemental-at` on that bubble, a `0` to `1` ratio spent the same way
+  `--slider-elemental-start` and `--slider-elemental-end` are. `style.scss` places it — a
+  bubble left in the flow would shove the layout about as the pointer moved — and
+  `theme.scss` paints it, through `--slider-elemental-tooltip-gap`, `-padding-block`,
+  `-padding-inline`, `-radius`, `-surface` and `-color`. New selector to target:
+  `slider-elemental > output[data-tooltip]`.
+
+### Changed
+
+- **`<slider-elemental>`'s thumb follows its fill.** `--slider-elemental-thumb` now defaults
+  to `var(--slider-elemental-fill)` rather than `currentcolor` — the thumb is the end of the
+  selection, and recolouring the fill and getting a thumb still in the text colour meant
+  finding out there was a second knob. Both still default to `currentcolor` in the end, so
+  a page that has not set either sees no change; one that set `--slider-elemental-fill`
+  alone now has a matching thumb, and one that wants them apart sets
+  `--slider-elemental-thumb` as before. Forced-colors mode keeps its `CanvasText` thumb,
+  because a `Highlight` thumb on a `Highlight` fill is a thumb nobody can find.
+
+  **The one case to check when upgrading:** `--slider-elemental-fill: transparent` now takes
+  the thumb with it, so a slider drawn over something else that already shows the selection
+  needs `--slider-elemental-thumb: currentcolor` on the same rule from here on. A `var()`
+  fallback cannot cover it — a fallback fires on an *unset* property, and `transparent` is a
+  value like any other.
+
+### Fixed
+
+- **`<slider-elemental>`'s thumb never took the page's colour, in any browser.** A thumb
+  pseudo-element does not see the page's `color` — the browser gives the control one of its
+  own — so the `currentcolor` the theme painted the thumb with resolved to that instead:
+  white in Chromium whatever the page said, mid grey in WebKit. Only Chromium's wrong answer
+  happened to look right, which is why this reads as a Safari bug and is not one. The theme
+  now names the colour on the input (`color: var(--slider-elemental-thumb)`) and the thumb
+  rules paint in `currentcolor` from there, so a thumb in a coloured block finally tints with
+  it. `--slider-elemental-focus-color` was resolving against the same wrong colour and is
+  fixed by the same line; it now mixes out of the thumb's colour. `style.scss` carries the
+  declaration too, so a two-thumb slider with no theme is right as well.
+
+  **If you wrote your own thumb rule:** `currentcolor` in it is the value that misbehaves.
+  Set `color` on the input and paint the thumb with `currentcolor`, or use a literal.
+
+- **The scrubber example drew its played part with the wrong element.** It was the
+  `<progress-elemental>`'s fill, which eases over `--progress-elemental-duration` and so
+  trailed a quarter of a second behind every drag. The layers are swapped: the slider draws
+  the fill, which has no transition and arrives with the thumb, and the bar behind keeps the
+  rail and the buffer — the two things a slider cannot draw. Copy the new CSS if you built a
+  scrubber from the old one. The example also wires the `<progress>` to the seek input now,
+  so what a screen reader reads for position no longer parts company with the thumb.
+
 ## [0.8.0] - 2026-08-15
 
 ### Added

@@ -51,6 +51,13 @@ slider-elemental {
       // and the optional theme is the part that may be skipped.
       appearance: none;
       background: transparent;
+
+      // A thumb pseudo-element does not see the page's `color`: the UA stylesheet gives the
+      // control one of its own, so the `currentcolor` the thumbs below are painted with
+      // resolves to that rather than to the text around them - white in Chromium whatever
+      // the page says, and mid grey in WebKit. Naming it on the input is what puts it back,
+      // and the theme's own thumb colour is honoured here when that file is loaded.
+      color: var(--slider-elemental-thumb, currentcolor);
     }
 
     // Written out one pseudo-element per rule, never combined into a selector list: a
@@ -103,5 +110,35 @@ slider-elemental {
   // where it has nowhere left to go. `Tab` reaches either one regardless.
   &[data-stacked="start"] > input[type="range"]:nth-of-type(1) {
     z-index: 2;
+  }
+
+  // The `tooltip` bubble, placed rather than styled - the look is the theme's, and this is
+  // structure because none of it can be skipped and leave a working control: unplaced, the
+  // bubble is a loose number in the flow under the track, shoving the layout about as the
+  // pointer crosses. The element writes it only where the attribute asked for one.
+  > output[data-tooltip] {
+    position: absolute;
+
+    // The thumbs are the first thing in the box and exactly one thumb tall, so a gap above
+    // the top of this element is a gap above the thumb - which `100%` of a control made
+    // taller by an `<output>`, a caption or a pair of end labels would not be.
+    inset-block-end: calc(100% + var(--slider-elemental-tooltip-gap, 0.375rem));
+
+    // The thumb's real centre, which is the arithmetic the fill is placed with and the
+    // reason the element writes ratios: a bare percentage of the width puts the bubble half
+    // a thumb off the thing it is reading out, at both ends.
+    inset-inline-start: calc(var(--slider-elemental-at, 0) * (100% - var(--slider-elemental-thumb-size, 1rem)) + var(--slider-elemental-thumb-size, 1rem) / 2);
+    translate: -50%;
+
+    // The bubble hangs outside this element's box, over whatever the page put above the
+    // control - so it must not be what a press there lands on.
+    pointer-events: none;
+  }
+
+  // `translate` has no logical form, so the one thing here that is not already a logical
+  // property is turned around by hand: `inset-inline-start` measures from the right in RTL,
+  // and centring the bubble on that point means moving it right rather than left.
+  &:dir(rtl) > output[data-tooltip] {
+    translate: 50%;
   }
 }

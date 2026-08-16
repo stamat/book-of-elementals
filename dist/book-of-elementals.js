@@ -4040,13 +4040,50 @@
     if (toStart === toEnd) return value > end ? "end" : "start";
     return toStart < toEnd ? "start" : "end";
   }
+  function alongTrack(x, left, width, thumb, rtl) {
+    const travel = width - thumb;
+    if (!(travel > 0)) return 0;
+    const along = (x - left - thumb / 2) / travel;
+    return Math.min(Math.max(rtl ? 1 - along : along, 0), 1);
+  }
+  function decimals(value) {
+    const text = String(value);
+    return text.includes("e") ? 0 : (text.split(".")[1] || "").length;
+  }
+  function snapToStep(value, min, max, step) {
+    if (!(step > 0)) return Math.min(Math.max(value, min), max);
+    const places = Math.max(decimals(step), decimals(min));
+    const trim = (number) => places ? Number(number.toFixed(places)) : number;
+    const snapped = min + Math.round((value - min) / step) * step;
+    if (snapped < min) return min;
+    if (snapped > max) return trim(min + Math.floor((max - min) / step) * step);
+    return trim(snapped);
+  }
+  function thumbUnder(x, left, width, thumb, ratios, rtl) {
+    const travel = Math.max(width - thumb, 0);
+    for (let i = 0; i < ratios.length; i++) {
+      const at = rtl ? 1 - ratios[i] : ratios[i];
+      if (Math.abs(x - (left + thumb / 2 + at * travel)) <= thumb / 2) return i;
+    }
+    return -1;
+  }
+  function draggedThumb(under, count) {
+    if (under >= 0) return under;
+    return count === 1 ? 0 : -1;
+  }
+  function tooltipModes(value) {
+    if (value === null || value === void 0) return { thumb: false, track: false };
+    const tokens = value.trim().split(/\s+/).filter(Boolean);
+    if (!tokens.length) return { thumb: true, track: false };
+    return { thumb: tokens.includes("thumb"), track: tokens.includes("track") };
+  }
   function bound(value, fallback) {
     const number = parseFloat(value);
     return Number.isFinite(number) ? number : fallback;
   }
   var SliderElemental = class extends ElementBase {
     static get observedAttributes() {
-      return ["gap"];
+      return ["gap", "tooltip"];
     }
     /** The thumbs, in document order. Direct children, so a range input inside a card this
      * element happens to wrap is not mistaken for one of them. */
@@ -4060,9 +4097,13 @@
      * punctuation that gives it meaning - a currency symbol, a unit, the word "to" between a
      * pair - and a rule that only saw direct children would refuse the shape everybody
      * writes. `closest` is what keeps a nested slider's readouts its own.
+     *
+     * The `tooltip` bubble is an `<output>` too and is not one of these. Counted in, it would
+     * take an index off the end of the list and the readouts would each be showing the value
+     * of the thumb before their own.
      */
     get outputs() {
-      return Array.from(this.querySelectorAll("output")).filter((output) => output.closest("slider-elemental") === this);
+      return Array.from(this.querySelectorAll("output:not([data-tooltip])")).filter((output) => output.closest("slider-elemental") === this);
     }
     /** Least distance between the two thumbs, in the scale's own units. */
     get gap() {
@@ -4070,6 +4111,11 @@
     }
     set gap(value) {
       this.setAttribute("gap", value);
+    }
+    /** Whether the control runs right to left. Computed style rather than `:dir()`, which
+     * throws on the browsers that do not know it instead of quietly not matching. */
+    get rtl() {
+      return typeof getComputedStyle === "function" && getComputedStyle(this).direction === "rtl";
     }
     connectedCallback() {
       if (this.initialized) return;
@@ -4080,6 +4126,13 @@
       this.onInput = this.onInput.bind(this);
       this.onReset = this.onReset.bind(this);
       this.onPointerDown = this.onPointerDown.bind(this);
+      this.onPointerMove = this.onPointerMove.bind(this);
+      this.onPointerLeave = this.onPointerLeave.bind(this);
+      this.onTooltipDown = this.onTooltipDown.bind(this);
+      this.onTooltipUp = this.onTooltipUp.bind(this);
+      this.tooltipX = null;
+      this.tooltipElement = null;
+      this.dragging = -1;
       this.addEventListener("input", this.onInput, true);
       this.form = this.closest("form");
       if (this.form) this.form.addEventListener("reset", this.onReset);
@@ -4092,6 +4145,7 @@
         }
       }
       this.apply();
+      this.syncTooltip();
     }
     disconnectedCallback() {
       if (!this.initialized) return;
@@ -4100,6 +4154,7 @@
       if (this.form) this.form.removeEventListener("reset", this.onReset);
       if (typeof window !== "undefined") window.removeEventListener("pageshow", this.apply);
       this.form = null;
+      this.removeTooltip();
       this.style.removeProperty("--slider-elemental-start");
       this.style.removeProperty("--slider-elemental-end");
       this.removeAttribute("data-stacked");
@@ -4110,6 +4165,10 @@
     /** A new `gap` is a new distance the thumbs may already be inside of. */
     attributeChangedCallback(name, previous, current) {
       if (!this.initialized || previous === current) return;
+      if (name === "tooltip") {
+        this.syncTooltip();
+        return;
+      }
       this.clamp("end");
       this.apply();
     }
@@ -4173,6 +4232,137 @@
       for (let i = 0; i < outputs.length && i < inputs.length; i++) {
         outputs[i].textContent = inputs[i].value;
       }
+      if (this.tooltipX !== null) this.showTooltipAt(this.tooltipX);
+    }
+    /**
+     * Put the value bubble in, or take it out, to match the `tooltip` attribute.
+     *
+     * Written by this element rather than asked of the author: a box reading out where the
+     * *pointer* is has no markup anyone would have written anyway, and an `<output>` the page
+     * forgot would be a tooltip that silently never appeared. `aria-hidden`, because the input
+     * beneath it announces its own value already.
+     */
+    syncTooltip() {
+      const modes = tooltipModes(this.getAttribute("tooltip"));
+      const wanted = modes.thumb || modes.track;
+      if (wanted && !this.tooltipElement) {
+        const bubble = document.createElement("output");
+        bubble.setAttribute("aria-hidden", "true");
+        bubble.dataset.tooltip = "thumb";
+        bubble.hidden = true;
+        this.appendChild(bubble);
+        this.tooltipElement = bubble;
+        this.addEventListener("pointermove", this.onPointerMove);
+        this.addEventListener("pointerleave", this.onPointerLeave);
+        this.addEventListener("pointerdown", this.onTooltipDown);
+        this.addEventListener("pointerup", this.onTooltipUp);
+        this.addEventListener("pointercancel", this.onTooltipUp);
+      }
+      if (!wanted) this.removeTooltip();
+      if (this.tooltipElement && this.tooltipX !== null) this.showTooltipAt(this.tooltipX);
+    }
+    /** The bubble and the listeners that draw it, gone together. The element wrote the bubble,
+     * so the element is what takes it back off the page. */
+    removeTooltip() {
+      if (!this.tooltipElement) return;
+      this.removeEventListener("pointermove", this.onPointerMove);
+      this.removeEventListener("pointerleave", this.onPointerLeave);
+      this.removeEventListener("pointerdown", this.onTooltipDown);
+      this.removeEventListener("pointerup", this.onTooltipUp);
+      this.removeEventListener("pointercancel", this.onTooltipUp);
+      this.tooltipElement.remove();
+      this.tooltipElement = null;
+      this.tooltipX = null;
+      this.dragging = -1;
+    }
+    onPointerMove(e) {
+      if (e.pointerType === "touch") return;
+      this.tooltipX = e.clientX;
+      this.showTooltipAt(e.clientX);
+    }
+    /** A press pins the bubble to whatever it is about to drag, for as long as it is held. */
+    onTooltipDown(e) {
+      if (e.pointerType === "touch") return;
+      const m = this.metrics(e.clientX);
+      this.dragging = m ? draggedThumb(m.under, m.inputs.length) : -1;
+      this.tooltipX = e.clientX;
+      this.showTooltipAt(e.clientX);
+    }
+    /**
+     * Let go, and where the pointer is decides again - including that it may have been let go
+     * somewhere the bubble has no business still being.
+     *
+     * Answered from the coordinates rather than from `target` or from a `pointerleave` that
+     * follows, because neither survives the drag. A range input holds pointer capture until
+     * the release, so `target` is the input wherever on the screen the pointer actually is;
+     * and the leave that would have covered it is not something every engine sends - Chromium
+     * fires one after the capture ends and WebKit fires none at all, which is a bubble left
+     * on the page after every drag that ended off the control.
+     */
+    onTooltipUp(e) {
+      if (e.pointerType === "touch") return;
+      this.dragging = -1;
+      const rect = this.getBoundingClientRect();
+      const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+      if (inside) this.showTooltipAt(e.clientX);
+      else this.onPointerLeave();
+    }
+    onPointerLeave() {
+      if (this.dragging >= 0) return;
+      this.tooltipX = null;
+      if (this.tooltipElement) this.tooltipElement.hidden = true;
+    }
+    /**
+     * Everything a bubble is drawn from, measured in one go: the scale, where each thumb sits
+     * on it, and which one a pointer at `x` is over. `null` where there is nothing to measure.
+     */
+    metrics(x) {
+      const inputs = this.inputs;
+      if (!inputs.length) return null;
+      const rect = this.getBoundingClientRect();
+      const thumb = inputs[0].getBoundingClientRect().height;
+      const rtl = this.rtl;
+      const min = bound(inputs[0].min, 0);
+      const max = bound(inputs[0].max, 100);
+      const ratios = inputs.map((input) => ratio(bound(input.value, min), min, max));
+      return { inputs, rect, thumb, rtl, min, max, ratios, under: thumbUnder(x, rect.left, rect.width, thumb, ratios, rtl) };
+    }
+    /**
+     * Draw the bubble for a pointer at `x`, in viewport coordinates, or hide it where the
+     * attribute did not ask for a bubble at that spot.
+     *
+     * A thumb reads out its input's own `value`, which the browser has already put on a step
+     * and written the way it writes numbers. The track is the only one with a value to work
+     * out, and it is worked out the way a press on the track is - same travel, same rounding -
+     * so the number previewed is the number a click there would produce.
+     *
+     * A drag in progress overrules the pointer: `dragging` is the thumb the press pinned this
+     * to, and it holds until the release. Without it the bubble answers where the pointer is,
+     * which during a drag is beside the thumb half the time.
+     */
+    showTooltipAt(x) {
+      const bubble = this.tooltipElement;
+      if (!bubble) return;
+      const m = this.metrics(x);
+      if (!m) return;
+      const modes = tooltipModes(this.getAttribute("tooltip"));
+      const over = this.dragging >= 0 && this.dragging < m.inputs.length ? this.dragging : m.under;
+      const on = over < 0 ? "track" : "thumb";
+      if (!modes[on]) {
+        bubble.hidden = true;
+        return;
+      }
+      let at = m.ratios[over];
+      let text = over < 0 ? "" : m.inputs[over].value;
+      if (over < 0) {
+        at = alongTrack(x, m.rect.left, m.rect.width, m.thumb, m.rtl);
+        const step = m.inputs[0].step === "any" ? 0 : bound(m.inputs[0].step, 1);
+        text = String(snapToStep(m.min + at * (m.max - m.min), m.min, m.max, step));
+      }
+      bubble.dataset.tooltip = on;
+      bubble.textContent = text;
+      bubble.style.setProperty("--slider-elemental-at", at);
+      bubble.hidden = false;
     }
     /**
      * A press on the track, which stacked inputs would otherwise eat: the one on top covers
@@ -4186,13 +4376,10 @@
       if (inputs.length < 2) return;
       const rect = this.getBoundingClientRect();
       const thumb = inputs[0].getBoundingClientRect().height;
-      const travel = rect.width - thumb;
-      if (travel <= 0) return;
+      if (rect.width <= thumb) return;
       const min = bound(inputs[0].min, 0);
       const max = bound(inputs[0].max, 100);
-      let along = (e.clientX - rect.left - thumb / 2) / travel;
-      if (typeof getComputedStyle === "function" && getComputedStyle(this).direction === "rtl") along = 1 - along;
-      const value = min + Math.min(Math.max(along, 0), 1) * (max - min);
+      const value = min + alongTrack(e.clientX, rect.left, rect.width, thumb, this.rtl) * (max - min);
       const input = inputs[nearerThumb(value, bound(inputs[0].value, min), bound(inputs[1].value, max)) === "start" ? 0 : 1];
       input.value = value;
       e.preventDefault();

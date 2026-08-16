@@ -4525,8 +4525,97 @@
           "description": "Which thumb a press on the track belongs to: the nearer one, and on a tie the one the\npress is asking to move.\n\nThe tie is not a corner case, it is the whole of the piled-up state - with both thumbs on\none value, every point on the track is exactly as far from one as from the other, so\ndistance alone would answer the same thumb every time and half the track would be dead:\nthe clamp puts a low thumb dragged past the high one straight back where it came from."
         },
         {
+          "kind": "function",
+          "name": "alongTrack",
+          "parameters": [
+            {
+              "name": "x"
+            },
+            {
+              "name": "left"
+            },
+            {
+              "name": "width"
+            },
+            {
+              "name": "thumb"
+            },
+            {
+              "name": "rtl"
+            }
+          ],
+          "description": "Where a point on the control sits along the thumb's travel, as `0` to `1`.\n\nOn the scale's own axis, not the screen's: `0` is `min` in both writing directions, which\nis the same axis `--slider-elemental-start` and `--slider-elemental-end` are measured on\nand the same one `inset-inline-start` spends them on.\n\nThe travel is the box less one thumb, because a thumb's centre starts half a width in and\nstops half a width short - the same arithmetic the fill is placed with, and the reason a\nbare percentage of the width is off by half a thumb at both ends. A control with no room\nto travel answers `0`, for the reason `ratio` does: there is one place a thumb can be."
+        },
+        {
+          "kind": "function",
+          "name": "snapToStep",
+          "parameters": [
+            {
+              "name": "value"
+            },
+            {
+              "name": "min"
+            },
+            {
+              "name": "max"
+            },
+            {
+              "name": "step"
+            }
+          ],
+          "description": "A value put on the nearest notch, the way a range input puts its own there.\n\nThe notches are counted from `min` rather than from zero, which is the platform's rule:\n`min=\"1\" step=\"10\"` is 1, 11, 21, and a bubble reading out 10 for a press the input would\nmake 11 is a bubble that lies about what it is previewing. Ties round up, which is what\n[MDN says a user agent does](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input/range)\nand what `Math.round` does.\n\nThe top of the scale is the last notch at or below `max`, not `max` - `max` is not always\na whole number of steps above `min`, and where it is not the end of the scale is a value\nthe input cannot hold. `min=\"0\" max=\"100\" step=\"40\"` stops at 80.\n\nRounded to the decimals the step is written with, because binary floating point cannot\nhold a tenth: three notches up a `step=\"0.1\"` scale is `0.30000000000000004` otherwise,\nand that is what the reader would see."
+        },
+        {
+          "kind": "function",
+          "name": "thumbUnder",
+          "parameters": [
+            {
+              "name": "x"
+            },
+            {
+              "name": "left"
+            },
+            {
+              "name": "width"
+            },
+            {
+              "name": "thumb"
+            },
+            {
+              "name": "ratios"
+            },
+            {
+              "name": "rtl"
+            }
+          ],
+          "description": "Which thumb the pointer is over, by index, or `-1` for the track beside or between them.\n\nA pointer within half a thumb of a thumb's centre is on it, because that is the thumb's\nown box - one `--slider-elemental-thumb-size` across, centred on where it sits. The first\nmatch wins, and with two thumbs piled on one value that is the low one: they carry the\nsame value, so there is nothing to choose between what either would read out.\n\n`ratios` are on the scale's axis and this is screen pixels, which is the whole of the\n`rtl` flip - the low thumb of a range runs to the right-hand end when the page does."
+        },
+        {
+          "kind": "function",
+          "name": "draggedThumb",
+          "parameters": [
+            {
+              "name": "under"
+            },
+            {
+              "name": "count"
+            }
+          ],
+          "description": "Which thumb a press holds the value bubble on until it is let go, or `-1` for a press that\ndrags no thumb at all.\n\nWhere the pointer is answers this everywhere except during a drag, and during a drag it is\nwrong twice over: a thumb snaps to notches while the pointer moves smoothly, so half a step\nout the pointer is beside the thumb it is dragging, and past either end it is off the\ncontrol entirely. Both would flip the bubble to a track reading under the reader's own\nhand. So the press decides, once.\n\nA press on the track is a drag only with one thumb, and that is the stylesheet's doing\nrather than a rule invented here: one input covers the whole control, so the native range\ntakes the press and carries on into a drag. Two are stacked with their pointer events on\nthe thumbs, so the press is this element's, moves the nearer thumb and stops - nothing is\nbeing dragged, and nothing should be pinned."
+        },
+        {
+          "kind": "function",
+          "name": "tooltipModes",
+          "parameters": [
+            {
+              "name": "value"
+            }
+          ],
+          "description": "Which value bubbles the `tooltip` attribute asked for.\n\nA bare `tooltip` is the thumb, because that is the half a slider is asked for and the half\nevery library that ships the feature ships. A token list rather than one value, so a page\ncan have the other half on its own or both at once without a third keyword to remember.\n\nAn unknown token is no bubble rather than an error: the attribute is a list, and refusing\nto draw anything is what tells the author the word did not land - louder than a thumb\nbubble they did not ask for and quieter than a page that throws."
+        },
+        {
           "kind": "class",
-          "description": "One or two native range inputs sharing a track, with the fill position CSS cannot work\nout on its own. The prose above is the whole story; these tags are the same API in the\nform a machine can read - `custom-elements.json` is generated from them, and the docs\ntables, editor autocomplete and the live options panel all come out of that one file.\n\nCurated by omission: `--slider-elemental-start`, `--slider-elemental-end` and\n`data-stacked` are written by the element and are not tagged. They are the state, not\nknobs to turn, and setting one by hand parks the fill somewhere the thumbs are not.",
+          "description": "One or two native range inputs sharing a track, with the fill position CSS cannot work\nout on its own. The prose above is the whole story; these tags are the same API in the\nform a machine can read - `custom-elements.json` is generated from them, and the docs\ntables, editor autocomplete and the live options panel all come out of that one file.\n\nCurated by omission: `--slider-elemental-start`, `--slider-elemental-end`,\n`--slider-elemental-at` and `data-stacked` are written by the element and are not tagged.\nThey are the state, not knobs to turn, and setting one by hand parks the fill or the\nbubble somewhere the thumbs are not.",
           "name": "SliderElemental",
           "cssProperties": [
             {
@@ -4581,9 +4670,9 @@
               "type": {
                 "text": "<color>"
               },
-              "description": "Thumb fill.",
+              "description": "Thumb fill. Follows the selection unless you set it.",
               "name": "--slider-elemental-thumb",
-              "default": "currentcolor"
+              "default": "var(--slider-elemental-fill)"
             },
             {
               "type": {
@@ -4600,6 +4689,54 @@
               "description": "Ring colour.",
               "name": "--slider-elemental-focus-color",
               "default": "color-mix(in srgb, currentcolor 35%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between the thumb and the `tooltip` bubble above it.",
+              "name": "--slider-elemental-tooltip-gap",
+              "default": "0.375rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Above and below the number in the bubble.",
+              "name": "--slider-elemental-tooltip-padding-block",
+              "default": "0.25em"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Either side of it.",
+              "name": "--slider-elemental-tooltip-padding-inline",
+              "default": "0.5em"
+            },
+            {
+              "type": {
+                "text": "<length-percentage>"
+              },
+              "description": "The bubble's corners.",
+              "name": "--slider-elemental-tooltip-radius",
+              "default": "6px"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "What the bubble is painted in.",
+              "name": "--slider-elemental-tooltip-surface",
+              "default": "CanvasText"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The number on it.",
+              "name": "--slider-elemental-tooltip-color",
+              "default": "Canvas"
             }
           ],
           "slots": [
@@ -4618,13 +4755,19 @@
             {
               "kind": "field",
               "name": "outputs",
-              "description": "The readouts, in document order, each following the input at the same index.\n\nAnywhere inside, unlike the inputs: a readout is nearly always wrapped in the\npunctuation that gives it meaning - a currency symbol, a unit, the word \"to\" between a\npair - and a rule that only saw direct children would refuse the shape everybody\nwrites. `closest` is what keeps a nested slider's readouts its own.",
+              "description": "The readouts, in document order, each following the input at the same index.\n\nAnywhere inside, unlike the inputs: a readout is nearly always wrapped in the\npunctuation that gives it meaning - a currency symbol, a unit, the word \"to\" between a\npair - and a rule that only saw direct children would refuse the shape everybody\nwrites. `closest` is what keeps a nested slider's readouts its own.\n\nThe `tooltip` bubble is an `<output>` too and is not one of these. Counted in, it would\ntake an index off the end of the list and the readouts would each be showing the value\nof the thumb before their own.",
               "readonly": true
             },
             {
               "kind": "field",
               "name": "gap",
               "description": "Least distance between the two thumbs, in the scale's own units."
+            },
+            {
+              "kind": "field",
+              "name": "rtl",
+              "description": "Whether the control runs right to left. Computed style rather than `:dir()`, which\nthrows on the browsers that do not know it instead of quietly not matching.",
+              "readonly": true
             },
             {
               "kind": "method",
@@ -4657,6 +4800,69 @@
             },
             {
               "kind": "method",
+              "name": "syncTooltip",
+              "description": "Put the value bubble in, or take it out, to match the `tooltip` attribute.\n\nWritten by this element rather than asked of the author: a box reading out where the\n*pointer* is has no markup anyone would have written anyway, and an `<output>` the page\nforgot would be a tooltip that silently never appeared. `aria-hidden`, because the input\nbeneath it announces its own value already."
+            },
+            {
+              "kind": "method",
+              "name": "removeTooltip",
+              "description": "The bubble and the listeners that draw it, gone together. The element wrote the bubble,\nso the element is what takes it back off the page."
+            },
+            {
+              "kind": "method",
+              "name": "onPointerMove",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onTooltipDown",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "A press pins the bubble to whatever it is about to drag, for as long as it is held."
+            },
+            {
+              "kind": "method",
+              "name": "onTooltipUp",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "Let go, and where the pointer is decides again - including that it may have been let go\nsomewhere the bubble has no business still being.\n\nAnswered from the coordinates rather than from `target` or from a `pointerleave` that\nfollows, because neither survives the drag. A range input holds pointer capture until\nthe release, so `target` is the input wherever on the screen the pointer actually is;\nand the leave that would have covered it is not something every engine sends - Chromium\nfires one after the capture ends and WebKit fires none at all, which is a bubble left\non the page after every drag that ended off the control."
+            },
+            {
+              "kind": "method",
+              "name": "onPointerLeave"
+            },
+            {
+              "kind": "method",
+              "name": "metrics",
+              "parameters": [
+                {
+                  "name": "x"
+                }
+              ],
+              "description": "Everything a bubble is drawn from, measured in one go: the scale, where each thumb sits\non it, and which one a pointer at `x` is over. `null` where there is nothing to measure."
+            },
+            {
+              "kind": "method",
+              "name": "showTooltipAt",
+              "parameters": [
+                {
+                  "name": "x"
+                }
+              ],
+              "description": "Draw the bubble for a pointer at `x`, in viewport coordinates, or hide it where the\nattribute did not ask for a bubble at that spot.\n\nA thumb reads out its input's own `value`, which the browser has already put on a step\nand written the way it writes numbers. The track is the only one with a value to work\nout, and it is worked out the way a press on the track is - same travel, same rounding -\nso the number previewed is the number a click there would produce.\n\nA drag in progress overrules the pointer: `dragging` is the thumb the press pinned this\nto, and it holds until the release. Without it the bubble answers where the pointer is,\nwhich during a drag is beside the thumb half the time."
+            },
+            {
+              "kind": "method",
               "name": "onPointerDown",
               "parameters": [
                 {
@@ -4674,6 +4880,13 @@
               },
               "description": "Least distance between the two thumbs, in the scale's own units. Ignored with one thumb.",
               "default": "0"
+            },
+            {
+              "name": "tooltip",
+              "type": {
+                "text": "string"
+              },
+              "description": "A value bubble that follows the pointer. `thumb` over the thumb it is on, `track` for the value under it elsewhere, `thumb track` for both; a bare `tooltip` is `thumb`. Pointer only, and `aria-hidden` — the input announces its own value."
             }
           ],
           "superclass": {
@@ -4714,6 +4927,46 @@
           "name": "nearerThumb",
           "declaration": {
             "name": "nearerThumb",
+            "module": "src/elementals/slider/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "alongTrack",
+          "declaration": {
+            "name": "alongTrack",
+            "module": "src/elementals/slider/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "snapToStep",
+          "declaration": {
+            "name": "snapToStep",
+            "module": "src/elementals/slider/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "thumbUnder",
+          "declaration": {
+            "name": "thumbUnder",
+            "module": "src/elementals/slider/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "draggedThumb",
+          "declaration": {
+            "name": "draggedThumb",
+            "module": "src/elementals/slider/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "tooltipModes",
+          "declaration": {
+            "name": "tooltipModes",
             "module": "src/elementals/slider/index.js"
           }
         },

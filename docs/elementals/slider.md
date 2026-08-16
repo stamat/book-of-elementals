@@ -10,7 +10,8 @@ order: 10
 One `<input type="range">` inside it is a slider; two is a range, with a low thumb and a
 high one that cannot pass each other. The thumbs stay native inputs, so the whole
 [APG Slider pattern](https://www.w3.org/WAI/ARIA/apg/patterns/slider/) is the browser's.
-Light DOM, no shadow root, nothing moved or wrapped.
+Light DOM, no shadow root, nothing moved or wrapped — the one thing it ever inserts is the
+[value bubble](#the-value-bubble), and only where you asked for one.
 
 <div class="demo-block" style="max-inline-size: 22rem">
   <span id="price-demo-label">Price</span>
@@ -86,6 +87,7 @@ Nearly all of it is the browser's, because the thumbs are real range inputs:
 | Two thumbs sharing one track, and not passing each other              | this element |
 | A press on the track, which stacking would otherwise eat              | this element |
 | Keeping an `<output>` in step                                         | this element |
+| The hover value bubble, where `tooltip` asked for one                 | this element |
 
 So there is no `role="slider"` written here, no `aria-valuenow`, and no event of its own —
 a range input fires `input` and `change`, and both bubble.
@@ -97,6 +99,7 @@ a range input fires `input` and `change`, and both bubble.
 | Attribute | Type   | Default | Description                                                              |
 | --------- | ------ | ------- | ------------------------------------------------------------------------ |
 | `gap`     | number | `0`     | Least distance between the two thumbs, in the scale's own units. Ignored with one thumb. |
+| `tooltip` | token list | absent | A value bubble that follows the pointer. `thumb` over the thumb it is on, `track` for the value under it elsewhere, `thumb track` for both; a bare `tooltip` is `thumb`. [See below](#the-value-bubble) |
 
 ### What it writes on itself
 
@@ -110,12 +113,17 @@ a range input fires `input` and `change`, and both bubble.
 They are ratios rather than percentages, and that is the point —
 [see below](#why-ratios-and-not-percentages).
 
+With `tooltip` set there is one more thing, and it is the only markup this element ever
+writes: an `<output aria-hidden="true" data-tooltip="thumb|track">` appended as the last
+child, carrying `--slider-elemental-at` — where the bubble is, on that same `0` to `1`
+scale. It goes again when the attribute does, or when the element leaves the page.
+
 ### Properties
 
 | Property    | Type                   | Description                                                                   |
 | ----------- | ---------------------- | ----------------------------------------------------------------------------- |
 | `inputs`    | `HTMLInputElement[]`   | Read-only. The thumbs' inputs, in document order.                             |
-| `outputs`   | `HTMLOutputElement[]`  | Read-only. The readouts, in document order, from anywhere inside.             |
+| `outputs`   | `HTMLOutputElement[]`  | Read-only. The readouts, in document order, from anywhere inside — yours, never the `tooltip` bubble. |
 | `gap`       | number                 | Get/set. Writes the attribute.                                                |
 | `clamp(moved)` | —                   | Re-apply the gap after moving a value from script. `'start'` or `'end'` says which one gives way. |
 | `apply()`   | —                      | Re-read the inputs. Call it after moving one from script, or swapping one out. |
@@ -154,6 +162,8 @@ price.apply();
 | `slider-elemental:not(:defined)`              | Before the script has run, or without it       |
 | `slider-elemental > input[type="range"]`      | A thumb's input                                |
 | `slider-elemental:has(> input[type="range"] ~ input[type="range"])` | Two thumbs rather than one |
+| `slider-elemental > output[data-tooltip]`     | The value bubble, showing or `hidden`          |
+| `slider-elemental > output[data-tooltip="thumb"]` / `="track"` | Which of the two it is showing |
 
 ## One thumb, or two
 
@@ -233,6 +243,79 @@ An `<output>` is a live region, so a screen reader announces it changing — whi
 announcement too many next to a slider that is already announcing its own value on every
 arrow key. Add `aria-hidden="true"` where the readout is only there for the eye.
 
+## The value bubble
+
+**Read this first: it is a hover, so half your readers never see it.** There is no hover on
+a touch screen and the bubble does not follow focus, so a phone reader and a keyboard reader
+get nothing from it. That is fine for a number they can already read off the thumb they are
+dragging, and it is why nothing goes in here that is not somewhere else too. If the value
+has to be visible, that is the `<output>` above, and the two compose.
+
+`tooltip` turns it on. Drag the thumb, then run the pointer along the empty part of the
+track — the number is what a press there would set:
+
+<!-- demo slider -->
+
+```html
+<label for="bitrate">Bitrate</label>
+<slider-elemental tooltip="thumb track">
+  <input type="range" id="bitrate" name="bitrate" min="0" max="320" step="16" value="192" />
+</slider-elemental>
+```
+
+```css demo
+/* Room for the bubble, which hangs above the control and outside its box */
+body {
+  padding-block-start: 4rem;
+}
+body > label {
+  margin-block-end: 2rem;
+}
+```
+
+**The bubble hangs outside the element's box**, a `--slider-elemental-tooltip-gap` above the
+thumb, so it is drawn over whatever the page put above the control — the label in that
+sample would be under it without the margin. Leave the room, or move the bubble with the
+gap; it is not clipped and it does not push anything aside.
+
+| Token | Where the bubble appears | What it says |
+| --- | --- | --- |
+| `thumb` | while the pointer is on a thumb, dragging included | that input's own `value` |
+| `track` | while it is anywhere else on the control | the value a press there would set |
+| `thumb track` | both | whichever of the two the pointer is over |
+| bare `tooltip` | same as `thumb` | — |
+
+**One bubble, not one per thumb.** A pointer is in one place at a time, so a second one
+could only ever be a box stacked on the same spot the moment the pointer reached a thumb.
+Which one is showing is on the bubble itself as `data-tooltip="thumb"` or `="track"`, so a
+theme can tell them apart without the element writing two.
+
+**A press pins it for the length of the drag.** Where the pointer is decides which bubble
+you get — except while a thumb is being dragged, when it is the wrong question twice over: a
+thumb snaps to notches while the pointer moves smoothly, so half a step out the pointer is
+already beside the thumb it is holding, and dragged past either end it is off the control
+altogether. So the press decides once and the release lets go. Without that, a drag across a
+`step="16"` scale flips between the two readings on nearly every pointer move, showing a
+number that disagrees with the thumb under it.
+
+It follows the thumb off the control too — drag below the slider or past its end and the
+bubble stays, reading the value the thumb is pinned at. It goes when you let go.
+
+The track number is put on the `step` the way the input would put it — counted from `min`,
+ties rounded up, and never past the last notch the scale actually has. `min="0" max="100"
+step="40"` stops at 80, so that is what the bubble says at the far end rather than 100, which
+the input cannot hold. Set `step="any"` and it is not rounded at all.
+
+### What it is not
+
+| | |
+| --- | --- |
+| Not announced | `aria-hidden="true"`. The input under it announces its own value on every arrow key, and the same number twice is one announcement too many — [which is what Base UI does with its marks](https://v6.mui.com/base-ui/react-slider/) |
+| Not reachable by touch | touch pointers are ignored outright rather than half-handled, the same refusal [`<tooltip-elemental>`](tooltip.html) makes |
+| Not shown on focus | a keyboard reader hears the value already; a bubble that appeared on <kbd>Tab</kbd> would be a second copy of it, drawn |
+| Not formatted | it is the raw value, like the `<output>`. A currency symbol or a unit belongs in a readout you write |
+| Not always on | there is no "pinned" mode. [noUiSlider's `tooltips: true`](https://refreshless.com/nouislider/slider-options/) and [MUI's `valueLabelDisplay="on"`](https://mui.com/material-ui/react-slider/) both have one; here that is an `<output>` positioned with `--slider-elemental-end`, and no attribute |
+
 ## Naming it
 
 Each input is a slider in its own right and needs its own name. The element does not invent
@@ -297,8 +380,10 @@ slider-elemental::after {
 }
 ```
 
-That is the theme's own fill rule. Draw something else along the track — a tick, a tooltip
-over the thumb — with the same two lines and it lands on the thumb rather than near it.
+That is the theme's own fill rule, and `--slider-elemental-at` on the
+[value bubble](#the-value-bubble) is spent the same way. Draw something else along the track
+— a tick, a label pinned over a thumb — with the same two lines and it lands on the thumb
+rather than near it.
 
 ## What is not written, and why
 
@@ -327,6 +412,7 @@ Named rather than worked around:
 | A press on the track jumps the nearer thumb but does not carry on into a drag | Two stacked inputs need their pointer events on the thumbs, so the track press is the element's rather than the input's — and the input never learns it happened. Grab the thumb to drag |
 | Two thumbs, not N                                  | The clamp is a pair. Three inputs still work as plain range inputs, unclamped and undrawn |
 | Horizontal only                                    | `writing-mode: vertical-lr` on the input is the platform's answer for one thumb; the stacking here has not been built for it |
+| `tooltip` is pointer-only, and there is no pinned mode | A touch or keyboard reader never sees it, so nothing goes in it that is not elsewhere too. Pin a value with an `<output>` placed on `--slider-elemental-end` |
 | The buffer-style second bar is not here            | That is [`<progress-elemental>`](progress.html), and the two compose — see [the scrubber](progress.html#a-scrubber) |
 
 ## Degrading
@@ -343,6 +429,12 @@ the `:defined` it hangs off is for. With `style.scss` loaded either way:
 
 The one thing that never happens is the theme drawing a track with the fill parked at zero
 while the browser has put the thumb somewhere else.
+
+`tooltip` degrades to nothing in the honest sense: no script, no bubble, and no gap in the
+page where one was going to be — the element writes it, so it is simply never there. With
+the script but no theme it is placed over the thumb by `style.scss` and painted by nothing,
+which is a bare number rather than a bubble, because a number landing in the middle of the
+layout would be worse than an unstyled one.
 
 The two things that are not optional are in `style.scss` rather than the theme: with two
 thumbs, the stacking and the pointer routing that makes both of them grabbable. A thumb
@@ -367,6 +459,26 @@ That is also the one way to get this wrong: resize the thumb through
 `::-webkit-slider-thumb { inline-size: … }` yourself and the rail is still inset for the
 old size, so the gaps come back at whatever the difference is.
 
+**A thumb pseudo-element does not see the page's `color`.** The browser gives the control
+one of its own, so `currentcolor` written inside a `::-webkit-slider-thumb` or
+`::-moz-range-thumb` rule resolves to that rather than to the text around it — white in
+Chromium whatever the page says, mid grey in WebKit, and the author's colour in neither.
+The theme names the colour on the **input** instead, and the thumb rules paint in
+`currentcolor` from there:
+
+```css
+slider-elemental > input[type="range"] {
+  color: var(--slider-elemental-thumb);
+}
+slider-elemental > input[type="range"]::-webkit-slider-thumb {
+  background: currentcolor;
+}
+```
+
+Worth knowing if you write your own thumb rule: paint it in `currentcolor` and set `color`
+on the input, or hand it a literal colour. A bare `currentcolor` on the thumb is the one
+that silently draws something else.
+
 | Custom property                    | Default                                              | What it does                                        |
 | ---------------------------------- | ---------------------------------------------------- | --------------------------------------------------- |
 | `--slider-elemental-thumb-size`    | `1rem`                                               | Thumb width and height. Also the control's height, what the fill is inset by, and the strip the track is centred on |
@@ -375,9 +487,15 @@ old size, so the gaps come back at whatever the difference is.
 | `--slider-elemental-thumb-radius`  | `50%`                                                | Thumb shape. `50%` is a circle, `0` a square        |
 | `--slider-elemental-track`         | `color-mix(in srgb, currentcolor 20%, transparent)`  | Outside the selection                               |
 | `--slider-elemental-fill`          | `currentcolor`                                       | Inside it                                           |
-| `--slider-elemental-thumb`         | `currentcolor`                                       | Thumb fill                                          |
+| `--slider-elemental-thumb`         | `var(--slider-elemental-fill)`                       | Thumb fill. Follows the selection unless you set it |
 | `--slider-elemental-focus-width`   | `3px`                                                | Ring around a focused thumb                         |
 | `--slider-elemental-focus-color`   | `color-mix(in srgb, currentcolor 35%, transparent)`  | Ring colour                                         |
+| `--slider-elemental-tooltip-gap`   | `0.375rem`                                           | Between the thumb and the bubble above it           |
+| `--slider-elemental-tooltip-padding-block` | `0.25em`                                     | Above and below the number in it                    |
+| `--slider-elemental-tooltip-padding-inline` | `0.5em`                                     | Either side of it                                   |
+| `--slider-elemental-tooltip-radius` | `6px`                                               | The bubble's corners                                |
+| `--slider-elemental-tooltip-surface` | `CanvasText`                                       | What the bubble is painted in                       |
+| `--slider-elemental-tooltip-color` | `Canvas`                                             | The number on it                                    |
 
 The colours are mixed out of `currentcolor`, so the control takes the page's palette with
 nothing to configure:
@@ -385,15 +503,41 @@ nothing to configure:
 ```css
 slider-elemental.brand {
   --slider-elemental-fill: rebeccapurple;
-  --slider-elemental-thumb: rebeccapurple;
   --slider-elemental-thumb-size: 1.25rem;
 }
 ```
+
+The thumb comes with it — it defaults to `var(--slider-elemental-fill)`, because the thumb
+is the end of the selection and the two are one thing to look at. Set
+`--slider-elemental-thumb` where it has to differ; forced-colors mode does exactly that, so
+a `Highlight` thumb is not lost on a `Highlight` track.
+
+**Hiding the fill hides the thumb with it.** `--slider-elemental-fill: transparent` is a
+real thing to write — a slider drawn over something else that is already showing the
+selection — and there the thumb has to be named back on the same rule, or the control loses
+the one part you still have to grab:
+
+```css
+.slider-over-something {
+  --slider-elemental-fill: transparent;
+  --slider-elemental-thumb: currentcolor;
+}
+```
+
+A `var()` fallback cannot catch this, because a fallback fires on a property that is
+*unset* and `transparent` is a value like any other.
 
 The focus ring is a spread `box-shadow` on the thumb rather than an `outline` on the input,
 because an outline on the input is a rectangle around the whole track and the thing that
 took focus is one thumb on it. In forced-colors mode, where shadows are dropped, it goes
 back to being an outline and the fill is repainted in `Highlight`.
+
+The value bubble is the one part that does not mix out of `currentcolor` — it takes
+`CanvasText` on `Canvas`, the page's own two extremes swapped, because it hangs above the
+control over content this element knows nothing about and has to be legible on all of it.
+That also means it follows a light/dark switch with nothing to configure. In forced-colors
+mode it turns the right way up and grows a `CanvasText` rim, since a box painted in the
+mode's text colour is a solid block where the mode expects a page.
 
 ## Slider, or something else?
 
