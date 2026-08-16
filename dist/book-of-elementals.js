@@ -2335,14 +2335,27 @@
       this.initialized = false;
     }
     onEvent(e) {
+      if (e.type === "invalid") {
+        e.preventDefault();
+        this.takeFocus();
+      }
+      setTimeout(() => this.settle(e.type), 0);
+    }
+    /**
+     * What the control says now, and what to do about it.
+     *
+     * `validity.valid` rather than `checkValidity()`, which is the same answer with an
+     * `invalid` event fired alongside it - straight back into `onEvent`, where every blur
+     * would arrive as a refused submit and light up a field nobody has filled in yet.
+     */
+    settle(type) {
+      if (!this.initialized) return;
       const control = this.control;
       if (!control) return;
-      const action = fieldAction(e.type, control.validity.valid, this.showing, this.dirty);
-      if (e.type === "invalid") e.preventDefault();
-      if (action === "clear" && e.type === "reset" && this.serverMessage) this.show(this.serverMessage);
+      const action = fieldAction(type, control.validity.valid, this.showing, this.dirty);
+      if (action === "clear" && type === "reset" && this.serverMessage) this.show(this.serverMessage);
       else if (action === "show") this.show(control.validationMessage);
       else if (action === "clear") this.clear();
-      if (e.type === "invalid") this.takeFocus();
     }
     /**
      * Put focus on this control if it is the first thing in the form standing in the way.

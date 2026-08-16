@@ -231,6 +231,34 @@ field wants in a hint next to it, the way the demo above does — which is
 and worth doing whether or not anything is ever wrong — and use `setCustomValidity()` when the
 message itself has to be specific.
 
+### Two fields that have to agree
+
+A confirm field is the constraint HTML has no attribute for, and `setCustomValidity()` is
+where it goes. There is no `match` attribute here, because this is already the whole of it:
+
+```javascript
+const check = () => confirm.setCustomValidity(
+  confirm.value === password.value ? '' : 'Passwords do not match.'
+);
+confirm.addEventListener('input', check);
+password.addEventListener('input', check); // the half that is usually forgotten
+```
+
+That second listener is the bug in most hand-written versions: editing the *password* after
+the confirmation was already filled in leaves a mismatch nothing re-checks. The element
+shows, announces and clears whatever those four lines decide, so the accessible half is not
+written twice.
+
+What it cannot do is speak for a field the reader is not in. Changing the password says
+nothing under the confirm field until they come back to it or submit — an element watching
+one control cannot know another one moved, and shouting about the second field while they
+are still typing in the first would be the wrong answer anyway.
+
+The element reads the validity at the *end* of the event rather than during it, which is
+what makes the above work at all: a page's `input` listener is registered after the element
+upgraded, so it runs after the element's. Reading any sooner would report the answer from
+before your rule ran, and the message would clear a keystroke late.
+
 ## What it does not do
 
 | | Why |

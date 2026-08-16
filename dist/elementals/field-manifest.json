@@ -118,6 +118,16 @@
             },
             {
               "kind": "method",
+              "name": "settle",
+              "parameters": [
+                {
+                  "name": "type"
+                }
+              ],
+              "description": "What the control says now, and what to do about it.\n\n`validity.valid` rather than `checkValidity()`, which is the same answer with an\n`invalid` event fired alongside it - straight back into `onEvent`, where every blur\nwould arrive as a refused submit and light up a field nobody has filled in yet."
+            },
+            {
+              "kind": "method",
               "name": "takeFocus",
               "description": "Put focus on this control if it is the first thing in the form standing in the way.\n\nCancelling `invalid` is what drops the bubble, and it drops the browser's focus with\nit: measured in Chromium and WebKit, a refused submit then leaves focus on the button\n(Chromium) or on `<body>` (WebKit). Either one is a form that says nothing and goes\nnowhere, which is worse than the bubble this element was replacing.\n\nEvery invalid control in the form gets its own `invalid` event, so without the check\nthe last of them would win the race and the reader would land past the field that\nstopped the submit."
             },

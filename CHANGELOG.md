@@ -53,6 +53,12 @@ may already be targeting**, since neither shows up in a function signature.
   how a server error survives with no script, and a form reset puts it back. `field-validity`
   carries `detail.valid` and `detail.message`.
 
+  **The validity is read at the end of the event, not during it.** `setCustomValidity()` is
+  called from an `input` listener the page adds after the element upgraded, so it runs after
+  the element's — reading any sooner reports the answer from before the page's own rule ran,
+  and the message clears a keystroke late. That is what makes a confirm-password field work
+  with no `match` attribute to learn.
+
   Not covered: radio and checkbox groups (one message belongs to one answer — a group is a
   `<fieldset>`), error summaries at the top of a form, and any styling of the control. The
   theme styles the message and nothing else; `[aria-invalid="true"]` is there for your CSS.

@@ -201,22 +201,47 @@ export class FieldElemental extends ElementBase {
   }
 
   onEvent(e) {
+    // Both of these have to happen in the turn the event arrived in. `preventDefault` is
+    // ignored once the dispatch is over, and focus wants to land in the same turn as the
+    // submit it is answering.
+    if (e.type === 'invalid') {
+      // The bubble goes whether or not the message changes. It is the one thing this
+      // element is replacing, and a submit refused twice would otherwise show it the
+      // second time.
+      e.preventDefault();
+      this.takeFocus();
+    }
+    // Reading the validity is what waits, and it waits for the rest of this event.
+    //
+    // `setCustomValidity()` is the platform's own way to add a constraint the attributes
+    // cannot express - two fields that have to agree, a code checked as it is typed - and
+    // it is called from an `input` listener the page adds after this element upgraded,
+    // which means after this handler. Reading `validity` here would report the answer from
+    // before the page's own rule ran: a message that clears one keystroke late, and a
+    // field that says it is fine while the rule says it is not.
+    setTimeout(() => this.settle(e.type), 0);
+  }
+
+  /**
+   * What the control says now, and what to do about it.
+   *
+   * `validity.valid` rather than `checkValidity()`, which is the same answer with an
+   * `invalid` event fired alongside it - straight back into `onEvent`, where every blur
+   * would arrive as a refused submit and light up a field nobody has filled in yet.
+   */
+  settle(type) {
+    // A timeout outliving the element it was scheduled by, which is a page that removed
+    // the field while a keystroke was still in the air.
+    if (!this.initialized) return;
     const control = this.control;
     if (!control) return;
-    // `validity.valid` rather than `checkValidity()`, which is the same answer with an
-    // `invalid` event fired alongside it - straight back into this handler, where every
-    // blur would arrive as a refused submit and light up a field nobody has filled in yet.
-    const action = fieldAction(e.type, control.validity.valid, this.showing, this.dirty);
-    // The bubble goes whether or not the message changes. It is the one thing this element
-    // is replacing, and a submit refused twice would otherwise show it the second time.
-    if (e.type === 'invalid') e.preventDefault();
+    const action = fieldAction(type, control.validity.valid, this.showing, this.dirty);
     // A reset puts the values back to the ones the page was rendered with, and a message
     // the page was rendered with was about exactly those. Taking it down would leave the
     // form holding the value the server already refused, with nothing on screen saying so.
-    if (action === 'clear' && e.type === 'reset' && this.serverMessage) this.show(this.serverMessage);
+    if (action === 'clear' && type === 'reset' && this.serverMessage) this.show(this.serverMessage);
     else if (action === 'show') this.show(control.validationMessage);
     else if (action === 'clear') this.clear();
-    if (e.type === 'invalid') this.takeFocus();
   }
 
   /**
