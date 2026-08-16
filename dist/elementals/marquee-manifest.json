@@ -1,0 +1,302 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/marquee/index.js",
+      "declarations": [
+        {
+          "kind": "variable",
+          "name": "DEFAULT_SPEED",
+          "type": {
+            "text": "number"
+          },
+          "default": "50",
+          "description": "Pixels a second, when `speed` says nothing usable. The figure the ecosystem settled on."
+        },
+        {
+          "kind": "variable",
+          "name": "MAX_CLONES",
+          "type": {
+            "text": "number"
+          },
+          "default": "20",
+          "description": "The most copies of the track this will ever make.\n\nEvery copy is a full subtree in the document - `inert` and out of the accessibility tree,\nbut still nodes to lay out and paint. A track one narrow item wide against a wide screen\nasks for hundreds, and the honest answer there is a visible gap the author can see and fix\nwith more content, rather than a page that quietly grew a thousand elements."
+        },
+        {
+          "kind": "function",
+          "name": "cloneCount",
+          "parameters": [
+            {
+              "name": "trackWidth"
+            },
+            {
+              "name": "gapWidth"
+            },
+            {
+              "name": "containerWidth"
+            },
+            {
+              "name": "max",
+              "default": "MAX_CLONES"
+            }
+          ],
+          "description": "How many copies of the track it takes to cover the container without a gap.\n\nThe strip repeats every `track + gap`, which is also how far one lap travels. A lap ends\nwith the original translated that far out of frame, and what the reader sees at that moment\nis whatever is behind it - so the strip minus one repeat has to still cover the container.\n\n**The gap on the end is the one the strip does not have**, and it is the whole reason this\nis not simply `container / repeat`. A strip of `n + 1` copies carries `n` gaps and none\nafter the last, so it is `(n + 1) x repeat - gap` long, not `(n + 1) x repeat`. Solve\n`(n + 1) x repeat - gap - repeat >= container` and the gap moves to the other side:\n`n >= (container + gap) / repeat`. Count it the shorter way and the strip is up to one gap\nshort of the frame, which is a sliver of empty container in the last moments before the\nlap wraps - visible as a blink, and blamed on the wrap rather than on the arithmetic.\n\n**One is the floor, and zero is not an option while it moves.** A track already wider than\nthe container still needs a copy behind it: without one, the lap ends on empty container\nand the loop reads as a jump. The formula gives that on its own - any positive container\nrounds up to at least one - so there is nothing here enforcing it. Zero is what a track\nwith no width gets, because there is nothing to loop, and what a container with no width\ngets, because a `display: none` panel and a closed `<details>` both measure zero and\ncloning against that number fills the page the moment it opens."
+        },
+        {
+          "kind": "function",
+          "name": "cycleDuration",
+          "parameters": [
+            {
+              "name": "distance"
+            },
+            {
+              "name": "speed"
+            }
+          ],
+          "description": "One lap, in seconds: the distance between two copies at the speed asked for. A speed that\nis not a positive number falls back rather than resolving to a `NaN` duration, which is an\nanimation that never runs with the strip parked wherever the clones left it."
+        },
+        {
+          "kind": "class",
+          "description": "`<marquee-elemental>` custom element.\n\nA row of content that scrolls forever - a logo strip, a ticker - built out of the list you\nalready wrote.\n\nThere is no APG pattern for this, because there is no widget: nothing here is operated, and\nthe content is the same content it was standing still. What there is instead is an\nobligation, and it is a Level A one.\n[WCAG 2.2 2.2.2 Pause, Stop, Hide](https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide.html)\nsays movement that starts on its own, runs longer than five seconds and sits beside other\ncontent has to have a mechanism to stop it - and an infinite loop is longer than five\nseconds. Every marquee in the ecosystem leaves that mechanism to you: the CSS-only recipes\npause on `:hover`, which no keyboard has, and the component libraries hand you a `play`\nprop and a hook to build the button out of. **This writes the button.**\n\nThe second half is the one nobody has at all. A seamless loop is copies of the track, and a\ncopy of a logo strip is a copy of its links: `aria-hidden` keeps them out of the screen\nreader, and does nothing whatever about <kbd>Tab</kbd>, so the keyboard walks into copies of\nthe same links scrolling past under the focus ring. The copies here are `inert` as well as\n`aria-hidden`, and their `id`s are stripped on the way out, because a duplicated `id` is\nthe same bug one layer down.\n\n**The copies are counted, not guessed.** Two of everything is the usual recipe and it is\nright for one screen width: cover a wide monitor with a short track and the loop shows a\nhole. This measures the track against the container and clones until the strip covers it,\nagain whenever a resize changes the answer - one clone when the track already fills the\ncontainer, more when it does not, and none at all while nothing is moving, so a reader on\nreduced motion is not handed copies of the page they never asked to see move.\n\nLight DOM, no shadow root. Nothing you wrote is moved or wrapped - the copies are appended\nafter it and the control after those. With no script it is a list, wrapped or scrolling the\nway any list of things does, every item in the page and in reading order.\n\nponytail: no vertical axis, no `pauseOnClick`, no gradient-mask props. The fade at the\nedges is the theme's, the gap is a custom property, and the axis is one someone can ask\nfor when they have a ticker that needs it.",
+          "name": "MarqueeElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between one copy of the track and the next, and between the items inside a `<ul>` or `<ol>` track.",
+              "name": "--marquee-elemental-gap",
+              "default": "2rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Theme. How far the two edges fade out. `0` is a hard edge.",
+              "name": "--marquee-elemental-fade",
+              "default": "2rem"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. What the edges fade into and the button is painted on: the page's own background, so re-point it on a card.",
+              "name": "--marquee-elemental-surface",
+              "default": "Canvas"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. The rim around the button.",
+              "name": "--marquee-elemental-border-color",
+              "default": "currentcolor at 30%"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. Its fill under the pointer.",
+              "name": "--marquee-elemental-hover",
+              "default": "currentcolor at 10% over the surface"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Theme. The button's box.",
+              "name": "--marquee-elemental-control-size",
+              "default": "2rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Theme. Its corners.",
+              "name": "--marquee-elemental-control-radius",
+              "default": "50%"
+            }
+          ],
+          "slots": [
+            {
+              "description": "The content to loop, usually one `<ul>`. Whatever you write is the track, and the track is what gets copied.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "track",
+              "type": {
+                "text": "array"
+              },
+              "default": "[]",
+              "description": "What the author wrote, captured at upgrade. Held rather than re-read, because after the\nfirst lap the element's own children are mostly copies of it."
+            },
+            {
+              "kind": "field",
+              "name": "clones",
+              "description": "The copies.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "control",
+              "description": "The pause button, when this wrote one.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "speed",
+              "description": "Pixels a second."
+            },
+            {
+              "kind": "field",
+              "name": "playing",
+              "description": "Whether it is moving. Setting it is the same as pressing the button."
+            },
+            {
+              "kind": "method",
+              "name": "addControl",
+              "description": "Write the pause button.\n\nAppended rather than expected in the markup, for the reason the carousel's controls are:\na button authored by hand is a button that does nothing until the script lands, and a\ndead control is a worse promise than no control.\n\nIts name says what pressing it will do and it carries no `aria-pressed` - the APG's own\nanswer for this button, rather than both, which would have a screen reader read the two\nagainst each other."
+            },
+            {
+              "kind": "method",
+              "name": "labelControl"
+            },
+            {
+              "kind": "method",
+              "name": "measure",
+              "description": "Measure the track against the container, and make the strip cover it.\n\n**Guarded on the width it last saw**, and that guard is load-bearing twice over. Rebuilding\nthe copies restarts the animation from its first frame, so doing it on a resume would put\na jump behind the one gesture that means hold still - and an observer that rebuilt on\nevery callback would be one whose own writes are what it hears next, which is a loop with\nno bottom to it.\n\nThe clones come off before the read, because the number wanted is the width of what the\nauthor wrote and a strip with copies in it is the width of the last answer. It is\nmeasured across the track's own boxes and **not** off the element's `scrollWidth`, which\nis the trap here: `scrollWidth` never reports less than the box it is on, so a short\ntrack in a wide container measures as the container - one copy, and a hole in the loop\nexactly where more copies were needed. Both ends are taken by extent rather than in\norder, because `dir=\"rtl\"` lays the same children out the other way round.\n\nThe gap goes into the distance rather than beside it: a lap has to land the second copy\nexactly where the first one started, which with a gap between them is one track plus one\ngap. It is read off the computed style, so an author's own `--marquee-elemental-gap` is\nin the sum without this having to parse it."
+            },
+            {
+              "kind": "method",
+              "name": "applyTiming",
+              "description": "How far a lap goes and how long it takes, onto the element for the keyframes to read.\nSplit out of the measuring because `speed` changes the second number and not the first,\nand remeasuring to answer it would rebuild the strip to say the same thing."
+            },
+            {
+              "kind": "method",
+              "name": "copyTrack",
+              "description": "One copy of the track.\n\n`inert` and `aria-hidden` are two different readers and both are owed an answer: the\nsecond keeps the copies out of the accessibility tree, and the first is the one every\nother marquee is missing - without it <kbd>Tab</kbd> walks into copies of the same links,\nscrolling past under the focus ring. `id`s come off on the way out, because a document\nwith twenty of the same `id` is one where every `aria-labelledby` and every `#anchor`\nresolves to whichever came first."
+            },
+            {
+              "kind": "method",
+              "name": "removeClones"
+            },
+            {
+              "kind": "method",
+              "name": "play",
+              "description": "Start moving, making the copies it takes to do it seamlessly if they are not there yet."
+            },
+            {
+              "kind": "method",
+              "name": "pause",
+              "description": "Stop.\n\nThe copies stay where they are. Taking them out would reflow the strip back to the\nauthor's one track under a reader who has just asked for the movement to stop, which is\na jump asked for by the one gesture that means \"hold still\"."
+            }
+          ],
+          "events": [
+            {
+              "name": "marquee-toggle",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "`detail.playing` is whether it is moving now."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "speed",
+              "type": {
+                "text": "number"
+              },
+              "description": "Pixels a second. Anything that is not a positive number is the default.",
+              "default": "50"
+            },
+            {
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Travel the other way. Flipped again under `dir=\"rtl\"`, where the other way is the default one.",
+              "name": "reverse",
+              "default": "false"
+            },
+            {
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Do not write the pause button. For a page that provides the mechanism itself - one control over several strips, a site-wide motion switch - through `.play()` and `.pause()`. With nothing else on the page it is 2.2.2 unmet, and yours to meet.",
+              "name": "no-controls",
+              "default": "false"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "The control's accessible name while stopped.",
+              "name": "play-text",
+              "default": "Start the moving content"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "Its name while moving. `--marquee-elemental-distance` and `--marquee-elemental-duration` are deliberately not tagged below. The element writes them into its own `style` attribute, and an inline declaration beats any stylesheet - so a knob for either would be a control that cannot move anything, and the docs panel is built out of these tags. They are outputs, and the page describes them as such.",
+              "name": "pause-text",
+              "default": "Stop the moving content"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "marquee-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "DEFAULT_SPEED",
+          "declaration": {
+            "name": "DEFAULT_SPEED",
+            "module": "src/elementals/marquee/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MAX_CLONES",
+          "declaration": {
+            "name": "MAX_CLONES",
+            "module": "src/elementals/marquee/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "cloneCount",
+          "declaration": {
+            "name": "cloneCount",
+            "module": "src/elementals/marquee/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "cycleDuration",
+          "declaration": {
+            "name": "cycleDuration",
+            "module": "src/elementals/marquee/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MarqueeElemental",
+          "declaration": {
+            "name": "MarqueeElemental",
+            "module": "src/elementals/marquee/index.js"
+          }
+        }
+      ]
+    }
+  ]
+}

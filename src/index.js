@@ -7,6 +7,7 @@ export * from './elementals/checkbox-group/index.js';
 export * from './elementals/combobox/index.js';
 export * from './elementals/copy/index.js';
 export * from './elementals/disclosure/index.js';
+export * from './elementals/marquee/index.js';
 export * from './elementals/menu/index.js';
 export * from './elementals/modal/index.js';
 export * from './elementals/navbar/index.js';

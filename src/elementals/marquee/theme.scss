@@ -1,0 +1,77 @@
+// Optional look for `<marquee-elemental>`. Not part of the element's own stylesheet and not
+// in its bundle: that one lays out the strip and runs the lap, and a light-DOM element cannot
+// scope a look away from a page that did not ask for one. Import this when you want the look,
+// skip it when you do not.
+
+// Two things only: the edges the strip travels out through, and the button that stops it.
+// Nothing here has an opinion about what is on the strip - a logo is the author's image at the
+// author's size, and a theme that greyed them out until hover would be a design system's
+// answer written into a book of elements.
+
+// On the bare tag and not on `:defined`, for the reason `index.scss` gives at the top: a page
+// replacing one of these writes a plain `marquee-elemental { ... }` rule, and a default hidden
+// behind `:defined` outweighs it.
+marquee-elemental {
+  --marquee-elemental-fade: 2rem;
+  --marquee-elemental-control-size: 2rem;
+  --marquee-elemental-control-radius: 50%;
+
+  // The colour the edges fade into, and the one the button is painted on: the page's own
+  // background, so both sit in whatever palette is already there, including a theme switch.
+  // It is the one value here that knows something about its surroundings, so it is the one to
+  // re-point when they are not what it assumes - on a card, and on a page that themes in
+  // custom properties without declaring `color-scheme`, where a dark page keeps a white
+  // `Canvas`.
+  --marquee-elemental-surface: Canvas;
+  --marquee-elemental-border-color: color-mix(in srgb, currentcolor 30%, transparent);
+  --marquee-elemental-hover: color-mix(in srgb, currentcolor 10%, var(--marquee-elemental-surface));
+}
+
+marquee-elemental:defined {
+  // The two edges, drawn as overlays rather than as a mask on the element. A mask would take
+  // the button down with them: it sits at the end edge, which is the part being faded to
+  // nothing, and a stop control you cannot see is the one thing here that has to stay solid.
+  &::before,
+  &::after {
+    position: absolute;
+    z-index: 0;
+    inset-block: 0;
+    width: var(--marquee-elemental-fade);
+    content: "";
+
+    // Decoration over content: never in the way of a pointer aiming at a logo underneath.
+    pointer-events: none;
+  }
+
+  &::before {
+    inset-inline-start: 0;
+    background: linear-gradient(to var(--marquee-elemental-fade-start, right), var(--marquee-elemental-surface), transparent);
+  }
+
+  &::after {
+    inset-inline-end: 0;
+    background: linear-gradient(to var(--marquee-elemental-fade-end, left), var(--marquee-elemental-surface), transparent);
+  }
+
+  // Physical directions, flipped as a pair: `to right` on the inline-start edge is the fade
+  // running away from that edge, and in `rtl` the inline-start edge is the right-hand one.
+  &:dir(rtl) {
+    --marquee-elemental-fade-start: left;
+    --marquee-elemental-fade-end: right;
+  }
+
+  > .marquee-elemental-control {
+    width: var(--marquee-elemental-control-size);
+    height: var(--marquee-elemental-control-size);
+    margin-inline-end: calc(var(--marquee-elemental-fade) / 4);
+    color: inherit;
+    cursor: pointer;
+    background: var(--marquee-elemental-surface);
+    border: 1px solid var(--marquee-elemental-border-color);
+    border-radius: var(--marquee-elemental-control-radius);
+
+    &:hover {
+      background: var(--marquee-elemental-hover);
+    }
+  }
+}

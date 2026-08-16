@@ -11,6 +11,7 @@ const browserGlobals = {
   AbortController: 'readonly',
   IntersectionObserver: 'readonly',
   MutationObserver: 'readonly',
+  ResizeObserver: 'readonly',
   decodeURIComponent: 'readonly',
   setTimeout: 'readonly',
   clearTimeout: 'readonly',

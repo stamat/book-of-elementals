@@ -34,6 +34,7 @@ holds the JavaScript helpers, this one holds the elements.
 | `<toolbar-elemental>`    | [APG Toolbar](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/) — a row of buttons the arrows walk and Tab passes in one step |
 | `<tooltip-elemental>`    | [APG Tooltip](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/) as far as it has consensus — a description on hover and focus, still on the page without script |
 | `<copy-elemental>`       | No APG pattern — a `<button>`, the clipboard write behind it, and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-changes.html) every copy button forgets |
+| `<marquee-elemental>`    | No APG pattern — a strip that loops, with the copies counted against the container, kept out of the tab order with `inert`, and the [stop button](https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide.html) every other marquee leaves you to write |
 | `<progress-elemental>`   | No APG pattern — `<progress>` already is one, so this adds only what it has never had: where its fill ends as something CSS can draw with, and a second value for the part loaded but not played |
 | `<search-elemental>`     | No APG pattern — the query half of a search field: the debounce, the abort, the loading state and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html) a panel filling itself does not make |
 
@@ -437,6 +438,59 @@ padding is a floor the height cannot get under.
 The element is `display: contents`, so dropping it around existing markup changes
 no layout. With scripting off the region is simply visible and the button is not
 offered, which for a long description is the right way round.
+
+## `<marquee-elemental>`
+
+A strip that scrolls forever — a logo wall, a ticker — built out of the list you
+already wrote:
+
+```html
+<marquee-elemental aria-label="Sponsors" speed="60">
+  <ul>
+    <li><a href="/ferrum"><img src="/logo/ferrum.svg" alt="Ferrum &amp; Co."></a></li>
+  </ul>
+</marquee-elemental>
+```
+
+| Attribute     | Type    | Default                     | Description                                                          |
+| ------------- | ------- | --------------------------- | ---------------------------------------------------------------------- |
+| `speed`       | number  | `50`                        | Pixels a second. Anything not a positive number is the default.       |
+| `reverse`     | boolean | off                         | Travel the other way. Flipped again under `dir="rtl"`.                |
+| `no-controls` | boolean | off                         | Do not write the stop button — the mechanism becomes yours.           |
+| `play-text`   | string  | `Start the moving content`  | The button's accessible name while stopped.                           |
+| `pause-text`  | string  | `Stop the moving content`   | Its name while moving.                                                |
+
+**There is no APG pattern here, because nothing is operated.** What there is instead is
+an obligation, and it is a Level A one:
+[WCAG 2.2 SC 2.2.2 Pause, Stop, Hide](https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide.html)
+asks for a mechanism to stop movement that starts on its own and runs past five seconds,
+and an infinite loop runs past five seconds. Every marquee in the ecosystem leaves that
+mechanism to you — the CSS-only recipes pause on `:hover`, which no keyboard has, and
+[react-fast-marquee](https://github.com/justin-chu/react-fast-marquee),
+[Nuxt UI](https://ui.nuxt.com/docs/components/marquee) and
+[Chakra UI](https://chakra-ui.com/docs/components/marquee) hand you a prop and a hook to
+build the button out of. This writes the button.
+
+**The second half is the one nobody has.** A seamless loop is copies of the track, and a
+copy of a logo strip is a copy of its links: `aria-hidden` keeps them out of a screen
+reader and does nothing whatever about Tab, so the keyboard walks into copies of the same
+links scrolling past under the focus ring. The copies here are `inert` as well, and their
+`id`s are stripped, because a duplicated `id` is the same bug one layer down.
+
+**The copies are counted, not guessed.** Two of everything is the usual recipe and it is
+right for one screen width; cover a wide monitor with a short track and the loop shows a
+hole. This measures the track against the container and clones until the strip covers it,
+again whenever a resize changes the answer — one copy when the track already fills the
+container, up to 20 when it does not, and none at all while nothing is moving, so a reader
+on `prefers-reduced-motion` is not handed copies of a page they never asked to see move.
+The button still says Start, because asking a system for less movement is not the same as
+never wanting this strip to move.
+
+The pointer, focus and the button all hold it still — the first two everywhere except over the
+button itself, which sits on the strip: counting it would stop the strip as the pointer
+arrived, while the button still read Stop, so the press changed nothing anybody could see. With no script there is no strip at
+all: every rule in the stylesheet is behind `:defined`, so the logos wrap the way any list
+of things does.
 
 ## `<menu-elemental>`
 

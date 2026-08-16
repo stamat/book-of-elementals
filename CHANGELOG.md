@@ -17,6 +17,55 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Added
 
+- **`<marquee-elemental>`** — a strip that scrolls forever, out of the list you already
+  wrote. No APG pattern, because nothing in it is operated; what there is instead is
+  [SC 2.2.2 Pause, Stop, Hide](https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide.html),
+  Level A, which every other marquee leaves to the author — the CSS recipes pause on
+  `:hover`, which no keyboard has, and the component libraries hand you a `play` prop and a
+  hook to build the button out of. This writes the button, names it for what pressing it will
+  do, and stops on the pointer and on focus as well.
+
+  **The copies are counted against the container, not hard-coded at two.** A lap ends with
+  the original translated its own length out of frame, so the copies behind it have to cover
+  the container: one when the track is already that wide, `⌈(container + gap) ÷ (track + gap)⌉`
+  when it is not, capped at 20, and none at all while it is stopped. The `+ gap` on the
+  container is the gap the strip does not have after its last copy, and counting without it
+  leaves a sliver of empty container in the last moments of a lap — a blink at the wrap that
+  is really an off-by-one-gap two seconds earlier. Recounted on a `ResizeObserver`,
+  and not rebuilt when the width came out the same, because rebuilding restarts the lap.
+  `prefers-reduced-motion` starts it stopped with no copies made, and the button still says
+  Start.
+
+  `speed` is pixels a second, `reverse` turns it round, `no-controls` takes the button away
+  for a page providing the mechanism itself, and `play-text` / `pause-text` are the names.
+  `.play()`, `.pause()` and `playing` are the same switch from script; `marquee-toggle`
+  carries `detail.playing`.
+
+  **DOM:** the copies are appended after your markup as `[data-marquee-clone]`, each one
+  `inert` and `aria-hidden="true"` with every `id` inside it stripped — `aria-hidden` alone
+  is what leaves the keyboard walking into copies of the same links, and a duplicated `id` is
+  the same bug one layer down. A `<button class="marquee-elemental-control">` is appended
+  last unless `no-controls` says otherwise, and a `<ul>` or `<ol>` track gets `role="list"`
+  written back onto it, because `list-style: none` is what takes list semantics away from
+  VoiceOver in Safari. Two attributes carry the state: `data-marquee-running` while the lap
+  exists and `data-marquee-paused` while it is stopped. `data-marquee-running` is what keeps
+  the animation from existing before the distance does — WebKit resolves the custom properties
+  in a keyframe once, when the animation is created, so an animation created earlier travels
+  zero for as long as it lives.
+  **CSS to know about if you restyle it:** the pointer and focus hold the strip everywhere
+  except over the button, which sits on the strip — counted, it stops the strip as the pointer
+  arrives while the button still reads Stop, so the press changes nothing visible. The lap is
+  set with `animation-*` longhands and never the `animation` shorthand, which would take
+  `animation-play-state` back to `running` and undo every pause. And every custom property is
+  declared on the bare `marquee-elemental` selector rather than on `marquee-elemental:defined`,
+  so a plain `marquee-elemental { ... }` rule of yours outweighs the default.
+  **CSS:** everything in `style.scss` is behind `:defined`, so with no script there is no
+  strip — the list wraps as it always did. New properties to target:
+  `--marquee-elemental-gap`, and `--marquee-elemental-distance` and
+  `--marquee-elemental-duration`, which the element writes. `theme.scss` adds the edge fades
+  and the button through `--marquee-elemental-fade`, `-surface`, `-border-color`, `-hover`,
+  `-control-size` and `-control-radius`.
+
 - **`<slider-elemental tooltip>`** — a value bubble that follows the pointer: `thumb` for the
   one it is on, `track` for the value a press anywhere else would set, `thumb track` for
   both, and a bare `tooltip` for the thumb. The track number is put on the `step` the way the

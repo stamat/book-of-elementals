@@ -1,0 +1,149 @@
+// Structure for `<marquee-elemental>`: the strip, the lap it travels, and the three ways it
+// holds still. No look - that is `theme.scss`, which this does not import.
+
+// Everything is gated on `:defined`, and that is the whole of the no-script promise. The
+// copies that make the loop seamless only exist after the element has upgraded, so before
+// that there is nothing to clip and nothing to move: the element is left as it was written,
+// and a list of logos is a list of logos, wrapping the way any list does.
+
+// **The defaults an author sets go on the bare tag, never on `:defined`.** A page overriding
+// one writes `marquee-elemental { --marquee-elemental-gap: 1rem }`, which is one class less
+// specific than `:defined` - so a default declared behind the gate wins over the page that
+// meant to replace it, silently, and only for this element in the book. The gate is for the
+// layout below, which has to wait for the copies; a custom property has nothing to wait for.
+marquee-elemental {
+  --marquee-elemental-gap: 2rem;
+}
+
+marquee-elemental:defined {
+  // Which way the lap runs, as one value two things flip. `dir="rtl"` reverses it because
+  // the default direction is "towards the end of the line" and that end has moved; `reverse`
+  // reverses whatever that came out as. Both at once is back where it started, which is the
+  // last rule, and is why this is a variable rather than two `animation-direction`
+  // declarations racing each other on specificity.
+  --marquee-elemental-direction: normal;
+
+  position: relative;
+  display: flex;
+  gap: var(--marquee-elemental-gap);
+  align-items: center;
+
+  // `clip`, not `hidden`. A hidden box is still a scroll container, and a scroll container
+  // that has been scrolled - by a focus landing in it, by an anchor, by a stray gesture -
+  // stays scrolled: the strip sits permanently off its own alignment with a hole at one end.
+  // Clipping cannot be scrolled at all, so there is no offset to end up stuck at.
+  overflow: clip;
+
+  > * {
+    // Each copy keeps its own width. Without this the flex line divides the container
+    // between them and every copy is squeezed to a fraction of the track it is a copy of.
+    flex: none;
+  }
+
+  // Not decoration. A `<ul>` is a column of blocks, and a column scrolled sideways is not a
+  // track - so the row, and the markers and indent that come with a list nobody is reading
+  // as a list, are structure. The element writes `role="list"` back onto it, because
+  // `list-style: none` is what takes the list semantics away from VoiceOver in Safari.
+  > ul,
+  > ol {
+    display: flex;
+    gap: var(--marquee-elemental-gap);
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  // The lap. Every copy travels the same number of pixels at the same time, so what moves is
+  // the strip - the element writes the distance between one copy and the next, which is one
+  // track plus one gap, and the copies behind the original are what is in frame when it has
+  // travelled its own length.
+
+  // `[data-marquee-running]` is the element saying the two numbers below it are written, and
+  // it is not decoration: WebKit resolves the custom properties in a keyframe once, when the
+  // animation is created, so an animation that exists before the distance does is one that
+  // travels zero for as long as it lives. The attribute is what holds it back until there is
+  // something to travel, and what takes it away and gives it back when a resize changes the
+  // answer.
+  // Longhands, and never the `animation` shorthand: the shorthand also sets
+  // `animation-play-state`, back to `running`, because that is what a shorthand does to every
+  // longhand it covers and does not mention. This rule outweighs the three below it, so a
+  // shorthand here would restart the strip the moment anything asked it to hold - the pointer,
+  // the focus, or the button - and the pause would be gone with no rule to blame for it.
+  &[data-marquee-running] > *:not(.marquee-elemental-control) {
+    animation-name: marquee-elemental-lap;
+    animation-duration: var(--marquee-elemental-duration, 0s);
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-direction: var(--marquee-elemental-direction);
+  }
+
+  &[reverse] {
+    --marquee-elemental-direction: reverse;
+  }
+
+  &:dir(rtl) {
+    --marquee-elemental-direction: reverse;
+  }
+
+  &[reverse]:dir(rtl) {
+    --marquee-elemental-direction: normal;
+  }
+
+  // The three ways it holds still. The pointer and the keyboard are the reader looking at
+  // something on the strip; the attribute is the reader having said so with the button.
+
+  // The hover is the element's own and not a copy's, because the copies are `inert` and an
+  // inert box is not hit-tested - what the pointer lands on over one of them is this.
+
+  // There is deliberately no `prefers-reduced-motion` rule here: the element reads that
+  // setting at upgrade and starts stopped, and a rule in the stylesheet would also override
+  // the reader who then pressed Start - taking the choice away in the name of respecting it.
+  &:hover > *,
+  &:focus-within > *,
+  &[data-marquee-paused] > * {
+    animation-play-state: paused;
+  }
+
+  // **The button is not the strip, and giving it back the movement is what makes it work.**
+  // It sits over the content, so a reader reaching for it is hovering the element and, once
+  // pressed, focusing inside it - and holding the strip for either means it stops as the
+  // pointer arrives while the button still reads Stop, so the press changes nothing anybody
+  // can see. That is a control that looks broken, and it is the same sticky hover an iOS tap
+  // leaves behind, which would otherwise hold the strip until something else was touched.
+
+  // A rule of its own rather than a `:not(:has(...))` on the one above: `:has()` inside
+  // `:not()` fails to parse in both WebKit and Chromium, and one bad selector takes its whole
+  // comma-separated list with it - which silently dropped the pause with it. Standing alone,
+  // the worst it can do where `:has()` is missing is leave the button pausing the strip the
+  // way it did before, which is the behaviour to degrade to.
+  &:has(> .marquee-elemental-control:hover):not([data-marquee-paused]) > *,
+  &:has(> .marquee-elemental-control:focus):not([data-marquee-paused]) > * {
+    animation-play-state: running;
+  }
+
+  // Out of the flow, so the strip's width is the strip's and the button is not a copy short.
+  > .marquee-elemental-control {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-end: 0;
+    z-index: 1;
+    translate: 0 -50%;
+
+    // A 16px icon in a button with no padding is a 16px target. 24 is the floor
+    // [WCAG 2.2 2.5.8](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)
+    // puts under it, and it belongs here rather than in the theme because a target too small
+    // to hit is a failure and not a look.
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    min-height: 24px;
+  }
+}
+
+@keyframes marquee-elemental-lap {
+  to {
+    transform: translateX(calc(var(--marquee-elemental-distance, 0px) * -1));
+  }
+}
