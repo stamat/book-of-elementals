@@ -60,6 +60,28 @@ test('at the ends the other thumb has to move, because the moved one cannot', ()
   expect(clampPair(95, 100, 10, 'end', 0, 100)).toEqual([90, 100]);
 });
 
+test('a gap no whole number of steps wide still holds, because the thumb errs outwards', () => {
+  // `step="10"` cannot put a thumb 25 from the other one, so it goes to the notch past it
+  // rather than the nearest. Nearest is 30, which is 20 from the high thumb - a gap of 25
+  // asked for, 20 delivered, and nothing anywhere saying so.
+  expect(clampPair(60, 50, 25, 'start', 0, 100, 10)).toEqual([20, 50]);
+  expect(clampPair(50, 40, 25, 'end', 0, 100, 10)).toEqual([50, 80]);
+});
+
+test('a gap that is a whole number of steps costs nothing extra', () => {
+  expect(clampPair(45, 50, 20, 'start', 0, 100, 10)).toEqual([30, 50]);
+  expect(clampPair(20, 25, 20, 'end', 0, 100, 10)).toEqual([20, 40]);
+});
+
+test('erring outwards at a bound still lands on a notch, and inside the scale', () => {
+  expect(clampPair(0, 5, 25, 'start', 0, 100, 10)).toEqual([0, 30]);
+  expect(clampPair(95, 100, 25, 'end', 0, 100, 10)).toEqual([70, 100]);
+});
+
+test('a step of any is no notches at all, so the gap is met exactly', () => {
+  expect(clampPair(60, 50, 25, 'start', 0, 100, 0)).toEqual([25, 50]);
+});
+
 test('a gap wider than the scale opens the pair as far as the scale goes', () => {
   expect(clampPair(40, 45, 500, 'start', 0, 100)).toEqual([0, 100]);
   expect(clampPair(40, 45, 500, 'end', 0, 100)).toEqual([0, 100]);

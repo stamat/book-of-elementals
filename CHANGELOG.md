@@ -112,6 +112,14 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Fixed
 
+- **`<slider-elemental>` quietly under-delivered `gap` when `step` did not divide it.** The
+  low thumb was pushed to exactly `gap` short of the high one and handed to the input, which
+  put it back on its own notch — the nearest one, which is the one *towards* the other thumb
+  half the time. `step="10"` with `gap="25"` left the pair 20 apart: a gap asked for, a
+  smaller one delivered, and nothing anywhere saying so. The thumb now gives way to the notch
+  past where the gap lands rather than the nearest, which costs at most one notch and cannot
+  be silently wrong. A `gap` that is a whole number of steps is unaffected, as is `step="any"`.
+
 - **`<slider-elemental>`'s thumb never took the page's colour, in any browser.** A thumb
   pseudo-element does not see the page's `color` — the browser gives the control one of its
   own — so the `currentcolor` the theme painted the thumb with resolved to that instead:

@@ -83,17 +83,23 @@ export function ratio(value, min, max) {
  * Except at the ends, where it cannot: `gap` may be wider than the room left between the
  * moved thumb and the bound behind it, and then the other one is what has to move. That is
  * the case a range pinned to its minimum is in every time the low thumb is dragged down.
+ *
+ * The thumb gives way to the notch *past* where the gap lands, never the nearest one. A
+ * `gap` no whole number of steps wide - `step="10"` with `gap="25"` - would otherwise be
+ * handed a value the input rounds back towards the other thumb, leaving the two 20 apart
+ * with a gap of 25 asked for and nothing anywhere saying so. Erring outwards spends at most
+ * one notch and cannot be silently wrong.
  */
-export function clampPair(start, end, gap, moved, min, max) {
+export function clampPair(start, end, gap, moved, min, max, step) {
   if (end - start >= gap) return [start, end];
   if (moved === 'start') {
     const pushed = end - gap;
-    if (pushed >= min) return [pushed, end];
-    return [min, Math.min(min + gap, max)];
+    if (pushed >= min) return [snapToStep(pushed, min, max, step, -1), end];
+    return [min, snapToStep(Math.min(min + gap, max), min, max, step, 1)];
   }
   const pushed = start + gap;
-  if (pushed <= max) return [start, pushed];
-  return [Math.max(max - gap, min), max];
+  if (pushed <= max) return [start, snapToStep(pushed, min, max, step, 1)];
+  return [snapToStep(Math.max(max - gap, min), min, max, step, -1), max];
 }
 
 /**
@@ -168,15 +174,35 @@ function decimals(value) {
  * Rounded to the decimals the step is written with, because binary floating point cannot
  * hold a tenth: three notches up a `step="0.1"` scale is `0.30000000000000004` otherwise,
  * and that is what the reader would see.
+ *
+ * `direction` picks which notch when the value falls between two: `-1` the one below, `1`
+ * the one above, and nothing at all the nearest. Rounding to the nearest is right for a
+ * bubble previewing a press, and wrong for the gap between two thumbs - there, landing on
+ * the near notch is landing closer to the other thumb than the gap allows, so the caller
+ * that has a direction to give gives it.
  */
-export function snapToStep(value, min, max, step) {
+export function snapToStep(value, min, max, step, direction) {
   if (!(step > 0)) return Math.min(Math.max(value, min), max);
   const places = Math.max(decimals(step), decimals(min));
   const trim = (number) => (places ? Number(number.toFixed(places)) : number);
-  const snapped = min + Math.round((value - min) / step) * step;
+  const steps = (value - min) / step;
+  const nearest = Math.round(steps);
+  // A value already on a notch can divide out to 2.9999999999999996, and flooring that
+  // walks a whole notch the wrong way - so an exact hit is taken as exact before either
+  // direction gets a say.
+  const count = Math.abs(steps - nearest) < 1e-9 ? nearest
+    : direction < 0 ? Math.floor(steps)
+      : direction > 0 ? Math.ceil(steps)
+        : nearest;
+  const snapped = min + count * step;
   if (snapped < min) return min;
   if (snapped > max) return trim(min + Math.floor((max - min) / step) * step);
   return trim(snapped);
+}
+
+/** The notch spacing an input is actually on: unset means `1`, and `any` means no notches. */
+export function stepOf(input) {
+  return input.step === 'any' ? 0 : bound(input.step, 1);
 }
 
 /**
@@ -443,7 +469,7 @@ export class SliderElemental extends ElementBase {
     const max = bound(inputs[0].max, 100);
     const start = bound(inputs[0].value, min);
     const end = bound(inputs[1].value, max);
-    const clamped = clampPair(start, end, this.gap, moved, min, max);
+    const clamped = clampPair(start, end, this.gap, moved, min, max, stepOf(inputs[0]));
     if (clamped[0] !== start) inputs[0].value = clamped[0];
     if (clamped[1] !== end) inputs[1].value = clamped[1];
   }
@@ -632,8 +658,7 @@ export class SliderElemental extends ElementBase {
       at = alongTrack(x, m.rect.left, m.rect.width, m.thumb, m.rtl);
       // `step="any"` is the one value meaning no step at all, and `parseFloat` would read it
       // as the missing attribute's default of 1.
-      const step = m.inputs[0].step === 'any' ? 0 : bound(m.inputs[0].step, 1);
-      text = String(snapToStep(m.min + at * (m.max - m.min), m.min, m.max, step));
+      text = String(snapToStep(m.min + at * (m.max - m.min), m.min, m.max, stepOf(m.inputs[0])));
     }
 
     bubble.dataset.tooltip = on;

@@ -16,16 +16,16 @@ Light DOM, no shadow root, nothing moved or wrapped — the one thing it ever in
 <div class="demo-block" style="max-inline-size: 22rem">
   <span id="price-demo-label">Price</span>
   <slider-elemental aria-labelledby="price-demo-label" gap="50">
-    <input type="range" aria-label="Lowest price" min="0" max="1000" value="200">
-    <input type="range" aria-label="Highest price" min="0" max="1000" value="750">
+    <input type="range" aria-label="Lowest price" min="0" max="1000" step="10" value="200">
+    <input type="range" aria-label="Highest price" min="0" max="1000" step="10" value="750">
   </slider-elemental>
 </div>
 
 ```html
 <span id="price-label">Price</span>
 <slider-elemental aria-labelledby="price-label" gap="50">
-  <input type="range" aria-label="Lowest price" min="0" max="1000" value="200" />
-  <input type="range" aria-label="Highest price" min="0" max="1000" value="750" />
+  <input type="range" aria-label="Lowest price" min="0" max="1000" step="10" value="200" />
+  <input type="range" aria-label="Highest price" min="0" max="1000" step="10" value="750" />
 </slider-elemental>
 ```
 
@@ -177,8 +177,8 @@ Nothing configures this — the element counts its inputs:
 
 <!-- a range -->
 <slider-elemental aria-label="Price">
-  <input type="range" aria-label="Lowest" min="0" max="1000" value="200" />
-  <input type="range" aria-label="Highest" min="0" max="1000" value="750" />
+  <input type="range" aria-label="Lowest" min="0" max="1000" step="10" value="200" />
+  <input type="range" aria-label="Highest" min="0" max="1000" step="10" value="750" />
 </slider-elemental>
 ```
 
@@ -187,6 +187,38 @@ element reads them off the first, because two rulers drawn on top of each other 
 control anyone can use. A third input still works as a plain range input; it is not clamped
 and not drawn, because the fill is between the first two.
 
+## Step, and how fast the keyboard moves
+
+There is no `step` on this element, because there is one on the input already — it is the
+native attribute, it is the browser that reads it, and a second name for it here would be a
+second thing to keep in step:
+
+```html
+<slider-elemental aria-label="Price" gap="50">
+  <input type="range" aria-label="Lowest" min="0" max="1000" step="10" value="200" />
+  <input type="range" aria-label="Highest" min="0" max="1000" step="10" value="750" />
+</slider-elemental>
+```
+
+It is worth setting, because the default is `1` and the keyboard is what pays for it — a
+`0`–`1000` scale left at the default is a thousand presses of <kbd>→</kbd> to cross. The
+browser gives you two gears and neither is this element's:
+
+| Key                                         | Moves by                            | On `0`–`1000`      |
+| ------------------------------------------- | ----------------------------------- | ------------------ |
+| <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> | one `step`                  | `1`, or `10` above |
+| <kbd>PageUp</kbd> <kbd>PageDown</kbd>       | a tenth of the range, whatever `step` says | `100`       |
+| <kbd>Home</kbd> <kbd>End</kbd>              | to `min` or `max`                   | `0` / `1000`       |
+
+Measured in Chromium and WebKit, which agree. The coarse gear is already there, so a step
+is about the fine one: pick the smallest change that means anything on your scale — `10` on
+a price in pounds, `1` on a percentage, `0.1` on a rating.
+
+A `gap` that is not a whole number of steps still holds, because the thumb gives way to the
+notch *past* where the gap lands rather than the nearest one. `step="10"` with `gap="25"`
+opens to 30 rather than closing to 20: erring outwards costs at most one notch, and closing
+in would be a gap you asked for and quietly did not get.
+
 ## The gap
 
 `gap` is the least distance the two thumbs may be apart, in the scale's own units — `50` on
@@ -194,8 +226,8 @@ a `0`–`1000` price range is fifty pounds:
 
 ```html
 <slider-elemental aria-label="Price" gap="50">
-  <input type="range" aria-label="Lowest" min="0" max="1000" value="200" />
-  <input type="range" aria-label="Highest" min="0" max="1000" value="750" />
+  <input type="range" aria-label="Lowest" min="0" max="1000" step="10" value="200" />
+  <input type="range" aria-label="Highest" min="0" max="1000" step="10" value="750" />
 </slider-elemental>
 ```
 
@@ -233,8 +265,8 @@ inside, where it would be overwritten:
 
 ```html
 <slider-elemental>
-  <input type="range" min="0" max="1000" value="200" aria-label="Lowest" />
-  <input type="range" min="0" max="1000" value="750" aria-label="Highest" />
+  <input type="range" min="0" max="1000" step="10" value="200" aria-label="Lowest" />
+  <input type="range" min="0" max="1000" step="10" value="750" aria-label="Highest" />
   <p>£<output>200</output> to £<output>750</output></p>
 </slider-elemental>
 ```
@@ -332,8 +364,8 @@ it:
 <!-- two: one name for the pair, one for each end -->
 <span id="price-label">Price</span>
 <slider-elemental aria-labelledby="price-label">
-  <input type="range" aria-label="Lowest price" min="0" max="1000" value="200" />
-  <input type="range" aria-label="Highest price" min="0" max="1000" value="750" />
+  <input type="range" aria-label="Lowest price" min="0" max="1000" step="10" value="200" />
+  <input type="range" aria-label="Highest price" min="0" max="1000" step="10" value="750" />
 </slider-elemental>
 ```
 
@@ -349,8 +381,8 @@ Nothing to do. Each input submits under its own `name`, exactly as it would unwr
 ```html
 <form>
   <slider-elemental aria-label="Price" gap="50">
-    <input type="range" name="min" aria-label="Lowest" min="0" max="1000" value="200" />
-    <input type="range" name="max" aria-label="Highest" min="0" max="1000" value="750" />
+    <input type="range" name="min" aria-label="Lowest" min="0" max="1000" step="10" value="200" />
+    <input type="range" name="max" aria-label="Highest" min="0" max="1000" step="10" value="750" />
   </slider-elemental>
 </form>
 ```
