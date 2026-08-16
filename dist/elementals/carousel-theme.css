@@ -10,6 +10,7 @@ carousel-elemental {
   --carousel-elemental-radius: 999px;
   --carousel-elemental-fade: 400ms;
   --carousel-elemental-chip: Canvas;
+  --carousel-elemental-rotate-hover-color: CanvasText;
   --carousel-elemental-ring: 3px;
 }
 
@@ -100,6 +101,7 @@ carousel-elemental > button[data-carousel-rotate] {
 }
 carousel-elemental > button[data-carousel-rotate]:hover {
   --carousel-elemental-chip: color-mix(in srgb, CanvasText 10%, Canvas);
+  color: var(--carousel-elemental-rotate-hover-color);
 }
 
 @media (prefers-reduced-motion: no-preference) {

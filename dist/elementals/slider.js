@@ -15,16 +15,16 @@
     if (value >= max) return 1;
     return (value - min) / (max - min);
   }
-  function clampPair(start, end, gap, moved, min, max) {
+  function clampPair(start, end, gap, moved, min, max, step) {
     if (end - start >= gap) return [start, end];
     if (moved === "start") {
       const pushed2 = end - gap;
-      if (pushed2 >= min) return [pushed2, end];
-      return [min, Math.min(min + gap, max)];
+      if (pushed2 >= min) return [snapToStep(pushed2, min, max, step, -1), end];
+      return [min, snapToStep(Math.min(min + gap, max), min, max, step, 1)];
     }
     const pushed = start + gap;
-    if (pushed <= max) return [start, pushed];
-    return [Math.max(max - gap, min), max];
+    if (pushed <= max) return [start, snapToStep(pushed, min, max, step, 1)];
+    return [snapToStep(Math.max(max - gap, min), min, max, step, -1), max];
   }
   function stackedThumb(start, end, max) {
     if (start !== end) return null;
@@ -46,14 +46,20 @@
     const text = String(value);
     return text.includes("e") ? 0 : (text.split(".")[1] || "").length;
   }
-  function snapToStep(value, min, max, step) {
+  function snapToStep(value, min, max, step, direction) {
     if (!(step > 0)) return Math.min(Math.max(value, min), max);
     const places = Math.max(decimals(step), decimals(min));
     const trim = (number) => places ? Number(number.toFixed(places)) : number;
-    const snapped = min + Math.round((value - min) / step) * step;
+    const steps = (value - min) / step;
+    const nearest = Math.round(steps);
+    const count = Math.abs(steps - nearest) < 1e-9 ? nearest : direction < 0 ? Math.floor(steps) : direction > 0 ? Math.ceil(steps) : nearest;
+    const snapped = min + count * step;
     if (snapped < min) return min;
     if (snapped > max) return trim(min + Math.floor((max - min) / step) * step);
     return trim(snapped);
+  }
+  function stepOf(input) {
+    return input.step === "any" ? 0 : bound(input.step, 1);
   }
   function thumbUnder(x, left, width, thumb, ratios, rtl) {
     const travel = Math.max(width - thumb, 0);
@@ -200,7 +206,7 @@
       const max = bound(inputs[0].max, 100);
       const start = bound(inputs[0].value, min);
       const end = bound(inputs[1].value, max);
-      const clamped = clampPair(start, end, this.gap, moved, min, max);
+      const clamped = clampPair(start, end, this.gap, moved, min, max, stepOf(inputs[0]));
       if (clamped[0] !== start) inputs[0].value = clamped[0];
       if (clamped[1] !== end) inputs[1].value = clamped[1];
     }
@@ -352,8 +358,7 @@
       let text = over < 0 ? "" : m.inputs[over].value;
       if (over < 0) {
         at = alongTrack(x, m.rect.left, m.rect.width, m.thumb, m.rtl);
-        const step = m.inputs[0].step === "any" ? 0 : bound(m.inputs[0].step, 1);
-        text = String(snapToStep(m.min + at * (m.max - m.min), m.min, m.max, step));
+        text = String(snapToStep(m.min + at * (m.max - m.min), m.min, m.max, stepOf(m.inputs[0])));
       }
       bubble.dataset.tooltip = on;
       bubble.textContent = text;

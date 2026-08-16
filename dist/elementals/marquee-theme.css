@@ -6,6 +6,7 @@ marquee-elemental {
   --marquee-elemental-surface: Canvas;
   --marquee-elemental-border-color: color-mix(in srgb, currentcolor 30%, transparent);
   --marquee-elemental-hover: color-mix(in srgb, currentcolor 10%, var(--marquee-elemental-surface));
+  --marquee-elemental-hover-color: inherit;
 }
 
 marquee-elemental:defined::before, marquee-elemental:defined::after {
@@ -39,6 +40,7 @@ marquee-elemental:defined > .marquee-elemental-control {
   border-radius: var(--marquee-elemental-control-radius);
 }
 marquee-elemental:defined > .marquee-elemental-control:hover {
+  color: var(--marquee-elemental-hover-color);
   background: var(--marquee-elemental-hover);
 }
 /*# sourceMappingURL=marquee-theme.css.map */

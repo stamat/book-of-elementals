@@ -631,6 +631,14 @@
             },
             {
               "type": {
+                "text": "<color>"
+              },
+              "description": "The rotation control's foreground under the pointer: its icon, and the countdown ring with it.",
+              "name": "--carousel-elemental-rotate-hover-color",
+              "default": "CanvasText"
+            },
+            {
+              "type": {
                 "text": "<length>"
               },
               "description": "How thick the rotation control's countdown ring is. A hairline is a countdown nobody reads at a glance.",
@@ -2397,6 +2405,14 @@
               "description": "Theme. Its fill under the pointer.",
               "name": "--marquee-elemental-hover",
               "default": "currentcolor at 10% over the surface"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. Its icon under the pointer. Setting it tints the fill above with it, which is 10% of whatever the icon is.",
+              "name": "--marquee-elemental-hover-color",
+              "default": "inherit"
             },
             {
               "type": {
@@ -4784,9 +4800,12 @@
             },
             {
               "name": "max"
+            },
+            {
+              "name": "step"
             }
           ],
-          "description": "The two values with the thumbs kept apart, and which one gave way.\n\nThe thumb being moved is the one that gives way, so dragging the low thumb into the high\none stops it rather than pushing the high one along - a drag that shoves the other end of\nthe range ahead of it is a drag that changes a value nobody touched.\n\nExcept at the ends, where it cannot: `gap` may be wider than the room left between the\nmoved thumb and the bound behind it, and then the other one is what has to move. That is\nthe case a range pinned to its minimum is in every time the low thumb is dragged down."
+          "description": "The two values with the thumbs kept apart, and which one gave way.\n\nThe thumb being moved is the one that gives way, so dragging the low thumb into the high\none stops it rather than pushing the high one along - a drag that shoves the other end of\nthe range ahead of it is a drag that changes a value nobody touched.\n\nExcept at the ends, where it cannot: `gap` may be wider than the room left between the\nmoved thumb and the bound behind it, and then the other one is what has to move. That is\nthe case a range pinned to its minimum is in every time the low thumb is dragged down.\n\nThe thumb gives way to the notch *past* where the gap lands, never the nearest one. A\n`gap` no whole number of steps wide - `step=\"10\"` with `gap=\"25\"` - would otherwise be\nhanded a value the input rounds back towards the other thumb, leaving the two 20 apart\nwith a gap of 25 asked for and nothing anywhere saying so. Erring outwards spends at most\none notch and cannot be silently wrong."
         },
         {
           "kind": "function",
@@ -4857,9 +4876,22 @@
             },
             {
               "name": "step"
+            },
+            {
+              "name": "direction"
             }
           ],
-          "description": "A value put on the nearest notch, the way a range input puts its own there.\n\nThe notches are counted from `min` rather than from zero, which is the platform's rule:\n`min=\"1\" step=\"10\"` is 1, 11, 21, and a bubble reading out 10 for a press the input would\nmake 11 is a bubble that lies about what it is previewing. Ties round up, which is what\n[MDN says a user agent does](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input/range)\nand what `Math.round` does.\n\nThe top of the scale is the last notch at or below `max`, not `max` - `max` is not always\na whole number of steps above `min`, and where it is not the end of the scale is a value\nthe input cannot hold. `min=\"0\" max=\"100\" step=\"40\"` stops at 80.\n\nRounded to the decimals the step is written with, because binary floating point cannot\nhold a tenth: three notches up a `step=\"0.1\"` scale is `0.30000000000000004` otherwise,\nand that is what the reader would see."
+          "description": "A value put on the nearest notch, the way a range input puts its own there.\n\nThe notches are counted from `min` rather than from zero, which is the platform's rule:\n`min=\"1\" step=\"10\"` is 1, 11, 21, and a bubble reading out 10 for a press the input would\nmake 11 is a bubble that lies about what it is previewing. Ties round up, which is what\n[MDN says a user agent does](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input/range)\nand what `Math.round` does.\n\nThe top of the scale is the last notch at or below `max`, not `max` - `max` is not always\na whole number of steps above `min`, and where it is not the end of the scale is a value\nthe input cannot hold. `min=\"0\" max=\"100\" step=\"40\"` stops at 80.\n\nRounded to the decimals the step is written with, because binary floating point cannot\nhold a tenth: three notches up a `step=\"0.1\"` scale is `0.30000000000000004` otherwise,\nand that is what the reader would see.\n\n`direction` picks which notch when the value falls between two: `-1` the one below, `1`\nthe one above, and nothing at all the nearest. Rounding to the nearest is right for a\nbubble previewing a press, and wrong for the gap between two thumbs - there, landing on\nthe near notch is landing closer to the other thumb than the gap allows, so the caller\nthat has a direction to give gives it."
+        },
+        {
+          "kind": "function",
+          "name": "stepOf",
+          "parameters": [
+            {
+              "name": "input"
+            }
+          ],
+          "description": "The notch spacing an input is actually on: unset means `1`, and `any` means no notches."
         },
         {
           "kind": "function",
@@ -5239,6 +5271,14 @@
           "name": "snapToStep",
           "declaration": {
             "name": "snapToStep",
+            "module": "src/elementals/slider/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "stepOf",
+          "declaration": {
+            "name": "stepOf",
             "module": "src/elementals/slider/index.js"
           }
         },

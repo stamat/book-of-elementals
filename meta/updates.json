@@ -8,8 +8,8 @@
     "updated": "2026-08-05T21:03:21.003Z"
   },
   "docs/elementals/carousel.md": {
-    "hash": "32dcac57a12670b8d19fc7a6e99f9c40a20d73a3",
-    "updated": "2026-08-10T01:36:27.151Z"
+    "hash": "acfefe4ab7cb875a4fc1960ca0cad7d44b4663f0",
+    "updated": "2026-08-16T12:37:33.209Z"
   },
   "docs/elementals/checkbox-group.md": {
     "hash": "98e2e3327e4a80d8a159b35a41eabb19a482c3a8",
@@ -32,8 +32,8 @@
     "updated": "2026-08-16T11:34:31.792Z"
   },
   "docs/elementals/marquee.md": {
-    "hash": "86b79dc21325ff307a1526d031e331a4ae13b79c",
-    "updated": "2026-08-16T12:24:51.419Z"
+    "hash": "725b66e2274b4d5f66f4c243c7bb90ee8bf1a506",
+    "updated": "2026-08-16T12:37:32.100Z"
   },
   "docs/elementals/menu.md": {
     "hash": "e54fbeb3b29e117bce4da278eb75330de0ca5381",
@@ -60,8 +60,8 @@
     "updated": "2026-08-09T18:55:23.424Z"
   },
   "docs/elementals/slider.md": {
-    "hash": "db588d9efd65e18bddf4a9f822b032ccd18c5487",
-    "updated": "2026-08-16T11:01:12.065Z"
+    "hash": "4145bb2a81515f526185a607965ebc31b17c3d0c",
+    "updated": "2026-08-16T12:38:41.261Z"
   },
   "docs/elementals/suggest.md": {
     "hash": "1ce615ec48dad7b1748a66be94c4a5454ad9c32e",

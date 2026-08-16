@@ -104,6 +104,14 @@
             },
             {
               "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. Its icon under the pointer. Setting it tints the fill above with it, which is 10% of whatever the icon is.",
+              "name": "--marquee-elemental-hover-color",
+              "default": "inherit"
+            },
+            {
+              "type": {
                 "text": "<length>"
               },
               "description": "Theme. The button's box.",

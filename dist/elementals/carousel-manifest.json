@@ -415,6 +415,14 @@
             },
             {
               "type": {
+                "text": "<color>"
+              },
+              "description": "The rotation control's foreground under the pointer: its icon, and the countdown ring with it.",
+              "name": "--carousel-elemental-rotate-hover-color",
+              "default": "CanvasText"
+            },
+            {
+              "type": {
                 "text": "<length>"
               },
               "description": "How thick the rotation control's countdown ring is. A hairline is a countdown nobody reads at a glance.",
