@@ -15,6 +15,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-08-16
+
 ### Added
 
 - **`<marquee-elemental>`** — a strip that scrolls forever, out of the list you already
