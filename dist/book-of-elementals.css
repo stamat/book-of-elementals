@@ -231,6 +231,10 @@ disclosure-elemental:not(:defined) > button {
     transition: none;
   }
 }
+field-elemental {
+  display: block;
+}
+
 marquee-elemental {
   --marquee-elemental-gap: 2rem;
 }

@@ -311,7 +311,7 @@ field and not the hidden control:
     </li>
     <li class="combobox-elemental-empty" role="option" aria-disabled="true" hidden>No matches</li>
   </ul>
-  <p class="combobox-elemental-error" role="alert" hidden></p>
+  <p class="combobox-elemental-error" hidden></p>
   <select class="combobox-elemental-native" aria-hidden="true" tabindex="-1">…</select>
 </combobox-elemental>
 ```
@@ -399,12 +399,22 @@ What the element does with that is take the message and leave the bubble:
 | ----- | ------------- |
 | The browser finds the value missing | `invalid` fires on the `<select>` |
 | Its bubble is cancelled             | it would be aimed at a transparent, `aria-hidden` control |
-| The message is kept                 | `select.validationMessage`, so it is the browser's own words, already translated — into `<p class="combobox-elemental-error" role="alert">` under the field |
+| The message is kept                 | `select.validationMessage`, so it is the browser's own words, already translated — into `<p class="combobox-elemental-error">` under the field |
 | The field says so                   | `aria-invalid="true"`, and `aria-describedby` pointing at that message on top of any description you gave it |
 | Focus goes to the field             | and only for the first invalid control in the form, which is the one the browser would have focused |
 
 Choosing a value clears all of it. Nothing here is invented — the text is the platform's,
 and the element only moves it somewhere the reader can see.
+
+There is no `role="alert"` on that message, which is the counter-intuitive part.
+`aria-describedby` is read when focus arrives at the field, and the message appears at the
+moment the field is taking focus — so an alert on top of it is the same sentence twice in
+NVDA and JAWS, and stops VoiceOver reading the description at all
+([Roselli's testing](https://adrianroselli.com/2023/04/exposing-field-errors.html)). A
+combobox further down the form does not take focus, so its message waits until the reader
+reaches it, which is what a plain form does and better than three alerts firing at once from
+three invalid fields. [`<field-elemental>`](field.html) does the same thing for an ordinary
+input.
 
 ## Degrading
 

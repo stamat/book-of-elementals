@@ -1,0 +1,25 @@
+// Optional look for `<field-elemental>`. Not part of the element's own stylesheet and not
+// in its bundle: that one styles structure only, and a light-DOM element cannot scope a
+// look away from a page that did not ask for one. Import this when you want the look, skip
+// it when you do not.
+// It styles the message and nothing else. The control keeps whatever the page already gave
+// it, deliberately: this book is not a design system, and a theme for a field that redrew
+// every `<input>` under it would restyle a form that only wanted its errors announced.
+// `[aria-invalid="true"]` is on the control the whole time the message is up - style that
+// in your own CSS and the rim, the ring, the tint are yours.
+
+field-elemental {
+  // Mixed towards the page's own text colour rather than a fixed red, so the message lands
+  // in whatever palette is already there - a dark theme included - with nothing to
+  // configure. Colour is never the only cue here: the message is a sentence, and it says
+  // what is wrong in words the browser wrote.
+  --field-elemental-error-color: color-mix(in srgb, currentcolor 30%, #e5484d);
+  --field-elemental-gap: 0.35em;
+  --field-elemental-message-size: 0.85em;
+
+  > .field-elemental-error {
+    margin-block: var(--field-elemental-gap) 0;
+    font-size: var(--field-elemental-message-size);
+    color: var(--field-elemental-error-color);
+  }
+}

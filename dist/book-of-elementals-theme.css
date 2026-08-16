@@ -565,6 +565,17 @@ disclosure-elemental > button[aria-expanded=true]::before {
   margin-block-start: 0.5rem;
 }
 
+field-elemental {
+  --field-elemental-error-color: color-mix(in srgb, currentcolor 30%, #e5484d);
+  --field-elemental-gap: 0.35em;
+  --field-elemental-message-size: 0.85em;
+}
+field-elemental > .field-elemental-error {
+  margin-block: var(--field-elemental-gap) 0;
+  font-size: var(--field-elemental-message-size);
+  color: var(--field-elemental-error-color);
+}
+
 marquee-elemental {
   --marquee-elemental-fade: 2rem;
   --marquee-elemental-control-size: 2rem;

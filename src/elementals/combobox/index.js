@@ -334,10 +334,17 @@ export class ComboboxElemental extends ElementBase {
     this.list.hidden = true;
     if (select.multiple) this.list.setAttribute('aria-multiselectable', 'true');
 
-    // Announced when it appears, and pointed at from the field for anyone arriving back
-    // at it afterwards. Empty and hidden until the browser has something to say.
+    // Pointed at from the field with `aria-describedby`, and that is the whole of how it
+    // is announced - there is no `role="alert"` here, which is the counter-intuitive part.
+    // A description is read when focus arrives at the field, and this message appears at
+    // the moment the field is taking focus, so an alert on top of it is the same sentence
+    // twice: double-speak in NVDA and JAWS, and it stops VoiceOver reading the description
+    // at all ([Roselli](https://adrianroselli.com/2023/04/exposing-field-errors.html)).
+    // A combobox further down a form does not take focus and so says nothing until the
+    // reader reaches it - which is what a plain form does, and better than three alerts
+    // firing at once from three invalid fields.
+    // Empty and hidden until the browser has something to say.
     this.error.id = id + '-error';
-    this.error.setAttribute('role', 'alert');
     this.error.hidden = true;
 
     this.field.append(this.chips, this.input);

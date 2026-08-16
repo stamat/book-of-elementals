@@ -1,0 +1,12 @@
+field-elemental {
+  // A box, unlike most of the book's `display: contents` coordinators. This one holds a
+  // label above a control above a message, which is a stack - and a stack that is not a box
+  // is one the parent grid lays out three children of instead of one field.
+  display: block;
+
+  // The message is a `<p>`, which is already a block, and it is taken down with the
+  // `hidden` attribute rather than a class. Giving it a `display` here would beat the
+  // browser's own `[hidden] { display: none }` on specificity and leave an empty paragraph
+  // standing on every valid field. So there is nothing to declare, and that is the note
+  // rather than the rule.
+}

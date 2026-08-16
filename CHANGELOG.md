@@ -15,6 +15,65 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Added
+
+- **`<field-elemental>`** — the browser's own validation message, on the page instead of in a
+  bubble that floats away. No APG pattern, because there is no widget: the control inside is
+  already accessible and the constraints are already enforced. What the platform leaves
+  undone is everything after the refusal — the bubble cannot be styled, vanishes when the
+  field takes focus, is shown for the first invalid control and no other, and is not reliably
+  announced. So every form either lives with it or hand-writes a replacement, and the
+  replacement is where the accessibility goes: a red paragraph no `aria` attribute ties to
+  the field is a message a screen reader user never meets.
+
+  **Nothing here validates anything.** `required`, `type`, `pattern` and `setCustomValidity()`
+  stay the whole constraint layer, and the wording stays the browser's, already translated.
+  There is no message vocabulary — no `data-required-message`, no `invalid-message` — because
+  the platform has one call for that already and a set of attributes shadowing it would be a
+  second place for the same string to live.
+
+  **`aria-describedby`, not `aria-errormessage`.** The attribute written for exactly this is
+  still not the one that works: [Roselli's
+  testing](https://adrianroselli.com/2023/04/exposing-field-errors.html) found the message
+  behind it "generally not exposed when navigating through fields", against `aria-describedby`
+  being "consistently exposed". No live region on the message either — `describedby` is
+  already announced when focus leaves the field, so `aria-live` on top of it is the same
+  sentence twice in NVDA and JAWS and stops VoiceOver reading the description at all.
+
+  **It takes focus, and that is not a preference.** Cancelling `invalid` is what drops the
+  bubble, and it drops the browser's focus with it — measured in Chromium and WebKit, a
+  refused submit then leaves focus on the button or on `<body>`. So the element focuses the
+  first invalid control in the form itself. Firefox was not checked.
+
+  **DOM it writes:** a `<p class="field-elemental-error">` appended to the element, `hidden`
+  and empty while the field is fine; `aria-invalid="true"` and an appended `aria-describedby`
+  on the control while it is not, both removed again when it is. The control gets an `id` if
+  it had none, and the message takes that `id` plus `-error`. Render the `<p>` yourself with a
+  server-side message in it and the element adopts it rather than adding a second — that is
+  how a server error survives with no script, and a form reset puts it back. `field-validity`
+  carries `detail.valid` and `detail.message`.
+
+  Not covered: radio and checkbox groups (one message belongs to one answer — a group is a
+  `<fieldset>`), error summaries at the top of a form, and any styling of the control. The
+  theme styles the message and nothing else; `[aria-invalid="true"]` is there for your CSS.
+
+### Changed
+
+- **`<combobox-elemental>` no longer puts `role="alert"` on its validation message.**
+  **DOM change:** `<p class="combobox-elemental-error">` is written without a `role`; the
+  class, the `id` and the `hidden` toggling are unchanged, so CSS targeting it is unaffected.
+
+  It was announcing twice. The message is already pointed at with `aria-describedby`, and a
+  description is read when focus arrives at the field — which is the same moment this
+  message appears, because the element focuses the field it just refused. [Roselli's
+  testing](https://adrianroselli.com/2023/04/exposing-field-errors.html) is what a live
+  region on top of that costs: double-speak in NVDA and JAWS, and VoiceOver stops reading the
+  description at all.
+
+  A combobox that is not the first invalid control now waits until the reader reaches it
+  instead of announcing from off-screen. That is what a plain form does, and better than
+  three alerts firing at once from three invalid fields.
+
 ## [0.9.0] - 2026-08-16
 
 ### Added

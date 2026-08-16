@@ -242,7 +242,6 @@
       this.list.hidden = true;
       if (select.multiple) this.list.setAttribute("aria-multiselectable", "true");
       this.error.id = id + "-error";
-      this.error.setAttribute("role", "alert");
       this.error.hidden = true;
       this.field.append(this.chips, this.input);
       if (this.indicator) this.field.append(this.indicator);

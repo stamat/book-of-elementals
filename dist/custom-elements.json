@@ -2308,6 +2308,189 @@
     },
     {
       "kind": "javascript-module",
+      "path": "src/elementals/field/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "fieldAction",
+          "parameters": [
+            {
+              "name": "type",
+              "description": "The event: `invalid`, `blur`, `input`, `change`, `reset`.",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "valid",
+              "description": "What `control.validity.valid` says right now.",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "showing",
+              "description": "Whether a message is already on screen.",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "dirty",
+              "description": "Whether the reader has put anything in the field.",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "When the field is allowed to speak, and what happens when it does.\n\nThe browser's own rule is one moment and no others: nothing at all until a submit is\nrefused, and then a bubble that vanishes on the next click. The rule every hand-written\nvalidator reaches for instead is the opposite - validate on every keystroke - which tells\na reader their email address is invalid after they have typed `n`.\n\nSo the moments here are three, and the ordering between them is the whole design.\nA refused submit always speaks: that is the reader asking. Leaving a field speaks only if\nthey put something in it, so tabbing through a form does not light it up. And typing\nnever *starts* a complaint - it only keeps one already on screen current, and takes it\ndown the moment the value is right, which is the half that turns a complaint into\nprogress.\n\n`dirty` is whether the reader has put anything in the field, not whether they have been\nin it. A field they typed into and emptied again is back to untouched, which is the\nkinder reading of the same gesture.",
+          "return": {
+            "type": {
+              "text": "\"show\"|\"clear\"|\"ignore\""
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<field-elemental>` custom element.\n\nThe label, the control and the message that belongs to it - wrapped so the browser's\nrefusal to submit becomes a sentence on the page instead of a bubble that floats away.\n\nThere is no APG pattern for this, because there is no widget: the control inside is\nalready accessible and already validated. What the platform leaves undone is everything\nafter the refusal. The native bubble cannot be styled, disappears the moment the field\ntakes focus, is shown for the first invalid control and no other, and is not reliably\nannounced. So every form on the web either lives with it or hand-writes a replacement,\nand the replacement is where the accessibility goes: a red paragraph that no `aria`\nattribute ties to the field is a message a screen reader user never meets.\n\nWhat it does, and nothing more: cancels the bubble, puts the browser's own\n`validationMessage` in a paragraph, points the control at it with `aria-describedby`, and\nmarks the control `aria-invalid` while - and only while - there is something wrong. The\nconstraints stay the author's `required`, `type`, `pattern`, `minlength`; the wording\nstays the browser's, already translated into the reader's language. There is no\nvalidation vocabulary to learn here, because there is no validation here.\n\n`aria-describedby` rather than `aria-errormessage`, which is the attribute written for\nexactly this and is still not the one that works. [Adrian Roselli's\ntesting](https://adrianroselli.com/2023/04/exposing-field-errors.html) found the message\nbehind `aria-errormessage` \"generally not exposed when navigating through fields\", while\n`aria-describedby` is \"consistently exposed\" - and [it was still not\nthere](https://cerovac.com/a11y/2024/06/support-for-aria-errormessage-is-getting-better-but-still-not-there-yet/)\nin mid-2024. The day it lands, this is one attribute name to change.\n\nNo live region on the message either, which is the counter-intuitive half. `describedby`\nis announced when focus leaves the field and the message appears, so a live region on top\nof it is the same sentence twice in NVDA and JAWS, and stops VoiceOver reading the\ndescription at all.\n\nLight DOM, no shadow root, nothing moved. One node is added - the message - unless the\npage already rendered one, which is how a server-side error survives: write the paragraph\nwith the message in it and the element adopts it, wires it up and marks the field invalid,\nso the same markup works with the script and without it.\n\nDegrades honestly: with no script the browser's own bubble is still there, doing what it\nhas always done. Nothing is taken away before there is something to replace it with.\n\nponytail: no message vocabulary - no `data-required-message`, no `invalid-message`. The\nplatform already has one call for this, `setCustomValidity()`, and a set of attributes\nshadowing it would be a second place for the same string to live. Its own trap comes with\nit and is the author's to know: a control with a custom validity set stays invalid until\nthe same call is made with an empty string.",
+          "name": "FieldElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The message's colour. The control is not styled at all - `[aria-invalid=\"true\"]` is there for the page's own CSS.",
+              "name": "--field-elemental-error-color",
+              "default": "currentcolor mixed towards red"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between the control and the message under it.",
+              "name": "--field-elemental-gap",
+              "default": "0.35em"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "The message's own size.",
+              "name": "--field-elemental-message-size",
+              "default": "0.85em"
+            }
+          ],
+          "slots": [
+            {
+              "description": "A label, one form control, and optionally the `<p class=\"field-elemental-error\">` a server-rendered error was written into.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "control",
+              "description": "The control being validated: the first one in here that a reader could put a value in.\n\nFirst rather than every, because a message belongs to a field and a field holds one\nanswer. A set of radios or checkboxes sharing one question is a `<fieldset>` and a\ndifferent element - wrapping one here would point the message at the first radio and\ndescribe the group by whichever of them the reader happened to land on.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "error",
+              "description": "The message. The author's if they rendered one, otherwise the one added at upgrade.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "showing",
+              "description": "Whether a message is on screen.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "dirty",
+              "description": "Whether the reader has put anything in the field.\n\nA tick box holds its answer in `checked`; its `value` is the string that would be\nsubmitted and is `\"on\"` whether or not it has been ticked, so reading `value` here\nwould call every untouched box filled in and complain at a reader tabbing past it.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "onEvent",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "takeFocus",
+              "description": "Put focus on this control if it is the first thing in the form standing in the way.\n\nCancelling `invalid` is what drops the bubble, and it drops the browser's focus with\nit: measured in Chromium and WebKit, a refused submit then leaves focus on the button\n(Chromium) or on `<body>` (WebKit). Either one is a form that says nothing and goes\nnowhere, which is worse than the bubble this element was replacing.\n\nEvery invalid control in the form gets its own `invalid` event, so without the check\nthe last of them would win the race and the reader would land past the field that\nstopped the submit."
+            },
+            {
+              "kind": "method",
+              "name": "show",
+              "parameters": [
+                {
+                  "name": "message"
+                }
+              ],
+              "description": "Put the message on screen and tie the control to it."
+            },
+            {
+              "kind": "method",
+              "name": "clear",
+              "description": "Take it down.\n\nHidden rather than emptied, and unpointed-at rather than pointed at an empty\nparagraph: a description that is there and says nothing is still read out as part of\nthe field, and `aria-invalid` left on a field that is now fine is the field lying about\nitself."
+            },
+            {
+              "kind": "method",
+              "name": "announce",
+              "parameters": [
+                {
+                  "name": "valid"
+                },
+                {
+                  "name": "message"
+                }
+              ]
+            }
+          ],
+          "events": [
+            {
+              "name": "field-validity",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "Whenever the message appears or goes. `detail.valid` is what the control says, `detail.message` the text now on screen, empty when there is none."
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "field-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "fieldAction",
+          "declaration": {
+            "name": "fieldAction",
+            "module": "src/elementals/field/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "FieldElemental",
+          "declaration": {
+            "name": "FieldElemental",
+            "module": "src/elementals/field/index.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/elementals/marquee/index.js",
       "declarations": [
         {
