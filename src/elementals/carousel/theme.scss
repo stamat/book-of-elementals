@@ -29,6 +29,13 @@ carousel-elemental {
   // drawn on the page's background - see the rule that uses it.
   --carousel-elemental-chip: Canvas;
 
+  // The rotation control's foreground under the pointer, and its own property for the same
+  // reason the chip is: that button is `CanvasText` over its own fill rather than
+  // `currentcolor` over the page, so `--carousel-elemental-control` is the wrong value to
+  // reach for here. It takes the countdown ring with it, swept arc and track both - they are
+  // `currentcolor` and 20% of it, so the control's foreground is one colour by construction.
+  --carousel-elemental-rotate-hover-color: CanvasText;
+
   // How thick the countdown ring is. A hairline is a countdown nobody reads at a glance, which
   // is the whole of what it is for; this is a ninth of the control's diameter, and turning one
   // without the other is what this property is here for.
@@ -190,6 +197,8 @@ carousel-elemental > button[data-carousel-rotate] {
   // The fill and not the whole background, so the hover does not paint over the ring.
   &:hover {
     --carousel-elemental-chip: color-mix(in srgb, CanvasText 10%, Canvas);
+
+    color: var(--carousel-elemental-rotate-hover-color);
   }
 }
 

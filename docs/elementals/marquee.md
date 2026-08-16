@@ -211,6 +211,7 @@ button.
 | `--marquee-elemental-surface` | `Canvas` | What the edges fade into and the button is painted on. Re-point it on a card |
 | `--marquee-elemental-border-color` | `currentcolor` at 30% | The rim around the button |
 | `--marquee-elemental-hover` | `currentcolor` at 10% over the surface | Its fill under the pointer |
+| `--marquee-elemental-hover-color` | `inherit` | Its icon under the pointer. Setting it tints the fill above too, which is 10% of whatever the icon is |
 | `--marquee-elemental-control-size` | `2rem` | The button's box |
 | `--marquee-elemental-control-radius` | `50%` | Its corners |
 

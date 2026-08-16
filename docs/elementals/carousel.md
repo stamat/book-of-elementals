@@ -621,6 +621,7 @@ of round buttons, mixed out of `currentcolor` so they sit in whatever palette th
 | `--carousel-elemental-hover`        | 10% of `currentcolor` | Control background under the pointer                                                                      |
 | `--carousel-elemental-current`      | `currentcolor`        | Fill of the picker button for the slide on screen                                                         |
 | `--carousel-elemental-chip`         | `Canvas`              | Fill behind the rotation control, which sits over a slide rather than over the page                       |
+| `--carousel-elemental-rotate-hover-color` | `CanvasText`    | The rotation control's foreground under the pointer — its icon, and the countdown ring with it            |
 | `--carousel-elemental-ring`         | `3px`                 | How thick the rotation control's countdown ring is                                                        |
 | `--carousel-elemental-radius`       | `999px`               | Corner radius of the controls                                                                             |
 | `--carousel-elemental-fade`         | `400ms`               | How long the cross-fade takes in `fade`, and how long the box takes to travel between two slides' heights |

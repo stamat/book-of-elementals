@@ -93,6 +93,13 @@ may already be targeting**, since neither shows up in a function signature.
   `-padding-inline`, `-radius`, `-surface` and `-color`. New selector to target:
   `slider-elemental > output[data-tooltip]`.
 
+- **`--carousel-elemental-rotate-hover-color`** — the rotation control's foreground under the
+  pointer, defaulting to `CanvasText`, which is what it was fixed at before. `theme.scss`
+  only. The chip behind that button already lifted on hover and the icon did not, so a theme
+  that wanted the icon to answer the pointer had no property to turn. It takes the countdown
+  ring with it, swept arc and track both — they are `currentcolor` and 20% of it, so the
+  control stays one colour.
+
 ### Changed
 
 - **`<slider-elemental>`'s thumb follows its fill.** `--slider-elemental-thumb` now defaults

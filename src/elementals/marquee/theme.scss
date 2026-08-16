@@ -25,6 +25,12 @@ marquee-elemental {
   --marquee-elemental-surface: Canvas;
   --marquee-elemental-border-color: color-mix(in srgb, currentcolor 30%, transparent);
   --marquee-elemental-hover: color-mix(in srgb, currentcolor 10%, var(--marquee-elemental-surface));
+
+  // The icon under the pointer. `inherit` and not `currentcolor`, which on the button would
+  // resolve against the value being set and leave the colour where it was.
+  // Setting it moves the fill above with it: that mix is 10% of `currentcolor`, and
+  // `currentcolor` in the button's own `background` is whatever this line says by then.
+  --marquee-elemental-hover-color: inherit;
 }
 
 marquee-elemental:defined {
@@ -71,6 +77,7 @@ marquee-elemental:defined {
     border-radius: var(--marquee-elemental-control-radius);
 
     &:hover {
+      color: var(--marquee-elemental-hover-color);
       background: var(--marquee-elemental-hover);
     }
   }

@@ -406,6 +406,7 @@ function reducedMotion() {
  * @cssprop {<color>} [--carousel-elemental-hover=color-mix(in srgb, currentcolor 10%, transparent)] - Control background under the pointer.
  * @cssprop {<color>} [--carousel-elemental-current=currentcolor] - Fill of the picker button for the slide on screen.
  * @cssprop {<color>} [--carousel-elemental-chip=Canvas] - Fill behind the rotation control - the one control drawn over a slide rather than over the page, which is why it is opaque and does not follow `currentcolor`.
+ * @cssprop {<color>} [--carousel-elemental-rotate-hover-color=CanvasText] - The rotation control's foreground under the pointer: its icon, and the countdown ring with it.
  * @cssprop {<length>} [--carousel-elemental-ring=3px] - How thick the rotation control's countdown ring is. A hairline is a countdown nobody reads at a glance.
  * @cssprop {<length-percentage>} [--carousel-elemental-radius=999px] - Corner radius of the controls.
  *

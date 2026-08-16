@@ -152,6 +152,7 @@ function icon({ d, box }) {
  * @cssprop {<color>} [--marquee-elemental-surface=Canvas] - Theme. What the edges fade into and the button is painted on: the page's own background, so re-point it on a card.
  * @cssprop {<color>} [--marquee-elemental-border-color=currentcolor at 30%] - Theme. The rim around the button.
  * @cssprop {<color>} [--marquee-elemental-hover=currentcolor at 10% over the surface] - Theme. Its fill under the pointer.
+ * @cssprop {<color>} [--marquee-elemental-hover-color=inherit] - Theme. Its icon under the pointer. Setting it tints the fill above with it, which is 10% of whatever the icon is.
  * @cssprop {<length>} [--marquee-elemental-control-size=2rem] - Theme. The button's box.
  * @cssprop {<length>} [--marquee-elemental-control-radius=50%] - Theme. Its corners.
  *
