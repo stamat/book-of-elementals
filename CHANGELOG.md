@@ -68,6 +68,22 @@ may already be targeting**, since neither shows up in a function signature.
   `transform-style` back to `flat` and silently stop every layer rising. The theme rounds its
   corners with `border-radius` alone for that reason.
 
+### Changed
+
+- **`<slider-elemental>`'s `tooltip` bubble now shows on touch, for the length of a press.**
+  It was pointer-only in the narrow sense — touch pointers were dropped in every handler — so
+  the one reader whose fingertip is covering the thumb was the one reader who never saw the
+  number. A finger is not a hover, so the press is the whole gesture: `pointerdown` draws the
+  bubble, the drag carries it, and the release takes it away wherever on the control the
+  finger lifted, rather than leaving it parked where a finger last was. A tap shows it for as
+  long as the tap lasts. Nothing changes for a mouse, and there is still no tap-to-pin and
+  nothing shown on focus — a keyboard reader hears the value already, and the bubble stays
+  `aria-hidden` for both.
+
+  **DOM:** unchanged. The same `<output aria-hidden="true" data-tooltip>`, appended only where
+  `tooltip` asked for one; a touch gesture now toggles its `hidden` and moves
+  `--slider-elemental-at` the way a mouse always did.
+
 ## [0.10.0] - 2026-08-17
 
 ### Added

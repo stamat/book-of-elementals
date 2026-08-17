@@ -35,8 +35,14 @@ import { ElementBase, define } from '../../core.js';
  * over the track between them. One bubble and not one per thumb, because a pointer is in one
  * place at a time - two would be two boxes stacked on the same spot the moment the pointer
  * reached a thumb. It is `aria-hidden`, since the input under it announces its own value and
- * the same number twice is one announcement too many; it is pointer-only for the same reason
- * `<tooltip-elemental>` is, and nothing that only it can say may go in it.
+ * the same number twice is one announcement too many; it is pointer-only, and nothing that
+ * only it can say may go in it.
+ *
+ * Touch gets it too, for the length of a press. A finger is not a hover - it is on the glass
+ * only while it presses - so the press is the whole gesture: down draws the bubble, the drag
+ * carries it, and lifting takes it away rather than leaving it parked where the finger was.
+ * A thumb dragged under a fingertip is the one place the number is genuinely hard to read,
+ * which is the case for showing it there rather than against.
  *
  * Light DOM, no shadow root, and nothing is moved or wrapped. The bubble is the only thing
  * inserted, only where `tooltip` asked for it, and it goes again when the attribute or the
@@ -283,7 +289,7 @@ function bound(value, fallback) {
  *
  * @tag slider-elemental
  * @attr {number} [gap=0] - Least distance between the two thumbs, in the scale's own units. Ignored with one thumb.
- * @attr {string} tooltip - A value bubble that follows the pointer. `thumb` over the thumb it is on, `track` for the value under it elsewhere, `thumb track` for both; a bare `tooltip` is `thumb`. Pointer only, and `aria-hidden` — the input announces its own value.
+ * @attr {string} tooltip - A value bubble that follows the pointer. `thumb` over the thumb it is on, `track` for the value under it elsewhere, `thumb track` for both; a bare `tooltip` is `thumb`. Pointer only, and `aria-hidden` — the input announces its own value. Touch draws it for the length of a press, since a finger has no hover to rest in.
  * @prop {?function} format - What the `tooltip` bubble says, called as `(value, element)` and returning what lands in it. A number is all the bubble can say on its own, and a scrubber needs `01:12` where a price needs `€40` — neither is something an attribute could spell. Unset, or returning nothing, leaves the browser's own spelling of the value. Does not touch what the input announces: assistive technology reads the range, which still says the number.
  *
  * @cssprop {<length>} [--slider-elemental-thumb-size=1rem] - Thumb width and height. This is also the height of the control, and what the fill is inset by so its ends meet the thumb centres.
@@ -377,6 +383,10 @@ export class SliderElemental extends ElementBase {
     this.format = null;
     // The thumb a press pinned the bubble to, or `-1` for no drag in progress.
     this.dragging = -1;
+    // Whether a pointer is currently held down, which is the whole of a touch bubble's life:
+    // `dragging` cannot answer it, because a track press on a two-thumb control pins no thumb
+    // and is still a press with a finger on the glass.
+    this.pressed = false;
 
     // Capture, so the clamp has already happened by the time the event reaches a listener
     // the page put on the input itself. In the bubble phase it would not have, and half the
@@ -567,19 +577,21 @@ export class SliderElemental extends ElementBase {
     this.tooltipElement = null;
     this.tooltipX = null;
     this.dragging = -1;
+    this.pressed = false;
   }
 
   onPointerMove(e) {
-    // A tap is not a hover. Half-handling touch is how a bubble ends up stuck on a phone,
-    // and there is nothing in this one a touch reader does not already have on screen.
-    if (e.pointerType === 'touch') return;
+    // A move is a hover for a mouse and nothing at all for a finger that is not touching the
+    // screen - which is every touch move that is not part of a press. Drawing on those is how
+    // a bubble ends up stuck on a phone, parked where a finger last was.
+    if (e.pointerType === 'touch' && !this.pressed) return;
     this.tooltipX = e.clientX;
     this.showTooltipAt(e.clientX);
   }
 
   /** A press pins the bubble to whatever it is about to drag, for as long as it is held. */
   onTooltipDown(e) {
-    if (e.pointerType === 'touch') return;
+    this.pressed = true;
     const m = this.metrics(e.clientX);
     this.dragging = m ? draggedThumb(m.under, m.inputs.length) : -1;
     this.tooltipX = e.clientX;
@@ -596,10 +608,17 @@ export class SliderElemental extends ElementBase {
    * and the leave that would have covered it is not something every engine sends - Chromium
    * fires one after the capture ends and WebKit fires none at all, which is a bubble left
    * on the page after every drag that ended off the control.
+   *
+   * A finger is not asked where it is: it is nowhere the moment it lifts, however far inside
+   * the control it let go, so the release is the end of the bubble and not a question.
    */
   onTooltipUp(e) {
-    if (e.pointerType === 'touch') return;
     this.dragging = -1;
+    this.pressed = false;
+    if (e.pointerType === 'touch') {
+      this.onPointerLeave();
+      return;
+    }
     const rect = this.getBoundingClientRect();
     const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
     if (inside) this.showTooltipAt(e.clientX);

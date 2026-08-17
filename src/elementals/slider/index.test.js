@@ -15,7 +15,13 @@
 //
 // `format` is the one bubble concern that is covered, because deciding what the bubble says
 // is arithmetic rather than drawing: `formatValue` reads one field and touches no DOM. Where
-// that text is drawn, and whether the bubble is showing at all, stays uncovered above.
+// that text is drawn stays uncovered above.
+//
+// Which pointers the bubble answers to is covered the same way. The three handlers reach the
+// DOM only through `metrics`, `showTooltipAt` and this element's own box, so a stand-in
+// carrying those records what a gesture asked for without a document to hang it on - and the
+// touch rule is worth a spec, because a bubble left parked where a finger last was is the
+// failure that made touch a refusal here in the first place.
 
 import { alongTrack, clampPair, draggedThumb, nearerThumb, ratio, snapToStep, stackedThumb, thumbUnder, tooltipModes, SliderElemental } from './index.js';
 
@@ -50,6 +56,58 @@ test('a formatter returning something that is not a string is still shown', () =
 test('anything that is not a function is no formatter at all, rather than a crash on every pointer move', () => {
   expect(formatValue('mm:ss', 40, '40')).toBe('40');
   expect(formatValue({}, 40, '40')).toBe('40');
+});
+
+// One thumb, so a press anywhere is a drag of it - the same shape as a phone dragging the
+// only thumb a slider has. `showTooltipAt` is the drawing, so recording the coordinates it
+// was called with is recording every time the bubble was asked for.
+const gestures = () => ({
+  dragging: -1,
+  pressed: false,
+  tooltipX: null,
+  tooltipElement: { hidden: true },
+  drawn: [],
+  metrics() { return { inputs: [{}], under: 0 }; },
+  showTooltipAt(x) { this.drawn.push(x); this.tooltipElement.hidden = false; },
+  getBoundingClientRect() { return { left: 0, right: 100, top: 0, bottom: 20 }; },
+  onPointerLeave: SliderElemental.prototype.onPointerLeave,
+});
+
+const move = (slider, pointerType, clientX) => SliderElemental.prototype.onPointerMove.call(slider, { pointerType, clientX });
+const press = (slider, pointerType, clientX) => SliderElemental.prototype.onTooltipDown.call(slider, { pointerType, clientX });
+const release = (slider, pointerType, clientX, clientY) => SliderElemental.prototype.onTooltipUp.call(slider, { pointerType, clientX, clientY });
+
+test('a finger dragging the thumb gets the bubble, and one that never pressed does not', () => {
+  const slider = gestures();
+  move(slider, 'touch', 40);
+  expect(slider.drawn).toEqual([]); // a touch move with nothing held is a finger that is not on the screen
+  press(slider, 'touch', 40);
+  move(slider, 'touch', 60);
+  expect(slider.drawn).toEqual([40, 60]); // the press, then the drag that follows it
+});
+
+test('a lifted finger takes the bubble with it, wherever inside the control it let go', () => {
+  const slider = gestures();
+  press(slider, 'touch', 40);
+  release(slider, 'touch', 40, 10);
+  expect(slider.tooltipElement.hidden).toBe(true); // otherwise a bubble parked where a finger last was
+  expect(slider.tooltipX).toBe(null);
+});
+
+test('a mouse let go on the control keeps the bubble, because the pointer is still there', () => {
+  const slider = gestures();
+  press(slider, 'mouse', 40);
+  release(slider, 'mouse', 40, 10);
+  expect(slider.tooltipElement.hidden).toBe(false);
+});
+
+test('a mouse let go off the control does not, and neither pointer is left holding a thumb', () => {
+  const slider = gestures();
+  press(slider, 'mouse', 40);
+  release(slider, 'mouse', 400, 10);
+  expect(slider.tooltipElement.hidden).toBe(true);
+  expect(slider.dragging).toBe(-1); // the release ends the pin, whichever pointer made it
+  expect(slider.pressed).toBe(false);
 });
 
 test('a value is where it sits between the ends, as zero to one', () => {

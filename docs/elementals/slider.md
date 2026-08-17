@@ -87,7 +87,7 @@ Nearly all of it is the browser's, because the thumbs are real range inputs:
 | Two thumbs sharing one track, and not passing each other              | this element |
 | A press on the track, which stacking would otherwise eat              | this element |
 | Keeping an `<output>` in step                                         | this element |
-| The hover value bubble, where `tooltip` asked for one                 | this element |
+| The pointer value bubble, where `tooltip` asked for one               | this element |
 
 So there is no `role="slider"` written here, no `aria-valuenow`, and no event of its own —
 a range input fires `input` and `change`, and both bubble.
@@ -278,11 +278,11 @@ arrow key. Add `aria-hidden="true"` where the readout is only there for the eye.
 
 ## The value bubble
 
-**Read this first: it is a hover, so half your readers never see it.** There is no hover on
-a touch screen and the bubble does not follow focus, so a phone reader and a keyboard reader
-get nothing from it. That is fine for a number they can already read off the thumb they are
-dragging, and it is why nothing goes in here that is not somewhere else too. If the value
-has to be visible, that is the `<output>` above, and the two compose.
+**Read this first: it is a pointer, so a keyboard reader never sees it.** The bubble does not
+follow focus and there is nothing in it a screen reader is not already told, so it is a hover
+for a mouse and a press for a finger and nothing at all for <kbd>Tab</kbd>. That is why
+nothing goes in here that is not somewhere else too. If the value has to be visible, that is
+the `<output>` above, and the two compose.
 
 `tooltip` turns it on. Drag the thumb, then run the pointer along the empty part of the
 track — the number is what a press there would set:
@@ -334,6 +334,13 @@ number that disagrees with the thumb under it.
 It follows the thumb off the control too — drag below the slider or past its end and the
 bubble stays, reading the value the thumb is pinned at. It goes when you let go.
 
+**On touch the press is the whole of it.** A finger is not a hover — it is on the glass only
+while it presses — so the bubble is drawn on the press, carried by the drag, and taken away
+by the release, wherever on the control the finger lifted. There is no resting pointer to
+answer to afterwards, and a bubble left parked where a finger last was is the failure this
+avoids. A fingertip covering the thumb is the one place the number is genuinely hard to read,
+which is the case for drawing it there rather than against.
+
 The track number is put on the `step` the way the input would put it — counted from `min`,
 ties rounded up, and never past the last notch the scale actually has. `min="0" max="100"
 step="40"` stops at 80, so that is what the bubble says at the far end rather than 100, which
@@ -382,14 +389,14 @@ back to that same spelling rather than emptying the bubble, because a function m
 **It does not change what is announced.** The bubble is `aria-hidden`; the input underneath
 announces its own value, and a screen reader still hears the number. If the formatted
 version is the one that matters to every reader, it belongs in an
-[`<output>`](#the-value-readout) as well — where it is text on the page rather than a hover.
+[`<output>`](#the-value-readout) as well — where it is text on the page rather than a gesture.
 
 ### What it is not
 
 | | |
 | --- | --- |
 | Not announced | `aria-hidden="true"`. The input under it announces its own value on every arrow key, and the same number twice is one announcement too many — [which is what Base UI does with its marks](https://v6.mui.com/base-ui/react-slider/) |
-| Not reachable by touch | touch pointers are ignored outright rather than half-handled, the same refusal [`<tooltip-elemental>`](tooltip.html) makes |
+| Not left behind on touch | a finger has no resting state, so the press draws it and the release takes it away — there is no tap-to-pin |
 | Not shown on focus | a keyboard reader hears the value already; a bubble that appeared on <kbd>Tab</kbd> would be a second copy of it, drawn |
 | Not formatted by default | the raw value, like the `<output>`, until you set [`format`](#saying-something-other-than-the-number) |
 | Not always on | there is no "pinned" mode. [noUiSlider's `tooltips: true`](https://refreshless.com/nouislider/slider-options/) and [MUI's `valueLabelDisplay="on"`](https://mui.com/material-ui/react-slider/) both have one; here that is an `<output>` positioned with `--slider-elemental-end`, and no attribute |
@@ -490,7 +497,7 @@ Named rather than worked around:
 | A press on the track jumps the nearer thumb but does not carry on into a drag | Two stacked inputs need their pointer events on the thumbs, so the track press is the element's rather than the input's — and the input never learns it happened. Grab the thumb to drag |
 | Two thumbs, not N                                  | The clamp is a pair. Three inputs still work as plain range inputs, unclamped and undrawn |
 | Horizontal only                                    | `writing-mode: vertical-lr` on the input is the platform's answer for one thumb; the stacking here has not been built for it |
-| `tooltip` is pointer-only, and there is no pinned mode | A touch or keyboard reader never sees it, so nothing goes in it that is not elsewhere too. Pin a value with an `<output>` placed on `--slider-elemental-end` |
+| `tooltip` is pointer-only, and there is no pinned mode | A keyboard reader never sees it, and a touch reader only while pressing, so nothing goes in it that is not elsewhere too. Pin a value with an `<output>` placed on `--slider-elemental-end` |
 | The buffer-style second bar is not here            | That is [`<progress-elemental>`](progress.html), and the two compose — see [the scrubber](progress.html#a-scrubber) |
 
 ## Degrading
