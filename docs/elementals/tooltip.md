@@ -28,11 +28,18 @@ button { font: inherit; padding: 0.4em 0.8em; }
 
 ## Read this before you use one
 
-**A tooltip is unreachable by touch, and no library fixes that.** There is no hover on a
-touch screen, and a tap is activation rather than focus — so on a phone, the words in a
-tooltip are words nobody gets. This element ignores touch pointers outright instead of
-half-handling them, because a tooltip that opens on tap is a
+**A tooltip is all but unreachable by touch, and no library fixes that.** There is no hover
+on a touch screen and a tap is activation rather than hover, so this element ignores touch
+pointers outright instead of half-handling them — a tooltip that opens on tap is a
 [toggletip](https://inclusive-components.design/tooltips-toggletips/) wearing the wrong name.
+
+What is left is focus, and whether a tap moves it is the engine's call, not this element's.
+Measured with a touch pointer on the demo above: **Chromium focuses a `<button>` on tap, so
+the bubble opens and a tap elsewhere closes it; WebKit does not focus buttons on tap, so
+nothing appears.** A text input focuses on tap everywhere, a button does not, so what the
+trigger is decides it as much as the browser does. Focus is not filtered by how it arrived,
+because that would take the words away from the readers who currently get them — but they are
+words no phone reader can be counted on to see.
 
 So: **nothing essential goes in one.** GitHub's own design system puts it plainly —
 [tooltips "should be the last resort for conveying information as they are hidden by default
@@ -58,7 +65,7 @@ So this element implements the half every source agrees on and refuses the half 
 | hoverable, dismissible, persistent | SC 1.4.13 | yes — no timeout, and the bubble itself can be hovered |
 | `role="tooltip"` | [does nothing in any screen reader](https://sarahmhigley.com/writing/tooltips-in-wcag-21/) | set, because the pattern says so. It costs nothing and buys nothing |
 | the tooltip as the control's **name** | contested — Primer ships it, Higley calls it a smell | **no.** `aria-label` names a control |
-| touch | nobody has an answer | ignored, and documented above |
+| touch | nobody has an answer | touch pointers ignored; a tap that focuses the trigger still shows it — [see above](#read-this-before-you-use-one) |
 
 ## Two shapes
 
@@ -325,7 +332,7 @@ off everywhere else.
 | trigger focused | shows |
 | trigger blurred | hides |
 | <kbd>Escape</kbd> | hides, and **stays** hidden until the reader has actually left. A dismissal undone by the next twitch of the mouse is no dismissal |
-| touch | nothing |
+| touch | no hover, so nothing of its own — a tap shows it only where it focuses the trigger, by the row above and [not on every engine](#read-this-before-you-use-one). Tapping away is then the dismissal, since <kbd>Escape</kbd> is not one a finger has |
 
 Hover and focus each hold it open on their own, so a reader who tabs to a button and then
 moves the mouse away still has the words.

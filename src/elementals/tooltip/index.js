@@ -186,11 +186,15 @@ let sequence = 0;
  * and the attribute is removed so the native tooltip does not double up. Where those words
  * end up depends on what the trigger already had: see `titleRole`.
  *
- * **It is unreachable by touch, and that is not a bug to work around.** There is no hover
- * on a touch screen, and a tap is activation rather than focus, so pointer events from a
- * touch are ignored outright rather than half-handled. Nothing essential belongs in one.
- * A control that needs its description read on every device wants visible text, and one
- * that reveals content on a press wants `<disclosure-elemental>`.
+ * **It is all but unreachable by touch, and that is not a bug to work around.** There is no
+ * hover on a touch screen and a tap is activation rather than hover, so pointer events from
+ * a touch are ignored outright rather than half-handled. Focus is the one way in that is
+ * left, and whether a tap moves it is the engine's: Chromium focuses a `<button>` on tap and
+ * the bubble opens, WebKit does not focus buttons on tap and nothing appears - measured, not
+ * assumed. Focus is deliberately not filtered by how it arrived, because that would take the
+ * words away from the readers who do get them; what it means is that nothing essential
+ * belongs in one. A control that needs its description read on every device wants visible
+ * text, and one that reveals content on a press wants `<disclosure-elemental>`.
  *
  * Light DOM, no shadow root. Nothing is moved and nothing is wrapped: the bubble is the
  * element the author wrote, given a `role`, an `id` if it had none, and a `hidden` while
@@ -349,6 +353,9 @@ export class TooltipElemental extends ElementBase {
   }
 
   onFocus() {
+    // Every focus, however it arrived. Chromium focuses a `<button>` on tap, so this is the
+    // one path a touch reader reaches the words by - narrowing it to `:focus-visible` or to a
+    // remembered pointer type would take them away from the only engine that offers them.
     this.apply('focus');
   }
 
