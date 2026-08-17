@@ -14,8 +14,14 @@ field-elemental {
   // configure. Colour is never the only cue here: the message is a sentence, and it says
   // what is wrong in words the browser wrote.
   --field-elemental-error-color: color-mix(in srgb, currentcolor 30%, #e5484d);
-  --field-elemental-gap: 0.35em;
   --field-elemental-message-size: 0.85em;
+
+  // Zero, so the theme adds no spacing of its own. A field is a stack, and a page laying one
+  // out has already said how far apart its parts sit - a `gap` on the grid, a margin on the
+  // label. A theme that also pushed the message down would be adding to a number the page
+  // already chose, which is a gap nobody wrote and everybody has to cancel. Set it when you
+  // want the theme to own that distance instead.
+  --field-elemental-gap: 0;
 
   > .field-elemental-error {
     margin-block: var(--field-elemental-gap) 0;

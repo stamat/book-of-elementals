@@ -101,7 +101,7 @@ const NOT_THE_CONTROL = new Set(['hidden', 'submit', 'reset', 'button', 'image']
  * @tag field-elemental
  *
  * @cssprop {<color>} [--field-elemental-error-color=currentcolor mixed towards red] - The message's colour. The control is not styled at all - `[aria-invalid="true"]` is there for the page's own CSS.
- * @cssprop {<length>} [--field-elemental-gap=0.35em] - Between the control and the message under it.
+ * @cssprop {<length>} [--field-elemental-gap=0] - Above the message. Zero, because the page laying the field out has already said how far apart its parts sit - set it to have the theme own that distance instead.
  * @cssprop {<length>} [--field-elemental-message-size=0.85em] - The message's own size.
  *
  * @fires field-validity - Whenever the message appears or goes. `detail.valid` is what the control says, `detail.message` the text now on screen, empty when there is none.

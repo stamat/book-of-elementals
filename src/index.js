@@ -12,6 +12,7 @@ export * from './elementals/marquee/index.js';
 export * from './elementals/menu/index.js';
 export * from './elementals/modal/index.js';
 export * from './elementals/navbar/index.js';
+export * from './elementals/password/index.js';
 export * from './elementals/progress/index.js';
 export * from './elementals/search/index.js';
 export * from './elementals/segmented/index.js';

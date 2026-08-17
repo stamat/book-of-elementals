@@ -1,8 +1,8 @@
 /* book-of-elementals v0.9.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 field-elemental {
   --field-elemental-error-color: color-mix(in srgb, currentcolor 30%, #e5484d);
-  --field-elemental-gap: 0.35em;
   --field-elemental-message-size: 0.85em;
+  --field-elemental-gap: 0;
 }
 field-elemental > .field-elemental-error {
   margin-block: var(--field-elemental-gap) 0;

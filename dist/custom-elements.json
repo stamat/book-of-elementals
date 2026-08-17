@@ -2367,9 +2367,9 @@
               "type": {
                 "text": "<length>"
               },
-              "description": "Between the control and the message under it.",
+              "description": "Above the message. Zero, because the page laying the field out has already said how far apart its parts sit - set it to have the theme own that distance instead.",
               "name": "--field-elemental-gap",
-              "default": "0.35em"
+              "default": "0"
             },
             {
               "type": {
@@ -4259,6 +4259,213 @@
     },
     {
       "kind": "javascript-module",
+      "path": "src/elementals/password/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "revealAfter",
+          "parameters": [
+            {
+              "name": "event",
+              "description": "`toggle`, `submit`, `reset`, or anything else.",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "shown",
+              "description": "Whether the value is visible now.",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "Whether the field is showing its value after `event`, given whether it was before.\n\nTwo of these three are about security rather than about the button. A revealed field is an\n`<input type=\"text\">`, and browsers remember what has been typed into text fields - so a\nvalue submitted while revealed can be offered back in an autofill list on some other page\nlater. Masking before the value leaves costs nothing and is the whole of the fix.\n\nReset is the same argument from the other end: the page loaded masked, and putting the\nvalue back without putting the mask back would leave a password on screen that the reader\nnever asked to see again.",
+          "return": {
+            "type": {
+              "text": "boolean"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<password-elemental>` custom element.\n\nA password field you can look at, and a button that says so out loud.\n\nThere is no APG pattern for this, because there is no widget: it is a `<button>` next to an\n`<input>`, and both are already accessible. What is missing is everything about the\n*state*. A button that swaps an eye for a crossed-out eye has told a sighted reader which\nway round it is and told everyone else nothing, and the field it controls has changed from\nmasked to plain with no announcement at all - which is the one change on the page a reader\nmost needs to know about, because it is the one with a shoulder-surfer behind it.\n\nWhat it does, and nothing more: gives the button `aria-pressed` and keeps it in step,\nflips the field between `password` and `text`, says which in a live region, and masks the\nfield again before the form is submitted or reset. No strength meter, no generator, no\nconfirmation field - see below.\n\n`aria-pressed` with a *fixed* name, which is the one place the sources disagree:\n\n| Prior art | Button name | State |\n| --- | --- | --- |\n| [GOV.UK](https://design-system.service.gov.uk/components/password-input/) | swaps, `Show` ⇄ `Hide` | implied by the name |\n| [Make Things Accessible](https://www.makethingsaccessible.com/guides/make-an-accessible-password-reveal-input/) | fixed | `aria-pressed` |\n| [hexagoncircle](https://github.com/hexagoncircle/password-input-components) | swaps | `aria-pressed` - both at once |\n| this | fixed | `aria-pressed` |\n\nThe third row is what the second explicitly warns against: with `aria-pressed` carrying the\nstate, a name that also changes says it twice and disagrees with itself half the time. Of\nthe two that are self-consistent, the toggle is the one ARIA is written for - the name is\nthe thing being switched and `pressed` is whether it is on, exactly as a Bold button in an\neditor works - and it is the one where nothing changes under a reader's focus. The live\nregion is what settles the ambiguity either way, and both sources agree on having one.\n\nLight DOM, no shadow root, nothing moved. One node is added: the live region, because a\nlive region only announces text that lands in one already in the document.\n\nDegrades honestly: the stylesheet keeps the button out of reach until the element has\nupgraded, so with no script there is no dead button - just a password field, which is what\nthe page had before and still works. Nothing is taken away before there is something to\nreplace it with.\n\nponytail: no caret to save and restore. Flipping `input.type` keeps focus and the selection\nrange in Chromium and WebKit - measured - so the obvious defensive code would have been\nfifteen lines guarding against nothing. Pressing the button still moves focus to the\nbutton, because that is what pressing a button does; what the preserved selection buys is\n`el.shown = true` from script leaving the reader's place in the field alone.",
+          "name": "PasswordElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between the field and the button.",
+              "name": "--password-elemental-gap",
+              "default": "0.5rem"
+            }
+          ],
+          "slots": [
+            {
+              "description": "An `<input type=\"password\">` and the `<button>` that reveals it.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "control",
+              "description": "The field being revealed: the first password or text input in here. Both, because\nonce it has been revealed the type is what this element changed it to.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "button",
+              "description": "The button that reveals it. Direct child or not - a reveal button is often inside a\nwrapper holding it against the field's right edge.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "shown",
+              "description": "Whether the value is visible. Reflected, so a page can reveal one from script."
+            },
+            {
+              "kind": "field",
+              "name": "label",
+              "description": "The button's accessible name. Does not change with the state - `aria-pressed` does.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "shownText",
+              "description": "What the live region says once the value is on screen.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "hiddenText",
+              "description": "And once it is not.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "status",
+              "description": "The live region. Added at upgrade, because a live region only announces text that\nlands in one already in the document.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "description": "Put the field and the button into the state the `shown` attribute says they are in."
+            },
+            {
+              "kind": "method",
+              "name": "announce",
+              "parameters": [
+                {
+                  "name": "message"
+                }
+              ],
+              "description": "Say something in the live region.\n\nA live region announces a *change*, so the same message set twice in a row is silent.\nCleared first and set back in a later task, so the two writes cannot coalesce into no\nchange at all."
+            },
+            {
+              "kind": "method",
+              "name": "update",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ],
+              "description": "Move to the state `event` calls for, and say so if it changed anything."
+            },
+            {
+              "kind": "method",
+              "name": "onClick",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onForm",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ],
+              "description": "A submit or a reset masks the field.\n\n`submit` fires only when the form is really being submitted - a browser that refuses\nthe submit on a constraint never dispatches it, measured in Chromium - so this lands\nexactly at the moment the value is about to leave the page and at no other. There is\nno trade to weigh: a reader whose submit was refused keeps the field the way they left\nit, and nothing was submitted for a browser to remember."
+            }
+          ],
+          "events": [
+            {
+              "name": "password-reveal",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "`detail.shown` is whether the value is now visible."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "shown",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether the value is visible. Reflected, so `[shown]` is a styling hook, and settable from script.",
+              "default": "false"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "The button's accessible name. Fixed on purpose: `aria-pressed` is what carries the state.",
+              "name": "label",
+              "default": "Show password"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "What the live region says when the value is revealed.",
+              "name": "shown-text",
+              "default": "Your password is visible"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "What it says when the mask goes back on.",
+              "name": "hidden-text",
+              "default": "Your password is hidden"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "password-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "revealAfter",
+          "declaration": {
+            "name": "revealAfter",
+            "module": "src/elementals/password/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "PasswordElemental",
+          "declaration": {
+            "name": "PasswordElemental",
+            "module": "src/elementals/password/index.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/elementals/progress/index.js",
       "declarations": [
         {
@@ -5384,6 +5591,19 @@
             },
             {
               "kind": "method",
+              "name": "formatValue",
+              "parameters": [
+                {
+                  "name": "value"
+                },
+                {
+                  "name": "fallback"
+                }
+              ],
+              "description": "What the bubble says for a value, once `format` has had it.\n\n`fallback` is the browser's own spelling of the same number and is what shows whenever\nthere is no formatter, so an element nobody has assigned one to reads exactly as it did\nbefore this hook existed. A formatter returning nothing falls back too - a bubble that\nwent blank because a function forgot a `return` looks like a broken element rather than\na bug in the page."
+            },
+            {
+              "kind": "method",
               "name": "onPointerDown",
               "parameters": [
                 {
@@ -5391,6 +5611,14 @@
                 }
               ],
               "description": "A press on the track, which stacked inputs would otherwise eat: the one on top covers\nthe whole width, so the stylesheet takes its pointer events away and leaves them on the\nthumbs. That is what makes both thumbs grabbable, and it is also what leaves the track\ndead until this runs - the nearer thumb takes the value and the focus."
+            },
+            {
+              "type": {
+                "text": "?function"
+              },
+              "description": "What the `tooltip` bubble says, called as `(value, element)` and returning what lands in it. A number is all the bubble can say on its own, and a scrubber needs `01:12` where a price needs `€40` — neither is something an attribute could spell. Unset, or returning nothing, leaves the browser's own spelling of the value. Does not touch what the input announces: assistive technology reads the range, which still says the number.",
+              "name": "format",
+              "kind": "field"
             }
           ],
           "attributes": [

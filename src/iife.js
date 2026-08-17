@@ -14,6 +14,7 @@ import './elementals/marquee/index.js';
 import './elementals/menu/index.js';
 import './elementals/modal/index.js';
 import './elementals/navbar/index.js';
+import './elementals/password/index.js';
 import './elementals/progress/index.js';
 import './elementals/search/index.js';
 import './elementals/segmented/index.js';

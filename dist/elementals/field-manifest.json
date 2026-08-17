@@ -63,9 +63,9 @@
               "type": {
                 "text": "<length>"
               },
-              "description": "Between the control and the message under it.",
+              "description": "Above the message. Zero, because the page laying the field out has already said how far apart its parts sit - set it to have the theme own that distance instead.",
               "name": "--field-elemental-gap",
-              "default": "0.35em"
+              "default": "0"
             },
             {
               "type": {

@@ -41,7 +41,7 @@ field-elemental label { font-size: 0.875rem; font-weight: 500; }
 
 field-elemental input {
   box-sizing: border-box;
-  padding: 0.5rem 0.625rem;
+  padding: 0.6rem 0.75rem;
   font: inherit;
   color: CanvasText;
   background: Canvas;
@@ -61,13 +61,6 @@ field-elemental [id$="-hint"] {
   color: color-mix(in srgb, CanvasText 60%, transparent);
 }
 
-/* holding the line open so the form does not jump when a message arrives. the element
-   `hidden`s the message rather than emptying it, which is `display: none` — so reserving
-   the space means saying otherwise, and the trade is a blank line under every field that
-   never has anything wrong with it. still `hidden` to a screen reader, and pointed at by
-   nothing while it is empty */
-field-elemental .field-elemental-error { min-height: 1.5em; }
-field-elemental .field-elemental-error[hidden] { display: block; }
 
 form > button {
   justify-self: start;
@@ -268,7 +261,7 @@ before your rule ran, and the message would clear a keystroke late.
 | Leave focus where the browser put it | it cannot. Cancelling `invalid` to drop the bubble drops the browser's focus with it — a refused submit leaves focus on the button in Chromium and on `<body>` in WebKit. So the element does focus the first invalid control, and only that one. Firefox was not checked |
 | Summarise errors at the top of the form | that is a page-level component, not a field, and [GOV.UK's error summary](https://design-system.service.gov.uk/components/error-summary/) is the one to copy |
 | Handle a radio or checkbox group | one message belongs to one answer. A group is a `<fieldset>`, and pointing this at the first radio would describe the group by whichever one the reader landed on |
-| Reserve space for the message | the message is `hidden` until there is one, so the page shifts by a line when it appears. Give `.field-elemental-error` a `min-height` if that matters more to you than the gap |
+| Reserve space for the message | the message is `hidden` until there is one, so the field below it moves down a line when it appears. Holding the line open costs a blank gap under every field that is never wrong, which is the more visible of the two — and it means overriding `[hidden]` back to `display: block`, so the space is held by an element saying it is not there. Add it in your own CSS if your layout needs it |
 
 ## Events
 

@@ -79,6 +79,46 @@ may already be targeting**, since neither shows up in a function signature.
   `<fieldset>`), error summaries at the top of a form, and any styling of the control. The
   theme styles the message and nothing else; `[aria-invalid="true"]` is there for your CSS.
 
+- **`<password-elemental>`** — a reveal button for a password field. No APG pattern, because
+  there is no widget: a `<button>` beside an `<input>`, both already accessible. What is
+  missing is the state. A button that swaps an eye for a crossed-out eye has told a sighted
+  reader which way round it is and told everyone else nothing, and the field changing from
+  dots to letters — the one change on the page with a shoulder-surfer behind it — is
+  announced nowhere.
+
+  **`aria-pressed` with a fixed name**, which is the one point the prior art splits on.
+  [GOV.UK](https://design-system.service.gov.uk/components/password-input/) swaps the name and
+  has no pressed state; [Make Things
+  Accessible](https://www.makethingsaccessible.com/guides/make-an-accessible-password-reveal-input/)
+  keeps the name fixed and uses `aria-pressed`; [hexagoncircle](https://github.com/hexagoncircle/password-input-components)
+  does both, which is what the second explicitly warns against — with `aria-pressed` carrying
+  the state, a name that also changes says it twice and disagrees with itself half the time.
+  Of the two that are self-consistent this takes the toggle: the state is exposed rather than
+  inferred from a verb, and nothing changes under a reader's focus. Both sources agree on the
+  half that settles it, and it is here — `role="status"` saying "Your password is visible" or
+  "Your password is hidden" on every press.
+
+  **The field masks itself before the value leaves.** A revealed field posts from an
+  `<input type="text">`, and browsers remember what was typed into text fields, so the value
+  can be offered back in an autofill list on an unrelated page later. `submit` fires only when
+  the form is really being submitted — a browser refusing it on a constraint never dispatches
+  it, measured in Chromium — so this lands exactly when it matters and a refused submit leaves
+  the field however the reader left it. `reset` masks too.
+
+  **DOM it writes:** `type` on the field flipped between `password` and `text`, `aria-pressed`
+  and `aria-controls` on the button, an `id` on the field if it had none, and one appended
+  `<span class="password-elemental-status" role="status">`. `shown` is reflected — a styling
+  hook, and settable from script. `label`, `shown-text` and `hidden-text` are the strings;
+  `password-reveal` carries `detail.shown`. Without the script the stylesheet keeps the button
+  out of reach, so the page is left with a password field, which is what the markup was.
+
+  No strength meter: [NIST SP 800-63B Rev 4](https://pages.nist.gov/800-63-4/sp800-63b.html)
+  prohibits the composition rules a character-class meter scores, and an honest measure needs
+  a guessability library or a breach-list lookup. No generator, and no confirmation field —
+  `setCustomValidity()` does that in four lines and `<field-elemental>` reports it. There is
+  no caret-restoring code either: flipping `input.type` keeps focus and the selection range in
+  Chromium and WebKit, measured rather than guarded against.
+
 ### Changed
 
 - **`<combobox-elemental>` no longer puts `role="alert"` on its validation message.**
