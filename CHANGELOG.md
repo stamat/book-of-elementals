@@ -15,6 +15,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-08-17
+
 ### Added
 
 - **`<slider-elemental>` takes a `format` function for its value bubble.** The bubble could
