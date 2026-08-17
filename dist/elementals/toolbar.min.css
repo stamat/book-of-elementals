@@ -1,2 +1,2 @@
-/* book-of-elementals v0.10.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v0.11.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 toolbar-elemental{display:flex;align-items:center;gap:var(--toolbar-elemental-gap, .25rem)}toolbar-elemental[vertical]{flex-direction:column;align-items:stretch}toolbar-elemental [role=group]{display:flex;align-items:center;gap:var(--toolbar-elemental-gap, .25rem)}toolbar-elemental[vertical] [role=group]{flex-direction:column;align-items:stretch}
