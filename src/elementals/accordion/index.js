@@ -71,6 +71,8 @@ export function exclusiveOpen(states) {
  * @attr {boolean} [exclusive=false] - Only one panel open at a time.
  * @attr {string} name - The shared `name` `exclusive` assigns. Generated if unset.
  *
+ * @cssprop {<time>} [--accordion-elemental-duration=250ms] - How long a panel takes to slide. The element reads it back out of the computed styles, so `0s` toggles instantly.
+ * @cssprop {<easing-function>} [--accordion-elemental-easing=ease] - How the slide moves.
  * @cssprop {<color>} [--accordion-elemental-border-color=color-mix(in srgb, currentcolor 15%, transparent)] - Rule between the panels.
  * @cssprop {<length>} [--accordion-elemental-radius=0.5rem] - Corner radius, on the grouped look.
  *

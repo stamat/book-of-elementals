@@ -4745,6 +4745,7 @@
       this.tooltipElement = null;
       this.format = null;
       this.dragging = -1;
+      this.pressed = false;
       this.addEventListener("input", this.onInput, true);
       this.form = this.closest("form");
       if (this.form) this.form.addEventListener("reset", this.onReset);
@@ -4886,15 +4887,16 @@
       this.tooltipElement = null;
       this.tooltipX = null;
       this.dragging = -1;
+      this.pressed = false;
     }
     onPointerMove(e) {
-      if (e.pointerType === "touch") return;
+      if (e.pointerType === "touch" && !this.pressed) return;
       this.tooltipX = e.clientX;
       this.showTooltipAt(e.clientX);
     }
     /** A press pins the bubble to whatever it is about to drag, for as long as it is held. */
     onTooltipDown(e) {
-      if (e.pointerType === "touch") return;
+      this.pressed = true;
       const m = this.metrics(e.clientX);
       this.dragging = m ? draggedThumb(m.under, m.inputs.length) : -1;
       this.tooltipX = e.clientX;
@@ -4910,10 +4912,17 @@
      * and the leave that would have covered it is not something every engine sends - Chromium
      * fires one after the capture ends and WebKit fires none at all, which is a bubble left
      * on the page after every drag that ended off the control.
+     *
+     * A finger is not asked where it is: it is nowhere the moment it lifts, however far inside
+     * the control it let go, so the release is the end of the bubble and not a question.
      */
     onTooltipUp(e) {
-      if (e.pointerType === "touch") return;
       this.dragging = -1;
+      this.pressed = false;
+      if (e.pointerType === "touch") {
+        this.onPointerLeave();
+        return;
+      }
       const rect = this.getBoundingClientRect();
       const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
       if (inside) this.showTooltipAt(e.clientX);

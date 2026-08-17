@@ -86,8 +86,8 @@ Or the CDN, no build step. Every element ships its own bundle:
 ```
 
 No global, no boot call — including a bundle registers its element and it
-upgrades itself wherever it appears, including markup added later. Swap in
-`book-of-elementals.min.js` for the whole book.
+upgrades itself wherever it appears, including markup added later. The whole
+book is one directory up: `dist/book-of-elementals.min.js`.
 
 Those stylesheets carry structure and motion only. Each element's look is a
 separate, optional one, off unless you ask for it:
@@ -103,8 +103,9 @@ separate, optional one, off unless you ask for it:
 />
 ```
 
-Swap in `book-of-elementals/theme.scss`, or `book-of-elementals-theme.min.css`,
-for every element's look at once.
+Every element's look at once is `book-of-elementals/theme.scss`, or
+`dist/book-of-elementals-theme.min.css` — beside the whole-book script, one
+directory up from the per-element bundles.
 
 ## `<accordion-elemental>`
 

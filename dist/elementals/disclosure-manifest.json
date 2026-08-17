@@ -102,6 +102,22 @@
           "cssProperties": [
             {
               "type": {
+                "text": "<time>"
+              },
+              "description": "How long the region takes to slide. Override it on the region, which is where the element reads it back out of the computed styles - `0s` toggles instantly.",
+              "name": "--disclosure-elemental-duration",
+              "default": "250ms"
+            },
+            {
+              "type": {
+                "text": "<easing-function>"
+              },
+              "description": "How the slide moves. On the region, like the duration.",
+              "name": "--disclosure-elemental-easing",
+              "default": "ease"
+            },
+            {
+              "type": {
                 "text": "<length>"
               },
               "description": "Caret size, on the caret look.",

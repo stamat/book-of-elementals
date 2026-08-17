@@ -14,7 +14,7 @@ it, which is the whole point.
 
 Native `<details>` is a disclosure already, and where it fits it wins —
 [`<accordion-elemental>`](accordion.html) is built on it for that reason. It fits when the
-region can live _inside_ the trigger's element. This is for [when it cannot](#why-not-just-details).
+region can live _inside_ the trigger's element. This is for [when it cannot](#why-not-just).
 
 <figure class="demo-figure">
   <img src="https://picsum.photos/id/168/900/600" alt="Large glacial boulders on cropped grass, three of them raised on smaller stones behind, with flat farmland and a bright broken sky beyond." width="900" height="600" loading="lazy">

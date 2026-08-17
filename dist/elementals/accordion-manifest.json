@@ -32,6 +32,22 @@
           "cssProperties": [
             {
               "type": {
+                "text": "<time>"
+              },
+              "description": "How long a panel takes to slide. The element reads it back out of the computed styles, so `0s` toggles instantly.",
+              "name": "--accordion-elemental-duration",
+              "default": "250ms"
+            },
+            {
+              "type": {
+                "text": "<easing-function>"
+              },
+              "description": "How the slide moves.",
+              "name": "--accordion-elemental-easing",
+              "default": "ease"
+            },
+            {
+              "type": {
                 "text": "<color>"
               },
               "description": "Rule between the panels.",

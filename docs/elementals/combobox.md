@@ -303,6 +303,8 @@ Other libraries call this
 | `placeholder` | string  | —            | The field's placeholder. A single select falls back to the label of the option whose value is empty. |
 | `empty-text`  | string  | `No matches` | What the popup says when the query matches nothing.                     |
 | `remove-text` | string  | `Remove`     | The verb in a chip's remove button, in front of the option's label. Holding `{label}` it says where the label goes instead, for a language that puts the verb last — `{label} entfernen`. |
+| `custom-values` | boolean | `false`    | Let a value the `<select>` does not hold be typed in — [values that are not in the list](#values-that-are-not-in-the-list). |
+| `add-text`    | string  | `Add {label}` | What the add row says, `{label}` standing in for what was typed. Same convention as `remove-text`. |
 
 Everything else is the `<select>`'s: `multiple`, `required`, `disabled`, `name`, and the
 options themselves.

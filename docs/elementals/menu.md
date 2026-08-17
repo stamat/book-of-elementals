@@ -514,8 +514,7 @@ menu-elemental {
 ## Layout
 
 The element is `display: inline-block` and `position: relative`, because the flyout is
-positioned against it — the one element in this book that is a box rather than
-`display: contents`. Inline, it drops to `display: block` and `position: static`, so
+positioned against it. Inline, it drops to `display: block` and `position: static`, so
 it stretches in a drawer like the block it is.
 
 <script src="../dist/elementals/menu.js"></script>

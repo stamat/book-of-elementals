@@ -118,6 +118,8 @@ let regionCount = 0;
  * @attr {string} for - `id` of the region. Also read as `data-for`. Defaults to the button's next element sibling.
  * @attr {string} media - A media query that owns `open`: held open while it matches, closed when it stops. Unset means the button is the only thing that opens it.
  *
+ * @cssprop {<time>} [--disclosure-elemental-duration=250ms] - How long the region takes to slide. Override it on the region, which is where the element reads it back out of the computed styles - `0s` toggles instantly.
+ * @cssprop {<easing-function>} [--disclosure-elemental-easing=ease] - How the slide moves. On the region, like the duration.
  * @cssprop {<length>} [--disclosure-elemental-caret-size=1em] - Caret size, on the caret look.
  *
  * @fires disclosure-toggle - `detail.region` is the element being shown or hidden, `detail.open` its new state.

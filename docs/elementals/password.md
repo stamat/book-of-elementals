@@ -179,6 +179,38 @@ the `aria-describedby` all stay put.
 | Style the field | this book is not a design system. The theme draws the button and nothing else |
 | Save and restore the caret | it does not have to. Flipping `input.type` keeps focus **and** the selection range — measured in Chromium and WebKit, Firefox not checked. Pressing the button still moves focus to the button, as pressing any button does; what the preserved selection buys is `el.shown = true` from script leaving the reader's place alone |
 
+## The look
+
+`style.scss` is structure; `theme.scss` is the look and is optional — a light-DOM element
+cannot scope a look away from a page that did not ask for one.
+
+It draws the button and nothing else. The field keeps whatever the page already gave it —
+this book is not a design system, and a theme that redrew every `<input>` under it would
+restyle a form that only wanted a reveal button. The eye is an
+[Octicon](https://primer.style/foundations/icons/eye-16/) masked rather than painted, so it
+takes the button's own `color` and follows a theme switch for free; supplying your own icon
+means setting `content: none` on the button's `::before`, or the two glyphs stack. Three
+properties:
+
+| Property | Default | |
+| --- | --- | --- |
+| `--password-elemental-icon-size` | `1em` | The eye, both axes |
+| `--password-elemental-padding` | `0.35em` | Inside the button |
+| `--password-elemental-radius` | `0.35rem` | The button's corners |
+
+Turn them in the **Options** tab and copy the rule out of the bottom of the panel — the same
+table, with the values live:
+
+<!-- demo password tab="options" -->
+
+```html
+<label for="pw-look">Password</label>
+<password-elemental>
+  <input type="password" id="pw-look" name="password" autocomplete="current-password">
+  <button type="button"><span class="visually-hidden">Show password</span></button>
+</password-elemental>
+```
+
 ## Events
 
 | Event | When | `detail` |

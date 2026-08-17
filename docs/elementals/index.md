@@ -52,6 +52,7 @@ that is fine.
 | [`<password-elemental>`](password.html) | No APG pattern, because there is no widget — a `<button>` beside an `<input>`, and the state neither of them carries: `aria-pressed` rather than a swapped name, a live region rather than a swapped icon, and the field masked again before the form is submitted |
 | [`<progress-elemental>`](progress.html) | No APG pattern, because `<progress>` already is one — this adds the two things it has never had: where its fill ends, as something CSS can draw with, and a second value beside it for the part that is loaded but not played |
 | [`<search-elemental>`](search.html) | No APG pattern, because the widget is next door — the query half of a search field: the debounce, the abort, the loading state, and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html) a panel filling itself does not make |
+| [`<tilt-elemental>`](tilt.html) | No APG pattern, because nothing is operated — a card that leans under the pointer, layers that rise out of it, a glare that follows, and the [reduced-motion switch](https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html) every other tilt library animates straight through |
 
 ## Not in the book
 

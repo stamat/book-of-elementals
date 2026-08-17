@@ -292,7 +292,13 @@ export function writesClose(mode) {
  *
  * @cssprop {<time>} [--modal-elemental-duration=200ms] - How long the dialog and its backdrop take to arrive and to leave. The element waits for the animation it starts, so `0s` closes instantly.
  * @cssprop {<easing-function>} [--modal-elemental-easing=ease] - Easing for both ends.
+ * @cssprop {<color>} [--modal-elemental-backdrop=rgb(0 0 0 / 50%)] - The sheet over the page.
+ * @cssprop {<length>} [--modal-elemental-max-width=32rem] - Capped again at `100% - 2rem`, so a phone keeps its gutter.
+ * @cssprop {<length>} [--modal-elemental-padding=1.5rem] - Inside the box.
+ * @cssprop {<length>} [--modal-elemental-radius=0.75rem] - Its corners.
  * @cssprop {<length>} [--modal-elemental-close-size=2rem] - The close button, both axes. Its cross is sized from it.
+ * @cssprop {<length>} [--modal-elemental-close-inset=0.75rem] - How far the cross sits from the box's corner.
+ * @cssprop {<length> | auto} [--modal-elemental-margin-block=auto] - Where it sits: `auto` centres, `5vh auto` pins it near the top.
  *
  * @fires modal-toggle - `detail.open` is the new state, `detail.dialog` the dialog, `detail.depth` how deep in a stack of modals it sits.
  *

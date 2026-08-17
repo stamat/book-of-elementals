@@ -15,6 +15,28 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The docs option panels no longer under-report the theme knobs.** The panels read
+  `custom-elements.json`, which reads the JSDoc — and four elementals had knobs the JSDoc
+  never mentioned. `<modal-elemental>` now tags all nine of its custom properties instead of
+  three; `<password-elemental>` tags its real three (`icon-size`, `padding`, `radius`) and
+  drops `--password-elemental-gap`, which no stylesheet ever read — the element is
+  `display: contents` and has no gap to set; `<accordion-elemental>` and
+  `<disclosure-elemental>` tag the `duration`/`easing` pair their Animation sections were
+  already documenting. The password page also gains the "The look" section the other themed
+  elementals already had. No element behaviour, DOM or CSS changed.
+- **Docs corrections from a full read-through.** The home page said eighteen elements when
+  there are twenty-two, and the elementals index was missing `<tilt-elemental>` from its
+  table; the "swap in `book-of-elementals.min.js`" instruction on the home page and README
+  pointed one directory too deep — the whole-book bundles live in `dist/`, not
+  `dist/elementals/`; two anchors pointed at headings that do not exist (disclosure's
+  `#why-not-just-details`, navbar's `#how-few-links-is-not-a-bar`); the menu page called
+  itself the one element in the book that is a box, which the carousel, navbar and accordion
+  also are; the combobox API table was missing `custom-values` and `add-text`; the carousel
+  page now names `data-carousel-markers` on the picker, which the card-row example was
+  already styling against.
+
 ### Added
 
 - **`<tilt-elemental>`** — the 3D tilt card, with the reduced-motion switch the rest of the

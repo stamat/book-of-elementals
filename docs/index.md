@@ -51,7 +51,8 @@ Or use the CDN, no build step at all. Every element ships its own bundle:
 
 There is no global and no boot call. Including a bundle registers its element,
 and the element upgrades itself wherever it appears in the page — including
-markup added later. Swap in `book-of-elementals.min.js` for the whole book.
+markup added later. The whole book is one directory up:
+`dist/book-of-elementals.min.js`.
 
 Those stylesheets carry structure and motion only. Each element's look is a
 separate, optional one, off unless you ask for it:
@@ -67,8 +68,9 @@ separate, optional one, off unless you ask for it:
 />
 ```
 
-Swap in `book-of-elementals/theme.scss`, or `book-of-elementals-theme.min.css`,
-for every element's look at once.
+Every element's look at once is `book-of-elementals/theme.scss`, or
+`dist/book-of-elementals-theme.min.css` — beside the whole-book script, one
+directory up from the per-element bundles.
 
 ## Principles
 
@@ -93,8 +95,8 @@ handling are not options.
 
 ## The book so far
 
-Eighteen elements, one page each — fifteen on an APG pattern, three where there
-is none to have. [**The elementals**](elementals/index.html) is the index: what
+Twenty-two elements, one page each — fifteen on an APG pattern, seven where
+there is none to have. [**The elementals**](elementals/index.html) is the index: what
 each one implements, and which gap in the platform it fills.
 
 Assembled into whole interface pieces, they are in

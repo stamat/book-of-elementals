@@ -475,7 +475,7 @@ reason the note below gives:
 </switch-elemental>
 ```
 
-Three of the fourteen are not in the panel, and deliberately: `--switch-elemental-inset`,
+Three properties are not in the panel, and deliberately: `--switch-elemental-inset`,
 `--switch-elemental-knob-size` and `--switch-elemental-travel` are `calc()`-derived from the
 four geometry properties, and setting one by hand is how a knob ends up overshooting its own
 track. Size it with `--switch-elemental-width` and `--switch-elemental-height` and the rest

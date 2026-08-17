@@ -32,6 +32,22 @@
           "cssProperties": [
             {
               "type": {
+                "text": "<time>"
+              },
+              "description": "How long a panel takes to slide. The element reads it back out of the computed styles, so `0s` toggles instantly.",
+              "name": "--accordion-elemental-duration",
+              "default": "250ms"
+            },
+            {
+              "type": {
+                "text": "<easing-function>"
+              },
+              "description": "How the slide moves.",
+              "name": "--accordion-elemental-easing",
+              "default": "ease"
+            },
+            {
+              "type": {
                 "text": "<color>"
               },
               "description": "Rule between the panels.",
@@ -2214,6 +2230,22 @@
           "cssProperties": [
             {
               "type": {
+                "text": "<time>"
+              },
+              "description": "How long the region takes to slide. Override it on the region, which is where the element reads it back out of the computed styles - `0s` toggles instantly.",
+              "name": "--disclosure-elemental-duration",
+              "default": "250ms"
+            },
+            {
+              "type": {
+                "text": "<easing-function>"
+              },
+              "description": "How the slide moves. On the region, like the duration.",
+              "name": "--disclosure-elemental-easing",
+              "default": "ease"
+            },
+            {
+              "type": {
                 "text": "<length>"
               },
               "description": "Caret size, on the caret look.",
@@ -3436,11 +3468,59 @@
             },
             {
               "type": {
+                "text": "<color>"
+              },
+              "description": "The sheet over the page.",
+              "name": "--modal-elemental-backdrop",
+              "default": "rgb(0 0 0 / 50%)"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Capped again at `100% - 2rem`, so a phone keeps its gutter.",
+              "name": "--modal-elemental-max-width",
+              "default": "32rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Inside the box.",
+              "name": "--modal-elemental-padding",
+              "default": "1.5rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Its corners.",
+              "name": "--modal-elemental-radius",
+              "default": "0.75rem"
+            },
+            {
+              "type": {
                 "text": "<length>"
               },
               "description": "The close button, both axes. Its cross is sized from it.",
               "name": "--modal-elemental-close-size",
               "default": "2rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "How far the cross sits from the box's corner.",
+              "name": "--modal-elemental-close-inset",
+              "default": "0.75rem"
+            },
+            {
+              "type": {
+                "text": "<length> | auto"
+              },
+              "description": "Where it sits: `auto` centres, `5vh auto` pins it near the top.",
+              "name": "--modal-elemental-margin-block",
+              "default": "auto"
             }
           ],
           "slots": [
@@ -4363,9 +4443,25 @@
               "type": {
                 "text": "<length>"
               },
-              "description": "Between the field and the button.",
-              "name": "--password-elemental-gap",
-              "default": "0.5rem"
+              "description": "The eye, both axes.",
+              "name": "--password-elemental-icon-size",
+              "default": "1em"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Inside the button.",
+              "name": "--password-elemental-padding",
+              "default": "0.35em"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "The button's corners.",
+              "name": "--password-elemental-radius",
+              "default": "0.35rem"
             }
           ],
           "slots": [
@@ -5630,7 +5726,7 @@
                   "name": "e"
                 }
               ],
-              "description": "Let go, and where the pointer is decides again - including that it may have been let go\nsomewhere the bubble has no business still being.\n\nAnswered from the coordinates rather than from `target` or from a `pointerleave` that\nfollows, because neither survives the drag. A range input holds pointer capture until\nthe release, so `target` is the input wherever on the screen the pointer actually is;\nand the leave that would have covered it is not something every engine sends - Chromium\nfires one after the capture ends and WebKit fires none at all, which is a bubble left\non the page after every drag that ended off the control."
+              "description": "Let go, and where the pointer is decides again - including that it may have been let go\nsomewhere the bubble has no business still being.\n\nAnswered from the coordinates rather than from `target` or from a `pointerleave` that\nfollows, because neither survives the drag. A range input holds pointer capture until\nthe release, so `target` is the input wherever on the screen the pointer actually is;\nand the leave that would have covered it is not something every engine sends - Chromium\nfires one after the capture ends and WebKit fires none at all, which is a bubble left\non the page after every drag that ended off the control.\n\nA finger is not asked where it is: it is nowhere the moment it lifts, however far inside\nthe control it let go, so the release is the end of the bubble and not a question."
             },
             {
               "kind": "method",
@@ -5702,7 +5798,7 @@
               "type": {
                 "text": "string"
               },
-              "description": "A value bubble that follows the pointer. `thumb` over the thumb it is on, `track` for the value under it elsewhere, `thumb track` for both; a bare `tooltip` is `thumb`. Pointer only, and `aria-hidden` — the input announces its own value."
+              "description": "A value bubble that follows the pointer. `thumb` over the thumb it is on, `track` for the value under it elsewhere, `thumb track` for both; a bare `tooltip` is `thumb`. Pointer only, and `aria-hidden` — the input announces its own value. Touch draws it for the length of a press, since a finger has no hover to rest in."
             }
           ],
           "superclass": {
@@ -7475,7 +7571,7 @@
         },
         {
           "kind": "class",
-          "description": "`<tooltip-elemental>` custom element.\n\nA description that shows on hover and on focus, wired to the control it describes - and\nstill on the page when the script is not.\n\nThe [APG's tooltip pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/) says of\nitself that it \"is work in progress; it does not yet have task force consensus\", so this\nimplements the half every source does agree on - `aria-describedby` from the trigger to\nthe words, Escape to dismiss, hover and focus to show - and refuses the half they do\nnot. `role=\"tooltip\"` is set because the pattern says so, and\n[buys nothing on its own](https://sarahmhigley.com/writing/tooltips-in-wcag-21/):\n`aria-describedby` is what any screen reader actually reads.\n\nTwo ways to write it, and they are the same element:\n\n```html\n<tooltip-elemental>\n  <button type=\"button\">Save</button>\n  <span>Saves to your drafts, without publishing</span>\n</tooltip-elemental>\n\n<button type=\"button\" id=\"save\">Save</button>\n<tooltip-elemental for=\"save\">Saves to your drafts, without publishing</tooltip-elemental>\n```\n\nWrapping is the one to reach for. `for` exists because a bubble is sometimes written far\nfrom the button it belongs to - a table of controls, a template that emits its help text\nin one block - and it costs nothing at the markup level, since the element works out\nwhich shape it is in by whether it contains something focusable.\n\nA `title` on the trigger is read as the words when there is no other source for them,\nand the attribute is removed so the native tooltip does not double up. Where those words\nend up depends on what the trigger already had: see `titleRole`.\n\n**It is unreachable by touch, and that is not a bug to work around.** There is no hover\non a touch screen, and a tap is activation rather than focus, so pointer events from a\ntouch are ignored outright rather than half-handled. Nothing essential belongs in one.\nA control that needs its description read on every device wants visible text, and one\nthat reveals content on a press wants `<disclosure-elemental>`.\n\nLight DOM, no shadow root. Nothing is moved and nothing is wrapped: the bubble is the\nelement the author wrote, given a `role`, an `id` if it had none, and a `hidden` while\nit is not showing - which still leaves it readable, because\n[`aria-describedby` reaches hidden content](https://www.w3.org/TR/accname-1.2/).\n\nDegrades honestly: with no script the words are a sentence beside the control, which is\nwhat the markup says on its own. Nothing is hidden until there is something able to show\nit again.\n\nponytail: fixed positioning rather than the popover API, so a bubble is not clipped by a\nscrolling ancestor. Popover would put it in the top layer and take the Escape handling\nwith it; it is worth revisiting once CSS anchor positioning is in Firefox and Safari,\nwhich is the half that would then be missing.",
+          "description": "`<tooltip-elemental>` custom element.\n\nA description that shows on hover and on focus, wired to the control it describes - and\nstill on the page when the script is not.\n\nThe [APG's tooltip pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/) says of\nitself that it \"is work in progress; it does not yet have task force consensus\", so this\nimplements the half every source does agree on - `aria-describedby` from the trigger to\nthe words, Escape to dismiss, hover and focus to show - and refuses the half they do\nnot. `role=\"tooltip\"` is set because the pattern says so, and\n[buys nothing on its own](https://sarahmhigley.com/writing/tooltips-in-wcag-21/):\n`aria-describedby` is what any screen reader actually reads.\n\nTwo ways to write it, and they are the same element:\n\n```html\n<tooltip-elemental>\n  <button type=\"button\">Save</button>\n  <span>Saves to your drafts, without publishing</span>\n</tooltip-elemental>\n\n<button type=\"button\" id=\"save\">Save</button>\n<tooltip-elemental for=\"save\">Saves to your drafts, without publishing</tooltip-elemental>\n```\n\nWrapping is the one to reach for. `for` exists because a bubble is sometimes written far\nfrom the button it belongs to - a table of controls, a template that emits its help text\nin one block - and it costs nothing at the markup level, since the element works out\nwhich shape it is in by whether it contains something focusable.\n\nA `title` on the trigger is read as the words when there is no other source for them,\nand the attribute is removed so the native tooltip does not double up. Where those words\nend up depends on what the trigger already had: see `titleRole`.\n\n**It is all but unreachable by touch, and that is not a bug to work around.** There is no\nhover on a touch screen and a tap is activation rather than hover, so pointer events from\na touch are ignored outright rather than half-handled. Focus is the one way in that is\nleft, and whether a tap moves it is the engine's: Chromium focuses a `<button>` on tap and\nthe bubble opens, WebKit does not focus buttons on tap and nothing appears - measured, not\nassumed. Focus is deliberately not filtered by how it arrived, because that would take the\nwords away from the readers who do get them; what it means is that nothing essential\nbelongs in one. A control that needs its description read on every device wants visible\ntext, and one that reveals content on a press wants `<disclosure-elemental>`.\n\nLight DOM, no shadow root. Nothing is moved and nothing is wrapped: the bubble is the\nelement the author wrote, given a `role`, an `id` if it had none, and a `hidden` while\nit is not showing - which still leaves it readable, because\n[`aria-describedby` reaches hidden content](https://www.w3.org/TR/accname-1.2/).\n\nDegrades honestly: with no script the words are a sentence beside the control, which is\nwhat the markup says on its own. Nothing is hidden until there is something able to show\nit again.\n\nponytail: fixed positioning rather than the popover API, so a bubble is not clipped by a\nscrolling ancestor. Popover would put it in the top layer and take the Escape handling\nwith it; it is worth revisiting once CSS anchor positioning is in Firefox and Safari,\nwhich is the half that would then be missing.",
           "name": "TooltipElemental",
           "cssProperties": [
             {

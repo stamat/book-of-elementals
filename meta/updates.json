@@ -8,52 +8,52 @@
     "updated": "2026-08-05T21:03:21.003Z"
   },
   "docs/elementals/carousel.md": {
-    "hash": "acfefe4ab7cb875a4fc1960ca0cad7d44b4663f0",
-    "updated": "2026-08-16T12:37:33.209Z"
+    "hash": "53dda503f36c4a2c45dddf98dff62afce64bea43",
+    "updated": "2026-08-17T17:47:46.731Z"
   },
   "docs/elementals/checkbox-group.md": {
     "hash": "98e2e3327e4a80d8a159b35a41eabb19a482c3a8",
     "updated": "2026-08-07T14:35:10.749Z"
   },
   "docs/elementals/combobox.md": {
-    "hash": "23e5628cd7b8c1d393f32a829e8dec7e098faf39",
-    "updated": "2026-08-17T01:19:53.511Z"
+    "hash": "ed5d7309920051c65b6f00e060e2c9da905a8f1e",
+    "updated": "2026-08-17T16:14:55.003Z"
   },
   "docs/elementals/copy.md": {
     "hash": "4ebab5e45fa34616d0950884c708617b9849f798",
     "updated": "2026-08-10T01:15:11.298Z"
   },
   "docs/elementals/disclosure.md": {
-    "hash": "4d877e948a096ce8b8aee20800128fe0ad8206bd",
-    "updated": "2026-08-06T17:55:18.737Z"
+    "hash": "0c500295edab0d48d7e26bf3da766e1a02155995",
+    "updated": "2026-08-17T16:11:54.783Z"
   },
   "docs/elementals/field.md": {
     "hash": "9e5504e4b5810e52162b8e22b1658fc52ebdb6e0",
     "updated": "2026-08-17T00:13:19.567Z"
   },
   "docs/elementals/index.md": {
-    "hash": "515246b2a66e8cd6950c200b856fca65e538cba8",
-    "updated": "2026-08-17T00:08:01.722Z"
+    "hash": "c7fc4fe1e320f805d09e8c2d02e16be0771ca42e",
+    "updated": "2026-08-17T16:12:58.999Z"
   },
   "docs/elementals/marquee.md": {
     "hash": "725b66e2274b4d5f66f4c243c7bb90ee8bf1a506",
     "updated": "2026-08-16T12:37:32.100Z"
   },
   "docs/elementals/menu.md": {
-    "hash": "e54fbeb3b29e117bce4da278eb75330de0ca5381",
-    "updated": "2026-08-09T18:55:23.422Z"
+    "hash": "b3e96e632eb2b7a765f1ec52e93662272f8f6b8b",
+    "updated": "2026-08-17T16:16:13.335Z"
   },
   "docs/elementals/modal.md": {
     "hash": "4f9b54f9d6b30407b5f81bb6d1eca9239a6f7465",
     "updated": "2026-08-10T00:41:59.022Z"
   },
   "docs/elementals/navbar.md": {
-    "hash": "daef3cf6eed3ab62a45960b2eb2fad0b2c99a231",
-    "updated": "2026-08-10T14:12:15.819Z"
+    "hash": "97e680c48d5ccd99bdf15a058f0e3c4ef6cf8167",
+    "updated": "2026-08-17T16:11:53.383Z"
   },
   "docs/elementals/password.md": {
-    "hash": "a7bc601be59d1d1e5db5d442a598ae4e065a6a57",
-    "updated": "2026-08-17T00:13:19.567Z"
+    "hash": "96d7bb6ad51e1a830add7def4edbc3799f2a75e2",
+    "updated": "2026-08-17T16:09:28.343Z"
   },
   "docs/elementals/progress.md": {
     "hash": "f2a039a360e1a45971a59296364a3272485d2e54",
@@ -76,8 +76,8 @@
     "updated": "2026-08-11T21:50:19.369Z"
   },
   "docs/elementals/switch.md": {
-    "hash": "5799940edbda250bf4ede57a01d419a8977e3d51",
-    "updated": "2026-08-09T18:55:23.424Z"
+    "hash": "e5a0ad0016cacf8313a115da3bb17470772f2115",
+    "updated": "2026-08-17T17:46:24.831Z"
   },
   "docs/elementals/tabs.md": {
     "hash": "e34bde45d869742e1acbf758ac014a76600b0338",
@@ -92,8 +92,8 @@
     "updated": "2026-08-09T21:21:16.620Z"
   },
   "docs/elementals/tooltip.md": {
-    "hash": "9be69a1a2312a1a06c760c93473e739825a1ba6e",
-    "updated": "2026-08-09T21:25:51.661Z"
+    "hash": "3583849b344a443593a69fe20fc5722ae5b434ba",
+    "updated": "2026-08-17T15:36:26.606Z"
   },
   "docs/examples/bulk-actions.md": {
     "hash": "f72c04e3c8b7d0101b4ea0b1f5dee7c5c3ebfbbc",
@@ -124,7 +124,7 @@
     "updated": "2026-08-09T21:21:16.621Z"
   },
   "docs/index.md": {
-    "hash": "28ed11dadac96d9235e941d597ab048f86898f67",
-    "updated": "2026-08-15T11:41:27.965Z"
+    "hash": "5edf728057fc1185628f181ef9cb03d769721dcb",
+    "updated": "2026-08-17T16:12:56.134Z"
   }
 }

@@ -81,7 +81,9 @@ export function revealAfter(event, shown) {
  * @attr {string} [shown-text=Your password is visible] - What the live region says when the value is revealed.
  * @attr {string} [hidden-text=Your password is hidden] - What it says when the mask goes back on.
  *
- * @cssprop {<length>} [--password-elemental-gap=0.5rem] - Between the field and the button.
+ * @cssprop {<length>} [--password-elemental-icon-size=1em] - The eye, both axes.
+ * @cssprop {<length>} [--password-elemental-padding=0.35em] - Inside the button.
+ * @cssprop {<length>} [--password-elemental-radius=0.35rem] - The button's corners.
  *
  * @fires password-reveal - `detail.shown` is whether the value is now visible.
  *

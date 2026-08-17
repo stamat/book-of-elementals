@@ -189,11 +189,59 @@
             },
             {
               "type": {
+                "text": "<color>"
+              },
+              "description": "The sheet over the page.",
+              "name": "--modal-elemental-backdrop",
+              "default": "rgb(0 0 0 / 50%)"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Capped again at `100% - 2rem`, so a phone keeps its gutter.",
+              "name": "--modal-elemental-max-width",
+              "default": "32rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Inside the box.",
+              "name": "--modal-elemental-padding",
+              "default": "1.5rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Its corners.",
+              "name": "--modal-elemental-radius",
+              "default": "0.75rem"
+            },
+            {
+              "type": {
                 "text": "<length>"
               },
               "description": "The close button, both axes. Its cross is sized from it.",
               "name": "--modal-elemental-close-size",
               "default": "2rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "How far the cross sits from the box's corner.",
+              "name": "--modal-elemental-close-inset",
+              "default": "0.75rem"
+            },
+            {
+              "type": {
+                "text": "<length> | auto"
+              },
+              "description": "Where it sits: `auto` centres, `5vh auto` pins it near the top.",
+              "name": "--modal-elemental-margin-block",
+              "default": "auto"
             }
           ],
           "slots": [
