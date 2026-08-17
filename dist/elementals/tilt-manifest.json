@@ -1,0 +1,337 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/tilt/index.js",
+      "declarations": [
+        {
+          "kind": "variable",
+          "name": "DEFAULT_MAX",
+          "type": {
+            "text": "number"
+          },
+          "default": "10",
+          "description": "Degrees at the edge, when `max` says nothing usable. Chosen rather than derived: the card\nthis was extracted from leans 2, which is slight enough that most readers never see it."
+        },
+        {
+          "kind": "function",
+          "name": "tiltFrom",
+          "parameters": [
+            {
+              "name": "rect",
+              "description": "The box.",
+              "type": {
+                "text": "DOMRect|{left: number, top: number, width: number, height: number}"
+              }
+            },
+            {
+              "name": "pointerX",
+              "description": "Viewport coordinates, as `PointerEvent.clientX` gives them.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "pointerY",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "options",
+              "default": "{}",
+              "optional": true,
+              "type": {
+                "text": "{max?: number, axis?: string|null, reverse?: boolean}"
+              }
+            }
+          ],
+          "description": "Where the pointer is inside the box, as the two angles the card is drawn at and the point\nthe glare is centred on.\n\n**The sign convention is the whole of it, and nothing about `rotateX` announces which way\nit goes.** A positive `rotateX` sends the top edge away from the reader and a positive\n`rotateY` sends the right edge away, so the card leans *away* from the pointer - the feel\nof pressing a corner rather than of the card following a magnet. `reverse` is the other\none, and it is an attribute rather than a default because both look deliberate and only\none of them can be first.\n\nThe glare does not flip with it. Reverse changes which way the card leans; the light is\nstill where the reader is pointing.\n\nAngles are unitless and so is the glare position - the stylesheet multiplies by `1deg` and\n`1%`. That is what lets the theme's shadow read the same two numbers as an offset without\ndividing a `deg` back out of them.",
+          "return": {
+            "type": {
+              "text": "{x: number, y: number, glareX: number, glareY: number}"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "layerDepth",
+          "parameters": [
+            {
+              "name": "value"
+            }
+          ],
+          "description": "A layer's `data-tilt-depth` as a number, or `null` when it is not one.\n\n`Number` rather than `parseFloat`, so `data-tilt-depth=\"40px\"` is refused instead of\nhalf-honoured: the value is multiplied by `--tilt-elemental-depth-step`, and a length\ntimes a length is a `calc()` that does not resolve - which invalidates the whole\n`transform` and takes the card's rotation down with the layer's rise."
+        },
+        {
+          "kind": "class",
+          "description": "`<tilt-elemental>` custom element.\n\nA card that leans under the pointer: the 3D tilt every product page has, wrapped round the\nmarkup you already wrote rather than poured into a structure of its own.\n\nThere is no APG pattern for this, because there is no widget - nothing is operated, and the\ncontent is the same content lying flat. What there is instead is an obligation nobody in\nthis corner of the ecosystem meets.\n[WCAG 2.2 2.3.3 Animation from Interactions](https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html)\nsays motion animation triggered by interaction has to be able to be turned off unless it is\nessential - and a decorative tilt is never essential, so there is no exemption to claim.\n`prefers-reduced-motion` is the technique the criterion names, and **this element reads it\nand then does not listen at all**: no pointer handlers, no transform, no glare. It follows\nthe setting live, because unlike a marquee there is no button here for a reader to have\npressed, so nothing is being overridden by keeping up with them.\n\nThe pointer is a mouse or it is nothing. A finger dragging across a card is a page trying\nto scroll, and a card that tilts under it is a card fighting the gesture it intercepted.\nThere is no keyboard equivalent either, and that is deliberate rather than missing: motion\nthat a reader cannot avoid triggering is the failure the criterion is about.\n\nLight DOM, no shadow root. Nothing you wrote is moved or wrapped - the element writes four\nnumbers into its own `style` and the stylesheet spends them. With no script it is a `<div>`\nthat does nothing, with your content inside it in reading order.\n\n**The tilt is a CSS transition, not a loop.** Every library on this shelf runs a `lerp`\ninside `requestAnimationFrame` to smooth the movement; a transition on `transform` is the\nsame easing done by the compositor, off the main thread, and it stops on its own. All the\nframe callback is left with is collapsing a burst of pointer events into one write.\n\nponytail: no gyroscope. `DeviceOrientationEvent.requestPermission()` needs transient\nactivation and a permission prompt on iOS, and a card that asks for sensor access to wobble\nis a worse trade than a card that does not wobble on a phone. If it is ever wanted it is an\nattribute plus a method the author calls from their own gesture, never an automatic prompt.\n\nponytail: no scale on hover, because `data-tilt-active` is public and\n`tilt-elemental[data-tilt-active] { scale: 1.03 }` is the whole feature.",
+          "name": "TiltElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "How near the reader is. Smaller is a wider lens and a stronger lean for the same angle.",
+              "name": "--tilt-elemental-perspective",
+              "default": "1000px"
+            },
+            {
+              "type": {
+                "text": "<time>"
+              },
+              "description": "How long the card takes to catch up with the pointer. The trailing feel every tilt library calls speed.",
+              "name": "--tilt-elemental-duration",
+              "default": "120ms"
+            },
+            {
+              "type": {
+                "text": "<time>"
+              },
+              "description": "How long it takes to settle flat once the pointer has gone. Longer than the chase on purpose.",
+              "name": "--tilt-elemental-return-duration",
+              "default": "400ms"
+            },
+            {
+              "type": {
+                "text": "ease | ease-in | ease-out | ease-in-out | linear"
+              },
+              "description": "How both of those move.",
+              "name": "--tilt-elemental-easing",
+              "default": "ease-out"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "What one unit of `data-tilt-depth` is worth, so `data-tilt-depth=\"40\"` rises 40px.",
+              "name": "--tilt-elemental-depth-step",
+              "default": "1px"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "The highlight, alpha included. One property rather than a colour and an opacity, because a glare is the two together.",
+              "name": "--tilt-elemental-glare-color",
+              "default": "rgb(255 255 255 / 35%)"
+            },
+            {
+              "type": {
+                "text": "<length-percentage>"
+              },
+              "description": "How far it spreads before it is gone. Small is a hotspot, large is a wash.",
+              "name": "--tilt-elemental-glare-size",
+              "default": "60%"
+            },
+            {
+              "type": {
+                "text": "<length-percentage>"
+              },
+              "description": "Theme. The card's corners, which the glare follows. Rounded with `border-radius` alone, because `overflow: hidden` over it would flatten every layer.",
+              "name": "--tilt-elemental-radius",
+              "default": "0.75rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Theme. How soft the shadow under the card is. Spent as half of itself, because the shadow is a blurred fill and a blur takes the deviation where a `box-shadow` takes twice it.",
+              "name": "--tilt-elemental-shadow-size",
+              "default": "1.5rem"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. Its colour, and the fill of the layer it is drawn on - so a card with a see-through background wants this at `transparent`. The offset is not a knob: it is the lean, a pixel per degree, moving against it.",
+              "name": "--tilt-elemental-shadow-color",
+              "default": "currentcolor at 30%"
+            }
+          ],
+          "slots": [
+            {
+              "description": "The card. Anything at all; mark a descendant `data-tilt-depth=\"40\"` to have it rise out of the surface while the card is leaning.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "frame",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "description": "The frame callback's handle, `0` when none is queued."
+            },
+            {
+              "kind": "field",
+              "name": "pointer",
+              "type": {
+                "text": "null"
+              },
+              "default": "null",
+              "description": "The last position the pointer reported, `null` when it is not over the card."
+            },
+            {
+              "kind": "field",
+              "name": "box",
+              "type": {
+                "text": "null"
+              },
+              "default": "null",
+              "description": "The card's box as it is with nothing leaning it, held for the length of one hover and\n`null` at rest.\n\n**Every decision is made against this and not against the box the card is currently\ndrawn in**, which is the whole of why this element does not flicker at its own border.\nThe card leans *away* from the pointer, so the edge the pointer is nearest is always the\nedge that swings back - and a receding edge projects inwards. Hit-test against the\nleaning card and a pointer a pixel inside that edge falls outside it: `pointerleave`\nfires, the card straightens, the edge lands back under the pointer, and it leans again.\n\nA lift towards the reader looks like it would cover the gap and does not: what the\nrotation gives away grows with the square of the card's size, where a lift only scales\nit, so any fixed lift is a card size away from flickering again. Measured on a\n`640x400` card at ten degrees, `2.5rem` of lift was still nine pixels short.\n\nIt can only be read at the one moment the card is flat, which is the first pointer event\nof a hover - so it is read there and kept. Stale after a scroll, which is what the\nscroll listener is for."
+            },
+            {
+              "kind": "field",
+              "name": "max",
+              "description": "Degrees at the edge. The trust boundary for `max`: past here it is a number at or above\nzero, and `0` is a value an author means rather than one to fall back from."
+            },
+            {
+              "kind": "field",
+              "name": "axis",
+              "description": "`'x'`, `'y'`, or `null` for both. Anything else is both, rather than a card that has\nsilently stopped moving because of a typo."
+            },
+            {
+              "kind": "method",
+              "name": "update",
+              "description": "Copy every `data-tilt-depth` in the card onto a custom property the stylesheet can\nmultiply.\n\nCSS cannot read an attribute as a number - `attr()` with a type is not in the browsers\nthis book targets - so the number has to be carried across, and this is the one place it\nhappens.\n\nponytail: read at upgrade and on demand, with no observer behind it. A card whose layers\narrive from a render after that calls `.update()`; a `MutationObserver` over the whole\nsubtree is the upgrade if that turns out to be the common case rather than the rare one."
+            },
+            {
+              "kind": "method",
+              "name": "onMotionChange"
+            },
+            {
+              "kind": "method",
+              "name": "start",
+              "description": "Listen. Nothing is drawn until the pointer arrives, so this is safe to call twice."
+            },
+            {
+              "kind": "method",
+              "name": "stop",
+              "description": "Stop listening and lie flat. The card animates back rather than snapping, because the\ntransition is on the transform and the transform is what changed."
+            },
+            {
+              "kind": "method",
+              "name": "onPointerMove",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onDocumentMove",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ],
+              "description": "The pointer, once the card is leaning: the card's own `pointermove` stops being the\nauthority the moment there is a transform in the way of it.\n\nCapture, so nothing on the page can swallow the event that decides the card is done, and\nthe containment test is against the flat box rather than against whether the event\nreached the element at all."
+            },
+            {
+              "kind": "method",
+              "name": "track",
+              "parameters": [
+                {
+                  "name": "x"
+                },
+                {
+                  "name": "y"
+                }
+              ],
+              "description": "Note where the pointer is and ask for a frame.\n\nThe first call of a hover is the one that matters: the card is still flat, so this is the\nonly moment `getBoundingClientRect` answers with the untransformed box, and it is kept\nfor the rest of the hover. Everything after it - the angles, and whether the pointer has\nleft - is measured against that.\n\nOne write a frame. `pointermove` outruns the display, and every extra pass is a style\ninvalidation for a frame nobody will see."
+            },
+            {
+              "kind": "method",
+              "name": "apply",
+              "description": "Draw the card at the last position the pointer reported."
+            },
+            {
+              "kind": "method",
+              "name": "rest",
+              "description": "Flat, and nothing queued.\n\nThe two angles are removed rather than set to zero, so the fallbacks in the stylesheet\nare the only place the resting angle is written down. Removing one still animates: what\ntransitions is `transform`, which is recomputed from whatever the `var()` resolves to.\n\n**The glare's position is deliberately left where it was.** Removing it too would send\nthe highlight sliding back to the middle of the card as it fades - a light travelling to\na place the pointer never was, and the one movement in this element that nobody asked\nfor. Fading out where it stood is what a highlight does. The next hover writes over it\nbefore anything is visible again.\n\nThe attribute comes off in the same task, which is what makes the way back slower than\nthe way out - the longer duration is the rule that applies once it is gone."
+            }
+          ],
+          "attributes": [
+            {
+              "type": {
+                "text": "number"
+              },
+              "description": "Degrees at the edge of the box. `0` is a card that does not move, for a glare on its own. Anything that is not a number at or above zero is the default.",
+              "name": "max",
+              "default": "10"
+            },
+            {
+              "type": {
+                "text": "x | y"
+              },
+              "description": "Keep one rotation and drop the other. `x` is the card nodding as the pointer moves up and down, `y` is it turning as the pointer moves across. Absent is both.",
+              "name": "axis"
+            },
+            {
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Lean towards the pointer instead of away from it. The glare does not move.",
+              "name": "reverse",
+              "default": "false"
+            },
+            {
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Draw a highlight that follows the pointer across the card. `--tilt-elemental-x`, `--tilt-elemental-y`, `--tilt-elemental-glare-x` and `--tilt-elemental-glare-y` are deliberately not tagged below. The element writes them into its own `style` attribute, and an inline declaration beats any stylesheet - so a knob for one would be a control that cannot move anything, and the docs panel is built out of these tags. They are outputs, and the page describes them as such.",
+              "name": "glare",
+              "default": "false"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "tilt-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "DEFAULT_MAX",
+          "declaration": {
+            "name": "DEFAULT_MAX",
+            "module": "src/elementals/tilt/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "tiltFrom",
+          "declaration": {
+            "name": "tiltFrom",
+            "module": "src/elementals/tilt/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "layerDepth",
+          "declaration": {
+            "name": "layerDepth",
+            "module": "src/elementals/tilt/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "TiltElemental",
+          "declaration": {
+            "name": "TiltElemental",
+            "module": "src/elementals/tilt/index.js"
+          }
+        }
+      ]
+    }
+  ]
+}

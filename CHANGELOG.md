@@ -15,6 +15,59 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Added
+
+- **`<tilt-elemental>`** — the 3D tilt card, with the reduced-motion switch the rest of the
+  shelf does not have. No APG pattern, because nothing is operated; what there is instead is
+  [2.3.3 Animation from Interactions](https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html),
+  which a decorative tilt can never claim the "essential" exemption from. vanilla-tilt, tilt.js
+  and Atropos all animate straight through `prefers-reduced-motion`; this reads it, follows it
+  live, and with it on attaches no pointer listener at all — no transform, no glare, no layers.
+  Mouse only, and no keyboard trigger: motion a reader cannot avoid is the thing the criterion
+  is about.
+
+  `max`, `axis`, `reverse` and `glare` are the whole attribute surface. Any descendant marked
+  `data-tilt-depth="40"` rises out of the card while it leans, at any depth of nesting.
+
+  **No stutter at the border, and no wrapper divs to buy it with.** The card leans away from
+  the pointer, so the edge the pointer is nearest is the edge that recedes — hit-test the
+  leaning card and a pointer a pixel inside it falls outside, straightening the card, which
+  puts the edge back under the pointer. Every angle is measured against the box the card has
+  when it is flat, read once at the start of a hover, and so is the question of whether the
+  pointer has left. Atropos pays for the same guarantee with three nested `<div>`s;
+  vanilla-tilt hands you an option for binding the listeners somewhere else.
+
+  **DOM:** one wrapper, and nothing inside it is moved. The element writes
+  `data-tilt-active` while the pointer is over the card, and four unitless custom properties
+  into its own `style` — `--tilt-elemental-x`, `--tilt-elemental-y`,
+  `--tilt-elemental-glare-x`, `--tilt-elemental-glare-y`. Unitless so the theme can spend the
+  same number as a pixel offset that the transform spends as a degree. The two angles are
+  removed when the pointer leaves; the glare's position is left where it stood, so the
+  highlight fades out in place instead of sliding to the middle of the card on its way. While
+  the pointer is over a card the element also listens on `document`, and a scroll straightens
+  it — the cached flat box has moved and cannot be re-measured while the card is leaning.
+
+  **CSS:** everything but `display: block` is behind `:defined`, so an unupgraded page is the
+  card you wrote. Both pseudo-elements are spoken for — `::after` is the glare, drawn by the
+  structure stylesheet rather than the optional theme because `glare` is an attribute and a
+  promise kept only for whoever also imported the look is a promise broken for everyone else;
+  `::before` is the theme's shadow. The shadow is a translated layer rather than an offset
+  inside `box-shadow`, which is what stops it stuttering: a `box-shadow` fed by a custom
+  property repaints a soft blur every frame on the main thread while the card glides on the
+  compositor, and the two run at visibly different rates. Measured over a 240-frame hover, 478
+  paints became 9. What is drawn on that layer is the card's shape, filled and blurred, rather
+  than a `box-shadow`: a shadow never paints inside its own box, so a hollow one slides out
+  from behind a leaning card as the hole in the middle of its ring, and a filled one with a
+  `box-shadow` on it has a hard rim on the two sides that emerge. `--tilt-elemental-shadow-size`
+  is spent as half of itself, since `box-shadow` takes twice the gaussian deviation that
+  `filter: blur()` takes, so the number means what it always did. The trade is that the layer
+  is a coloured slab rather than a hole, so a card with a see-through background shows the
+  shadow through it; point `--tilt-elemental-shadow-color` at `transparent` there. Note that `overflow` other than `visible` or `clip`, `filter`, `opacity`
+  below 1, `clip-path`, `mask-image`, `mix-blend-mode`, `isolation: isolate` or paint
+  containment — on the element **or on any wrapper between it and a layer** — force
+  `transform-style` back to `flat` and silently stop every layer rising. The theme rounds its
+  corners with `border-radius` alone for that reason.
+
 ## [0.10.0] - 2026-08-17
 
 ### Added

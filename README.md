@@ -39,6 +39,7 @@ holds the JavaScript helpers, this one holds the elements.
 | `<password-elemental>`   | No APG pattern — a reveal button for a password field: `aria-pressed` rather than a swapped name, the change [announced](https://www.w3.org/WAI/WCAG22/Understanding/status-changes.html) rather than left to an icon, and the mask back on before the value is submitted |
 | `<progress-elemental>`   | No APG pattern — `<progress>` already is one, so this adds only what it has never had: where its fill ends as something CSS can draw with, and a second value for the part loaded but not played |
 | `<search-elemental>`     | No APG pattern — the query half of a search field: the debounce, the abort, the loading state and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html) a panel filling itself does not make |
+| `<tilt-elemental>`       | No APG pattern — a card that leans under the pointer, with layers that rise out of it and a glare that follows, and the [`prefers-reduced-motion`](https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html) switch every other tilt library animates straight through |
 
 ## Docs
 

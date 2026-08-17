@@ -1,0 +1,153 @@
+// Structure and motion for `<tilt-elemental>`: the lean, the layers that rise out of it, and
+// the glare. No card - no radius, no shadow, no surface - that is `theme.scss`, which this
+// does not import.
+
+// The glare is here rather than in the theme, and it is the one place the line between the
+// two files bends. `glare` is an attribute, so it is a promise the element makes; a promise
+// kept only by whoever also imported the optional look is a promise broken for everybody
+// else. The theme restyles it, this file is what makes it exist.
+
+// `display` is the one declaration that does not wait for `:defined`, and the reason is the
+// no-script promise: left `display: inline`, an unupgraded `<tilt-elemental>` round a card is
+// an inline box with a block inside it, a layout nobody wrote and nobody can see coming.
+// Everything else waits, because a transform on an element the script has not reached is a
+// card leaning at an angle with nothing to straighten it.
+
+// **The defaults an author sets go on the bare tag, never on `:defined`.** A page overriding
+// one writes `tilt-elemental { --tilt-elemental-perspective: 600px }`, which is one class less
+// specific than `:defined` - so a default declared behind the gate would win over the rule
+// that meant to replace it, silently, and only for this element in the book. A custom
+// property has nothing to wait for anyway; the transform below does.
+tilt-elemental {
+  --tilt-elemental-perspective: 1000px;
+  --tilt-elemental-duration: 120ms;
+  --tilt-elemental-return-duration: 400ms;
+  --tilt-elemental-easing: ease-out;
+  --tilt-elemental-depth-step: 1px;
+  --tilt-elemental-glare-color: rgb(255 255 255 / 35%);
+  --tilt-elemental-glare-size: 60%;
+
+  display: block;
+}
+
+tilt-elemental:defined {
+  // The four numbers the element writes are unitless, and the unit is put back on here. That
+  // is what lets the theme's shadow spend the same `--tilt-elemental-y` as a translation in
+  // pixels: a `deg` would have to be divided back out of it, and dividing by a unit inside
+  // `calc()` is newer than the browsers this book targets.
+
+  // The fallbacks are the resting position, and they are the only place it is written down -
+  // the element removes its properties rather than setting them to zero, so this is what a
+  // card at rest resolves to. Removing one still animates: what transitions is `transform`,
+  // and `transform` is recomputed from whatever the `var()` resolves to now.
+
+  transform:
+    perspective(var(--tilt-elemental-perspective))
+    rotateX(calc(var(--tilt-elemental-x, 0) * 1deg))
+    rotateY(calc(var(--tilt-elemental-y, 0) * 1deg));
+
+  // What puts the layers in the same space as the card rather than painting them flat onto
+  // it. **It is also the trap in this element**, because `transform-style` is overridden back
+  // to `flat` by any of `overflow` other than `visible` or `clip`, `filter`, `opacity` below
+  // 1, `clip-path`, `mask-image`, `mix-blend-mode`, `isolation: isolate` or paint containment
+  // on this element - so the usual `overflow: hidden` for rounded corners silently flattens
+  // every `data-tilt-depth` in the card. The theme rounds the corners with `border-radius`
+  // alone for exactly that reason, and `clip` is the one that clips without flattening.
+  transform-style: preserve-3d;
+
+  // For the glare, and for whatever the theme hangs off the card. Free: the transform above
+  // already makes this a stacking context, and `position: relative` with no `z-index` adds
+  // nothing to that - so declaring it here rather than behind the `glare` attribute costs an
+  // author nothing, and saves the theme from introducing a positioning context that the
+  // structure did not have.
+  position: relative;
+
+  // The transition is the easing. Every library on this shelf runs a lerp inside
+  // `requestAnimationFrame` to get the same trailing feel; this is the compositor doing it,
+  // and it stops on its own when the numbers stop changing.
+  transition: transform var(--tilt-elemental-return-duration) var(--tilt-elemental-easing);
+
+  // The way back is slower than the way out, and it is one attribute rather than two
+  // durations fought over in script: `data-tilt-active` is on while the pointer is over the
+  // card, so the rule above is what applies the moment it comes off.
+  &[data-tilt-active] {
+    transition-duration: var(--tilt-elemental-duration);
+  }
+
+  // **A layer only rises if every box between it and the card is in the same 3D space**, and
+  // `transform-style` defaults to `flat` - so the one plain `<article>` an author wraps their
+  // content in, which is what a card *is*, flattens every depth inside it straight back onto
+  // the surface. Nothing warns: the transform still computes, still reads `translateZ(40px)`
+  // in the inspector, and is simply drawn with no depth. A feature that looks broken with
+  // nothing in the styles to blame for it.
+
+  // `:has()` rather than a blanket `*`, so this reaches only the boxes that actually contain
+  // a layer instead of making a 3D rendering context out of every descendant and re-sorting
+  // the paint order of a card that never asked for one. The flattening list above applies
+  // here too: an `overflow: hidden` on the wrapper undoes this the same way it undoes the
+  // card's own.
+  :has([data-tilt-depth]) {
+    transform-style: preserve-3d;
+  }
+
+  // A layer rises while the card is leaning and lies back down with it, rather than floating
+  // permanently above a card at rest - which at this perspective reads as a title that is
+  // slightly too big for its box and nothing else.
+  [data-tilt-depth] {
+    transform: translateZ(0);
+    transition: transform var(--tilt-elemental-return-duration) var(--tilt-elemental-easing);
+  }
+
+  &[data-tilt-active] [data-tilt-depth] {
+    transform: translateZ(calc(var(--tilt-elemental-depth, 0) * var(--tilt-elemental-depth-step)));
+    transition-duration: var(--tilt-elemental-duration);
+  }
+}
+
+// The glare. Only where it was asked for, and drawn on `::after` because the theme's shadow
+// has `::before` - the two are the element's whole pseudo budget, which is worth knowing
+// before adding a third thing that wants one.
+
+// ponytail: the gradient's centre is a custom property, so the whole radial gradient repaints
+// every frame the pointer moves - measured at about 127 paints across a 240-frame hover,
+// against 9 for a card whose paint never changes. The fix is the shadow's: a fixed gradient on
+// an oversized layer that only translates. It needs `overflow: clip` on the card to hide the
+// overhang, and that would clip the shadow's own blur off with it, so the two cannot both be
+// composited without a third box. Left as the smaller of the two costs.
+tilt-elemental[glare]:defined {
+  &::after {
+    position: absolute;
+    inset: 0;
+    content: "";
+
+    // Decoration over content, and never in the way of a pointer aiming at a link
+    // underneath - which on this element would also be a pointer that never reaches the
+    // handler reading its position.
+    pointer-events: none;
+    background: radial-gradient(
+      circle at calc(var(--tilt-elemental-glare-x, 50) * 1%) calc(var(--tilt-elemental-glare-y, 50) * 1%),
+      var(--tilt-elemental-glare-color),
+      transparent var(--tilt-elemental-glare-size)
+    );
+
+    // Whatever the card's corners are, including a radius the page set itself. A square
+    // highlight over a rounded card is the corner every glare implementation forgets.
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity var(--tilt-elemental-return-duration) var(--tilt-elemental-easing);
+  }
+
+  // It sits on the card's own surface, which is `translateZ(0)` - so a layer with a depth
+  // rises through it and is lit from below rather than over the top. That is the right way
+  // round for a title standing out of a photograph, and it is worth knowing before wondering
+  // where the highlight went.
+  &[data-tilt-active]::after {
+    opacity: 1;
+    transition-duration: var(--tilt-elemental-duration);
+  }
+}
+
+// No `prefers-reduced-motion` rule, and the absence is deliberate. The element reads the
+// setting, follows it, and simply never listens for the pointer - so there is no transform to
+// suppress and nothing here to say twice. A rule doing the same job would be a second place
+// the same fact is written, and the two would drift.

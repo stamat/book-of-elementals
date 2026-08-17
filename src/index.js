@@ -20,5 +20,6 @@ export * from './elementals/slider/index.js';
 export * from './elementals/suggest/index.js';
 export * from './elementals/switch/index.js';
 export * from './elementals/tabs/index.js';
+export * from './elementals/tilt/index.js';
 export * from './elementals/toolbar/index.js';
 export * from './elementals/tooltip/index.js';

@@ -1,0 +1,105 @@
+// Optional look for `<tilt-elemental>`. Not part of the element's own stylesheet and not in
+// its bundle: that one leans the card, raises the layers and draws the glare, and a light-DOM
+// element cannot scope a look away from a page that did not ask for one. Import this when you
+// want the look, skip it when you do not.
+
+// Two things only: the corners, and a shadow that moves with the lean. Nothing here has an
+// opinion about what is on the card - a photograph is the author's image at the author's size,
+// and a theme that put a surface colour and a padding under it would be a design system's
+// answer written into a book of elements.
+
+// On the bare tag and not on `:defined`, for the reason `index.scss` gives at the top: a page
+// replacing one of these writes a plain `tilt-elemental { ... }` rule, and a default hidden
+// behind `:defined` outweighs it.
+tilt-elemental {
+  --tilt-elemental-radius: 0.75rem;
+  --tilt-elemental-shadow-size: 1.5rem;
+
+  // 30% rather than the 20% a `box-shadow` wanted, and the difference is the blur: a shadow
+  // drawn by blurring a filled shape is only half-opaque at the shape's own edge, where
+  // `box-shadow` holds full colour up to it and fades outward from there. Same weight on the
+  // page, more of it spent on the soft part.
+  --tilt-elemental-shadow-color: color-mix(in srgb, currentcolor 30%, transparent);
+}
+
+tilt-elemental:defined {
+  // `border-radius` and nothing else. The obvious way to round a card is `overflow: hidden`
+  // on top of it, and on this element that is the bug: `overflow` other than `visible` or
+  // `clip` forces `transform-style` back to `flat`, so every `data-tilt-depth` in the card
+  // stops rising and nothing says why. A child with square corners of its own rounds itself.
+  border-radius: var(--tilt-elemental-radius);
+
+  // The same durations the card leans on, so the shadow arrives with it rather than trailing a
+  // frame behind and reading as a second object.
+
+  // `transform` is named again here and it is not redundant: this rule and the one in
+  // `index.scss` have the same specificity, so whichever stylesheet comes last replaces the
+  // other's `transition` outright. Naming one property would leave the card snapping to its
+  // angle wherever the theme is imported after the structure, which is every documented order
+  // there is.
+  transition: transform var(--tilt-elemental-return-duration) var(--tilt-elemental-easing);
+
+  &[data-tilt-active] {
+    transition-duration: var(--tilt-elemental-duration);
+  }
+
+  // **The shadow is a layer that moves, not a `box-shadow` that is redrawn.** Both look
+  // identical and only one of them is smooth: a `box-shadow` whose offset is a custom property
+  // is repainted on the main thread every frame the pointer moves, and repainting a soft blur
+  // sixty times a second is a shadow that visibly steps while the card it belongs to glides,
+  // because the card is a transform and transforms are the compositor's. Measured over a
+  // 240-frame hover: 478 paints with the offset in the `box-shadow`, 9 with it here.
+
+  // So the blur is rasterised once, on a pseudo element that is never anything but translated.
+  // The numbers are the same numbers, spent as pixels rather than as degrees, which is what
+  // the element writes them unitless for.
+  &::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    content: "";
+
+    // Behind the card and out of the way of anything aimed at it. `z-index` rather than a
+    // negative `translateZ`: this sits inside a `preserve-3d` parent, where a z offset is a
+    // real distance and would put the shadow on a different plane from the card casting it.
+    pointer-events: none;
+    border-radius: inherit;
+
+    // **The shadow is the card's shape, filled and blurred** - which is what a shadow is, and
+    // is not what `box-shadow` gives you here. A `box-shadow` never paints inside its own box,
+    // so this layer sliding out from behind the card exposes the hole in the middle of the
+    // ring: at twenty degrees the card cast a thin outline and nothing else. Filling it fixes
+    // that and leaves a second tell, because `box-shadow` holds full colour right up to the
+    // box edge and only fades outward - a hard rim on the two sides that emerge, which reads
+    // as a sticker rather than as a shadow. Blurring the fill fades it across the edge in both
+    // directions, and there is no rim to see.
+
+    // The fill is therefore not optional: blurring an empty box blurs nothing. The cost, said
+    // plainly, is that this is a coloured slab rather than a hole, so a card with a see-through
+    // background has its shadow visible through it - point `--tilt-elemental-shadow-color` at
+    // `transparent` on one of those.
+    background: var(--tilt-elemental-shadow-color);
+
+    // Halved on purpose. `box-shadow`'s blur radius is defined as twice the standard deviation
+    // of the gaussian it approximates, and `filter: blur()` takes that deviation directly - so
+    // half the number is what keeps `--tilt-elemental-shadow-size` meaning the same softness it
+    // meant when this was a `box-shadow`, for anyone who had already set it.
+
+    // `filter` is on the list of properties that force `transform-style` back to `flat`, and
+    // that list is why it is *here* and not on the card: it flattens the element it is on, and
+    // this one has no children to flatten. Measured, the card still leans, every
+    // `data-tilt-depth` still rises, and the paint count is unchanged.
+    filter: blur(calc(var(--tilt-elemental-shadow-size) / 2));
+
+    // Against the lean: a positive `--tilt-elemental-x` sends the top edge away and brings the
+    // bottom towards the reader, and the shadow follows the near edge down.
+    translate:
+      calc(var(--tilt-elemental-y, 0) * -1px)
+      calc(var(--tilt-elemental-x, 0) * 1px);
+    transition: translate var(--tilt-elemental-return-duration) var(--tilt-elemental-easing);
+  }
+
+  &[data-tilt-active]::before {
+    transition-duration: var(--tilt-elemental-duration);
+  }
+}

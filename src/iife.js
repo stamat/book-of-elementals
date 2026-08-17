@@ -22,5 +22,6 @@ import './elementals/slider/index.js';
 import './elementals/suggest/index.js';
 import './elementals/switch/index.js';
 import './elementals/tabs/index.js';
+import './elementals/tilt/index.js';
 import './elementals/toolbar/index.js';
 import './elementals/tooltip/index.js';
