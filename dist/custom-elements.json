@@ -6242,6 +6242,25 @@
         },
         {
           "kind": "function",
+          "name": "seedChecked",
+          "parameters": [
+            {
+              "name": "selector"
+            },
+            {
+              "name": "root"
+            },
+            {
+              "name": "checked"
+            },
+            {
+              "name": "report"
+            }
+          ],
+          "description": "What a `checked-if` switch starts in: whether the root element matches the selector the\nauthor wrote. Asked once, at upgrade, and only of the root - `<html>` is the one element\ncertain to be parsed whenever a switch upgrades, and a condition that silently never\nmatches because it named something further down the page is worse than no condition.\n\nThe point of asking this early is that the button is `display: none` until the element is\ndefined, so a state decided here is the first one painted. Anything setting `checked`\nafterwards - a bundle at `DOMContentLoaded`, a framework - has already lost that race.\n\nA selector the browser cannot parse leaves the markup's own state standing and hands the\nerror to `report` rather than throwing it here: by upgrade there is a visible button, and an\nexception out of `connectedCallback` leaves it sitting there with no `role` on it - a switch\nthat stopped being a switch because of a typo. Reported and not swallowed, though, because a\ncondition that quietly never matches is the kind of bug you look for everywhere else first."
+        },
+        {
+          "kind": "function",
           "name": "borrowedValueMissingMessage",
           "description": "What a required switch says while it is off, when nobody has said otherwise.\n\n`setValidity` throws on an empty message, and a form-associated custom element gets no\nplatform default to ask for - so the nearest true thing is borrowed: the browser's own\nmessage for a required checkbox, which arrives already translated into the reader's\nlanguage. It says \"box\" rather than \"switch\", and a reader given the right language\nwith the wrong noun is better served than one given English. Read once and kept."
         },
@@ -6548,6 +6567,13 @@
               "type": {
                 "text": "string"
               },
+              "description": "A selector. The switch starts on when `<html>` matches it, asked once at upgrade — for a setting the document already knows, like a theme toggle.",
+              "name": "checked-if"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
               "description": "Submits under this name. No name, no form data.",
               "name": "name"
             }
@@ -6574,6 +6600,14 @@
           "name": "validityState",
           "declaration": {
             "name": "validityState",
+            "module": "src/elementals/switch/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "seedChecked",
+          "declaration": {
+            "name": "seedChecked",
             "module": "src/elementals/switch/index.js"
           }
         },

@@ -13,7 +13,7 @@ shadow root, form-associated, nothing moved or wrapped.
 
 <p class="demo-row">
   <span id="switch-theme-label">Dark mode</span>
-  <switch-elemental id="switch-theme-demo">
+  <switch-elemental id="switch-theme-demo" checked-if="[data-theme=dark]">
     <button aria-labelledby="switch-theme-label">
       <span class="switch-elemental-off" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M8 12a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-1.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Zm5.657-8.157a.75.75 0 0 1 0 1.061l-1.061 1.06a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734l1.06-1.06a.75.75 0 0 1 1.06 0Zm-9.193 9.193a.75.75 0 0 1 0 1.06l-1.06 1.061a.75.75 0 1 1-1.061-1.06l1.06-1.061a.75.75 0 0 1 1.061 0ZM8 0a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V.75A.75.75 0 0 1 8 0ZM3 8a.75.75 0 0 1-.75.75H.75a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 3 8Zm13 0a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 16 8Zm-8 5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 8 13Zm3.536-1.464a.75.75 0 0 1 1.06 0l1.061 1.06a.75.75 0 0 1-1.06 1.061l-1.061-1.06a.75.75 0 0 1 0-1.061ZM2.343 2.343a.75.75 0 0 1 1.061 0l1.06 1.061a.751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018l-1.06-1.06a.75.75 0 0 1 0-1.06Z" fill="currentColor"/></svg></span>
       <span class="switch-elemental-on" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M9.598 1.591a.749.749 0 0 1 .785-.175 7.001 7.001 0 1 1-8.967 8.967.75.75 0 0 1 .961-.96 5.5 5.5 0 0 0 7.046-7.046.75.75 0 0 1 .175-.786Zm1.616 1.945a7 7 0 0 1-7.678 7.678 5.499 5.499 0 1 0 7.678-7.678Z" fill="currentColor"/></svg></span>
@@ -24,7 +24,7 @@ shadow root, form-associated, nothing moved or wrapped.
 
 ```html
 <span id="switch-theme-label">Dark mode</span>
-<switch-elemental id="switch-theme-demo">
+<switch-elemental id="switch-theme-demo" checked-if="[data-theme=dark]">
   <button aria-labelledby="switch-theme-label">
     <span class="switch-elemental-off" aria-hidden="true"
       ><svg><!-- ... --></svg></span
@@ -43,7 +43,8 @@ shadow root, form-associated, nothing moved or wrapped.
 const toggle = document.getElementById("switch-theme-demo");
 const root = document.documentElement;
 if (!toggle) return;
-// The label does not move - only [checked] does, and the state text keys off it.
+// The starting state is `checked-if`'s. This is the other half: writing the theme
+// back out, and following the topbar's switch when that one is the one flipped.
 const sync = () => {
   toggle.checked = root.dataset.theme === "dark";
 };
@@ -55,7 +56,6 @@ toggle.addEventListener("switch-toggle", (e) => {
   sync();
 });
 new MutationObserver(sync).observe(root, { attributeFilter: ["data-theme"] });
-sync();
 ```
 
 ## Usage
@@ -107,6 +107,7 @@ instantiate, no init call to forget.
 | Attribute          | Type    | Default | Description                                                                     |
 | ------------------ | ------- | ------- | ------------------------------------------------------------------------------- |
 | `checked`          | boolean | `false` | Whether it is on. Reflected — markup, script and CSS read the same thing.       |
+| `checked-if`       | string  | —       | A selector. Starts on when `<html>` matches it, asked once at upgrade. [See below](#theme-toggle). |
 | `name`             | string  | —       | Submits under this name. No name, no form data.                                 |
 | `value`            | string  | `on`    | What it submits while on.                                                       |
 | `disabled`         | boolean | `false` | Disables the button and submits nothing. A `<fieldset disabled>` does the same. |
@@ -403,9 +404,9 @@ it_, which is a different thing from wording the required message.
 
 ## Theme toggle
 
-The switch a switch most often is, and the code behind the demo at the top. The trick is
-that the page must not wait for the element to upgrade, or it paints in the wrong theme
-and then corrects itself:
+The switch a switch most often is, and the code behind the demo at the top. A theme is
+stamped on `<html>` before first paint, so the document knows the answer and the markup
+does not — which is what `checked-if` is for:
 
 ```html
 <!-- in <head>, before any CSS: stamp the saved theme before first paint -->
@@ -417,24 +418,40 @@ and then corrects itself:
     document.documentElement.dataset.theme = t;
   })();
 </script>
+
+<switch-elemental checked-if="[data-theme=dark]">
+  <button aria-labelledby="dark-label"></button>
+</switch-elemental>
 ```
 
 ```javascript
-const toggle = document.querySelector("switch-elemental");
 const root = document.documentElement;
 
-// The document already knows the theme, so the switch takes its starting state
-// from it rather than the other way round.
-toggle.checked = root.dataset.theme === "dark";
-
-toggle.addEventListener("switch-toggle", (e) => {
+document.querySelector("switch-elemental").addEventListener("switch-toggle", (e) => {
   root.dataset.theme = e.detail.checked ? "dark" : "light";
   localStorage.setItem("theme", root.dataset.theme);
 });
 ```
 
 The "On" beside it is [state text](#state-text) and needs no line here — it keys off the
-`checked` attribute this has just written.
+`checked` attribute the condition has just written.
+
+`checked-if` is why there is no ordering rule to get right. Written in script instead, the
+starting state has to be set in the same task that registers the element: registering is
+what takes the button out of the `display: none` it wears while undefined, so from that
+moment it is on screen, and a seed arriving at `DOMContentLoaded` is late. Measured on this
+site's own topbar when it worked that way: the knob painted _off_ over an already-dark page
+for two frames, around 90ms, then slid across. The attribute is read at upgrade, before the
+button can be painted at all, so nothing can arrive late.
+
+> [!NOTE]
+> Asked once, and only of `<html>` — the one element certain to be parsed whenever a switch
+> upgrades. It is a starting state, not a binding: flip the switch, or change `data-theme`
+> from elsewhere, and the condition is not consulted again. Keeping two controls for one
+> setting in step is a `MutationObserver` on the root, as the demo at the top of this page
+> does. A selector the browser cannot parse leaves the markup's own `checked` standing and
+> raises the error where the console will report it, rather than taking the switch down over
+> a typo: by upgrade there is a button on screen, and throwing leaves it there with no role.
 
 ## The look
 
@@ -698,7 +715,9 @@ button. Dropping the element around an existing button changes no layout at all.
     var toggle = document.getElementById("switch-theme-demo");
     var root = document.documentElement;
     if (!toggle) return;
-    // The label does not move - only [checked] does, and the state text keys off it.
+    // The starting state is `checked-if`'s, on the element itself. What is left here is
+    // writing the theme back out, and following the topbar's switch when that one is
+    // flipped - the label does not move, only [checked] does, and the state text keys off it.
     function sync() {
       toggle.checked = root.dataset.theme === "dark";
     }
@@ -708,7 +727,6 @@ button. Dropping the element around an existing button changes no layout at all.
       sync();
     });
     new MutationObserver(sync).observe(root, { attributeFilter: ["data-theme"] });
-    sync();
   })();
 </script>
 

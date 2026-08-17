@@ -15,6 +15,13 @@ import { ElementBase, define } from '../../core.js';
  *
  * What it does, and nothing more: marks the button `role="switch"`, keeps `aria-checked`
  * in step with a reflected `checked` attribute on the host, and flips it on click.
+ *
+ * One thing beyond that, and it is here because static markup cannot know the answer:
+ * `checked-if` takes a selector and starts the switch on when `<html>` matches it. A theme
+ * toggle is the case - the page's theme is stamped on the root before first paint by a boot
+ * script, and without this the switch is painted off over an already-dark page and slides
+ * across when a later script catches up. Asked once, at upgrade, which is before the button
+ * comes out of the `display: none` it wears while the element is undefined.
  * Enter, Space, focus and the disabled state are the button's, which is the point of
  * using one. There is no animation here at all - the knob slides in CSS, so with no
  * theme imported there is nothing to time.
@@ -59,6 +66,32 @@ export function validityState(required, checked, customMessage, missingMessage) 
   return { flags: {}, message: '' };
 }
 
+/**
+ * What a `checked-if` switch starts in: whether the root element matches the selector the
+ * author wrote. Asked once, at upgrade, and only of the root - `<html>` is the one element
+ * certain to be parsed whenever a switch upgrades, and a condition that silently never
+ * matches because it named something further down the page is worse than no condition.
+ *
+ * The point of asking this early is that the button is `display: none` until the element is
+ * defined, so a state decided here is the first one painted. Anything setting `checked`
+ * afterwards - a bundle at `DOMContentLoaded`, a framework - has already lost that race.
+ *
+ * A selector the browser cannot parse leaves the markup's own state standing and hands the
+ * error to `report` rather than throwing it here: by upgrade there is a visible button, and an
+ * exception out of `connectedCallback` leaves it sitting there with no `role` on it - a switch
+ * that stopped being a switch because of a typo. Reported and not swallowed, though, because a
+ * condition that quietly never matches is the kind of bug you look for everywhere else first.
+ */
+export function seedChecked(selector, root, checked, report) {
+  if (!selector || !root) return checked;
+  try {
+    return root.matches(selector);
+  } catch (error) {
+    if (report) report(error);
+    return checked;
+  }
+}
+
 let borrowed;
 
 /**
@@ -98,6 +131,7 @@ export function borrowedValueMissingMessage() {
  *
  * @tag switch-elemental
  * @attr {boolean} [checked=false] - Whether it is on. Reflected, so markup, script and CSS read the same thing.
+ * @attr {string} checked-if - A selector. The switch starts on when `<html>` matches it, asked once at upgrade — for a setting the document already knows, like a theme toggle.
  * @attr {string} name - Submits under this name. No name, no form data.
  * @attr {string} [value=on] - What it submits while on.
  * @attr {boolean} [disabled=false] - Disables the button and submits nothing. A `<fieldset disabled>` does the same.
@@ -250,6 +284,21 @@ export class SwitchElemental extends ElementBase {
     if (this.initialized) return;
     const button = this.button;
     if (!button) return;
+
+    // Ahead of `initialized`, so `attributeChangedCallback` sits this one out: the state a
+    // switch arrives in is not a flip, and a page that hears `switch-toggle` at boot is a page
+    // that writes the theme back out before anyone has touched anything. `apply()` below
+    // pushes the seeded state onto the button and the form either way.
+    // Rethrown a task later rather than logged: the book's elements have no `console` in them,
+    // and an error raised this way is the browser's own uncaught-error report - the stack, the
+    // file, the line - where a `console.warn` would be a string that says less.
+    const condition = this.getAttribute('checked-if');
+    if (condition) {
+      this.checked = seedChecked(condition, this.ownerDocument && this.ownerDocument.documentElement, this.checked, (error) => {
+        setTimeout(() => { throw error; });
+      });
+    }
+
     this.initialized = true;
 
     // A button in a form submits it unless told otherwise, and a setting that posts

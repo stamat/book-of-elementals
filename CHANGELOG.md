@@ -39,6 +39,38 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Added
 
+- **`<switch-elemental>` takes a `checked-if` selector, for a setting the document already
+  knows.** A theme toggle could not be right on the first frame. The theme is stamped on
+  `<html>` before first paint, so static markup cannot carry `checked`, and anything that
+  set it afterwards was too late: registering the element is what takes its button out of
+  the `display: none` it wears while undefined, so from that moment the switch is on screen,
+  and a starting state arriving at `DOMContentLoaded` is two painted frames behind it.
+  Measured on this site's own topbar: the knob painted _off_ over an already-dark page for
+  around 90ms, then slid across on its own.
+
+  ```html
+  <switch-elemental checked-if="[data-theme=dark]">
+    <button aria-labelledby="dark-label"></button>
+  </switch-elemental>
+  ```
+
+  The selector is asked once, at upgrade — before the button can be painted — and only of
+  `<html>`, the one element certain to be parsed whenever a switch upgrades. It is a
+  starting state and not a binding: nothing re-consults it, and keeping two controls for one
+  setting in step is still a `MutationObserver`, as the page shows. A selector the browser
+  cannot parse leaves the markup's own `checked` standing and raises the error where the
+  console reports it, because by upgrade there is a visible button and throwing out of
+  `connectedCallback` would leave it there with no `role`.
+
+  Prior art all pushes this back to the author:
+  [`<dark-mode-toggle>`](https://github.com/googlechromelabs/dark-mode-toggle) needs a
+  separate inline loader script and has [an open issue](https://github.com/GoogleChromeLabs/dark-mode-toggle/issues/77)
+  for the flash; [`<show-when>`](https://www.cssscript.com/conditional-content-visibility-show-when/),
+  which has the richest condition vocabulary of any of them, still says to write `hidden`
+  into the markup by hand; [Shoelace](https://shoelace.style/getting-started/themes) declines
+  the job outright. None of them can do what this does, because none of them hides its own
+  control until it is defined — which is what makes upgrade early enough to be the answer.
+
 - **`<tilt-elemental>`** — the 3D tilt card, with the reduced-motion switch the rest of the
   shelf does not have. No APG pattern, because nothing is operated; what there is instead is
   [2.3.3 Animation from Interactions](https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html),

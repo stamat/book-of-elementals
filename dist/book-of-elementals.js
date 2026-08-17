@@ -5268,6 +5268,15 @@
     if (required && !checked) return { flags: { valueMissing: true }, message: missingMessage };
     return { flags: {}, message: "" };
   }
+  function seedChecked(selector, root, checked, report) {
+    if (!selector || !root) return checked;
+    try {
+      return root.matches(selector);
+    } catch (error) {
+      if (report) report(error);
+      return checked;
+    }
+  }
   var borrowed;
   function borrowedValueMissingMessage() {
     if (borrowed === void 0) {
@@ -5375,6 +5384,14 @@
       if (this.initialized) return;
       const button = this.button;
       if (!button) return;
+      const condition = this.getAttribute("checked-if");
+      if (condition) {
+        this.checked = seedChecked(condition, this.ownerDocument && this.ownerDocument.documentElement, this.checked, (error) => {
+          setTimeout(() => {
+            throw error;
+          });
+        });
+      }
       this.initialized = true;
       if (!button.hasAttribute("type")) button.type = "button";
       button.setAttribute("role", "switch");
