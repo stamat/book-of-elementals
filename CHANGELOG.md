@@ -36,6 +36,13 @@ may already be targeting**, since neither shows up in a function signature.
   also are; the combobox API table was missing `custom-values` and `add-text`; the carousel
   page now names `data-carousel-markers` on the picker, which the card-row example was
   already styling against.
+- **`<tooltip-elemental>` said it was unreachable by touch, and that was only true of one
+  engine.** Behaviour is unchanged — touch pointers are still ignored outright — but focus is
+  not filtered by how it arrived, and a tap that focuses the trigger opens the bubble.
+  Measured with a touch pointer: Chromium focuses a `<button>` on tap and the bubble opens,
+  WebKit does not focus buttons on tap and nothing appears, and a text input focuses on tap in
+  both. So a phone reader may reach the words or may not, and the docs now say which. The
+  guidance is the same either way: nothing essential goes in a tooltip.
 
 ### Added
 
@@ -137,16 +144,6 @@ may already be targeting**, since neither shows up in a function signature.
   **DOM:** unchanged. The same `<output aria-hidden="true" data-tooltip>`, appended only where
   `tooltip` asked for one; a touch gesture now toggles its `hidden` and moves
   `--slider-elemental-at` the way a mouse always did.
-
-### Fixed
-
-- **`<tooltip-elemental>` said it was unreachable by touch, and that was only true of one
-  engine.** Behaviour is unchanged — touch pointers are still ignored outright — but focus is
-  not filtered by how it arrived, and a tap that focuses the trigger opens the bubble.
-  Measured with a touch pointer: Chromium focuses a `<button>` on tap and the bubble opens,
-  WebKit does not focus buttons on tap and nothing appears, and a text input focuses on tap in
-  both. So a phone reader may reach the words or may not, and the docs now say which. The
-  guidance is the same either way: nothing essential goes in a tooltip.
 
 ## [0.10.0] - 2026-08-17
 
