@@ -15,6 +15,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-08-17
+
 ### Fixed
 
 - **The docs option panels no longer under-report the theme knobs.** The panels read
