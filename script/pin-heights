@@ -1,0 +1,135 @@
+#!/usr/bin/env node
+// Re-measures every docs preview and pins its height into the demo marker, so the
+// previews land without layout shift.
+//
+// `<code-preview>` reserves `--code-preview-height` (or `--code-preview-options-height`
+// under `tab="options"`) before its frame renders, then overwrites the reservation with
+// the measured height once it has. The difference between the two is a layout shift on
+// every load — unless the reservation *is* the measured height, which is what a pin makes
+// true. This script measures each preview's settled height in a real Chromium over the
+// built site and writes it into the marker in the markdown:
+//
+//     <!-- demo tooltip style="--code-preview-height:170px" -->
+//
+// Run it after `script/build`, and re-run it after editing a sample — a pin describes the
+// sample it was measured from, and an edited sample makes its pin stale. The values are
+// this platform's font metrics; elsewhere they miss by a few pixels, which the frame
+// absorbs as internal scroll rather than shift.
+//
+// Only previews more than 8px off their reservation are (re)pinned: below that the write
+// is churn on numbers that wobble with font rounding, and the shift is invisible.
+
+// Unlike `script/a11y`, the browser half of this file travels as a string — `SWEEP` below
+// — so the linter never parses browser code here and the eslint block for this path needs
+// only the node globals.
+import { readdirSync, statSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { createServer } from 'node:http';
+import { join, relative } from 'node:path';
+import { chromium } from 'playwright-core';
+// poops' own static handler rather than a hand-rolled one: it already resolves the site
+// the way the deployed one is served. An internal path, a coupling this repo accepts.
+import { createStaticHandler } from 'poops/lib/server.js';
+
+const SITE = '_site';
+const DOCS = 'docs';
+
+// Below this the reservation and the measurement agree for any practical purpose, and
+// pinning would only churn the markdown with font-rounding noise.
+const TOLERANCE = 8;
+
+// Wide enough that the docs column is at its full width, so samples measure at the
+// height most readers get. Narrower viewports make samples taller; the frame scrolls
+// those rather than shifting, by the element's own design.
+const VIEWPORT = { width: 1280, height: 900 };
+
+/** Every .html file under the built site, at any depth. */
+function pages(dir) {
+  return readdirSync(dir).flatMap((name) => {
+    const path = join(dir, name);
+    if (statSync(path).isDirectory()) return pages(path);
+    return path.endsWith('.html') ? [path] : [];
+  });
+}
+
+// Serialised into the page. For every preview: what the stylesheet reserves right now —
+// the pin if there is one, the element's default if not — and what the box actually
+// measures once the element has written its height onto it.
+const SWEEP = `(() => {
+  const out = [];
+  const px = (value, fallback) => {
+    const n = parseFloat(value);
+    return Number.isNaN(n) ? fallback : (value.trim().endsWith('rem') ? n * 16 : n);
+  };
+  document.querySelectorAll('code-preview').forEach((cp, i) => {
+    const styles = getComputedStyle(cp);
+    const options = cp.getAttribute('tab') === 'options';
+    const reserve = options
+      ? px(styles.getPropertyValue('--code-preview-options-height'), 192)
+      : px(styles.getPropertyValue('--code-preview-height'), 128);
+    const box = options
+      ? cp.querySelector('.code-preview-options')
+      : cp.querySelector('.code-preview-viewport');
+    const real = box ? Math.round(box.getBoundingClientRect().height) : null;
+    out.push({ i, options, reserve: Math.round(reserve), real });
+  });
+  return out;
+})()`;
+
+// The same shape `script/demos.js` matches when it wraps these into previews, so what
+// this script rewrites is exactly what that one reads.
+const MARKER = /<!-- demo([^>]*?)\s*-->/g;
+
+/** Set one declaration inside the marker's style attribute, adding either as needed. */
+function pinned(attrs, knob, px) {
+  const declaration = `${knob}:${px}px`;
+  const style = attrs.match(/style="([^"]*)"/);
+  if (!style) return `${attrs} style="${declaration}"`;
+  const kept = style[1].split(';').map((s) => s.trim()).filter((s) => s && !s.startsWith(knob + ':'));
+  kept.push(declaration);
+  return attrs.replace(style[0], `style="${kept.join('; ')}"`);
+}
+
+const { server, port } = await new Promise((resolve) => {
+  const server = createServer(createStaticHandler(SITE));
+  server.listen(0, '127.0.0.1', () => resolve({ server, port: server.address().port }));
+});
+
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: VIEWPORT });
+let pins = 0;
+
+for (const path of pages(SITE)) {
+  const rel = relative(SITE, path);
+  const md = join(DOCS, rel.replace(/\.html$/, '.md'));
+  if (!existsSync(md)) continue;
+
+  await page.goto(`http://127.0.0.1:${port}/${rel}`, { waitUntil: 'load' });
+  // Long enough for every frame to load its bundle, upgrade and be measured — the
+  // element's own write is what settles the height this reads back.
+  await page.waitForTimeout(1800);
+  const rows = await page.evaluate(SWEEP);
+  const fixes = rows.filter((row) => row.real !== null && Math.abs(row.real - row.reserve) > TOLERANCE);
+  if (!fixes.length) continue;
+
+  // Preview order on the page is marker order in the markdown: `script/demos.js` wraps
+  // every marker with a fence under it, in document order, and nothing else on a docs
+  // page is a `<code-preview>`.
+  const wanted = new Map(fixes.map((row) => [row.i, row]));
+  let at = -1;
+  const out = readFileSync(md, 'utf8').replace(MARKER, (whole, attrs) => {
+    at += 1;
+    const fix = wanted.get(at);
+    if (!fix) return whole;
+    pins += 1;
+    const knob = fix.options ? '--code-preview-options-height' : '--code-preview-height';
+    return `<!-- demo${pinned(attrs, knob, fix.real)} -->`;
+  });
+  writeFileSync(md, out);
+  console.log(`${md}: ${fixes.length} pins`);
+}
+
+await browser.close();
+server.close();
+console.log(pins
+  ? `${pins} pins written — rebuild to land them: script/build`
+  : 'every preview lands inside tolerance, nothing to pin');

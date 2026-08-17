@@ -49,5 +49,16 @@ export default [
       sourceType: 'module',
       globals: { console: 'readonly', process: 'readonly', ...browserGlobals }
     }
+  },
+  {
+    // `script/pin-heights` for the first of those reasons only: an entry point the `.js`
+    // glob misses. Node globals alone — its browser half travels as a string the linter
+    // never parses.
+    files: ['script/pin-heights'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: { console: 'readonly', process: 'readonly' }
+    }
   }
 ];

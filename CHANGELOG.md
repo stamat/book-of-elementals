@@ -44,7 +44,8 @@ may already be targeting**, since neither shows up in a function signature.
   included — both behind the same `@media (scripting: enabled)` gate, so a no-script page
   still reads as a plain list of links. The docs also pin `--code-preview-height` /
   `--code-preview-options-height` on every preview whose measured height differed from the
-  reservation (62 demos), so the previews land without shifting the page; the residue —
+  reservation (62 demos), so the previews land without shifting the page — measured and
+  written by the new `script/pin-heights`, to re-run after editing any sample; the residue —
   0.002–0.007 CLS from toolbar rows the preview inserts — is `code-preview-element`'s
   reservation to fix, not this repo's.
 

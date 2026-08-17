@@ -25,6 +25,7 @@ script/build     # compiles dist/ and the docs site into _site/
 script/test      # jest
 script/lint      # eslint + stylelint (the authority; CI runs it)
 script/a11y      # axe over the built demos in Chromium, light and dark; build first
+script/pin-heights  # re-measure docs previews, pin heights into demo markers so they land shift-free; build first, rebuild after, re-run after editing a sample
 ```
 
 ## Layout
