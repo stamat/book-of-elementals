@@ -44,8 +44,14 @@ Light DOM, no shadow root, nothing you wrote is moved or wrapped.
 ```
 
 That markup is the page you would have had anyway: a list of links, and the sections they
-point at. The element is the only thing that ever hides a panel, so before it upgrades —
-and if it never does — the links jump and every panel is on screen.
+point at. With scripting off the links jump and every panel is on screen — nothing hides
+without something to show it again. With scripting on, the stylesheet paints only the
+first panel while the element is not yet defined, so the stack of sections does not flash
+and fold into a tab set on the first frame; a `#fragment` deep link still shows the first
+panel for that beat, until the element reads the hash. The gate's line is worth knowing:
+a bundle that never arrives *while scripting is on* — blocked, 404 — leaves one panel
+showing and links pointing at panels that stay hidden. The fallback covers scripting
+turned off, not every way a script can fail to run.
 
 ## Usage
 

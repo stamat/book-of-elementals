@@ -5,6 +5,22 @@ navbar-elemental {
 navbar-elemental:not(:defined) [data-navbar-toggle] {
   display: none;
 }
+@media (scripting: enabled) {
+  navbar-elemental:not(:defined) {
+    overflow: clip;
+  }
+  navbar-elemental:not(:defined) :is(ul, menu) {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+  navbar-elemental:not(:defined) li > :is(ul, menu) {
+    display: none;
+  }
+  navbar-elemental:not(:defined) [data-navbar-stack] {
+    display: none;
+  }
+}
 navbar-elemental ul,
 navbar-elemental menu {
   list-style: none;

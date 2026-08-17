@@ -15,6 +15,28 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Five elementals no longer flash their expanded markup on first paint.** The
+  progressive-enhancement markup — submenus plainly visible, panels stacked, the tooltip
+  sentence in flow — painted as authored until the bundle ran, then collapsed: a blink on
+  every first load, and the docs previews showed it on every refresh. The structure
+  stylesheets now split the pre-upgrade rendering on `@media (scripting)`. Scripting off
+  keeps the old fallback: everything visible, buttons that would do nothing not offered.
+  Scripting on paints the closed state the upgrade is about to wire — `<menu-elemental>`
+  pixel-identical (button shown, lists hidden), `<disclosure-elemental>` for the
+  sibling-region shape (`for` points at an id no stylesheet can know, so that shape keeps
+  the old collapse), `<tabs-elemental>` the first panel only (a `#fragment` deep link
+  still flashes it until the element reads the hash), `<tooltip-elemental>` the bubble
+  unpainted, and `<navbar-elemental>` a best guess — panels closed, the row on one line —
+  because the mode is unknowable until the script reads `media`, so a page about to stack
+  shows a row for the length of the fetch and the overflow still folds one frame after
+  upgrade. The trade: a bundle that never arrives *while scripting is on* — blocked, 404 —
+  now leaves the closed state with nothing to open it; the fallback covers scripting
+  turned off, not every way a script can fail to run, and each docs page says so.
+  CSS-only. No DOM output changed, and every new rule sits under `:not(:defined)`, so
+  nothing an author styles after upgrade moves.
+
 ## [0.11.0] - 2026-08-17
 
 ### Fixed

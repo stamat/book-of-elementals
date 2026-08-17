@@ -11,6 +11,21 @@ tabs-elemental {
   grid-template-columns: minmax(0, 1fr);
 }
 
+// With scripting on the pre-upgrade stack of panels is only waiting to be folded into a
+// tab set, so everything past the first panel is not painted and the reader's first frame
+// is the one the upgrade would have produced anyway. Reaches only panels that are the
+// element's own children after the list - the documented shape - since a panel paired by
+// `aria-controls` lives anywhere in the page, under an id no stylesheet can know. A
+// `#fragment` deep link still flashes the first panel until the element reads the hash.
+// The trade is stated plainly: a bundle that never arrives while scripting is on leaves
+// one panel showing with no tabs to reach the rest, so this gate narrows the no-script
+// promise from "script never ran" to "scripting is off".
+@media (scripting: enabled) {
+  tabs-elemental:not(:defined) > :is(ul, menu) ~ * ~ * {
+    display: none;
+  }
+}
+
 // The element writes both of these as it upgrades, so this stylesheet never has to guess
 // which child is the strip and which are the panels - and before it upgrades neither exists,
 // which is how the no-script view falls back to plain blocks in source order: a list of

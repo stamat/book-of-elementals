@@ -24,8 +24,8 @@
     "updated": "2026-08-10T01:15:11.298Z"
   },
   "docs/elementals/disclosure.md": {
-    "hash": "0c500295edab0d48d7e26bf3da766e1a02155995",
-    "updated": "2026-08-17T16:11:54.783Z"
+    "hash": "9cb3b1007fe17bfe1fbf805ea498ed679566a673",
+    "updated": "2026-08-17T21:01:27.168Z"
   },
   "docs/elementals/field.md": {
     "hash": "9e5504e4b5810e52162b8e22b1658fc52ebdb6e0",
@@ -40,16 +40,16 @@
     "updated": "2026-08-16T12:37:32.100Z"
   },
   "docs/elementals/menu.md": {
-    "hash": "b3e96e632eb2b7a765f1ec52e93662272f8f6b8b",
-    "updated": "2026-08-17T16:16:13.335Z"
+    "hash": "c2905e7667f9e32a44516d6ab458163fd43b5cf1",
+    "updated": "2026-08-17T21:01:07.857Z"
   },
   "docs/elementals/modal.md": {
     "hash": "4f9b54f9d6b30407b5f81bb6d1eca9239a6f7465",
     "updated": "2026-08-10T00:41:59.022Z"
   },
   "docs/elementals/navbar.md": {
-    "hash": "97e680c48d5ccd99bdf15a058f0e3c4ef6cf8167",
-    "updated": "2026-08-17T16:11:53.383Z"
+    "hash": "a31a80de01ab36d7f4e3ec8ef29f7f410c1053fc",
+    "updated": "2026-08-17T21:01:16.922Z"
   },
   "docs/elementals/password.md": {
     "hash": "96d7bb6ad51e1a830add7def4edbc3799f2a75e2",
@@ -80,8 +80,8 @@
     "updated": "2026-08-17T20:31:42.679Z"
   },
   "docs/elementals/tabs.md": {
-    "hash": "e34bde45d869742e1acbf758ac014a76600b0338",
-    "updated": "2026-08-09T21:21:16.620Z"
+    "hash": "b7d894f841249b1e0fb95dc55e89f13c6613353a",
+    "updated": "2026-08-17T21:01:47.876Z"
   },
   "docs/elementals/tilt.md": {
     "hash": "da962b496c21e42e9fcf97d96c2a5500babeafaf",
@@ -92,8 +92,8 @@
     "updated": "2026-08-09T21:21:16.620Z"
   },
   "docs/elementals/tooltip.md": {
-    "hash": "3583849b344a443593a69fe20fc5722ae5b434ba",
-    "updated": "2026-08-17T15:36:26.606Z"
+    "hash": "fca3192d5af37f40798be9a4691926289b78860a",
+    "updated": "2026-08-17T21:01:57.401Z"
   },
   "docs/examples/bulk-actions.md": {
     "hash": "f72c04e3c8b7d0101b4ea0b1f5dee7c5c3ebfbbc",
@@ -112,8 +112,8 @@
     "updated": "2026-08-09T22:03:27.149Z"
   },
   "docs/examples/sidebar-drawer.md": {
-    "hash": "c2d76b1b7642c7bdf591ef4e5be5ca674f25d000",
-    "updated": "2026-08-09T21:21:16.621Z"
+    "hash": "ce7af443e5ee46281981442d43c2139fc93de015",
+    "updated": "2026-08-17T21:05:52.685Z"
   },
   "docs/examples/site-navigation.md": {
     "hash": "301fb0a6ad0573a13111a1cfa2462b178fe1527a",

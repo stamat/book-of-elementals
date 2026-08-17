@@ -386,10 +386,16 @@ it — this element is the right one and the roles are the honest description.
 
 ## Without JavaScript
 
-The submenus are hidden by the element, not by the markup, and the button is hidden by
-the stylesheet until the element is defined. With scripting off, what is left is a
-nested list of links with every one of them reachable, and no button that does
-nothing.
+The submenus are hidden by the element, not by the markup, and the stylesheet splits the
+time before the element is defined on `@media (scripting)`. Scripting off: the button is
+hidden and what is left is a nested list of links with every one of them reachable, and
+no button that does nothing. Scripting on: the lists are hidden and the button shows, so
+the page paints the closed menu from the first frame and upgrading changes nothing on
+screen — no flash of the expanded tree while the bundle loads.
+
+The line that gate draws is worth knowing: a bundle that never arrives *while scripting
+is on* — blocked, 404 — leaves a button that opens nothing. The fallback covers scripting
+turned off, not every way a script can fail to run.
 
 Which is also why you should not author `hidden` on the lists yourself.
 

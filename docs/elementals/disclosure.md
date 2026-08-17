@@ -499,20 +499,35 @@ JavaScript, and no label state to get out of step.
 ## Without JavaScript
 
 The region is not authored `hidden` — it is ordinary, visible markup that the element hides
-on upgrade. With scripting off it stays visible, which for a long description is the right
-way round: the content is there, and the button that would have hidden it is not offered.
+on upgrade. The stylesheet splits the time before that on `@media (scripting)`:
 
 ```css
 /* in the element's own stylesheet */
-disclosure-elemental:not(:defined) > button {
-  display: none;
+@media (scripting: none) {
+  disclosure-elemental:not(:defined) > button {
+    display: none;
+  }
+}
+
+@media (scripting: enabled) {
+  disclosure-elemental:not(:defined):not([open]):not([for]):not([data-for]) > button + * {
+    display: none;
+  }
 }
 ```
 
-The cost runs the other way: on a slow load the region can show for a moment before the
-element upgrades and closes it. Author the region `hidden` yourself if you would rather
-have that moment than the fallback — the element takes over from whatever state it finds,
-and you are trading a scripting-off reader's access to the content for it.
+Scripting off: the region stays visible, which for a long description is the right way
+round — the content is there, and the button that would have hidden it is not offered.
+Scripting on: the page paints the closed disclosure from the first frame, so the region
+does not show for a moment and fold away while the bundle loads. Only for the sibling
+shape — a region `for` names lives under an id the stylesheet cannot know, so that one
+still has the moment; author it `hidden` yourself if you would rather trade a
+scripting-off reader's access for stillness, since the element takes over from whatever
+state it finds.
+
+The line that gate draws is worth knowing: a bundle that never arrives *while scripting
+is on* — blocked, 404 — leaves a button that opens nothing in front of a hidden region.
+The fallback covers scripting turned off, not every way a script can fail to run.
 
 ## Layout
 

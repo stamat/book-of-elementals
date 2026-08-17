@@ -11,12 +11,29 @@ disclosure-elemental {
   // Give it `display: block` in your own CSS if you want something to style.
   display: contents;
 
-  // Until the element is defined the button toggles nothing, so it is not offered.
-  // With scripting off that is the whole of the degradation: no button, and the
-  // region simply there, unhidden - which is the right way round for a long
+  // Two pre-upgrade renderings, split on whether the script is ever coming.
+  // With scripting off the button toggles nothing, so it is not offered: no button,
+  // and the region simply there, unhidden - which is the right way round for a long
   // description, and why the region is not authored `hidden`.
-  &:not(:defined) > button {
-    display: none;
+  @media (scripting: none) {
+    &:not(:defined) > button {
+      display: none;
+    }
+  }
+
+  // With scripting on the same markup is only waiting, so it paints the state the
+  // upgrade is about to wire - button shown, a closed region hidden - and upgrading
+  // changes nothing on screen. Only the sibling shape: a region `for` names lives
+  // anywhere in the page, under an id no stylesheet can know, so that shape keeps the
+  // old collapse - and is excluded here outright, because in it the button's next
+  // sibling is not the region and hiding it would hide a bystander. The trade is
+  // stated plainly: a bundle that never arrives while scripting is on leaves a button
+  // that opens nothing, so this gate narrows the no-script promise from "script never
+  // ran" to "scripting is off".
+  @media (scripting: enabled) {
+    &:not(:defined, [open], [for], [data-for]) > button + * {
+      display: none;
+    }
   }
 }
 

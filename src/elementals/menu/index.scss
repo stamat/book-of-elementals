@@ -8,12 +8,25 @@ menu-elemental {
   display: inline-block;
   position: relative;
 
-  // Until the element is defined the button opens nothing, so it is not offered:
-  // with scripting off what is left is a nested list of links, every one of them
-  // reachable, which is the whole degradation and the reason the submenus are not
-  // authored `hidden`.
-  &:not(:defined) > button {
-    display: none;
+  // Two pre-upgrade renderings, split on whether the script is ever coming.
+  // With scripting off the button opens nothing, so it is not offered: what is left
+  // is a nested list of links, every one of them reachable, which is the whole
+  // degradation and the reason the submenus are not authored `hidden`.
+  @media (scripting: none) {
+    &:not(:defined) > button {
+      display: none;
+    }
+  }
+
+  // With scripting on the same markup is only waiting, so it paints the closed state
+  // the upgrade is about to wire - button shown, lists hidden - and upgrading changes
+  // nothing on screen. The trade is stated plainly: a bundle that never arrives while
+  // scripting is on leaves a button that opens nothing, so this gate narrows the
+  // no-script promise from "script never ran" to "scripting is off".
+  @media (scripting: enabled) {
+    &:not(:defined) > :is(ul, menu) {
+      display: none;
+    }
   }
 
   // The element writes the mode, so a stylesheet reads the breakpoint back off the

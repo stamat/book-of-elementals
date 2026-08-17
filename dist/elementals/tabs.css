@@ -4,6 +4,11 @@ tabs-elemental {
   grid-template-columns: minmax(0, 1fr);
 }
 
+@media (scripting: enabled) {
+  tabs-elemental:not(:defined) > :is(ul, menu) ~ * ~ * {
+    display: none;
+  }
+}
 tabs-elemental > [data-tabs-list] {
   grid-area: 1/1;
   margin: 0;

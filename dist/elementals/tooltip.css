@@ -12,6 +12,12 @@ tooltip-elemental:not(:defined):has(> [title]) > :last-child {
   display: none;
 }
 
+@media (scripting: enabled) {
+  tooltip-elemental:not(:defined) > :last-child:not(:only-child, button, [href], input, select, textarea, [tabindex]),
+  tooltip-elemental:not(:defined)[for] {
+    display: none;
+  }
+}
 tooltip-elemental:defined[role=tooltip],
 tooltip-elemental:defined > [role=tooltip] {
   position: fixed;

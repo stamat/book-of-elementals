@@ -341,8 +341,9 @@ moves the mouse away still has the words.
 
 | Missing | What you get |
 | --- | --- |
-| the script never loads | the sentence, visible next to the control. Nothing is hidden until something can show it again |
-| the script loads late | one beat with the sentence visible, then it folds away |
+| scripting is off | the sentence, visible next to the control. Nothing is hidden until something can show it again |
+| the script never arrives with scripting on — blocked, 404 | no sentence: the stylesheet holds the bubble unpainted for an upgrade that never comes. The gate covers scripting turned off, not every way a script can fail to run |
+| the script loads late | nothing — the bubble waits unpainted from the first frame, so there is no beat to see. Bubble authored *before* its trigger is the exception, and keeps the beat |
 | the stylesheet is not imported | a working description, and a bubble that opens in the flow rather than over the page |
 | a `title` and no script | the native tooltip, exactly as before |
 

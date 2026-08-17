@@ -523,8 +523,11 @@ still cut off.
 
 The panel is not authored `hidden`, so with the bundle blocked or still in flight it is
 just an `<aside>` full of links — visible, reachable, in the flow where the markup put it.
-The button is already handled: the element's own stylesheet hides a trigger that would
-toggle nothing until the element is defined.
+The `for` shape keeps that even now that the element's stylesheet paints sibling regions
+closed while scripting is on: a region under an id no stylesheet can know is left alone.
+The button is handled twice over — the element's own stylesheet hides a trigger that would
+toggle nothing while scripting is off, and this example's `.nav-toggle { display: none }`
+behind `[data-mode="free"]` hides it until upgrade either way.
 
 The layout has to agree with that, and here it does so by accident of how it is written.
 Every rule that makes this thing a drawer is behind `[data-mode="free"]`:

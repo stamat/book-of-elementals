@@ -207,8 +207,15 @@ copy-elemental > .copy-elemental-status {
 disclosure-elemental {
   display: contents;
 }
-disclosure-elemental:not(:defined) > button {
-  display: none;
+@media (scripting: none) {
+  disclosure-elemental:not(:defined) > button {
+    display: none;
+  }
+}
+@media (scripting: enabled) {
+  disclosure-elemental:not(:defined, [open], [for], [data-for]) > button + * {
+    display: none;
+  }
 }
 
 .disclosure-elemental-region {
@@ -306,8 +313,15 @@ menu-elemental {
   display: inline-block;
   position: relative;
 }
-menu-elemental:not(:defined) > button {
-  display: none;
+@media (scripting: none) {
+  menu-elemental:not(:defined) > button {
+    display: none;
+  }
+}
+@media (scripting: enabled) {
+  menu-elemental:not(:defined) > :is(ul, menu) {
+    display: none;
+  }
 }
 menu-elemental[data-mode=inline] {
   display: block;
@@ -428,6 +442,22 @@ navbar-elemental {
 }
 navbar-elemental:not(:defined) [data-navbar-toggle] {
   display: none;
+}
+@media (scripting: enabled) {
+  navbar-elemental:not(:defined) {
+    overflow: clip;
+  }
+  navbar-elemental:not(:defined) :is(ul, menu) {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+  navbar-elemental:not(:defined) li > :is(ul, menu) {
+    display: none;
+  }
+  navbar-elemental:not(:defined) [data-navbar-stack] {
+    display: none;
+  }
 }
 navbar-elemental ul,
 navbar-elemental menu {
@@ -719,6 +749,11 @@ tabs-elemental {
   grid-template-columns: minmax(0, 1fr);
 }
 
+@media (scripting: enabled) {
+  tabs-elemental:not(:defined) > :is(ul, menu) ~ * ~ * {
+    display: none;
+  }
+}
 tabs-elemental > [data-tabs-list] {
   grid-area: 1/1;
   margin: 0;
@@ -827,6 +862,12 @@ tooltip-elemental:not(:defined):has(> [title]) > :last-child {
   display: none;
 }
 
+@media (scripting: enabled) {
+  tooltip-elemental:not(:defined) > :last-child:not(:only-child, button, [href], input, select, textarea, [tabindex]),
+  tooltip-elemental:not(:defined)[for] {
+    display: none;
+  }
+}
 tooltip-elemental:defined[role=tooltip],
 tooltip-elemental:defined > [role=tooltip] {
   position: fixed;

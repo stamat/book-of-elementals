@@ -15,9 +15,41 @@ navbar-elemental {
   // Until the element is defined the buttons open nothing, so they are not offered: with
   // scripting off what is left is a row of links with every nested list under it, all of them
   // reachable, which is the whole degradation and the reason the panels are not authored
-  // `hidden`.
+  // `hidden`. Unconditional, unlike the block below: whether the toggle belongs on screen is
+  // the `media` attribute's call, which a stylesheet cannot read, so it is not guessed at.
   &:not(:defined) [data-navbar-toggle] {
     display: none;
+  }
+
+  // With scripting on the pre-upgrade markup is only waiting, so it paints the nearest
+  // guess at what the upgrade will wire - panels closed, the row a single line - rather
+  // than the expanded tree collapsing on the reader's first frame. A guess, not the wired
+  // state: the mode is unknowable until the script reads `media`, so a page that is about
+  // to stack flashes a row first, and the overflow folds one frame after upgrade. The
+  // trade is stated plainly: a bundle that never arrives while scripting is on leaves the
+  // panels closed with nothing to open them, so this gate narrows the no-script promise
+  // from "script never ran" to "scripting is off".
+  @media (scripting: enabled) {
+    &:not(:defined) {
+      // The row has no rail yet to clip it, and a line of links running past the viewport
+      // would hand the page sideways scroll for the length of a bundle fetch.
+      overflow: clip;
+
+      :is(ul, menu) {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+      }
+
+      li > :is(ul, menu) {
+        display: none;
+      }
+
+      // Drawer-only items, hidden the same way the bar guess being painted would hide them.
+      [data-navbar-stack] {
+        display: none;
+      }
+    }
   }
 
   ul,

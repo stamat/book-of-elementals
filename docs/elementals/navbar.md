@@ -417,8 +417,18 @@ the honest description.
 
 The links are authored plainly visible, with every nested list under its own item and
 every one of them reachable. The drawer's button is hidden until the element upgrades, and
-the overflow item is hidden until there is something behind it, so a failed script leaves
-a page whose navigation is a list of links — which is what it was underneath all along.
+the overflow item is hidden until there is something behind it, so scripting turned off
+leaves a page whose navigation is a list of links — which is what it was underneath all
+along.
+
+With scripting on, the stylesheet paints the waiting markup as its best guess at the bar
+instead: panels closed, the row a single line, so the expanded tree does not flash and
+collapse on the first frame. A guess, because the mode is unknowable until the script
+reads `media` — a page about to stack shows a row of links for the length of the bundle
+fetch, and the overflow folds one frame after upgrade. The line that gate draws is worth
+knowing: a bundle that never arrives *while scripting is on* — blocked, 404 — leaves the
+panels closed with nothing to open them. The fallback covers scripting turned off, not
+every way a script can fail to run.
 
 There is no copy of the row in the markup to go stale, either: the copies are made on
 upgrade and removed again if the element leaves the document.

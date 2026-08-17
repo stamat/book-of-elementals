@@ -3,8 +3,15 @@ menu-elemental {
   display: inline-block;
   position: relative;
 }
-menu-elemental:not(:defined) > button {
-  display: none;
+@media (scripting: none) {
+  menu-elemental:not(:defined) > button {
+    display: none;
+  }
+}
+@media (scripting: enabled) {
+  menu-elemental:not(:defined) > :is(ul, menu) {
+    display: none;
+  }
 }
 menu-elemental[data-mode=inline] {
   display: block;

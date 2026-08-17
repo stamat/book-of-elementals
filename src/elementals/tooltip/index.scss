@@ -29,6 +29,22 @@ tooltip-elemental:not(:defined):has(> [title]) > :last-child {
   display: none;
 }
 
+// With scripting on every bubble is only waiting to be hidden, so it is not painted at
+// all and the reader's first frame is the one the upgrade would have produced anyway.
+// Both shapes: the bubble is the last child beside a wrapped trigger - the order the
+// `[title]` rule above already leans on - or the element itself when `for` named the
+// trigger from elsewhere. The focusables list is the element's own trigger test, kept
+// here so markup authored bubble-first hides nothing: a control missing for the length
+// of a bundle fetch is worse than a sentence that blinks. The trade is stated plainly:
+// a bundle that never arrives while scripting is on hides the words for good, so this
+// gate narrows the no-script promise from "script never ran" to "scripting is off".
+@media (scripting: enabled) {
+  tooltip-elemental:not(:defined) > :last-child:not(:only-child, button, [href], input, select, textarea, [tabindex]),
+  tooltip-elemental:not(:defined)[for] {
+    display: none;
+  }
+}
+
 // The two shapes, and one rule: the element itself when `for` named a trigger elsewhere,
 // or the child it wraps. `:defined` guards both, because before upgrade - and forever, on
 // a page whose script never loaded - these are a sentence next to a control, and a
