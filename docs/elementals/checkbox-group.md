@@ -235,8 +235,10 @@ In PHP and Rails that name wants to be `n[]`.
 
 With no script the parent is a checkbox that ticks itself and commands nothing, which is a
 control lying about what it does — so it is not offered at all until the element upgrades.
-`style.scss` hides the first checkbox and its label until `:defined`, and what is left is
-the plain list of checkboxes it was standing in front of, every one of them working.
+`style.scss` splits the wait on `@media (scripting)`: scripting off removes the first
+checkbox and its label outright, leaving the plain list of checkboxes it was standing in
+front of, every one of them working; scripting on holds their box invisible instead, so
+the list does not shift down when they land.
 
 That rule reaches a **direct child** and no further, because CSS cannot say "the first
 checkbox anywhere below me". Where the parent is deeper — a `<th>` in a table header, which

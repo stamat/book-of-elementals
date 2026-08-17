@@ -221,7 +221,8 @@ table, with the values live:
 
 | Missing | What you get |
 | --- | --- |
-| The script never loads | A password field, which is what the markup was. The stylesheet keeps the button out of reach rather than leaving a dead one |
+| Scripting off | A password field, which is what the markup was. The stylesheet keeps the button out of reach rather than leaving a dead one |
+| The script still loading | The button's box, invisible — its space held so the field does not shift when it lands, the control withheld until it can reveal |
 | The theme is not imported | The button, unstyled and unlabelled if you gave it no text of its own — the theme is what draws the eye |
 
 ## Installation

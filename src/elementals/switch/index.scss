@@ -11,7 +11,20 @@ switch-elemental {
   // scripting off that is the whole of the degradation, and it is why a setting that
   // must survive it belongs in a form as `<input type="checkbox" role="switch">`,
   // which needs no script in the first place.
-  &:not(:defined) > button {
-    display: none;
+  @media (scripting: none) {
+    &:not(:defined) > button {
+      display: none;
+    }
+  }
+
+  // With scripting on the button is only waiting, so its box is held and the control
+  // withheld: `visibility` keeps the layout, and takes the button out of the tab order
+  // and the accessibility tree, so nothing can offer or announce a switch that flips
+  // nothing yet. `display: none` here would be a layout shift on every load - the row
+  // the switch sits in closes up and reopens when the button lands.
+  @media (scripting: enabled) {
+    &:not(:defined) > button {
+      visibility: hidden;
+    }
   }
 }

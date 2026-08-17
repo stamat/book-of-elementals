@@ -438,7 +438,7 @@ The "On" beside it is [state text](#state-text) and needs no line here — it ke
 
 `checked-if` is why there is no ordering rule to get right. Written in script instead, the
 starting state has to be set in the same task that registers the element: registering is
-what takes the button out of the `display: none` it wears while undefined, so from that
+what lifts the `visibility: hidden` the button wears while undefined, so from that
 moment it is on screen, and a seed arriving at `DOMContentLoaded` is late. Measured on this
 site's own topbar when it worked that way: the knob painted _off_ over an already-dark page
 for two frames, around 90ms, then slid across. The attribute is read at upgrade, before the
@@ -684,8 +684,9 @@ the moment you flip it. Being in a `<form>` does not settle it — give this ele
 `name` and it submits like a checkbox. Two things do send you to
 `<input type="checkbox" role="switch">` instead:
 
-- **Scripting off.** The button is hidden until the element upgrades
-  (`switch-elemental:not(:defined) > button { display: none }`), and an element that never
+- **Scripting off.** The button is removed until the element upgrades
+  (`display: none` under `@media (scripting: none)`; with scripting on its box is held
+  invisible instead, so the page does not shift when it lands), and an element that never
   upgrades never sets a form value either. A switch that silently does not switch is worse
   than none.
 - **`<label>`.** A real form control gets one; a `<button>` does not.

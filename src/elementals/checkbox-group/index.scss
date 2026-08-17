@@ -12,8 +12,22 @@ checkbox-group-elemental {
   // since a label for a control that is not there names nothing. With scripting off that
   // is the whole of the degradation: the children are ordinary checkboxes and every one of
   // them still works.
-  &:not(:defined) > label:first-of-type,
-  &:not(:defined) > input[type="checkbox"]:first-of-type {
-    display: none;
+  @media (scripting: none) {
+    &:not(:defined) > label:first-of-type,
+    &:not(:defined) > input[type="checkbox"]:first-of-type {
+      display: none;
+    }
+  }
+
+  // With scripting on the pair is only waiting, so its box is held and the control
+  // withheld: `visibility` keeps the layout, and takes both out of the tab order and
+  // the accessibility tree, so nothing can offer a select-all that selects nothing yet.
+  // `display: none` here would be a layout shift on every load - the list under them
+  // moves up and back down when they land.
+  @media (scripting: enabled) {
+    &:not(:defined) > label:first-of-type,
+    &:not(:defined) > input[type="checkbox"]:first-of-type {
+      visibility: hidden;
+    }
   }
 }

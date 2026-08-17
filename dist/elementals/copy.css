@@ -2,8 +2,18 @@
 copy-elemental {
   display: contents;
 }
-copy-elemental:not(:defined) > button, copy-elemental[data-unavailable] > button {
+copy-elemental[data-unavailable] > button {
   display: none;
+}
+@media (scripting: none) {
+  copy-elemental:not(:defined) > button {
+    display: none;
+  }
+}
+@media (scripting: enabled) {
+  copy-elemental:not(:defined) > button {
+    visibility: hidden;
+  }
 }
 copy-elemental > .copy-elemental-status {
   position: absolute;

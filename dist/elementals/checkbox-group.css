@@ -2,7 +2,14 @@
 checkbox-group-elemental {
   display: contents;
 }
-checkbox-group-elemental:not(:defined) > label:first-of-type, checkbox-group-elemental:not(:defined) > input[type=checkbox]:first-of-type {
-  display: none;
+@media (scripting: none) {
+  checkbox-group-elemental:not(:defined) > label:first-of-type, checkbox-group-elemental:not(:defined) > input[type=checkbox]:first-of-type {
+    display: none;
+  }
+}
+@media (scripting: enabled) {
+  checkbox-group-elemental:not(:defined) > label:first-of-type, checkbox-group-elemental:not(:defined) > input[type=checkbox]:first-of-type {
+    visibility: hidden;
+  }
 }
 /*# sourceMappingURL=checkbox-group.css.map */

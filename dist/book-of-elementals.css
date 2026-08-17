@@ -91,8 +91,15 @@ carousel-elemental[fade] > [data-carousel-slides] > [data-carousel-current] {
 checkbox-group-elemental {
   display: contents;
 }
-checkbox-group-elemental:not(:defined) > label:first-of-type, checkbox-group-elemental:not(:defined) > input[type=checkbox]:first-of-type {
-  display: none;
+@media (scripting: none) {
+  checkbox-group-elemental:not(:defined) > label:first-of-type, checkbox-group-elemental:not(:defined) > input[type=checkbox]:first-of-type {
+    display: none;
+  }
+}
+@media (scripting: enabled) {
+  checkbox-group-elemental:not(:defined) > label:first-of-type, checkbox-group-elemental:not(:defined) > input[type=checkbox]:first-of-type {
+    visibility: hidden;
+  }
 }
 
 combobox-elemental {
@@ -184,8 +191,18 @@ combobox-elemental .combobox-elemental-add {
 copy-elemental {
   display: contents;
 }
-copy-elemental:not(:defined) > button, copy-elemental[data-unavailable] > button {
+copy-elemental[data-unavailable] > button {
   display: none;
+}
+@media (scripting: none) {
+  copy-elemental:not(:defined) > button {
+    display: none;
+  }
+}
+@media (scripting: enabled) {
+  copy-elemental:not(:defined) > button {
+    visibility: hidden;
+  }
 }
 copy-elemental > .copy-elemental-status {
   position: absolute;
@@ -570,8 +587,15 @@ navbar-elemental[data-mode=stack] [data-navbar-rail] > :is(ul, menu):not([data-n
 password-elemental {
   display: contents;
 }
-password-elemental:not(:defined) > button {
-  display: none;
+@media (scripting: none) {
+  password-elemental:not(:defined) > button {
+    display: none;
+  }
+}
+@media (scripting: enabled) {
+  password-elemental:not(:defined) > button {
+    visibility: hidden;
+  }
 }
 password-elemental > .password-elemental-status {
   position: absolute;
@@ -740,8 +764,15 @@ suggest-elemental:not(:defined) {
 switch-elemental {
   display: contents;
 }
-switch-elemental:not(:defined) > button {
-  display: none;
+@media (scripting: none) {
+  switch-elemental:not(:defined) > button {
+    display: none;
+  }
+}
+@media (scripting: enabled) {
+  switch-elemental:not(:defined) > button {
+    visibility: hidden;
+  }
 }
 
 tabs-elemental {

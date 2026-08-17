@@ -176,7 +176,8 @@ has upgraded **and** found something to write with.
 
 | Missing                        | What you get                                                                                                                               |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| the script never loads         | no button. The text is still on the page, still selectable                                                                                 |
+| scripting is off               | no button. The text is still on the page, still selectable                                                                                 |
+| the script is still loading    | the button's box, invisible — its space held so the page does not shift when it lands, the control withheld until it can copy              |
 | the page is served over `http` | no button — `navigator.clipboard` only exists in a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) |
 | `for` and `value` both unset   | no button, and `data-unavailable` on the element saying why                                                                                |
 | the theme is not imported      | your own button, wired and announcing. `style.scss` draws nothing                                                                          |

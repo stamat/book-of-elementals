@@ -11,8 +11,21 @@ password-elemental {
   // not reveal is worse than no button: the reader presses it, sees no change and no error,
   // and is left guessing whether the page or their eyes are wrong. With scripting off this
   // is the whole of the degradation - a password field, which is what the markup was.
-  &:not(:defined) > button {
-    display: none;
+  @media (scripting: none) {
+    &:not(:defined) > button {
+      display: none;
+    }
+  }
+
+  // With scripting on the button is only waiting, so its box is held and the control
+  // withheld: `visibility` keeps the layout, and takes the button out of the tab order
+  // and the accessibility tree, so nothing can offer a reveal that reveals nothing yet.
+  // `display: none` here would be a layout shift on every load - the field closes up
+  // and reopens when the button lands beside it.
+  @media (scripting: enabled) {
+    &:not(:defined) > button {
+      visibility: hidden;
+    }
   }
 
   // The announcement. Off screen and never off the accessibility tree: the field visibly

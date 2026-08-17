@@ -36,6 +36,18 @@ may already be targeting**, since neither shows up in a function signature.
   turned off, not every way a script can fail to run, and each docs page says so.
   CSS-only. No DOM output changed, and every new rule sits under `:not(:defined)`, so
   nothing an author styles after upgrade moves.
+- **Late-arriving controls no longer shift the page when they land.** The switch, copy
+  and password buttons and the checkbox-group's select-all were `display: none` until
+  `:defined` — correct as an offer (a control that does nothing yet must not be offered)
+  and wrong as layout: the row each sits in closed up and reopened on upgrade, a layout
+  shift on every load, including the theme switch on the docs topbar. Split on
+  `@media (scripting)` like the rest of this entry: scripting off keeps `display: none` —
+  the old degradation exactly — while scripting on holds the control's box with
+  `visibility: hidden`, which reserves the layout while the control stays out of reach:
+  no click, no tab stop, no announcement, until the element wires it. The navbar's drawer toggle
+  keeps the old behaviour deliberately: whether it belongs on screen at all is the `media`
+  attribute's call, which no stylesheet can read, and reserving space for a toggle the bar
+  mode is about to remove would shift the other way.
 - **The tab strip no longer reflows the page on upgrade.** Pre-upgrade the strip was a
   bulleted, indented UA list that snapped into a flex row when `[data-tabs-list]` arrived,
   moving everything under it — around 50px of layout shift on the tabs page alone. The

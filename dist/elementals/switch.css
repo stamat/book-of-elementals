@@ -2,7 +2,14 @@
 switch-elemental {
   display: contents;
 }
-switch-elemental:not(:defined) > button {
-  display: none;
+@media (scripting: none) {
+  switch-elemental:not(:defined) > button {
+    display: none;
+  }
+}
+@media (scripting: enabled) {
+  switch-elemental:not(:defined) > button {
+    visibility: hidden;
+  }
 }
 /*# sourceMappingURL=switch.css.map */
