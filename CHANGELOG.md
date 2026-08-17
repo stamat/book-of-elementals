@@ -15,6 +15,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-08-17
+
 ### Fixed
 
 - **Five elementals no longer flash their expanded markup on first paint.** The
