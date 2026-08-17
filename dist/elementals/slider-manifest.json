@@ -434,6 +434,19 @@
             },
             {
               "kind": "method",
+              "name": "formatValue",
+              "parameters": [
+                {
+                  "name": "value"
+                },
+                {
+                  "name": "fallback"
+                }
+              ],
+              "description": "What the bubble says for a value, once `format` has had it.\n\n`fallback` is the browser's own spelling of the same number and is what shows whenever\nthere is no formatter, so an element nobody has assigned one to reads exactly as it did\nbefore this hook existed. A formatter returning nothing falls back too - a bubble that\nwent blank because a function forgot a `return` looks like a broken element rather than\na bug in the page."
+            },
+            {
+              "kind": "method",
               "name": "onPointerDown",
               "parameters": [
                 {
@@ -441,6 +454,14 @@
                 }
               ],
               "description": "A press on the track, which stacked inputs would otherwise eat: the one on top covers\nthe whole width, so the stylesheet takes its pointer events away and leaves them on the\nthumbs. That is what makes both thumbs grabbable, and it is also what leaves the track\ndead until this runs - the nearer thumb takes the value and the focus."
+            },
+            {
+              "type": {
+                "text": "?function"
+              },
+              "description": "What the `tooltip` bubble says, called as `(value, element)` and returning what lands in it. A number is all the bubble can say on its own, and a scrubber needs `01:12` where a price needs `€40` — neither is something an attribute could spell. Unset, or returning nothing, leaves the browser's own spelling of the value. Does not touch what the input announces: assistive technology reads the range, which still says the number.",
+              "name": "format",
+              "kind": "field"
             }
           ],
           "attributes": [

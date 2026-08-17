@@ -17,6 +17,22 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Added
 
+- **`<slider-elemental>` takes a `format` function for its value bubble.** The bubble could
+  only ever say the number, which rules it out for every scale where the number is not the
+  reading: `72` on a media scrubber is `01:12`, `40` on a price is `€40`. `slider.format =
+  (value, element) => …` returns what lands in the bubble, called on every draw with the
+  value as a number.
+
+  A property rather than an attribute because the answer is a function, and no attribute
+  spells one. **Nothing changes for a slider that does not set it** — the bubble still shows
+  the browser's own spelling of the value, which is not the same as `String(value)`: a
+  `step="0.10"` input answers `3.10` where rounding the number back would give `3.1`. A
+  formatter returning `undefined` or `null` falls back to that spelling rather than emptying
+  the bubble, so a function missing a `return` looks like one.
+
+  No DOM or CSS change, and nothing new is announced: the bubble stays `aria-hidden` and the
+  range underneath still announces the raw value to assistive technology.
+
 - **`<field-elemental>`** — the browser's own validation message, on the page instead of in a
   bubble that floats away. No APG pattern, because there is no widget: the control inside is
   already accessible and the constraints are already enforced. What the platform leaves

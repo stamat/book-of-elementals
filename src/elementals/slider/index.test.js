@@ -12,8 +12,45 @@
 // stylesheet does, and the CSS that reads any of it. Jest runs under Node here with no
 // jsdom, so an element test would be asserting against a stub base class; the track and the
 // bubble are checked in a browser against the docs page.
+//
+// `format` is the one bubble concern that is covered, because deciding what the bubble says
+// is arithmetic rather than drawing: `formatValue` reads one field and touches no DOM. Where
+// that text is drawn, and whether the bubble is showing at all, stays uncovered above.
 
-import { alongTrack, clampPair, draggedThumb, nearerThumb, ratio, snapToStep, stackedThumb, thumbUnder, tooltipModes } from './index.js';
+import { alongTrack, clampPair, draggedThumb, nearerThumb, ratio, snapToStep, stackedThumb, thumbUnder, tooltipModes, SliderElemental } from './index.js';
+
+// `formatValue` touches no DOM, so it is reachable here even without jsdom: called against a
+// stand-in carrying the one field it reads.
+const formatValue = (format, value, fallback) => SliderElemental.prototype.formatValue.call({ format }, value, fallback);
+
+test('a bubble nobody gave a formatter reads exactly what the browser wrote', () => {
+  // Not `String(value)`: a `step="0.10"` input spells it `3.10`, and rounding that number
+  // back into a string would quietly make it `3.1`.
+  expect(formatValue(null, 3.1, '3.10')).toBe('3.10');
+  expect(formatValue(undefined, 40, '40')).toBe('40');
+});
+
+test('a formatter says what the number cannot, and is handed the number to say it with', () => {
+  const seen = [];
+  const format = (value) => { seen.push(value); return `${value / 60} min`; };
+  expect(formatValue(format, 120, '120')).toBe('2 min');
+  expect(seen).toEqual([120]);
+});
+
+test('a formatter that forgets to return leaves the number rather than emptying the bubble', () => {
+  expect(formatValue(() => undefined, 40, '40')).toBe('40');
+  expect(formatValue(() => null, 40, '40')).toBe('40');
+});
+
+test('a formatter returning something that is not a string is still shown', () => {
+  expect(formatValue(() => 0, 40, '40')).toBe('0');
+  expect(formatValue(() => 12, 40, '40')).toBe('12');
+});
+
+test('anything that is not a function is no formatter at all, rather than a crash on every pointer move', () => {
+  expect(formatValue('mm:ss', 40, '40')).toBe('40');
+  expect(formatValue({}, 40, '40')).toBe('40');
+});
 
 test('a value is where it sits between the ends, as zero to one', () => {
   expect(ratio(50, 0, 100)).toBe(0.5);

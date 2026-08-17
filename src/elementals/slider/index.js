@@ -284,6 +284,7 @@ function bound(value, fallback) {
  * @tag slider-elemental
  * @attr {number} [gap=0] - Least distance between the two thumbs, in the scale's own units. Ignored with one thumb.
  * @attr {string} tooltip - A value bubble that follows the pointer. `thumb` over the thumb it is on, `track` for the value under it elsewhere, `thumb track` for both; a bare `tooltip` is `thumb`. Pointer only, and `aria-hidden` — the input announces its own value.
+ * @prop {?function} format - What the `tooltip` bubble says, called as `(value, element)` and returning what lands in it. A number is all the bubble can say on its own, and a scrubber needs `01:12` where a price needs `€40` — neither is something an attribute could spell. Unset, or returning nothing, leaves the browser's own spelling of the value. Does not touch what the input announces: assistive technology reads the range, which still says the number.
  *
  * @cssprop {<length>} [--slider-elemental-thumb-size=1rem] - Thumb width and height. This is also the height of the control, and what the fill is inset by so its ends meet the thumb centres.
  * @cssprop {<length>} [--slider-elemental-track-size=0.375rem] - Track thickness.
@@ -368,6 +369,12 @@ export class SliderElemental extends ElementBase {
     // since, so there would be no event carrying the coordinate to redraw it at.
     this.tooltipX = null;
     this.tooltipElement = null;
+    // What the bubble says, when the number alone is not it. A property rather than an
+    // attribute because the answer is a function - `01:12` from 72, a currency, a name for a
+    // step - and none of that fits in a string a browser parses. A plain field rather than an
+    // accessor that redraws on assignment: the bubble is drawn on every pointer move, so the
+    // only stale window is a pointer sitting perfectly still across the assignment.
+    this.format = null;
     // The thumb a press pinned the bubble to, or `-1` for no drag in progress.
     this.dragging = -1;
 
@@ -653,18 +660,39 @@ export class SliderElemental extends ElementBase {
     }
 
     let at = m.ratios[over];
+    // Two numbers, deliberately. `text` is what the browser itself wrote into the input,
+    // which is already on a step and spelled the way that input spells numbers - `step="0.10"`
+    // gives `3.10`, and rounding it through Number would quietly make that `3.1`. `value` is
+    // the same quantity as a number, which is the only useful thing to hand a formatter.
     let text = over < 0 ? '' : m.inputs[over].value;
+    let value = over < 0 ? 0 : Number(m.inputs[over].value);
     if (over < 0) {
       at = alongTrack(x, m.rect.left, m.rect.width, m.thumb, m.rtl);
       // `step="any"` is the one value meaning no step at all, and `parseFloat` would read it
       // as the missing attribute's default of 1.
-      text = String(snapToStep(m.min + at * (m.max - m.min), m.min, m.max, stepOf(m.inputs[0])));
+      value = snapToStep(m.min + at * (m.max - m.min), m.min, m.max, stepOf(m.inputs[0]));
+      text = String(value);
     }
 
     bubble.dataset.tooltip = on;
-    bubble.textContent = text;
+    bubble.textContent = this.formatValue(value, text);
     bubble.style.setProperty('--slider-elemental-at', at);
     bubble.hidden = false;
+  }
+
+  /**
+   * What the bubble says for a value, once `format` has had it.
+   *
+   * `fallback` is the browser's own spelling of the same number and is what shows whenever
+   * there is no formatter, so an element nobody has assigned one to reads exactly as it did
+   * before this hook existed. A formatter returning nothing falls back too - a bubble that
+   * went blank because a function forgot a `return` looks like a broken element rather than
+   * a bug in the page.
+   */
+  formatValue(value, fallback) {
+    if (typeof this.format !== 'function') return fallback;
+    const formatted = this.format(value, this);
+    return formatted === undefined || formatted === null ? fallback : String(formatted);
   }
 
   /**

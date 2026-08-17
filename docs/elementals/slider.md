@@ -125,6 +125,7 @@ scale. It goes again when the attribute does, or when the element leaves the pag
 | `inputs`    | `HTMLInputElement[]`   | Read-only. The thumbs' inputs, in document order.                             |
 | `outputs`   | `HTMLOutputElement[]`  | Read-only. The readouts, in document order, from anywhere inside — yours, never the `tooltip` bubble. |
 | `gap`       | number                 | Get/set. Writes the attribute.                                                |
+| `format`    | `?function`            | Get/set. What the `tooltip` bubble says — `(value, element)`, returning what lands in it. [See below](#saying-something-other-than-the-number) |
 | `clamp(moved)` | —                   | Re-apply the gap after moving a value from script. `'start'` or `'end'` says which one gives way. |
 | `apply()`   | —                      | Re-read the inputs. Call it after moving one from script, or swapping one out. |
 
@@ -338,6 +339,51 @@ ties rounded up, and never past the last notch the scale actually has. `min="0" 
 step="40"` stops at 80, so that is what the bubble says at the far end rather than 100, which
 the input cannot hold. Set `step="any"` and it is not rounded at all.
 
+### Saying something other than the number
+
+Some values are not readable as numbers. `72` on a media scrubber is `01:12`, `40` on a
+price is `€40`, and neither is something an attribute could spell — which is why `format` is
+a property holding a function rather than a token in the markup:
+
+Run the pointer along this one — the track reads minutes and seconds, not `132`:
+
+<!-- demo slider -->
+
+```html
+<label for="seek">Seek</label>
+<slider-elemental tooltip="thumb track" id="scrubber">
+  <input type="range" id="seek" name="seek" min="0" max="600" step="1" value="132" />
+</slider-elemental>
+```
+
+```js demo
+const pad = (n) => String(n).padStart(2, '0');
+document.getElementById('scrubber').format = (seconds) =>
+  `${pad(Math.floor(seconds / 60))}:${pad(seconds % 60)}`;
+```
+
+```css demo
+/* Room for the bubble, which hangs above the control and outside its box */
+body {
+  padding-block-start: 4rem;
+}
+body > label {
+  margin-block-end: 2rem;
+}
+```
+
+It is called as `(value, element)` on every draw, with the value as a **number**, and what
+it returns is what lands in the bubble. Leave it unset and the bubble reads exactly as it
+always did: the browser's own spelling of the value, which matters for a `step="0.10"` scale
+where `3.10` is the input's answer and `3.1` is not. A formatter that returns nothing falls
+back to that same spelling rather than emptying the bubble, because a function missing a
+`return` should look like a function missing a `return` and not like a broken element.
+
+**It does not change what is announced.** The bubble is `aria-hidden`; the input underneath
+announces its own value, and a screen reader still hears the number. If the formatted
+version is the one that matters to every reader, it belongs in an
+[`<output>`](#the-value-readout) as well — where it is text on the page rather than a hover.
+
 ### What it is not
 
 | | |
@@ -345,7 +391,7 @@ the input cannot hold. Set `step="any"` and it is not rounded at all.
 | Not announced | `aria-hidden="true"`. The input under it announces its own value on every arrow key, and the same number twice is one announcement too many — [which is what Base UI does with its marks](https://v6.mui.com/base-ui/react-slider/) |
 | Not reachable by touch | touch pointers are ignored outright rather than half-handled, the same refusal [`<tooltip-elemental>`](tooltip.html) makes |
 | Not shown on focus | a keyboard reader hears the value already; a bubble that appeared on <kbd>Tab</kbd> would be a second copy of it, drawn |
-| Not formatted | it is the raw value, like the `<output>`. A currency symbol or a unit belongs in a readout you write |
+| Not formatted by default | the raw value, like the `<output>`, until you set [`format`](#saying-something-other-than-the-number) |
 | Not always on | there is no "pinned" mode. [noUiSlider's `tooltips: true`](https://refreshless.com/nouislider/slider-options/) and [MUI's `valueLabelDisplay="on"`](https://mui.com/material-ui/react-slider/) both have one; here that is an `<output>` positioned with `--slider-elemental-end`, and no attribute |
 
 ## Naming it

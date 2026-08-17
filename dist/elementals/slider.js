@@ -134,6 +134,7 @@
       this.onTooltipUp = this.onTooltipUp.bind(this);
       this.tooltipX = null;
       this.tooltipElement = null;
+      this.format = null;
       this.dragging = -1;
       this.addEventListener("input", this.onInput, true);
       this.form = this.closest("form");
@@ -356,14 +357,30 @@
       }
       let at = m.ratios[over];
       let text = over < 0 ? "" : m.inputs[over].value;
+      let value = over < 0 ? 0 : Number(m.inputs[over].value);
       if (over < 0) {
         at = alongTrack(x, m.rect.left, m.rect.width, m.thumb, m.rtl);
-        text = String(snapToStep(m.min + at * (m.max - m.min), m.min, m.max, stepOf(m.inputs[0])));
+        value = snapToStep(m.min + at * (m.max - m.min), m.min, m.max, stepOf(m.inputs[0]));
+        text = String(value);
       }
       bubble.dataset.tooltip = on;
-      bubble.textContent = text;
+      bubble.textContent = this.formatValue(value, text);
       bubble.style.setProperty("--slider-elemental-at", at);
       bubble.hidden = false;
+    }
+    /**
+     * What the bubble says for a value, once `format` has had it.
+     *
+     * `fallback` is the browser's own spelling of the same number and is what shows whenever
+     * there is no formatter, so an element nobody has assigned one to reads exactly as it did
+     * before this hook existed. A formatter returning nothing falls back too - a bubble that
+     * went blank because a function forgot a `return` looks like a broken element rather than
+     * a bug in the page.
+     */
+    formatValue(value, fallback) {
+      if (typeof this.format !== "function") return fallback;
+      const formatted = this.format(value, this);
+      return formatted === void 0 || formatted === null ? fallback : String(formatted);
     }
     /**
      * A press on the track, which stacked inputs would otherwise eat: the one on top covers
