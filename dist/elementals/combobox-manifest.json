@@ -72,6 +72,32 @@
           }
         },
         {
+          "kind": "function",
+          "name": "offersCustom",
+          "parameters": [
+            {
+              "name": "query",
+              "description": "What is in the field.",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "texts",
+              "description": "The text of every option already there.",
+              "type": {
+                "text": "string[]"
+              }
+            }
+          ],
+          "description": "Whether what has been typed is a value the list does not already hold - which is the only\nquestion `custom-values` ever asks.\n\nTrimmed and case-folded on both sides, because every answer the other way is a\nnear-duplicate the reader did not mean to make: `react` offered beside `React`, or\n`React ` beside `React`, sitting one row above the real one in every list from then on.\nFolding costs the page the ability to hold two options whose texts differ only in case,\nwhich is a list that was already unreadable.\n\nAn empty query is not a value however much whitespace it holds, and an empty list offers\neverything - which is a tag input with no suggestions behind it, and the reason this is one\nattribute rather than a second element.",
+          "return": {
+            "type": {
+              "text": "boolean"
+            }
+          }
+        },
+        {
           "kind": "class",
           "description": "`<combobox-elemental>` custom element.\n\nA `<select>` given a text field to search it with, per the\n[APG Combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) - the\nsearchable, tag-holding select every application ends up needing and the platform\nstill has no answer for.\n\nThe gap is narrow and worth naming, because most of what these libraries do is now\nnative. `appearance: base-select` styles the button, the picker and every `<option>`\nwith ordinary CSS, which is the half people used to reach for select2 to get. What it\ndoes not do is **filter**: there is no typing your way down a list of four hundred\ncities, in any browser, with or without the new styling. That is what this element is,\nand it is why it is not simply a stylesheet.\n\nThe `<select>` stays, and stays the control. It holds the value, submits under its own\n`name`, resets, restores, honours `required` and `disabled`, and goes down with a\n`<fieldset disabled>` - none of which is written here, because a second element\nmirroring the state is a second element that can disagree with it. The field, the\nlistbox and the chips are a view of it; every pick sets `option.selected` and lets the\n`<select>` fire the `change` that was going to be listened for anyway.\n\n`multiple` on the `<select>` is what makes it multi-select. The chips, the\nremove buttons and `Backspace` on an empty field come with it - and the caret goes,\nsince a caret is the mark of a control holding one value out of a list and a field full\nof tags has already said what this one holds. It is the one part of\nthis element with no APG example behind it - the pattern's six are all single-select.\nWhat is written here follows the pattern where it speaks (`aria-multiselectable`,\n`aria-selected` on every option rather than only the chosen one, a listbox that stays\nopen across picks) and is plain buttons where it does not.\n\nLight DOM, no shadow root. This one *does* build markup - a field, a listbox and a\nchip per selection - which the elements wrapping native widgets do not have to. That\nmarkup is the public API and is documented as such.\n\nDegrades honestly: with no script the `<select>` is a `<select>`, which is the whole\ncontrol minus the searching. Nothing is hidden until there is something to hide it\nbehind.\n\nponytail: the option list is built once, at upgrade, and filtered by hiding. Replace\nthe `<option>`s at runtime and call `apply()`; wire a `MutationObserver` if that stops\nbeing rare.",
           "name": "ComboboxElemental",
@@ -206,6 +232,18 @@
               "readonly": true
             },
             {
+              "kind": "field",
+              "name": "customValues",
+              "description": "Whether a value the list does not hold may be typed into it.\n\nOff by default, and it has to be: a `<select>` is a closed set of answers, and an\nelement that quietly widened one would be answering a question the markup did not ask.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "addText",
+              "description": "What the popup's add row says, with `{label}` standing in for what was typed.",
+              "readonly": true
+            },
+            {
               "kind": "method",
               "name": "build",
               "description": "Build the view: a field holding the chips, the text input and the popup indicator,\nand the listbox under it.\n\nInserted **before** the `<select>` rather than after, because a `<label>` wrapping\nthis element names the first labelable thing inside it, and the `<select>` staying\nfirst would leave the visible field anonymous while the hidden control wore the name."
@@ -259,7 +297,7 @@
             {
               "kind": "method",
               "name": "navigable",
-              "description": "The options an arrow key can reach: on screen, and not disabled."
+              "description": "The options an arrow key can reach: on screen, and not disabled. The add row is one of\nthem while it is showing, which is what makes it reachable by keyboard at all."
             },
             {
               "kind": "method",
@@ -295,6 +333,11 @@
                 }
               ],
               "description": "Choose, or in a multiple select un-choose, one option."
+            },
+            {
+              "kind": "method",
+              "name": "addValue",
+              "description": "Turn what has been typed into an `<option>` of the `<select>`, and choose it.\n\nA real `<option>`, appended to the control, because the control is what submits - a\nvalue held anywhere else is a value the form does not have. From that moment it is an\noption like the ones the page wrote: it filters, it gets a chip, its remove button is\nnamed the same way, and picking it again toggles it. That is the whole reason this is an\nattribute on the combobox and not a second element - the machinery already existed.\n\nRebuilding the view rather than splicing one row into it: `apply()` is what keeps the\n`<option>` order, the `id`s and the pair list agreeing with the `<select>`, and one\nrebuild on a keystroke the reader made deliberately is cheaper than a second code path\nthat can drift from the first."
             },
             {
               "kind": "method",
@@ -412,6 +455,22 @@
               },
               "description": "The verb in a chip's remove button, in front of the option's label. Holding `{label}` it says where the label goes instead: `{label} entfernen`.",
               "default": "Remove"
+            },
+            {
+              "name": "custom-values",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Let a value the `<select>` does not hold be typed in. The popup offers an add row for anything not already there; taking it appends a real `<option>` and chooses it. With `multiple` and an empty `<select>`, this is a tag input.",
+              "default": "false"
+            },
+            {
+              "name": "add-text",
+              "type": {
+                "text": "string"
+              },
+              "description": "What the add row says, with `{label}` standing in for what was typed. Same convention as `remove-text`.",
+              "default": "Add {label}"
             }
           ],
           "superclass": {
@@ -444,6 +503,14 @@
           "name": "removeName",
           "declaration": {
             "name": "removeName",
+            "module": "src/elementals/combobox/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "offersCustom",
+          "declaration": {
+            "name": "offersCustom",
             "module": "src/elementals/combobox/index.js"
           }
         },

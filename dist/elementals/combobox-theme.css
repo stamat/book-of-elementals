@@ -102,6 +102,7 @@ combobox-elemental[open]:has(.combobox-elemental-list[data-side=block-start]) .c
   border-end-end-radius: 0;
 }
 combobox-elemental .combobox-elemental-option,
+combobox-elemental .combobox-elemental-add,
 combobox-elemental .combobox-elemental-empty {
   display: flex;
   gap: var(--combobox-elemental-inset);
@@ -131,6 +132,12 @@ combobox-elemental .combobox-elemental-option[aria-selected=true]::after {
 combobox-elemental .combobox-elemental-option[aria-disabled=true],
 combobox-elemental .combobox-elemental-empty {
   opacity: 0.5;
+}
+combobox-elemental .combobox-elemental-add {
+  border-block-start: 1px solid var(--combobox-elemental-border);
+}
+combobox-elemental .combobox-elemental-add:first-child {
+  border-block-start: 0;
 }
 combobox-elemental .combobox-elemental-group-label {
   position: sticky;

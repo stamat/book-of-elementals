@@ -53,8 +53,45 @@ export function focusAfterRemoval(count, index) {
  * removeName('{label} entfernen', 'React') // => 'React entfernen'
  */
 export function removeName(verb, label) {
-  if (verb.indexOf('{label}') === -1) return verb + ' ' + label;
-  return verb.replace(/\{label\}/g, () => label);
+  return fillLabel(verb, label);
+}
+
+/**
+ * The shared half of the two: `{label}` filled in where the template puts it, or the label
+ * appended where the template has no slot for it. `add-text` asks the same question of the
+ * same convention, so it asks the same function.
+ */
+function fillLabel(template, label) {
+  if (template.indexOf('{label}') === -1) return template + ' ' + label;
+  return template.replace(/\{label\}/g, () => label);
+}
+
+/**
+ * Whether what has been typed is a value the list does not already hold - which is the only
+ * question `custom-values` ever asks.
+ *
+ * Trimmed and case-folded on both sides, because every answer the other way is a
+ * near-duplicate the reader did not mean to make: `react` offered beside `React`, or
+ * `React ` beside `React`, sitting one row above the real one in every list from then on.
+ * Folding costs the page the ability to hold two options whose texts differ only in case,
+ * which is a list that was already unreadable.
+ *
+ * An empty query is not a value however much whitespace it holds, and an empty list offers
+ * everything - which is a tag input with no suggestions behind it, and the reason this is one
+ * attribute rather than a second element.
+ *
+ * @param {string} query - What is in the field.
+ * @param {string[]} texts - The text of every option already there.
+ * @returns {boolean}
+ * @example
+ * offersCustom('Svelte', ['React', 'Vue']) // => true
+ * offersCustom('react', ['React']) // => false, case is not what makes a value new
+ * offersCustom('  ', ['React']) // => false
+ */
+export function offersCustom(query, texts) {
+  const value = String(query == null ? '' : query).trim().toLowerCase();
+  if (!value) return false;
+  return !texts.some((text) => String(text == null ? '' : text).trim().toLowerCase() === value);
 }
 
 /** Monotonic counter, so the listbox and its options have `id`s to be pointed at. */
@@ -116,6 +153,8 @@ function el(tag, className) {
  * @attr {string} placeholder - The field's placeholder. Single select falls back to the label of the option whose value is empty.
  * @attr {string} [empty-text=No matches] - What the popup says when the query matches nothing.
  * @attr {string} [remove-text=Remove] - The verb in a chip's remove button, in front of the option's label. Holding `{label}` it says where the label goes instead: `{label} entfernen`.
+ * @attr {boolean} [custom-values=false] - Let a value the `<select>` does not hold be typed in. The popup offers an add row for anything not already there; taking it appends a real `<option>` and chooses it. With `multiple` and an empty `<select>`, this is a tag input.
+ * @attr {string} [add-text=Add {label}] - What the add row says, with `{label}` standing in for what was typed. Same convention as `remove-text`.
  *
  * @cssprop {<length>} [--combobox-elemental-radius=0.375rem] - Corners of the field and the popup.
  * @cssprop {<length>} [--combobox-elemental-inset=0.5rem] - The one padding unit: inside the field, before the caret, and down the side of every option - and nowhere else, so the field's text and the popup's line up.
@@ -131,7 +170,7 @@ function el(tag, className) {
  */
 export class ComboboxElemental extends ElementBase {
   static get observedAttributes() {
-    return ['open', 'placeholder', 'empty-text', 'remove-text'];
+    return ['open', 'placeholder', 'empty-text', 'remove-text', 'custom-values', 'add-text'];
   }
 
   /** The control. Direct child, so a `<select>` inside a popover of your own is not
@@ -206,6 +245,21 @@ export class ComboboxElemental extends ElementBase {
   get values() {
     const select = this.select;
     return select ? Array.from(select.selectedOptions).map((option) => option.value) : [];
+  }
+
+  /**
+   * Whether a value the list does not hold may be typed into it.
+   *
+   * Off by default, and it has to be: a `<select>` is a closed set of answers, and an
+   * element that quietly widened one would be answering a question the markup did not ask.
+   */
+  get customValues() {
+    return this.hasAttribute('custom-values');
+  }
+
+  /** What the popup's add row says, with `{label}` standing in for what was typed. */
+  get addText() {
+    return this.getAttribute('add-text') || 'Add {label}';
   }
 
   connectedCallback() {
@@ -436,6 +490,18 @@ export class ComboboxElemental extends ElementBase {
     this.empty.hidden = true;
     this.list.append(this.empty);
 
+    // A real option rather than a hint under the field, because a hint saying "press Enter
+    // to add it" is a hint a screen reader meets only if it happens to be read - while an
+    // option is announced with the rest of the list, counted in it, and reachable with the
+    // same arrow key as everything else. Last, so the closest real match keeps the cursor
+    // and Enter still takes what the reader was searching for.
+    this.add = el('li', 'combobox-elemental-add');
+    this.add.id = this.list.id + '-add';
+    this.add.setAttribute('role', 'option');
+    this.add.setAttribute('aria-selected', 'false');
+    this.add.hidden = true;
+    this.list.append(this.add);
+
     this.filter();
     this.sync();
   }
@@ -543,13 +609,22 @@ export class ComboboxElemental extends ElementBase {
     for (const group of this.list.querySelectorAll('.combobox-elemental-group')) {
       group.hidden = !group.querySelector('[role="option"]:not([hidden])');
     }
+    const custom = this.customValues && offersCustom(this.query, this.pairs.map((pair) => pair.option.text));
+    this.add.hidden = !custom;
+    if (custom) this.add.textContent = fillLabel(this.addText, this.query.trim());
+
     this.empty.textContent = this.emptyText;
-    this.empty.hidden = shown > 0;
+    // "No matches" beside a row offering to add what was typed is the popup contradicting
+    // itself - the add row already says the list does not hold it, and says what to do next.
+    this.empty.hidden = shown > 0 || custom;
   }
 
-  /** The options an arrow key can reach: on screen, and not disabled. */
+  /** The options an arrow key can reach: on screen, and not disabled. The add row is one of
+   * them while it is showing, which is what makes it reachable by keyboard at all. */
   navigable() {
-    return this.pairs.filter((pair) => !pair.item.hidden && !pair.option.disabled);
+    const pairs = this.pairs.filter((pair) => !pair.item.hidden && !pair.option.disabled);
+    if (this.add && !this.add.hidden) pairs.push({ option: null, item: this.add, custom: true });
+    return pairs;
   }
 
   /** Where the popup's own cursor is - `aria-activedescendant`, read back as an index
@@ -566,6 +641,7 @@ export class ComboboxElemental extends ElementBase {
    */
   setActive(index) {
     for (const pair of this.pairs) pair.item.removeAttribute('data-active');
+    if (this.add) this.add.removeAttribute('data-active');
     const pair = this.navigable()[index];
     if (!pair) {
       this.input.removeAttribute('aria-activedescendant');
@@ -631,7 +707,12 @@ export class ComboboxElemental extends ElementBase {
 
   /** Choose, or in a multiple select un-choose, one option. */
   pick(pair) {
-    if (!pair || pair.option.disabled || this.disabled) return;
+    if (!pair || this.disabled) return;
+    if (pair.custom) {
+      this.addValue();
+      return;
+    }
+    if (pair.option.disabled) return;
     if (this.multiple) {
       pair.option.selected = !pair.option.selected;
       // The query has done its job the moment it found something; leaving it in the
@@ -654,6 +735,34 @@ export class ComboboxElemental extends ElementBase {
       this.emit();
     }
     this.input.focus();
+  }
+
+  /**
+   * Turn what has been typed into an `<option>` of the `<select>`, and choose it.
+   *
+   * A real `<option>`, appended to the control, because the control is what submits - a
+   * value held anywhere else is a value the form does not have. From that moment it is an
+   * option like the ones the page wrote: it filters, it gets a chip, its remove button is
+   * named the same way, and picking it again toggles it. That is the whole reason this is an
+   * attribute on the combobox and not a second element - the machinery already existed.
+   *
+   * Rebuilding the view rather than splicing one row into it: `apply()` is what keeps the
+   * `<option>` order, the `id`s and the pair list agreeing with the `<select>`, and one
+   * rebuild on a keystroke the reader made deliberately is cheaper than a second code path
+   * that can drift from the first.
+   */
+  addValue() {
+    const select = this.select;
+    const value = this.query.trim();
+    if (!select || !value) return;
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    select.append(option);
+    this.apply();
+    // Through `pick`, so single and multiple, the chip, the events and the open-or-close
+    // are the ones every other choice already goes through.
+    this.pick(this.pairs.find((pair) => pair.option === option));
   }
 
   /** Drop the `index`th selection, and put focus somewhere that still exists. */

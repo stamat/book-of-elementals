@@ -234,6 +234,67 @@ for URLs, so it drops everything outside `[\w0-9-]`. `Београд` comes out 
 comes out empty, `Đorđe` comes out as `ore`. A search box that cannot find a Cyrillic city
 on a Serbian site is not a smaller bug than one that cannot fold an accent.
 
+## Values that are not in the list
+
+`custom-values` lets the reader type a value the `<select>` does not hold. The popup grows an
+**add row** for anything not already there; taking it appends a real `<option>` to the
+`<select>` and chooses it.
+
+<!-- demo combobox class="demo-tall" -->
+
+```html
+<label for="tags">Tags</label>
+<combobox-elemental custom-values>
+  <select id="tags" name="tags" multiple>
+    <option>accessibility</option>
+    <option>web-components</option>
+  </select>
+</combobox-elemental>
+```
+
+Type something the list does not hold and the last row offers it. `multiple` with an empty
+`<select>` is a tag input, and that is the whole of what makes one — there is no second
+element for it, because the chips, the remove buttons, the `Backspace`, the filtering and the
+`{label}` naming all already existed here.
+
+**An add row, not a hint.** "Press Enter to add it" written under the field is a sentence a
+screen reader meets only if it happens to be read, and never at the moment it applies. A row
+in the listbox is announced with the rest of the list, counted in it, and reached with the
+same arrow key as everything else. `add-text` is what it says, with `{label}` standing in for
+what was typed — the same convention as `remove-text`:
+
+```html
+<combobox-elemental custom-values add-text='Create "{label}"'>
+```
+
+**It sits last, and that is deliberate.** The closest real match keeps the cursor, so
+<kbd>Enter</kbd> still takes what the reader was searching for and adding a new value is one
+<kbd>Down</kbd> away. Typing `Rea` into a list holding `React` offers `React`, `Preact`, then
+the add row — with `React` under the cursor.
+
+| What is typed | What the popup offers |
+| --- | --- |
+| Nothing, or only spaces | no add row |
+| `React`, and `React` is in the list | no add row — it is already an answer |
+| `react`, and `React` is in the list | no add row. Case is not what makes a value new, or a list fills with the same word in every capitalisation anyone typed it in |
+| `Svelte`, which is not | the add row, and "No matches" is suppressed — the add row already says the list does not hold it |
+
+Once taken, the value is an `<option>` like the ones you wrote: it filters, it gets a chip, its
+remove button is named the same way, and picking it again toggles it. It submits because the
+`<select>` submits — nothing is held anywhere else.
+
+Two things worth knowing. A created `<option>` stays in the list after a form `reset`, which
+puts back the *selection* and not the markup — the reader's own value is still there to pick
+again. And what they typed becomes both the label and the value; if those differ for you,
+listen for `change` and rewrite `option.value` yourself.
+
+Off by default, and it has to be: a `<select>` is a closed set of answers, and an element that
+quietly widened one would be answering a question the markup did not ask.
+
+Other libraries call this
+[`allow-custom-value`](https://vaadin.com/docs/latest/components/combo-box) (Vaadin) or
+"creatable" (react-select).
+
 ## API
 
 | Attribute     | Type    | Default      | Description                                                            |
@@ -310,6 +371,8 @@ field and not the hidden control:
       </ul>
     </li>
     <li class="combobox-elemental-empty" role="option" aria-disabled="true" hidden>No matches</li>
+    <!-- custom-values only -->
+    <li class="combobox-elemental-add" role="option" aria-selected="false" hidden>Add Svelte</li>
   </ul>
   <p class="combobox-elemental-error" hidden></p>
   <select class="combobox-elemental-native" aria-hidden="true" tabindex="-1">…</select>

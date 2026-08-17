@@ -1,8 +1,9 @@
-// The three decisions this element makes that are not the browser's: which way the popup
-// opens, where focus lands after a chip is removed, and - through `nextIndex`, which
-// `core.test.js` already covers - where an arrow key goes. Whether a typed query matches
-// an option is `matchesSearch`, covered in book-of-spells where it now lives. Everything
-// else this element does is wiring: reading the `<select>`, writing the roles, moving
+// The four decisions this element makes that are not the browser's: which way the popup
+// opens, where focus lands after a chip is removed, whether what has been typed is a value
+// the list does not already hold, and - through `nextIndex`, which `core.test.js` already
+// covers - where an arrow key goes. Whether a typed query matches an option is
+// `matchesSearch`, covered in book-of-spells where it now lives. Everything else this
+// element does is wiring: reading the `<select>`, writing the roles, moving
 // `aria-activedescendant`.
 //
 // Deliberately not covered: the wiring itself, and the CSS. Jest runs under Node here
@@ -10,7 +11,7 @@
 // than against a DOM - the roles, the keyboard and the popup are checked in a browser
 // against the docs page, and against the APG combobox pattern it claims to implement.
 
-import { flipsUp, focusAfterRemoval, removeName } from './index.js';
+import { flipsUp, focusAfterRemoval, offersCustom, removeName } from './index.js';
 
 test('the popup opens downwards while there is room for it', () => {
   const field = { top: 100, bottom: 130 };
@@ -69,4 +70,38 @@ test('a dollar sign in an option name is a dollar sign, not a reference back int
   expect(removeName('{label} entfernen', 'C$&C')).toBe('C$&C entfernen');
   expect(removeName('{label} entfernen', "a$'b")).toBe("a$'b entfernen");
   expect(removeName('{label} entfernen', 'net$$')).toBe('net$$ entfernen');
+});
+
+// `custom-values`: whether the popup offers what has been typed as a value of its own. The
+// question is only ever "is this already in the list", and the interesting half is what
+// counts as already - because every answer here is a near-duplicate the reader did not mean
+// to create, sitting one row above the real one forever.
+
+test('what was typed is offered when the list does not already hold it', () => {
+  expect(offersCustom('Svelte', ['React', 'Vue'])).toBe(true);
+});
+
+test('an empty field is not a value, however much whitespace it holds', () => {
+  expect(offersCustom('', ['React'])).toBe(false);
+  expect(offersCustom('   ', ['React'])).toBe(false);
+});
+
+test('what is already in the list is not a new value', () => {
+  expect(offersCustom('React', ['React', 'Vue'])).toBe(false);
+});
+
+test('case is not what makes a value new', () => {
+  // Otherwise `react` is offered beside `React`, and a list slowly fills with the same
+  // word in every capitalisation anyone happened to type it in.
+  expect(offersCustom('react', ['React'])).toBe(false);
+  expect(offersCustom('REACT', ['React'])).toBe(false);
+});
+
+test('the space around what was typed is not part of it', () => {
+  expect(offersCustom('  React  ', ['React'])).toBe(false);
+  expect(offersCustom('  Svelte  ', ['React'])).toBe(true);
+});
+
+test('an empty list offers everything, which is the tag input with no suggestions', () => {
+  expect(offersCustom('anything', [])).toBe(true);
 });

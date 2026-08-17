@@ -170,6 +170,7 @@ combobox-elemental {
   }
 
   .combobox-elemental-option,
+  .combobox-elemental-add,
   .combobox-elemental-empty {
     display: flex;
     gap: var(--combobox-elemental-inset);
@@ -213,6 +214,20 @@ combobox-elemental {
   .combobox-elemental-option[aria-disabled="true"],
   .combobox-elemental-empty {
     opacity: 0.5;
+  }
+
+  // The add row is the one line in the popup that is not in the `<select>` yet, and the rule
+  // above dims the other line that is not a chosen-able option. This one is choosable, so it
+  // is not dimmed - it is set apart by a rule above it instead, which says "past here is not
+  // the list any more" without saying it in a colour nobody has to be able to see.
+  .combobox-elemental-add {
+    border-block-start: 1px solid var(--combobox-elemental-border);
+  }
+
+  // Nothing above it to rule off against, which is what an empty list with a value typed
+  // into it looks like - and a line under the field's own rim reads as a mistake.
+  .combobox-elemental-add:first-child {
+    border-block-start: 0;
   }
 
   // The group's name, and the only line in the popup that is not an option. Its `<span>`

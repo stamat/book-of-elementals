@@ -1374,8 +1374,16 @@
     return index < count - 1 ? index : -1;
   }
   function removeName(verb, label) {
-    if (verb.indexOf("{label}") === -1) return verb + " " + label;
-    return verb.replace(/\{label\}/g, () => label);
+    return fillLabel(verb, label);
+  }
+  function fillLabel(template, label) {
+    if (template.indexOf("{label}") === -1) return template + " " + label;
+    return template.replace(/\{label\}/g, () => label);
+  }
+  function offersCustom(query, texts) {
+    const value = String(query == null ? "" : query).trim().toLowerCase();
+    if (!value) return false;
+    return !texts.some((text) => String(text == null ? "" : text).trim().toLowerCase() === value);
   }
   var comboboxCount = 0;
   function el(tag, className) {
@@ -1385,7 +1393,7 @@
   }
   var ComboboxElemental = class extends ElementBase {
     static get observedAttributes() {
-      return ["open", "placeholder", "empty-text", "remove-text"];
+      return ["open", "placeholder", "empty-text", "remove-text", "custom-values", "add-text"];
     }
     /** The control. Direct child, so a `<select>` inside a popover of your own is not
      * mistaken for it. */
@@ -1448,6 +1456,19 @@
     get values() {
       const select = this.select;
       return select ? Array.from(select.selectedOptions).map((option) => option.value) : [];
+    }
+    /**
+     * Whether a value the list does not hold may be typed into it.
+     *
+     * Off by default, and it has to be: a `<select>` is a closed set of answers, and an
+     * element that quietly widened one would be answering a question the markup did not ask.
+     */
+    get customValues() {
+      return this.hasAttribute("custom-values");
+    }
+    /** What the popup's add row says, with `{label}` standing in for what was typed. */
+    get addText() {
+      return this.getAttribute("add-text") || "Add {label}";
     }
     connectedCallback() {
       if (this.initialized) return;
@@ -1605,6 +1626,12 @@
       this.empty.setAttribute("aria-disabled", "true");
       this.empty.hidden = true;
       this.list.append(this.empty);
+      this.add = el("li", "combobox-elemental-add");
+      this.add.id = this.list.id + "-add";
+      this.add.setAttribute("role", "option");
+      this.add.setAttribute("aria-selected", "false");
+      this.add.hidden = true;
+      this.list.append(this.add);
       this.filter();
       this.sync();
     }
@@ -1697,12 +1724,18 @@
       for (const group of this.list.querySelectorAll(".combobox-elemental-group")) {
         group.hidden = !group.querySelector('[role="option"]:not([hidden])');
       }
+      const custom = this.customValues && offersCustom(this.query, this.pairs.map((pair) => pair.option.text));
+      this.add.hidden = !custom;
+      if (custom) this.add.textContent = fillLabel(this.addText, this.query.trim());
       this.empty.textContent = this.emptyText;
-      this.empty.hidden = shown > 0;
+      this.empty.hidden = shown > 0 || custom;
     }
-    /** The options an arrow key can reach: on screen, and not disabled. */
+    /** The options an arrow key can reach: on screen, and not disabled. The add row is one of
+     * them while it is showing, which is what makes it reachable by keyboard at all. */
     navigable() {
-      return this.pairs.filter((pair) => !pair.item.hidden && !pair.option.disabled);
+      const pairs = this.pairs.filter((pair) => !pair.item.hidden && !pair.option.disabled);
+      if (this.add && !this.add.hidden) pairs.push({ option: null, item: this.add, custom: true });
+      return pairs;
     }
     /** Where the popup's own cursor is - `aria-activedescendant`, read back as an index
      * into the list the arrows walk. */
@@ -1717,6 +1750,7 @@
      */
     setActive(index) {
       for (const pair2 of this.pairs) pair2.item.removeAttribute("data-active");
+      if (this.add) this.add.removeAttribute("data-active");
       const pair = this.navigable()[index];
       if (!pair) {
         this.input.removeAttribute("aria-activedescendant");
@@ -1765,7 +1799,12 @@
     // ---- editing ----
     /** Choose, or in a multiple select un-choose, one option. */
     pick(pair) {
-      if (!pair || pair.option.disabled || this.disabled) return;
+      if (!pair || this.disabled) return;
+      if (pair.custom) {
+        this.addValue();
+        return;
+      }
+      if (pair.option.disabled) return;
       if (this.multiple) {
         pair.option.selected = !pair.option.selected;
         this.query = "";
@@ -1784,6 +1823,31 @@
         this.emit();
       }
       this.input.focus();
+    }
+    /**
+     * Turn what has been typed into an `<option>` of the `<select>`, and choose it.
+     *
+     * A real `<option>`, appended to the control, because the control is what submits - a
+     * value held anywhere else is a value the form does not have. From that moment it is an
+     * option like the ones the page wrote: it filters, it gets a chip, its remove button is
+     * named the same way, and picking it again toggles it. That is the whole reason this is an
+     * attribute on the combobox and not a second element - the machinery already existed.
+     *
+     * Rebuilding the view rather than splicing one row into it: `apply()` is what keeps the
+     * `<option>` order, the `id`s and the pair list agreeing with the `<select>`, and one
+     * rebuild on a keystroke the reader made deliberately is cheaper than a second code path
+     * that can drift from the first.
+     */
+    addValue() {
+      const select = this.select;
+      const value = this.query.trim();
+      if (!select || !value) return;
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = value;
+      select.append(option);
+      this.apply();
+      this.pick(this.pairs.find((pair) => pair.option === option));
     }
     /** Drop the `index`th selection, and put focus somewhere that still exists. */
     removeAt(index) {

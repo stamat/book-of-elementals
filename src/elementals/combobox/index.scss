@@ -148,4 +148,10 @@ combobox-elemental {
   .combobox-elemental-empty {
     cursor: default;
   }
+
+  // The add row is a row you can choose, unlike the empty one it replaces - so it keeps
+  // every affordance a real option has and is left out of the rule above.
+  .combobox-elemental-add {
+    cursor: pointer;
+  }
 }

@@ -81,4 +81,7 @@ combobox-elemental .combobox-elemental-option[aria-disabled=true],
 combobox-elemental .combobox-elemental-empty {
   cursor: default;
 }
+combobox-elemental .combobox-elemental-add {
+  cursor: pointer;
+}
 /*# sourceMappingURL=combobox.css.map */

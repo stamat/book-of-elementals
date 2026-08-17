@@ -121,6 +121,30 @@ may already be targeting**, since neither shows up in a function signature.
   no caret-restoring code either: flipping `input.type` keeps focus and the selection range in
   Chromium and WebKit, measured rather than guarded against.
 
+- **`<combobox-elemental>` gained `custom-values`** — a value the `<select>` does not hold can
+  be typed in. With `multiple` on an empty `<select>`, that is a tag input, and it is one
+  attribute rather than a second element because everything it needs already existed here: the
+  chips, the remove buttons, `Backspace` on an empty field, the filtering, and the `{label}`
+  naming convention.
+
+  **An add row in the listbox, not a hint under the field.** "Press Enter to add it" is a
+  sentence a screen reader meets only if it happens to be read, and never at the moment it
+  applies. A row is announced with the rest of the list, counted in it, and reached with the
+  same arrow key. It sits last, so the closest real match keeps the cursor and Enter still
+  takes what the reader was searching for.
+
+  Nothing is offered for an empty query, for an exact match, or for one differing only in case
+  or surrounding space — `react` beside `React` is a near-duplicate nobody meant to make.
+  Taking the row appends a real `<option>` to the `<select>` and picks it through the same
+  path every other choice takes, so it submits, chips, filters and toggles like the ones you
+  wrote. A created `<option>` outlives a form `reset`, which puts back the selection and not
+  the markup.
+
+  **DOM change:** the popup gains `<li class="combobox-elemental-add" role="option">`, hidden
+  unless `custom-values` is set and the query is a new value. `add-text` is what it says,
+  `{label}` standing in for what was typed. Off by default — a `<select>` is a closed set of
+  answers, and widening one uninvited would answer a question the markup did not ask.
+
 ### Changed
 
 - **`<combobox-elemental>` no longer puts `role="alert"` on its validation message.**
