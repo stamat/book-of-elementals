@@ -36,7 +36,7 @@ a range — the thumb count is the markup, not an attribute. Inputs must be dire
 nothing else is enforced. Edit the sample and the preview above it follows as you type —
 add a second `<input type="range">` and watch it grow a thumb:
 
-<!-- demo slider -->
+<!-- demo slider style="--code-preview-height:103px" -->
 
 ```html
 <label for="volume">Volume</label>
@@ -247,7 +247,7 @@ either one regardless, which is why this decides the pointer only.
 
 An `<output>` child is kept in step, matched to the input at the same index:
 
-<!-- demo slider -->
+<!-- demo slider style="--code-preview-height:103px" -->
 
 ```html
 <label for="quality">Quality</label>
@@ -287,7 +287,7 @@ the `<output>` above, and the two compose.
 `tooltip` turns it on. Drag the thumb, then run the pointer along the empty part of the
 track — the number is what a press there would set:
 
-<!-- demo slider -->
+<!-- demo slider style="--code-preview-height:153px" -->
 
 ```html
 <label for="bitrate">Bitrate</label>
@@ -354,7 +354,7 @@ a property holding a function rather than a token in the markup:
 
 Run the pointer along this one — the track reads minutes and seconds, not `132`:
 
-<!-- demo slider -->
+<!-- demo slider style="--code-preview-height:153px" -->
 
 ```html
 <label for="seek">Seek</label>

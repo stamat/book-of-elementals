@@ -43,7 +43,7 @@ _Live, with `exclusive` and both theme classes. Focus a header and press the arr
 Write ordinary `<details>` panels and wrap them — edit the sample and the preview above it
 follows as you type:
 
-<!-- demo accordion -->
+<!-- demo accordion style="--code-preview-height:141px" -->
 
 ```html
 <accordion-elemental>
@@ -274,7 +274,7 @@ has its own value for:
 Turn them in the **Options** tab and copy the rule out of the bottom of the panel — the same
 table, with the values live:
 
-<!-- demo accordion tab="options" -->
+<!-- demo accordion tab="options" style="--code-preview-options-height:336px" -->
 
 ```html
 <accordion-elemental class="grouped">

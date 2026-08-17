@@ -10,7 +10,7 @@ order: 15
 A sentence about a control, wired to it as a description, shown when the pointer or the
 keyboard arrives. Light DOM, nothing moved, nothing wrapped.
 
-<!-- demo tooltip -->
+<!-- demo tooltip style="--code-preview-height:170px" -->
 
 ```html
 <p>
@@ -91,7 +91,7 @@ Nothing selects between them. The element contains something focusable or it doe
 that is the whole rule: with a focusable child it is a wrapper and the other child is the
 bubble; without one it *is* the bubble, and `for` names the control it belongs to.
 
-<!-- demo tooltip -->
+<!-- demo tooltip style="--code-preview-height:170px" -->
 
 ```html
 <p>
@@ -118,7 +118,7 @@ styling, no way to hover it, and a delay you cannot change. So a trigger with a 
 nothing else to say gets it read, moved into a bubble, and the attribute removed — the native
 one would otherwise show underneath.
 
-<!-- demo tooltip -->
+<!-- demo tooltip style="--code-preview-height:170px" -->
 
 ```html
 <p>
@@ -163,7 +163,7 @@ option. The bubble still shows, and the reader hears the words once, as the name
 control and flips above it when there is no room under; `horizontal` puts it beside instead,
 and which of the two sides that turns out to be is measured, not declared.
 
-<!-- demo tooltip -->
+<!-- demo tooltip style="--code-preview-height:259px" -->
 
 ```html
 <p>
@@ -209,7 +209,7 @@ follows it, because the caret is measured against wherever the bubble actually l
 than against where it was aimed — which is what lets it keep pointing at the button after the
 bubble has moved out from under it.
 
-<!-- demo tooltip -->
+<!-- demo tooltip style="--code-preview-height:202px" -->
 
 ```html
 <div class="row">
@@ -276,7 +276,7 @@ stuck at zero.
 The optional theme fades the bubble in and out over `--tooltip-elemental-duration`, which is
 `120ms` until you say otherwise. Turn it up to see it:
 
-<!-- demo tooltip -->
+<!-- demo tooltip style="--code-preview-height:170px" -->
 
 ```html
 <p>
@@ -453,7 +453,7 @@ hexes they follow a theme switch with nothing to configure. Under `forced-colors
 and the rim are re-pointed at system keywords, which is the whole fix: everything else here is
 spent through those two properties.
 
-<!-- demo tooltip tab="options" -->
+<!-- demo tooltip tab="options" style="--code-preview-options-height:491px" -->
 
 ```html
 <p>

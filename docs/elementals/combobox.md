@@ -539,7 +539,7 @@ thing.
 That is the table above, live. Turn the knobs in the **Options** tab until it looks the
 way you want, then copy the rule out of the bottom of the panel:
 
-<!-- demo combobox tab="options" class="demo-tall" -->
+<!-- demo combobox tab="options" class="demo-tall" style="--code-preview-options-height:554px" -->
 
 ```html
 <combobox-elemental>

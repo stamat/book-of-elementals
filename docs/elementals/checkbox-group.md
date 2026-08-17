@@ -80,7 +80,7 @@ a remembered combination that is all on, all off, or from when the group was a d
 size. So the cycle is three steps while there is something to go back to and two while
 there is not, rather than having a third step that lands where the second one did.
 
-<!-- demo checkbox-group -->
+<!-- demo checkbox-group style="--code-preview-height:153px" -->
 
 ```html
 <checkbox-group-elemental>
@@ -271,7 +271,7 @@ The **Options** tab below turns all eight — the indent above and the seven the
 Turn them until it looks the way you want, then copy the rule out of the bottom of the
 panel:
 
-<!-- demo checkbox-group tab="options" -->
+<!-- demo checkbox-group tab="options" style="--code-preview-options-height:306px" -->
 
 ```html
 <checkbox-group-elemental>

@@ -28,7 +28,7 @@ Light DOM, no shadow root, nothing you wrote is moved or wrapped.
   </div>
 </tabs-elemental>
 
-<!-- demo tabs -->
+<!-- demo tabs style="--code-preview-height:115px" -->
 
 ```html
 <tabs-elemental>
@@ -46,8 +46,9 @@ Light DOM, no shadow root, nothing you wrote is moved or wrapped.
 That markup is the page you would have had anyway: a list of links, and the sections they
 point at. With scripting off the links jump and every panel is on screen — nothing hides
 without something to show it again. With scripting on, the stylesheet paints only the
-first panel while the element is not yet defined, so the stack of sections does not flash
-and fold into a tab set on the first frame; a `#fragment` deep link still shows the first
+first panel while the element is not yet defined — and the theme paints the waiting list
+as the strip it is about to become — so the stack of sections does not flash and fold
+into a tab set on the first frame, and nothing under it reflows; a `#fragment` deep link still shows the first
 panel for that beat, until the element reads the hash. The gate's line is worth knowing:
 a bundle that never arrives *while scripting is on* — blocked, 404 — leaves one panel
 showing and links pointing at panels that stay hidden. The fallback covers scripting
@@ -336,7 +337,7 @@ sits in whatever palette the page has:
 Turn them in the **Options** tab and copy the rule out of the bottom of the panel — the same
 table, with the values live:
 
-<!-- demo tabs tab="options" -->
+<!-- demo tabs tab="options" style="--code-preview-options-height:524px" -->
 
 ```html
 <tabs-elemental>

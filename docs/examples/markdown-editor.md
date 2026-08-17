@@ -17,7 +17,7 @@ regex, the caret measuring, the ranking — which is
 here so the sample runs on its own. The toolbar's share is the twenty-odd lines under
 `wrap`, `prefix` and `insert`.
 
-<!-- demo toolbar suggest tooltip -->
+<!-- demo toolbar suggest tooltip style="--code-preview-height:386px" -->
 
 ```html
 <div class="editor">

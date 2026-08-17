@@ -11,7 +11,7 @@ navGroup: No APG pattern
 Wrap a label and a control, and the browser's refusal to submit becomes a sentence under the
 field — tied to it, announced, and yours to style. Light DOM, no shadow root, nothing moved.
 
-<!-- demo field -->
+<!-- demo field style="--code-preview-height:282px" -->
 
 ```html
 <form>

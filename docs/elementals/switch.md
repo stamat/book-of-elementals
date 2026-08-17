@@ -65,7 +65,7 @@ without one there is no switch, and nothing is enforced beyond that. Edit the sa
 the preview above it follows as you type; take the `<button>` out and watch it stop being
 a switch:
 
-<!-- demo switch -->
+<!-- demo switch style="--code-preview-height:89px" -->
 
 ```html
 <span id="dark-label">Dark mode</span>
@@ -483,7 +483,7 @@ the way you want it, then copy the rule out of the bottom of the panel — that 
 whole of what you would write, and its selector is the element rather than `:root` for the
 reason the note below gives:
 
-<!-- demo switch tab="options" -->
+<!-- demo switch tab="options" style="--code-preview-options-height:803px" -->
 
 ```html
 <span id="knobs-label">Turn me in the Options tab</span>

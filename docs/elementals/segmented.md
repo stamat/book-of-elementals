@@ -37,7 +37,7 @@ Labels must be direct children and the input must be inside its label; without e
 there is nothing to coordinate, and nothing is enforced beyond that. Edit the sample and
 the preview above it follows as you type:
 
-<!-- demo segmented -->
+<!-- demo segmented style="--code-preview-height:77px" -->
 
 ```html
 <segmented-elemental aria-label="View">
@@ -170,7 +170,7 @@ The label's text is the segment's name, so a text segment needs nothing. An icon
 segment has no text to be named by, and needs one of these — an `aria-label` on the
 **input**, since that is the control:
 
-<!-- demo segmented -->
+<!-- demo segmented style="--code-preview-height:69px" -->
 
 ```html
 <segmented-elemental aria-label="Align">
@@ -280,7 +280,7 @@ a sliding knob, mixed out of `currentcolor`, so it sits in whatever palette the 
 That is the table above, live. Turn the knobs in the **Options** tab until it looks the
 way you want, then copy the rule out of the bottom of the panel:
 
-<!-- demo segmented tab="options" -->
+<!-- demo segmented tab="options" style="--code-preview-options-height:468px" -->
 
 ```html
 <segmented-elemental aria-label="Turn me in the Options tab">
@@ -299,7 +299,7 @@ one by hand and the knob leaves the segment the reader actually chose.
 The label sits **on top of** the knob, so the two colours are chosen together. Which one
 carries the colour is the whole of the choice:
 
-<!-- demo segmented -->
+<!-- demo segmented style="--code-preview-height:77px" -->
 
 ```html
 <segmented-elemental aria-label="Coloured knob" class="knob">
@@ -343,7 +343,7 @@ is repainted `Highlight` and the label on it `HighlightText`, because that is th
 pair the mode guarantees contrasts. A disabled segment is the same segment at
 `opacity: 0.5` with a `not-allowed` cursor:
 
-<!-- demo segmented -->
+<!-- demo segmented style="--code-preview-height:77px" -->
 
 ```html
 <segmented-elemental aria-label="Quality">

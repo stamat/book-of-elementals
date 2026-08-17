@@ -17,7 +17,7 @@ layout — a button, a region somewhere else in the document, and the ARIA holdi
 together. What is left for the page is where the panel sits at each width, and that is a
 media query. Here is the assembly.
 
-<!-- demo disclosure viewport-widths="375 768 1024" -->
+<!-- demo disclosure viewport-widths="375 768 1024" style="--code-preview-height:208px" -->
 
 ```html
 <header class="topbar">

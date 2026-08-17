@@ -263,7 +263,7 @@ worst thing this element could draw, so failure is the colour and the words, nev
 That is the table above, live. Turn the knobs in the **Options** tab until it looks the way
 you want, then copy the rule out of the bottom of the panel:
 
-<!-- demo copy tab="options" -->
+<!-- demo copy tab="options" style="--code-preview-options-height:635px" -->
 
 ```html
 <p><code id="options-source">turn me in the Options tab</code></p>
@@ -292,7 +292,7 @@ The look every docs site ends up building: an icon-only button pinned in the cor
 sample, and a small bubble that says it copied. Both are stylesheet, on the state the element
 already writes — there is no second element here, and no option to turn on.
 
-<!-- demo copy -->
+<!-- demo copy style="--code-preview-height:81px" -->
 
 ```html
 <div class="snippet">

@@ -43,7 +43,7 @@ Edit the sample and the preview above it follows as you type. The width buttons 
 point here — `media` is what decides whether this is a flyout or a stack of disclosures,
 and 375px is the width where it stops being a menu:
 
-<!-- demo menu viewport-widths="375 768" -->
+<!-- demo menu viewport-widths="375 768" style="--code-preview-height:246px" -->
 
 ```html
 <menu-elemental media="(min-width: 40rem)">
@@ -258,7 +258,7 @@ Here is the corner case, live. The button is against the right edge, so the pane
 from it and the submenu opens on the side there is room for — open **Preferences** and watch
 which way it goes:
 
-<!-- demo menu -->
+<!-- demo menu style="--code-preview-height:247px" -->
 
 ```html
 <div class="bar">
@@ -431,7 +431,7 @@ Turn them in the **Options** tab and copy the rule out of the bottom of the pane
 table, with the values live. `--menu-elemental-surface` is the one to try first: `Canvas` is
 the page's own background, and it is what to re-point when the menu opens over a card:
 
-<!-- demo menu tab="options" -->
+<!-- demo menu tab="options" style="--code-preview-options-height:459px" -->
 
 ```html
 <menu-elemental>

@@ -12,7 +12,7 @@ A bar of six buttons is six tab stops between the reader and whatever comes afte
 tab stop for the bar, arrow keys between the controls inside it. That is all this element
 is — the role, the axis, and the single `tabindex="0"` that moves.
 
-<!-- demo toolbar -->
+<!-- demo toolbar style="--code-preview-height:79px" -->
 
 ```html
 <toolbar-elemental aria-label="Formatting">
@@ -60,7 +60,7 @@ Related controls go in a `role="group"` with its own label. The arrows run strai
 it — six controls in two groups are one sequence, not two the keyboard has to enter and
 leave — and a screen reader announces the group on the way past.
 
-<!-- demo toolbar -->
+<!-- demo toolbar style="--code-preview-height:79px" -->
 
 ```html
 <toolbar-elemental aria-label="Formatting">

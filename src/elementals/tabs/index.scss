@@ -24,6 +24,15 @@ tabs-elemental {
   tabs-elemental:not(:defined) > :is(ul, menu) ~ * ~ * {
     display: none;
   }
+
+  // The same reset `[data-tabs-list]` gets at upgrade, since that attribute cannot exist
+  // yet: without it the strip waits as a bulleted, indented, margined UA list and snaps
+  // clean on upgrade - a reflow of everything under it.
+  tabs-elemental:not(:defined) > :is(ul, menu) {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
 }
 
 // The element writes both of these as it upgrades, so this stylesheet never has to guess

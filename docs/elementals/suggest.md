@@ -16,7 +16,7 @@ It owns the keyboard and the ARIA. It does not fetch, does not filter, and has n
 about what put the links there. Give it a `<ul>` of `<a>`, point it at an input, and the
 arrows, Enter and Escape behave the way the pattern says.
 
-<!-- demo suggest -->
+<!-- demo suggest style="--code-preview-height:294px" -->
 
 ```html
 <div class="field">
@@ -187,7 +187,7 @@ is one token under the caret — `@sta` for a person, `:fi` for an emoji — and
 the parsing, the matching and what an accepted row does to the text. The element still owns
 the popup, the arrows, `aria-activedescendant` and the ARIA on the field.
 
-<!-- demo suggest -->
+<!-- demo suggest style="--code-preview-height:315px" -->
 
 ```html
 <div class="composer">

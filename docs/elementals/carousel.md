@@ -12,7 +12,7 @@ A row of slides you scroll through, per the
 next, a picker with one button per slide, and, when you ask for it, rotation on a timer with
 the control that stops it. Light DOM, no shadow root, nothing you wrote is moved or wrapped.
 
-<!-- demo carousel -->
+<!-- demo carousel style="--code-preview-height:213px" -->
 
 ```html
 <carousel-elemental aria-label="Places">
@@ -153,7 +153,7 @@ string left in the code for a page to be stuck with. None of them is visible; al
 what a screen reader reads, which is exactly why it is easy to ship a page that is Serbian to
 the eye and English to the ear.
 
-<!-- demo carousel -->
+<!-- demo carousel style="--code-preview-height:181px" -->
 
 ```html
 <carousel-elemental
@@ -459,7 +459,7 @@ never be the first visible one, so counting would leave the last press doing not
 rest. Same controls, same picker, same rotation, same events — the only thing that changes is
 how a slide arrives.
 
-<!-- demo carousel -->
+<!-- demo carousel style="--code-preview-height:241px" -->
 
 ```html
 <carousel-elemental aria-label="Fading places" fade autoplay interval="4000">
@@ -629,7 +629,7 @@ of round buttons, mixed out of `currentcolor` so they sit in whatever palette th
 Turn them in the **Options** tab and copy the rule out of the bottom of the panel — the same
 table, with the values live:
 
-<!-- demo carousel tab="options" -->
+<!-- demo carousel tab="options" style="--code-preview-options-height:935px" -->
 
 ```html
 <carousel-elemental aria-label="Options">

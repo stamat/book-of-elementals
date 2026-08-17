@@ -25,7 +25,7 @@ wrong:
 | Nothing said out loud | the panel fills, a screen reader user hears nothing | `role="status"`: "5 results", "No results", "Search failed" |
 | A spinner that never stops | the request failed and the state was set in the `then` | states are set from both sides of the promise, `AbortError` included |
 
-<!-- demo search suggest -->
+<!-- demo search suggest style="--code-preview-height:294px" -->
 
 ```html
 <search-elemental min="2">
@@ -262,7 +262,7 @@ Hand the element the promise and it has something to wait for. That is the whole
 loading state: `wait()` called, `data-state="pending"`, `aria-busy` on the panel, and the
 theme's spinner until the promise settles either way.
 
-<!-- demo search suggest -->
+<!-- demo search suggest style="--code-preview-height:454px" -->
 
 ```html
 <search-elemental min="2" delay="300" error-text="npm is not answering">

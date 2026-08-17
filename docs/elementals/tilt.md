@@ -28,7 +28,7 @@ names.
 | [Atropos](https://atroposjs.com/docs) | four nested `<div>`s — `.atropos`, `.atropos-scale`, `.atropos-rotate`, `.atropos-inner` — before anything tilts | your markup, unchanged, inside one wrapper |
 | all of them | a `lerp` inside `requestAnimationFrame`, running as long as the pointer is over the card | a CSS transition, eased by the compositor, which stops on its own |
 
-<!-- demo tilt -->
+<!-- demo tilt style="--code-preview-height:230px" -->
 
 ```html
 <tilt-elemental glare max="12">

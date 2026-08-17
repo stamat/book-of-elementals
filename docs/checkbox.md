@@ -106,7 +106,7 @@ That is the table above, live, group and lone label together. Turn the knobs in 
 **Options** tab until it looks the way you want, then copy the rule out of the bottom of
 the panel:
 
-<!-- demo checkbox-group tab="options" -->
+<!-- demo checkbox-group tab="options" style="--code-preview-options-height:306px" -->
 
 ```html
 <form class="checkbox-elemental">

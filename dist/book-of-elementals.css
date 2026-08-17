@@ -753,6 +753,11 @@ tabs-elemental {
   tabs-elemental:not(:defined) > :is(ul, menu) ~ * ~ * {
     display: none;
   }
+  tabs-elemental:not(:defined) > :is(ul, menu) {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
 }
 tabs-elemental > [data-tabs-list] {
   grid-area: 1/1;

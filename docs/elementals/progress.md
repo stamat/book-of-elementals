@@ -32,7 +32,7 @@ a direct child; without one there is nothing to measure, and nothing is enforced
 that. Edit the sample and the preview above it follows as you type — take the `value` off
 and watch it go indeterminate:
 
-<!-- demo progress -->
+<!-- demo progress style="--code-preview-height:71px" -->
 
 ```html
 <label for="upload">Uploading</label>
@@ -216,7 +216,7 @@ video.addEventListener("progress", () => {
 The two elements together are the whole of one — a bar underneath with the buffer on it,
 and a [`<slider-elemental>`](slider.html) over the top for the seeking:
 
-<!-- demo progress slider -->
+<!-- demo progress slider style="--code-preview-height:49px" -->
 
 ```html
 <div class="scrubber">

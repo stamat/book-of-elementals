@@ -49,7 +49,7 @@ them to. Try find-in-page for "2,457,600" with the table closed._
 Write a `<button>` and the region it controls, and wrap them — edit the sample and the
 preview above it follows as you type:
 
-<!-- demo disclosure -->
+<!-- demo disclosure style="--code-preview-height:57px" -->
 
 ```html
 <disclosure-elemental>
@@ -431,7 +431,7 @@ untouched. One property:
 Turn it in the **Options** tab and copy the rule out of the bottom of the panel — the same
 table, with the values live:
 
-<!-- demo disclosure tab="options" -->
+<!-- demo disclosure tab="options" style="--code-preview-options-height:333px" -->
 
 ```html
 <disclosure-elemental>

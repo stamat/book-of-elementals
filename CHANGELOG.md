@@ -36,6 +36,17 @@ may already be targeting**, since neither shows up in a function signature.
   turned off, not every way a script can fail to run, and each docs page says so.
   CSS-only. No DOM output changed, and every new rule sits under `:not(:defined)`, so
   nothing an author styles after upgrade moves.
+- **The tab strip no longer reflows the page on upgrade.** Pre-upgrade the strip was a
+  bulleted, indented UA list that snapped into a flex row when `[data-tabs-list]` arrived,
+  moving everything under it — around 50px of layout shift on the tabs page alone. The
+  structure stylesheet now gives the waiting list the same reset the attribute brings, and
+  the theme paints it as the strip — tabs padded, rule under them, vertical variant
+  included — both behind the same `@media (scripting: enabled)` gate, so a no-script page
+  still reads as a plain list of links. The docs also pin `--code-preview-height` /
+  `--code-preview-options-height` on every preview whose measured height differed from the
+  reservation (62 demos), so the previews land without shifting the page; the residue —
+  0.002–0.007 CLS from toolbar rows the preview inserts — is `code-preview-element`'s
+  reservation to fix, not this repo's.
 
 ## [0.11.0] - 2026-08-17
 

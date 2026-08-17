@@ -130,7 +130,7 @@ rest and locks the page's scroll, exactly as though a button had opened it. A `s
 the visible state and nothing else, because a non-modal dialog sits *in* the page rather than
 over it. `el.show()` on the `<modal-elemental>` is the same open with `close-others` honoured.
 
-<!-- demo modal -->
+<!-- demo modal style="--code-preview-height:353px" -->
 
 ```html
 <button type="button" command="show-modal" commandfor="feedback">Send feedback</button>
@@ -217,7 +217,7 @@ Open a modal from inside a modal. There is nothing to turn on: the second `showM
 stacks, the first goes inert underneath it, <kbd>Esc</kbd> closes the innermost, and focus
 walks back out the way it came in.
 
-<!-- demo modal -->
+<!-- demo modal style="--code-preview-height:353px" -->
 
 ```html
 <button type="button" command="show-modal" commandfor="settings">Settings</button>
@@ -303,7 +303,7 @@ its instruction as a query parameter. Both are below.
 
 ### A lightbox
 
-<!-- demo modal -->
+<!-- demo modal style="--code-preview-height:545px" -->
 
 ```html
 <button type="button" class="thumb" command="show-modal" commandfor="lightbox">
@@ -363,7 +363,7 @@ nobody finds against a photograph.
 
 ### A video
 
-<!-- demo modal -->
+<!-- demo modal style="--code-preview-height:353px" -->
 
 ```html
 <button type="button" command="show-modal" commandfor="clip">Watch the clip</button>
@@ -430,7 +430,7 @@ the player by `allow="autoplay"`. Checked in Chrome on this page: opening the mo
 the film. A browser that blocks autoplay with sound — Firefox does, by default — loads the
 same frame and leaves it on its own play button, which is the failure worth having.
 
-<!-- demo modal -->
+<!-- demo modal style="--code-preview-height:353px" -->
 
 ```html
 <button type="button" command="show-modal" commandfor="talk">Watch the film</button>
@@ -619,7 +619,7 @@ is the box, and is optional.
 | `--modal-elemental-close-inset` | `0.75rem`            | How far the cross sits from the box's corner             |
 | `--modal-elemental-margin-block` | `auto`              | Where it sits: `auto` centres, `5vh auto` pins it near the top |
 
-<!-- demo modal tab="options" -->
+<!-- demo modal tab="options" style="--code-preview-options-height:523px" -->
 
 ```html
 <button type="button" command="show-modal" commandfor="options-dialog">Open it</button>

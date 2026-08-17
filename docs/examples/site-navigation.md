@@ -12,7 +12,7 @@ gets out of the way. A header is that plus everything a header actually has in i
 a search field, links to npm and GitHub, a theme switch, and two calls to action. None of
 those are the element's business — which is the point of this page. Here is the assembly.
 
-<!-- demo navbar switch viewport-widths="375 768 900 1024" style="--code-preview-height:26rem" -->
+<!-- demo navbar switch viewport-widths="375 768 900 1024" style="--code-preview-height:299px" -->
 
 ```html
 <!-- one copy of each icon, used wherever it is needed -->

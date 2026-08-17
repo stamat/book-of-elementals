@@ -34,7 +34,7 @@ that:
 for and it is half a fix: it takes the copy out of the screen reader and does nothing
 whatever about <kbd>Tab</kbd>. `inert` is what does both.
 
-<!-- demo marquee -->
+<!-- demo marquee style="--code-preview-height:83px" -->
 
 ```html
 <marquee-elemental aria-label="Sponsors" speed="60">

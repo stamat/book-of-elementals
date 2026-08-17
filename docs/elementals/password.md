@@ -11,7 +11,7 @@ navGroup: No APG pattern
 A reveal button for a password field: the state in `aria-pressed`, the change announced, and
 the mask back on before the value is submitted. Light DOM, no shadow root, nothing moved.
 
-<!-- demo password field -->
+<!-- demo password field style="--code-preview-height:165px" -->
 
 ```html
 <form>
@@ -201,7 +201,7 @@ properties:
 Turn them in the **Options** tab and copy the rule out of the bottom of the panel — the same
 table, with the values live:
 
-<!-- demo password tab="options" -->
+<!-- demo password tab="options" style="--code-preview-options-height:364px" -->
 
 ```html
 <label for="pw-look">Password</label>

@@ -58,7 +58,7 @@ Edit the sample and the preview above it follows as you type. Narrow it with the
 buttons to watch the links move behind **More** one at a time, and then the whole row
 become a drawer — the element is measuring, not guessing, so it answers a real viewport:
 
-<!-- demo navbar viewport-widths="375 768 1024" style="--code-preview-height:22rem" -->
+<!-- demo navbar viewport-widths="375 768 1024" style="--code-preview-height:263px" -->
 
 ```html
 <navbar-elemental class="bar" media="(min-width: 40rem)" hover>
@@ -490,7 +490,7 @@ navbar-elemental[data-mode="stack"] .rail > ul:not([data-navbar-probe]) {
 quite `Canvas` wants its panels to match the page rather than the browser. Turn it in the
 **Options** tab and copy the rule out of the bottom of the panel:
 
-<!-- demo navbar tab="options" viewport-widths="375 768 1024" -->
+<!-- demo navbar tab="options" viewport-widths="375 768 1024" style="--code-preview-options-height:615px" -->
 
 ```html
 <navbar-elemental class="bar">

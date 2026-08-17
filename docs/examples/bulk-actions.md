@@ -18,7 +18,7 @@ a property with no HTML attribute behind it.
 nothing else. The toolbar, the count, the disabled buttons and the layout are the page's,
 which is the point of this example. Here is the assembly.
 
-<!-- demo checkbox-group -->
+<!-- demo checkbox-group style="--code-preview-height:311px" -->
 
 ```html
 <div class="bulk" role="toolbar" aria-label="Row actions">
