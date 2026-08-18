@@ -50,6 +50,12 @@ may already be targeting**, since neither shows up in a function signature.
   keeps the old behaviour deliberately: whether it belongs on screen at all is the `media`
   attribute's call, which no stylesheet can read, and reserving space for a toggle the bar
   mode is about to remove would shift the other way.
+- **The code under an inline demo no longer jumps up when the copy button arrives.** The
+  docs' flush rule — no gap between a hand-built sample and its fence — named only
+  `.code-wrap`, the shape the theme's copy-button script wraps the fence into at script
+  time; until then the fence is a bare `pre` with its full prose margin, so the code
+  snapped up by the difference on every load of a page with an inline demo. The rule now
+  names both shapes, and the fence is flush from first paint. Docs stylesheet only.
 - **The tab strip no longer reflows the page on upgrade.** Pre-upgrade the strip was a
   bulleted, indented UA list that snapped into a flex row when `[data-tabs-list]` arrived,
   moving everything under it — around 50px of layout shift on the tabs page alone. The

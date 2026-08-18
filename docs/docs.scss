@@ -206,8 +206,12 @@ navbar-elemental {
 // them. The `<code-preview>` demos on the same pages are a single box for exactly this
 // reason, and two loose blocks with a gap between them read as two things that happen to be
 // near each other - the sample ends up closer to the prose above it than to its own code.
-.demo-row + .code-wrap,
-.demo-block + .code-wrap {
+// Bare `pre` too, and not only the `.code-wrap` the theme's copy-button script wraps it
+// in: the fence is a `pre` from first paint until that script runs, and a rule naming
+// only the wrapped shape snaps the code up by the margin difference at script time - a
+// layout shift on every load of the pages with an inline demo.
+.demo-row + :is(pre, .code-wrap),
+.demo-block + :is(pre, .code-wrap) {
   margin-block-start: 0;
 }
 
