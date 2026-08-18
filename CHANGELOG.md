@@ -15,6 +15,22 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A YouTube embed in a `<modal-elemental>` no longer plays on after the modal is closed.**
+  Closing reloaded every `<iframe>` in the dialog by setting its `src` to the value it
+  already had — and a `loading="lazy"` frame in a closed dialog is `display: none`, so that
+  navigation is deferred until the frame is on screen again and the player keeps running,
+  unseen and audible, until the next open. The docs page recommends `loading="lazy"` on an
+  embed, so its own YouTube demo had the bug: measured on it, the framed document was still
+  loaded and playing after the close in Chromium 151 and Firefox 153. The frame is now
+  parked at `about:blank` instead, which discards the document there and then, with its
+  `src` and `loading` put back on the next open. DOM: a frame inside a closed modal reads
+  `src="about:blank" loading="eager"` for as long as the modal is closed — `loading` is
+  forced because Firefox defers a lazy navigation to `about:blank` as well — and both
+  attributes are restored to what the author wrote when it opens. Request counts are
+  unchanged: one per open, none on close.
+
 ## [0.11.1] - 2026-08-17
 
 ### Fixed

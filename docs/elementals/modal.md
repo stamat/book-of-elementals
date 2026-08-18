@@ -295,7 +295,7 @@ already gone back to.
 | Inside the dialog | On close                                                          |
 | ----------------- | ----------------------------------------------------------------- |
 | `<video>`, `<audio>` | paused where it was, so reopening carries on from there        |
-| `<iframe>`        | its `src` set again, since a cross-origin player cannot be paused from here — so it reopens at the start |
+| `<iframe>`        | parked at `about:blank`, since a cross-origin player cannot be paused from here — the framed document is discarded, so it reopens at the start |
 
 Starting it is the other half, and that one is yours: `modal-toggle` says when a modal
 opened and hands you the dialog, `play()` is the platform's, and a player in an iframe takes
@@ -485,12 +485,24 @@ until the modal is opened — without it the player is loaded, and told who is r
 every page view that never opens the dialog. Checked in Chromium: a plain iframe in a closed
 `<dialog>` requests its source immediately, a lazy one waits for `showModal()`.
 
-Closing the modal sets the frame's `src` again, which is what stops the player — and `lazy`
-is why that costs nothing: the dialog is `display: none` by then, so the load waits for the
-next open rather than fetching a player nobody can see. Checked in Chrome, counting requests:
-one when the modal is opened, none when it is closed, a second one on the next open. What a
-reader gets from that is the video from the beginning each time, which is the price of a
-player that only takes instructions from its own origin.
+Closing the modal points the frame at `about:blank`, which is what stops the player: the
+document that was playing is discarded, and the `src` and `loading` the markup above wrote
+are put back on the next open.
+
+Reloading the frame in place — setting `src` to the value it already had — is the version
+that looks right and is not. A `loading="lazy"` frame inside a closed dialog is `display:
+none`, so that navigation is deferred until the frame is on screen again, and the player goes
+on running behind the dialog the reader has dismissed. Measured with this demo's markup on a
+page of its own: closing the modal left the YouTube document loaded in Chromium 151 and
+Firefox 153, where parking leaves the frame at `about:blank` in both. Firefox defers a lazy
+navigation to `about:blank` too, which is why `loading` is `eager` for that one hop and back
+to what the author wrote afterwards — a parked frame reads `src="about:blank"
+loading="eager"` for as long as its modal is closed.
+
+Counting requests, with a frame of one's own in the player's place, in Chromium 151, Firefox
+153 and WebKit 26.5: one when the modal is opened, none when it is closed, one more on each
+reopen. What a reader gets from that is the video from the beginning each time, which is the
+price of a player that only takes instructions from its own origin.
 
 ## Degrading
 

@@ -160,8 +160,8 @@ gallery.addEventListener("click", (e) => {
 });
 
 // Gone rather than paused, whichever kind it was. `<modal-elemental>` pauses a `<video>` and
-// reloads an `<iframe>` that is still there on close — this is the version with nothing left
-// to stop.
+// parks an `<iframe>` that is still there at `about:blank` on close — this is the version
+// with nothing left to stop.
 document.addEventListener("modal-toggle", (e) => {
   if (!e.detail.open) stage.replaceChildren();
 });

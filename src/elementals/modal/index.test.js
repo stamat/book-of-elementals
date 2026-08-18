@@ -10,7 +10,8 @@
 // `getAnimations()`, which jsdom does not have either. Both belong to `script/a11y` and to
 // the docs demos, where a real browser is running.
 import {
-  dismissMode, dismissible, commandAction, outside, adoption, writesClose, settleLimit
+  dismissMode, dismissible, commandAction, outside, adoption, writesClose, settleLimit,
+  stopMedia, restoreMedia
 } from './index.js';
 
 test('a dialog that says nothing closes the way the platform closes one: Escape, not a click outside', () => {
@@ -109,4 +110,80 @@ test('a click on the dialog itself is inside it, including on its own padding an
   expect(outside(BOX, 200, 150)).toBe(false);
   expect(outside(BOX, 100, 100)).toBe(false);
   expect(outside(BOX, 300, 200)).toBe(false);
+});
+
+// A frame and a player, with only the surface `stopMedia` touches. What a real browser does
+// with the attributes these record - discard the framed document, defer a load on a lazy
+// frame nobody can see - is the part no fake can stand in for, and is measured by hand in
+// three engines rather than here; the note on `stopMedia` says what was seen.
+function fakeFrame(attributes) {
+  const state = { ...attributes };
+  return {
+    attributes: state,
+    get src() { return state.src; },
+    set src(value) { state.src = value; },
+    get loading() { return state.loading; },
+    set loading(value) { state.loading = value; },
+    getAttribute: (name) => (name in state ? state[name] : null),
+    setAttribute: (name, value) => { state[name] = value; },
+    removeAttribute: (name) => { delete state[name]; }
+  };
+}
+
+function fakeDialog(frames, players = []) {
+  return {
+    querySelectorAll: (selector) => (selector.includes('iframe') ? frames : players)
+  };
+}
+
+test('a closed modal parks its frames at about:blank, which is what discards a player nothing here can pause', () => {
+  const frame = fakeFrame({ src: 'https://example.test/embed?autoplay=1', loading: 'lazy' });
+  stopMedia(fakeDialog([frame]));
+  expect(frame.src).toBe('about:blank');
+  // Eager for that one navigation: a lazy frame in a display:none dialog defers the load
+  // and leaves the document that was playing alive behind it.
+  expect(frame.loading).toBe('eager');
+});
+
+test('opening it again gives the frame back the src and the loading its author wrote', () => {
+  const frame = fakeFrame({ src: 'https://example.test/embed?autoplay=1', loading: 'lazy' });
+  const dialog = fakeDialog([frame]);
+  stopMedia(dialog);
+  restoreMedia(dialog);
+  expect(frame.src).toBe('https://example.test/embed?autoplay=1');
+  expect(frame.loading).toBe('lazy');
+});
+
+test('a frame that never said loading does not come back saying eager', () => {
+  const frame = fakeFrame({ src: 'https://example.test/embed' });
+  const dialog = fakeDialog([frame]);
+  stopMedia(dialog);
+  restoreMedia(dialog);
+  expect(frame.getAttribute('loading')).toBe(null);
+});
+
+test('closing twice does not file about:blank as the thing to come back to', () => {
+  const frame = fakeFrame({ src: 'https://example.test/embed', loading: 'lazy' });
+  const dialog = fakeDialog([frame]);
+  // Both closes a real one performs: the element's own, and the `close` event after it.
+  stopMedia(dialog);
+  stopMedia(dialog);
+  restoreMedia(dialog);
+  expect(frame.src).toBe('https://example.test/embed');
+});
+
+test('a frame nobody parked is left exactly as it is, opened over and over', () => {
+  const frame = fakeFrame({ src: 'https://example.test/embed', loading: 'lazy' });
+  const dialog = fakeDialog([frame]);
+  restoreMedia(dialog);
+  restoreMedia(dialog);
+  expect(frame.src).toBe('https://example.test/embed');
+  expect(frame.loading).toBe('lazy');
+});
+
+test('a video is paused where the reader left it, and one already paused is not touched', () => {
+  const played = { paused: false, pause() { this.paused = true; } };
+  const stopped = { paused: true, pause() { throw new Error('pause() on an already paused player'); } };
+  stopMedia(fakeDialog([], [played, stopped]));
+  expect(played.paused).toBe(true);
 });

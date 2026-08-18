@@ -597,8 +597,9 @@ landed yet. A `<a href="#id">` opens one too, which is what deep links, the back
 button and a page with no script all ride on.
 
 Closing stops what the modal was playing: `<video>` and `<audio>` are paused, and
-an `<iframe>` is reloaded, since a cross-origin player takes no instructions from
-here. That is all the lightbox and the YouTube embed on the
+an `<iframe>` is parked at `about:blank` until the modal opens again, since a
+cross-origin player takes no instructions from here and a frame reloaded in place
+is a frame a lazy load leaves playing. That is all the lightbox and the YouTube embed on the
 [docs page](https://stamat.github.io/book-of-elementals/elementals/modal.html)
 are — markup in a dialog, with nothing switched on.
 

@@ -218,16 +218,28 @@ function settle(dialog) {
   ]);
 }
 
+/** What a frame is pointed at while its modal is closed, and what it is holding for later. */
+const PARKED = 'about:blank';
+const parked = new WeakMap();
+
 /**
  * Stop whatever the modal was playing, now that it is closed.
  *
  * A closed dialog is `display: none`, which stops nothing: a video keeps playing and an
  * embed keeps talking to a reader who has already dismissed it. `pause()` covers the
  * elements; an embedded player is a cross-origin document that cannot be paused from here,
- * so its frame is reloaded instead - which is why reopening a lightbox starts the video at
- * the beginning rather than where it was.
+ * so its frame is sent to `about:blank` instead - which discards the document, and is why
+ * reopening a lightbox starts the video at the beginning rather than where it was.
+ *
+ * `loading` goes to `eager` for that one navigation, and this is the whole reason the frame
+ * is parked rather than reloaded in place: a `lazy` frame in a `display: none` dialog is not
+ * navigated when its src is set, the load is deferred until it is on screen again, and the
+ * document that was playing lives on unseen and audible - measured with a ticking frame in
+ * Chromium 151, Firefox 153 and WebKit 26.5, all three. `about:blank` alone is not the
+ * answer either: Firefox defers a navigation to it the same way. Both attributes are put
+ * back on the next open, so the markup an author reads is the markup they wrote.
  */
-function stopMedia(dialog) {
+export function stopMedia(dialog) {
   for (const media of dialog.querySelectorAll('video, audio')) {
     if (!media.paused) media.pause();
   }
@@ -235,8 +247,31 @@ function stopMedia(dialog) {
     // Every framed document, not only a player: there is no way to ask a cross-origin one
     // whether it was making noise. An opt-out belongs here the day something inside one is
     // worth keeping across a close.
-    const src = frame.src;
-    frame.src = src;
+    //
+    // Already parked is a second close over the first - `onNativeClose` runs twice by
+    // design - and parking it again would file `about:blank` as the src to come back to.
+    if (parked.has(frame)) continue;
+    parked.set(frame, { src: frame.getAttribute('src'), loading: frame.getAttribute('loading') });
+    frame.loading = 'eager';
+    frame.src = PARKED;
+  }
+}
+
+/**
+ * Point a parked frame back at what it was showing, now that the modal is open again.
+ *
+ * `loading` first, so a frame that said `lazy` is lazy again before the src that starts the
+ * fetch is set - the dialog is open by now, so a deferred load resolves immediately either
+ * way, and the attribute is never observed holding a value its author did not write.
+ */
+export function restoreMedia(dialog) {
+  for (const frame of dialog.querySelectorAll('iframe')) {
+    const state = parked.get(frame);
+    if (!state) continue;
+    parked.delete(frame);
+    if (state.loading === null) frame.removeAttribute('loading');
+    else frame.setAttribute('loading', state.loading);
+    if (state.src !== null) frame.setAttribute('src', state.src);
   }
 }
 
@@ -426,6 +461,7 @@ export class ModalElemental extends ElementBase {
     // time for it to count.
     dialog.getBoundingClientRect();
     dialog.dataset.state = 'open';
+    restoreMedia(dialog);
     this.toggled(true);
   }
 
@@ -517,6 +553,7 @@ export class ModalElemental extends ElementBase {
     stack.push(this);
     depths();
     dialog.showModal();
+    restoreMedia(dialog);
 
     // The style the dialog opens from has to be computed before the one it opens into is
     // set, or the two land in the same frame and there is nothing to transition between.

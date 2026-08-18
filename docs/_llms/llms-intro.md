@@ -109,8 +109,8 @@ Elements published so far:
   by `command="show-modal"`/`commandfor`, by a link to its `id`, or by `show()`;
   the fragment in the URL opens it, and the back button closes it. `close-others`
   replaces the stack instead of adding to it. Closing pauses `<video>`/`<audio>`
-  inside and reloads any `<iframe>`, which is what a lightbox and a YouTube embed
-  need and all either of them is.
+  inside and parks any `<iframe>` at `about:blank` until the next open, which is what
+  a lightbox and a YouTube embed need and all either of them is.
 - `<navbar-elemental>` — APG disclosure navigation: a site's row of links and the
   panels some of them open, writing no roles at all, because a link announced as a
   menu item is a link no longer. Links that stop fitting move behind an overflow
