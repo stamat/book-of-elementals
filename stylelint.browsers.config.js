@@ -26,7 +26,13 @@ export default {
         // caniuse marks this "n" for desktop Safari and "y" for iOS Safari
         // since 13. It only ever governs touch gestures, so the one platform
         // reported as missing it is the one with no touch input to govern.
-        'css-touch-action'
+        'css-touch-action',
+        // caniuse carries the feature with every browser marked "n", current
+        // versions included, which is not what shipped: MDN has the `scripting`
+        // media feature as Baseline widely available since December 2023, so
+        // every target in .browserslistrc has it. Ignoring the data point, not
+        // the support gap.
+        'css-media-scripting'
       ]
     }]
   }
