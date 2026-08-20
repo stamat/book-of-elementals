@@ -6121,9 +6121,9 @@
     const middle = (trigger.left + trigger.right) / 2;
     return rtl ? bubble.left + bubble.width - middle : middle - bubble.left;
   }
-  function alignOnAxis(start, end, size, limit) {
+  function alignOnAxis(start, end, size, limit, margin = 0) {
     const at = (start + end) / 2 - size / 2;
-    return Math.min(Math.max(at, 0), Math.max(limit - size, 0));
+    return Math.min(Math.max(at, margin), Math.max(limit - size - margin, margin));
   }
   function landedAlign(at, size, start, end, rtl) {
     const off = Math.round(at + size / 2) - Math.round((start + end) / 2);
@@ -6137,6 +6137,11 @@
   var FOCUSABLE3 = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
   var CLOSE_DELAY = 120;
   var FALLBACK_GAP = 6;
+  var FALLBACK_VIEWPORT_MARGIN = 6;
+  function styleLength(styles, name, fallback) {
+    const value = parseFloat(styles.getPropertyValue(name));
+    return Number.isNaN(value) ? fallback : value;
+  }
   var sequence = 0;
   var TooltipElemental = class extends ElementBase {
     /** The control being described: what the element wraps, or what `for` names. */
@@ -6296,16 +6301,18 @@
       const bubble = this.bubbleElement.getBoundingClientRect();
       const viewport = { width: window.innerWidth, height: window.innerHeight };
       const rtl = window.getComputedStyle(this.triggerElement).direction === "rtl";
-      const gap = parseFloat(window.getComputedStyle(this.bubbleElement).getPropertyValue("--tooltip-elemental-gap")) || FALLBACK_GAP;
+      const styles = window.getComputedStyle(this.bubbleElement);
+      const gap = styleLength(styles, "--tooltip-elemental-gap", FALLBACK_GAP);
+      const margin = styleLength(styles, "--tooltip-elemental-viewport-margin", FALLBACK_VIEWPORT_MARGIN);
       const horizontal = this.hasAttribute("horizontal");
       const panel = {
-        width: bubble.width + (horizontal ? gap : 0),
-        height: bubble.height + (horizontal ? 0 : gap)
+        width: bubble.width + (horizontal ? gap + margin : 0),
+        height: bubble.height + (horizontal ? 0 : gap + margin)
       };
       const { side } = horizontal ? placeSubmenu(trigger, panel, viewport, rtl) : placeFlyout(trigger, panel, viewport, rtl);
       const after = side === "inline-end" !== rtl;
-      const top = horizontal ? alignOnAxis(trigger.top, trigger.bottom, bubble.height, viewport.height) : side === "block-end" ? trigger.bottom + gap : trigger.top - bubble.height - gap;
-      const left = horizontal ? after ? trigger.right + gap : trigger.left - bubble.width - gap : alignOnAxis(trigger.left, trigger.right, bubble.width, viewport.width);
+      const top = horizontal ? alignOnAxis(trigger.top, trigger.bottom, bubble.height, viewport.height, margin) : side === "block-end" ? trigger.bottom + gap : trigger.top - bubble.height - gap;
+      const left = horizontal ? after ? trigger.right + gap : trigger.left - bubble.width - gap : alignOnAxis(trigger.left, trigger.right, bubble.width, viewport.width, margin);
       this.bubbleElement.dataset.side = side;
       this.bubbleElement.dataset.align = horizontal ? landedAlign(top, bubble.height, trigger.top, trigger.bottom, false) : landedAlign(left, bubble.width, trigger.left, trigger.right, rtl);
       this.bubbleElement.style.top = `${Math.round(top)}px`;

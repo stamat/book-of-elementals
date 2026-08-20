@@ -122,6 +122,16 @@ test('a trigger near the edge keeps the most centred bubble that fits, not its o
   expect(alignOnAxis(944, 984, 200, 1000)).toBe(800);
 });
 
+test('the slid bubble stops a margin short of the glass, not on it', () => {
+  // The icon button at x=16 again, with 6px of viewport margin: pinned at 6, not 0.
+  expect(alignOnAxis(16, 56, 200, 1000, 6)).toBe(6);
+  expect(alignOnAxis(944, 984, 200, 1000, 6)).toBe(794);
+  // Room to centre is room to centre - the margin only matters at the edges.
+  expect(alignOnAxis(WIDE.left, WIDE.right, 120, 1000, 6)).toBe(240);
+  // A bubble wider than the viewport sits at the near margin rather than at zero.
+  expect(alignOnAxis(0, 400, 500, 300, 6)).toBe(6);
+});
+
 test('the bubble is never outside the viewport', () => {
   // A wide control reaching past the left edge: its middle still fits, so no clamp.
   expect(alignOnAxis(-40, 200, 120, 1000)).toBe(20);

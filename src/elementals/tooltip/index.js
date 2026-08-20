@@ -106,11 +106,14 @@ export function arrowOffset(trigger, bubble, horizontal, rtl) {
  * @param {number} end Trigger's far edge
  * @param {number} size The bubble's extent on the same axis
  * @param {number} limit The viewport's, on that axis
+ * @param {number} [margin=0] Breathing room kept from either edge, so a slid bubble stops
+ *   short of the glass rather than on it. A bubble too big for the margined viewport sits
+ *   at the near margin.
  * @returns {number} Where the bubble's near edge goes
  */
-export function alignOnAxis(start, end, size, limit) {
+export function alignOnAxis(start, end, size, limit, margin = 0) {
   const at = (start + end) / 2 - size / 2;
-  return Math.min(Math.max(at, 0), Math.max(limit - size, 0));
+  return Math.min(Math.max(at, margin), Math.max(limit - size - margin, margin));
 }
 
 /**
@@ -168,6 +171,18 @@ const CLOSE_DELAY = 120;
 
 /** Between the trigger and the bubble, when the page has not said. */
 const FALLBACK_GAP = 6;
+
+/** Between the bubble and the edge of the viewport, when the page has not said. The same
+ * six as the gap: the bubble keeps the distance from the glass that it keeps from its
+ * trigger. */
+const FALLBACK_VIEWPORT_MARGIN = 6;
+
+/** A custom property as a number of pixels, with `0` kept apart from "not set": read with
+ * `|| fallback`, a page that wrote `0px` would be handed the fallback instead. */
+function styleLength(styles, name, fallback) {
+  const value = parseFloat(styles.getPropertyValue(name));
+  return Number.isNaN(value) ? fallback : value;
+}
 
 let sequence = 0;
 
@@ -235,6 +250,7 @@ let sequence = 0;
  * @attr {boolean} [horizontal=false] - Beside the control rather than over or under it. Which of the two sides is still the viewport's call.
  *
  * @cssprop {<length>} [--tooltip-elemental-gap=6px] - Between the trigger and the bubble.
+ * @cssprop {<length>} [--tooltip-elemental-viewport-margin=6px] - The least the bubble keeps between itself and the edge of the viewport, sliding along its trigger and flipping sides to honour it. `0` lets it kiss the edge again.
  * @cssprop {<length>} [--tooltip-elemental-caret=5px] - Half the caret, since it is drawn as a border.
  * @cssprop {<time>} [--tooltip-elemental-duration=0s] - The fade, in and out. Off by default; `prefers-reduced-motion` keeps it off however high it is turned.
  * @cssprop {<length>} [--tooltip-elemental-padding-block=0.5em] - Above and below the words.
@@ -451,14 +467,18 @@ export class TooltipElemental extends ElementBase {
     const bubble = this.bubbleElement.getBoundingClientRect();
     const viewport = { width: window.innerWidth, height: window.innerHeight };
     const rtl = window.getComputedStyle(this.triggerElement).direction === 'rtl';
-    const gap = parseFloat(window.getComputedStyle(this.bubbleElement).getPropertyValue('--tooltip-elemental-gap')) || FALLBACK_GAP;
+    const styles = window.getComputedStyle(this.bubbleElement);
+    const gap = styleLength(styles, '--tooltip-elemental-gap', FALLBACK_GAP);
+    const margin = styleLength(styles, '--tooltip-elemental-viewport-margin', FALLBACK_VIEWPORT_MARGIN);
     const horizontal = this.hasAttribute('horizontal');
 
     // The gap is spent on the axis the bubble travels along, and only there: counting it on
-    // both would refuse a placement that fits by a few pixels sideways.
+    // both would refuse a placement that fits by a few pixels sideways. The viewport margin
+    // rides along with it, so a side is refused while the bubble's far edge still has
+    // breathing room - which is what lands the flipped bubble exactly a margin off the edge.
     const panel = {
-      width: bubble.width + (horizontal ? gap : 0),
-      height: bubble.height + (horizontal ? 0 : gap)
+      width: bubble.width + (horizontal ? gap + margin : 0),
+      height: bubble.height + (horizontal ? 0 : gap + margin)
     };
     // Only the side is taken from these. They answer the alignment too, in the `start` /
     // `end` a menu hangs from the item that opened it with, and a tooltip is centred on its
@@ -474,11 +494,11 @@ export class TooltipElemental extends ElementBase {
     const after = (side === 'inline-end') !== rtl;
 
     const top = horizontal
-      ? alignOnAxis(trigger.top, trigger.bottom, bubble.height, viewport.height)
+      ? alignOnAxis(trigger.top, trigger.bottom, bubble.height, viewport.height, margin)
       : (side === 'block-end' ? trigger.bottom + gap : trigger.top - bubble.height - gap);
     const left = horizontal
       ? (after ? trigger.right + gap : trigger.left - bubble.width - gap)
-      : alignOnAxis(trigger.left, trigger.right, bubble.width, viewport.width);
+      : alignOnAxis(trigger.left, trigger.right, bubble.width, viewport.width, margin);
 
     this.bubbleElement.dataset.side = side;
     // The block axis has no direction to mirror: with `horizontal` the bubble runs down the

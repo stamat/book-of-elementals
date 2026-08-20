@@ -15,6 +15,17 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Added
+
+- **`--tooltip-elemental-viewport-margin` keeps a tooltip off the very edge of the screen.**
+  The slide along the trigger used to stop flush with the viewport, glass to glass. The
+  clamp now stops this much short on either end, and the side decision honours it too: a
+  bubble that would fit below the trigger only by touching the bottom edge flips above
+  instead, and lands exactly a margin off the edge it fled. Only the caret's side is exempt,
+  since the bubble is anchored a gap off its trigger there. Default `6px` — the same
+  distance `--tooltip-elemental-gap` keeps it off its trigger — so tooltips near an edge
+  shift by up to that much; `0px` restores the old kissing.
+
 ### Changed
 
 - **The tooltip theme no longer fades by default.** `--tooltip-elemental-duration` is `0s`
@@ -54,6 +65,10 @@ may already be targeting**, since neither shows up in a function signature.
   `tilt-elemental { --tilt-elemental-glare-color: … }` as before.
 
 ### Fixed
+
+- **`--tooltip-elemental-gap: 0` no longer means "use the default".** The value was read
+  with `|| 6`, which cannot tell an explicit zero from an unset property — a page asking
+  for a bubble flush with its trigger got `6px`. Zero now counts; unset still falls back.
 
 - **A tooltip is centred on its trigger on both axes, and slides rather than jumps when the
   viewport is in the way.** The alignment came from book-of-spells' `placeFlyout` and

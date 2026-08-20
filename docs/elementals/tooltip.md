@@ -252,10 +252,17 @@ comes out of the middle of both. `horizontal` asks the same of the other axis: a
 beside the control is centred on its height, not hung from its top edge.
 
 Then the viewport gets the last word. A control near an edge cannot be centred on without
-the bubble hanging off, so the bubble is pulled back inside and stops at the edge. The caret
-follows it, because the caret is measured against wherever the bubble actually landed rather
-than against where it was aimed — which is what lets it keep pointing at the button after the
-bubble has moved out from under it.
+the bubble hanging off, so the bubble is pulled back inside — and stops
+`--tooltip-elemental-viewport-margin` short of the edge rather than pressed against the
+glass. The default is `6px`, the same distance the gap keeps it off its trigger; `0` lets it
+kiss the edge again. The caret follows the bubble, because it is measured against wherever
+the bubble actually landed rather than against where it was aimed — which is what lets it
+keep pointing at the button after the bubble has moved out from under it.
+
+The margin is honoured on the caretless side too: a bubble that would fit below the trigger
+only by touching the bottom of the viewport flips above it instead, and lands exactly a
+margin off the edge it fled. Only the caret's own side never moves — the bubble is anchored
+a gap off its trigger there, and breathing room is not worth pointing at nothing.
 
 <!-- demo tooltip style="--code-preview-height:202px" -->
 
@@ -292,8 +299,9 @@ button:has(svg) { display: inline-flex; padding: 0.4em; }
 ```
 
 _Hover the two icon buttons at the ends. Their bubbles are wider than they are and would
-run off the frame if they were centred, so each stops at the edge — and the caret slides
-along to stay over the button. The middle one has room and is centred on its trigger._
+run off the frame if they were centred, so each stops a margin short of the edge — and the
+caret slides along to stay over the button. The middle one has room and is centred on its
+trigger._
 
 Which side of the trigger the bubble goes on is
 [`placeFlyout`](https://github.com/stamat/book-of-spells) in book-of-spells, or

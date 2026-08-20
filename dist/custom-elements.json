@@ -7591,6 +7591,15 @@
               "type": {
                 "text": "number"
               }
+            },
+            {
+              "name": "margin",
+              "default": "0",
+              "description": "Breathing room kept from either edge, so a slid bubble stops\nshort of the glass rather than on it. A bubble too big for the margined viewport sits\nat the near margin.",
+              "optional": true,
+              "type": {
+                "text": "number"
+              }
             }
           ],
           "description": "Where the bubble starts on the axis it runs *along* - the one the caret slides on.\n\nCentred on the trigger, always: a tooltip is a bubble with a caret, and a caret coming\nout of a corner points at whatever happens to be beside the control. The viewport is the\none thing allowed to move it off the middle - the clamp slides the bubble just far enough\nin to fit, so a trigger near an edge keeps the most centred bubble there is room for. It\ndoes not spoil the caret, which is measured against wherever the bubble actually landed.\n\n`placeFlyout`'s own alignment used to decide this: it declines to centre where a fully\ncentred bubble would not fit and hands back the trigger's edge instead - a position that\nfits the viewport on its own, so the clamp never fired and the bubble jumped from centred\nto edge-aligned with nothing in between.",
@@ -7682,6 +7691,14 @@
               },
               "description": "Between the trigger and the bubble.",
               "name": "--tooltip-elemental-gap",
+              "default": "6px"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "The least the bubble keeps between itself and the edge of the viewport, sliding along its trigger and flipping sides to honour it. `0` lets it kiss the edge again.",
+              "name": "--tooltip-elemental-viewport-margin",
               "default": "6px"
             },
             {

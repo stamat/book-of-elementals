@@ -1,6 +1,7 @@
 /* book-of-elementals v0.11.1 | https://stamat.github.io/book-of-elementals/ | MIT License */
 tooltip-elemental {
   --tooltip-elemental-gap: 6px;
+  --tooltip-elemental-viewport-margin: 6px;
   --tooltip-elemental-padding-block: 0.5em;
   --tooltip-elemental-padding-inline: 0.75em;
   --tooltip-elemental-radius: 6px;
