@@ -132,11 +132,11 @@ export function layerDepth(value) {
  * @cssprop {<time>} [--tilt-elemental-return-duration=400ms] - How long it takes to settle flat once the pointer has gone. Longer than the chase on purpose.
  * @cssprop {ease | ease-in | ease-out | ease-in-out | linear} [--tilt-elemental-easing=ease-out] - How both of those move.
  * @cssprop {<length>} [--tilt-elemental-depth-step=1px] - What one unit of `data-tilt-depth` is worth, so `data-tilt-depth="40"` rises 40px.
- * @cssprop {<color>} [--tilt-elemental-glare-color=rgb(255 255 255 / 35%)] - The highlight, alpha included. One property rather than a colour and an opacity, because a glare is the two together.
+ * @cssprop {<color>} [--tilt-elemental-glare-color=light-dark(rgb(255 255 255 / 100%), rgb(255 255 255 / 10%))] - The highlight, alpha included. One property rather than a colour and an opacity, because a glare is the two together. Two weights because the surface decides how much of a white light shows - a light card needs all of it where a dark one needs a tenth.
  * @cssprop {<length-percentage>} [--tilt-elemental-glare-size=60%] - How far it spreads before it is gone. Small is a hotspot, large is a wash.
  * @cssprop {<length-percentage>} [--tilt-elemental-radius=0.75rem] - Theme. The card's corners, which the glare follows. Rounded with `border-radius` alone, because `overflow: hidden` over it would flatten every layer.
  * @cssprop {<length>} [--tilt-elemental-shadow-size=1.5rem] - Theme. How soft the shadow under the card is. Spent as half of itself, because the shadow is a blurred fill and a blur takes the deviation where a `box-shadow` takes twice it.
- * @cssprop {<color>} [--tilt-elemental-shadow-color=currentcolor at 30%] - Theme. Its colour, and the fill of the layer it is drawn on - so a card with a see-through background wants this at `transparent`. The offset is not a knob: it is the lean, a pixel per degree, moving against it.
+ * @cssprop {<color>} [--tilt-elemental-shadow-color=currentcolor at 30%] - Theme. Its colour, and the fill of the layer it is drawn on - so a card with a see-through background wants this at `transparent`. Dimmed to a quarter while the card lies flat, full while it leans. The offset is not a knob: it is the lean, a pixel per degree, moving against it.
  *
  * @slot - The card. Anything at all; mark a descendant `data-tilt-depth="40"` to have it rise out of the surface while the card is leaning.
  */

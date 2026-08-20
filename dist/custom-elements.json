@@ -7098,9 +7098,9 @@
               "type": {
                 "text": "<color>"
               },
-              "description": "The highlight, alpha included. One property rather than a colour and an opacity, because a glare is the two together.",
+              "description": "The highlight, alpha included. One property rather than a colour and an opacity, because a glare is the two together. Two weights because the surface decides how much of a white light shows - a light card needs all of it where a dark one needs a tenth.",
               "name": "--tilt-elemental-glare-color",
-              "default": "rgb(255 255 255 / 35%)"
+              "default": "light-dark(rgb(255 255 255 / 100%), rgb(255 255 255 / 10%))"
             },
             {
               "type": {
@@ -7130,7 +7130,7 @@
               "type": {
                 "text": "<color>"
               },
-              "description": "Theme. Its colour, and the fill of the layer it is drawn on - so a card with a see-through background wants this at `transparent`. The offset is not a knob: it is the lean, a pixel per degree, moving against it.",
+              "description": "Theme. Its colour, and the fill of the layer it is drawn on - so a card with a see-through background wants this at `transparent`. Dimmed to a quarter while the card lies flat, full while it leans. The offset is not a knob: it is the lean, a pixel per degree, moving against it.",
               "name": "--tilt-elemental-shadow-color",
               "default": "currentcolor at 30%"
             }

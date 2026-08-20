@@ -153,10 +153,17 @@ look is a promise broken for everyone else.
 <tilt-elemental glare>…</tilt-elemental>
 ```
 
-It is one colour, alpha included — `--tilt-elemental-glare-color`, defaulting to white at 35% —
-rather than a colour and an opacity, because a glare is the two together and nobody sets one
-without the other. `--tilt-elemental-glare-size` is how far it spreads before it is gone: small
-is a hotspot, large is a wash.
+It is one colour, alpha included — `--tilt-elemental-glare-color` — rather than a colour and
+an opacity, because a glare is the two together and nobody sets one without the other. The
+default is two weights of the same white, `light-dark(rgb(255 255 255 / 100%), rgb(255 255 255 / 10%))`,
+because the surface decides how much of a white light shows: 10% over a dark card is a sheen,
+and over a light card nothing short of full white reads at all — 80% was still invisible on
+this page's own demo. Full white is also the ceiling: **a white glare cannot show on a pure
+white surface**, so on a light card the highlight lives in whatever shading the card has, and
+a card that wants more of it wants a tinted glare. `light-dark()` follows the page's
+`color-scheme`, so a themed site's toggle carries the glare with it; a page that never
+declares one resolves to the light value. `--tilt-elemental-glare-size` is how far it spreads
+before it is gone: small is a hotspot, large is a wash.
 
 **The glare sits on the card's own surface**, so a layer with a depth rises *through* it and is
 lit from below rather than over the top. That is the right way round for a title standing out
@@ -269,7 +276,8 @@ ten is where the lean reads as deliberate without the card looking like it has f
 ## Styling
 
 The structure stylesheet leans the card, raises the layers and draws the glare. The theme adds
-the corners and a shadow that moves with the lean.
+the corners and a shadow that moves with the lean — barely there while the card lies flat,
+full weight while it leans.
 
 | Custom property | Default | What it does |
 | --- | --- | --- |
@@ -278,7 +286,7 @@ the corners and a shadow that moves with the lean.
 | `--tilt-elemental-return-duration` | `400ms` | How long it takes to settle flat once the pointer has gone |
 | `--tilt-elemental-easing` | `ease-out` | How both of those move |
 | `--tilt-elemental-depth-step` | `1px` | What one unit of `data-tilt-depth` is worth |
-| `--tilt-elemental-glare-color` | white at 35% | The highlight, alpha included |
+| `--tilt-elemental-glare-color` | white light, white at 10% dark | The highlight, alpha included |
 | `--tilt-elemental-glare-size` | `60%` | How far it spreads before it is gone |
 | `--tilt-elemental-radius` | `0.75rem` | Theme. The card's corners, which the glare follows |
 | `--tilt-elemental-shadow-size` | `1.5rem` | Theme. How soft the shadow is |
@@ -304,6 +312,11 @@ what `box-shadow` gives you here. Two things go wrong with one:
 
 Blurring the fill fades it across the edge in both directions, so there is no rim. The fill is
 not optional either way: blurring an empty box blurs nothing.
+
+At rest the layer sits at a quarter of its opacity and fades up to full as the card starts to
+lean: a flat card casts almost nothing, and the shadow arriving with the lean is part of what
+sells the lift. `--tilt-elemental-shadow-color` is still the one colour knob — both states
+follow it.
 
 `--tilt-elemental-shadow-size` is spent as *half* of itself, because `box-shadow`'s blur radius
 is defined as twice the standard deviation of the gaussian it approximates and `filter: blur()`

@@ -80,6 +80,13 @@ tilt-elemental:defined {
     // `transparent` on one of those.
     background: var(--tilt-elemental-shadow-color);
 
+    // Barely there at rest, full weight only while the card leans. A card nobody is touching
+    // lies flat on the page and casts almost nothing; the shadow arriving with the lean is
+    // part of what sells the lift. Dimmed with opacity rather than a second colour, so
+    // `--tilt-elemental-shadow-color` stays the one place the colour is written and both
+    // states follow it.
+    opacity: 0.25;
+
     // Halved on purpose. `box-shadow`'s blur radius is defined as twice the standard deviation
     // of the gaussian it approximates, and `filter: blur()` takes that deviation directly - so
     // half the number is what keeps `--tilt-elemental-shadow-size` meaning the same softness it
@@ -91,15 +98,27 @@ tilt-elemental:defined {
     // `data-tilt-depth` still rises, and the paint count is unchanged.
     filter: blur(calc(var(--tilt-elemental-shadow-size) / 2));
 
+    // Pinned composited, because Safari otherwise promotes this layer only while the
+    // `translate` transition is running and drops it the moment it settles - which is the
+    // moment the pointer stops at the card's edge. The blur is rasterised again in software
+    // on the way down, at a visibly different brightness than the compositor drew it, and the
+    // shadow blinks. Chromium keeps the layer once promoted, so only Safari shows it. The
+    // cost is one texture held per card, the size of the card - which is what this layer's
+    // whole design assumed anyway.
+    will-change: translate;
+
     // Against the lean: a positive `--tilt-elemental-x` sends the top edge away and brings the
     // bottom towards the reader, and the shadow follows the near edge down.
     translate:
       calc(var(--tilt-elemental-y, 0) * -1px)
       calc(var(--tilt-elemental-x, 0) * 1px);
-    transition: translate var(--tilt-elemental-return-duration) var(--tilt-elemental-easing);
+    transition:
+      translate var(--tilt-elemental-return-duration) var(--tilt-elemental-easing),
+      opacity var(--tilt-elemental-return-duration) var(--tilt-elemental-easing);
   }
 
   &[data-tilt-active]::before {
+    opacity: 1;
     transition-duration: var(--tilt-elemental-duration);
   }
 }

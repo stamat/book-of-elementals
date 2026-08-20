@@ -15,7 +15,35 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Changed
+
+- **`<tilt-elemental>`'s shadow is barely there until the card leans.** A card nobody is
+  touching lies flat on the page and casts almost nothing; the theme's shadow now rests at a
+  quarter of its opacity and fades up to full with the lean, on the same durations the card
+  moves on. CSS: the shadow's `::before` gains `opacity: 0.25` at rest and `opacity: 1` under
+  `[data-tilt-active]`, with `opacity` added to its transition.
+  `--tilt-elemental-shadow-color` is untouched and both states follow it — a page that wants
+  the old constant weight sets `tilt-elemental:defined::before { opacity: 1 }`.
+
+- **`<tilt-elemental>`'s glare default now weighs itself by colour scheme.**
+  `--tilt-elemental-glare-color` defaults to
+  `light-dark(rgb(255 255 255 / 100%), rgb(255 255 255 / 10%))` instead of a flat 35%: the
+  surface decides how much of a white light shows, and the old 35% was a spotlight on a dark
+  card while invisible on a light one — measured on this project's own demo card, so was 80%,
+  and full white is the ceiling a white glare has. `light-dark()` follows the page's
+  `color-scheme`, so a themed site's toggle carries the glare with it; a page that never
+  declares one resolves to the light value. A page that wants one weight in both schemes sets
+  `tilt-elemental { --tilt-elemental-glare-color: … }` as before.
+
 ### Fixed
+
+- **`<tilt-elemental>`'s shadow no longer blinks in Safari when the pointer settles.** The
+  theme's shadow is a blurred layer that only ever translates, and Safari composited it only
+  while its transition was running — dropping the layer the moment the pointer stopped at the
+  card's edge, and rasterising the blur again in software at a visibly different brightness.
+  Chromium keeps the layer once promoted, which is why only Safari showed it. CSS: the
+  shadow's `::before` now carries `will-change: translate`, pinning it composited for the
+  card's lifetime; the price is one card-sized texture held per card.
 
 - **A dialog whose first thing is a picture or a film no longer scrolls sideways.** The theme
   keeps content out from under the corner cross by padding the element right after it, so a
