@@ -2,6 +2,7 @@
 // plus the elements themselves, so the live demos on the pages are styled.
 // The docs layout links exactly one stylesheet, css/docs.min.css.
 @use "poops-docs-theme/scss/docs";
+@use "../src/styles/svg";
 @use "../src/styles/index";
 @use "../src/elementals/accordion/theme" as *;
 @use "../src/elementals/carousel/theme" as *;
@@ -180,6 +181,67 @@ navbar-elemental {
   display: flex;
   gap: 0.75rem;
   align-items: center;
+}
+
+// Demo-only: the menus standing in the prose on the menu page, which are live elements on
+// the page itself rather than a sample alone in a frame - so the two disagree until this
+// says otherwise. The rim is what every `<code-preview>` sample on that page draws in its
+// own CSS, and the demo above the fence should be the same object as the one inside it. The
+// links are the prose's until they are taken back: a menu row is a target, not a sentence,
+// and it arrives underlined and in link blue beside a `<button>` row that is neither. Two
+// selectors deep so it beats `.prose a` whatever order the sheets land in.
+.demo-row menu-elemental {
+  > button {
+    border: 1px solid color-mix(in srgb, currentcolor 25%, transparent);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+// A flex row is not a paragraph, so nothing under it collapses against it and the prose
+// below sits hard on the trigger. The prose's own bottom margin, so the demo keeps the
+// rhythm of the paragraphs it stands between. `:has()` rather than the element itself: a
+// margin on a flex item is inside the centring, and a row with a label beside the menu
+// would centre against the margin box and sit crooked.
+.demo-row:has(menu-elemental) {
+  margin-block-end: 1rem;
+}
+
+// The caret is this page's and not the theme's, which leaves a root menu button flat on
+// purpose - a menu button is a word in a menubar as often as it is a button. Standing alone
+// in prose it is neither, so the demo says it opens something. Not on `.hamburger`, which
+// already carries an icon saying the same thing.
+// Drawn as a mask rather than a background image, like the theme's own: it takes the
+// button's colour and follows the docs theme switch for free.
+.demo-row menu-elemental:not(.hamburger) > button {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+
+  &::after {
+    content: "";
+    flex: none;
+    width: var(--menu-elemental-caret-size);
+    height: var(--menu-elemental-caret-size);
+    background: currentcolor;
+    mask: svg.icon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/></svg>") center / contain no-repeat;
+
+    // A masked icon is a painted background, and forced-colors mode overrides author
+    // backgrounds. System color keywords survive it.
+    @media (forced-colors: active) {
+      background: CanvasText;
+    }
+  }
+
+  // Turning the way the theme's inline caret turns: closed it points at what will open,
+  // open it points back at the button. `aria-expanded` is already the state on the root
+  // button, at every width, so there is nothing else to read.
+  &[aria-expanded="true"]::after {
+    rotate: 180deg;
+  }
 }
 
 // Demo-only: the same job as `.demo-row` for a sample that is a block rather than a control
