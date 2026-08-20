@@ -17,6 +17,17 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Changed
 
+- **The tooltip theme no longer outranks the page importing it.** Its rules were gated on
+  `tooltip-elemental:defined[role="tooltip"]` / `:defined > [role="tooltip"]`, a class heavier
+  than any selector an author would reach for — so `tooltip-elemental [role="tooltip"] { … }`,
+  the hook the docs list, silently lost and a part of the look could only be turned off by
+  repeating the gate verbatim. The `:defined` guard now sits inside `:where()`, which costs
+  nothing on specificity: it still keeps the look off a bubble the script has not upgraded,
+  and a rule of yours at the documented weight is level with the theme's and wins by coming
+  later. CSS: nothing paints differently on a page that overrode nothing; a page that beat the
+  old weight still beats the new one. The other themes in the book gate the same way and are
+  unchanged for now.
+
 - **`<tilt-elemental>`'s shadow is barely there until the card leans.** A card nobody is
   touching lies flat on the page and casts almost nothing; the theme's shadow now rests at a
   quarter of its opacity and fades up to full with the lean, on the same durations the card

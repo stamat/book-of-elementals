@@ -366,20 +366,20 @@ tooltip-elemental {
   --tooltip-elemental-gap: 4px;
 }
 
-tooltip-elemental:defined > [role="tooltip"]::before,
-tooltip-elemental:defined > [role="tooltip"]::after {
+tooltip-elemental [role="tooltip"]::before,
+tooltip-elemental [role="tooltip"]::after {
   content: none;
 }
 ```
 
-The selector is the theme's own, repeated. Its caret rules are gated on `:defined` and on the
-role — `tooltip-elemental:defined > [role="tooltip"]::before` — so a plainer selector than that
-loses on specificity and the caret stays whatever the rule says. Matching it exactly is enough,
-because your stylesheet comes after the theme's.
+Both demos above wrap their trigger, and a wrapped bubble is a child. A bubble the `for`
+attribute points at *is* the element, so that shape is `tooltip-elemental[role="tooltip"]` —
+one rule each, or one rule listing both if a page uses both shapes.
 
-Both demos above wrap their trigger. A bubble the `for` attribute points at *is* the element,
-so that shape wants `tooltip-elemental:defined[role="tooltip"]::before` — the same rule with the
-child combinator dropped.
+That plain a selector wins because the theme keeps its own `:defined` guard inside `:where()`,
+which costs nothing on specificity: the two rules are level, and yours is later. The guard is
+there so the look is not painted on a bubble the script has not upgraded yet — it was never
+meant to outrank the page importing it.
 
 Turning the size down instead is the trap. `--tooltip-elemental-caret: 0` leaves a visible grey
 nub: the rim triangle's width is `calc(var(--tooltip-elemental-caret) + var(--tooltip-elemental-border-width))`,
@@ -535,6 +535,11 @@ tooltip-elemental [role="tooltip"][data-side="inline-end"] {
 tooltip-elemental [role="tooltip"][data-align="end"] {
 } /* the middle had no room, so it ran back the other way */
 ```
+
+Those are the theme's own selectors, minus the `:where(:defined)` it guards them with — which
+costs nothing on specificity, so a rule of yours at this weight is level with the theme's and
+wins by coming later. The `for` shape is the same attribute on the element itself:
+`tooltip-elemental[role="tooltip"]`.
 
 `position: fixed`, not absolute: the trigger and the bubble are not always in the same offset
 parent, and anything scrolling between them would clip a bubble that was. The element writes

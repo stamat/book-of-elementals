@@ -31,8 +31,15 @@ tooltip-elemental {
   --tooltip-elemental-duration: 120ms;
 }
 
-tooltip-elemental:defined[role="tooltip"],
-tooltip-elemental:defined > [role="tooltip"] {
+// `:defined` inside `:where()` so it costs nothing on specificity: it is a guard against
+// painting a look on a bubble that has not been upgraded yet, not a claim on the cascade. At
+// its own weight this block would sit at one class above every selector an author would think
+// to write - `tooltip-elemental [role="tooltip"]` loses to `tooltip-elemental:defined >
+// [role="tooltip"]` however late it comes - so turning off a part of the look meant repeating
+// this gate verbatim. Wrapped, the two are level and the later stylesheet wins, which is the
+// same bargain the custom properties above are declared under.
+tooltip-elemental:where(:defined)[role="tooltip"],
+tooltip-elemental:where(:defined) > [role="tooltip"] {
   padding: var(--tooltip-elemental-padding-block) var(--tooltip-elemental-padding-inline);
   border: var(--tooltip-elemental-border-width) solid var(--tooltip-elemental-border-color);
   border-radius: var(--tooltip-elemental-radius);
