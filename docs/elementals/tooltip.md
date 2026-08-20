@@ -295,16 +295,14 @@ _Hover the two icon buttons at the ends. Their bubbles are wider than they are a
 run off the frame if they were centred, so each stops at the edge — and the caret slides
 along to stay over the button. The middle one has room and is centred on its trigger._
 
-The decision itself is
-[`placeFlyout`](https://github.com/stamat/book-of-spells) in book-of-spells, which answers
-`center` when there is room for it and falls back to whichever edge fits when there is not.
-The clamp is applied after either answer, because the fallback edge can run off just as
-easily as the centre could.
-
-`horizontal` goes through `placeSubmenu` instead, which has no such answer — a submenu hangs
-down from the item that opened it, and that is right for a menu. So the middle is asked for
-here rather than there, and the submenu's own `start` / `end` is what a bubble too tall for
-the space beside the trigger falls back to.
+Which side of the trigger the bubble goes on is
+[`placeFlyout`](https://github.com/stamat/book-of-spells) in book-of-spells, or
+`placeSubmenu` under `horizontal` — and that is all either of them is asked. They answer an
+alignment too, in the `start` / `end` a submenu hangs from the item that opened it with,
+which is right for a menu and wrong for a bubble with a caret: an edge that fits the
+viewport on its own never reaches the clamp, so a trigger near the edge jumped straight to
+edge-aligned with nothing in between. Centring on the trigger and clamping is this element's
+own answer, on both axes, and the slide is what the jump became.
 
 ### Where the caret points
 
@@ -519,7 +517,7 @@ Or the single-element bundle:
 | On | What |
 | --- | --- |
 | the bubble | `role="tooltip"`, an `id` if it had none, `hidden` while it is not showing |
-| the bubble | `data-side` (`block-end`/`block-start`, or `inline-end`/`inline-start` with `horizontal`) and `data-align` (`center`, or `start` / `end` where the middle had no room), and `top` / `left` in viewport pixels |
+| the bubble | `data-side` (`block-end`/`block-start`, or `inline-end`/`inline-start` with `horizontal`) and `data-align` (`center`, or the end of the bubble the caret came out near when the viewport slid it off the middle), and `top` / `left` in viewport pixels |
 | the bubble | `--tooltip-elemental-arrow-offset`, the middle of the trigger measured from the bubble's start edge |
 | the trigger | `aria-describedby`, appended to any it already had — or `aria-label`, when its `title` was the only name it had |
 | the trigger | its `title` removed, when those words became the bubble |
@@ -539,7 +537,7 @@ tooltip-elemental [role="tooltip"][data-side="block-start"] {
 tooltip-elemental [role="tooltip"][data-side="inline-end"] {
 } /* `horizontal`, and it went after the trigger */
 tooltip-elemental [role="tooltip"][data-align="end"] {
-} /* the middle had no room, so it ran back the other way */
+} /* the viewport slid it, and the caret came out near that end */
 ```
 
 Those are the theme's own selectors, minus the `:where(:defined)` it guards them with — which

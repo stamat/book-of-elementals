@@ -6121,12 +6121,14 @@
     const middle = (trigger.left + trigger.right) / 2;
     return rtl ? bubble.left + bubble.width - middle : middle - bubble.left;
   }
-  function alignOnAxis(start, end, size, limit, toStart, centred) {
-    const at = centred ? (start + end) / 2 - size / 2 : toStart ? start : end - size;
+  function alignOnAxis(start, end, size, limit) {
+    const at = (start + end) / 2 - size / 2;
     return Math.min(Math.max(at, 0), Math.max(limit - size, 0));
   }
-  function besideAlign(trigger, height, limit, fallback) {
-    return fits((trigger.top + trigger.bottom - height) / 2, height, limit) ? "center" : fallback;
+  function landedAlign(at, size, start, end, rtl) {
+    const off = Math.round(at + size / 2) - Math.round((start + end) / 2);
+    if (!off) return "center";
+    return off > 0 !== rtl ? "start" : "end";
   }
   function withoutToken(list, token) {
     const kept = (list || "").split(/\s+/).filter((one) => one && one !== token);
@@ -6300,16 +6302,12 @@
         width: bubble.width + (horizontal ? gap : 0),
         height: bubble.height + (horizontal ? 0 : gap)
       };
-      const placement = horizontal ? placeSubmenu(trigger, panel, viewport, rtl) : placeFlyout(trigger, panel, viewport, rtl, true);
-      const { side } = placement;
-      const align = horizontal ? besideAlign(trigger, bubble.height, viewport.height, placement.align) : placement.align;
+      const { side } = horizontal ? placeSubmenu(trigger, panel, viewport, rtl) : placeFlyout(trigger, panel, viewport, rtl);
       const after = side === "inline-end" !== rtl;
-      const toStart = align === "start" !== rtl;
-      const centred = align === "center";
-      const top = horizontal ? alignOnAxis(trigger.top, trigger.bottom, bubble.height, viewport.height, align === "start", centred) : side === "block-end" ? trigger.bottom + gap : trigger.top - bubble.height - gap;
-      const left = horizontal ? after ? trigger.right + gap : trigger.left - bubble.width - gap : alignOnAxis(trigger.left, trigger.right, bubble.width, viewport.width, toStart, centred);
+      const top = horizontal ? alignOnAxis(trigger.top, trigger.bottom, bubble.height, viewport.height) : side === "block-end" ? trigger.bottom + gap : trigger.top - bubble.height - gap;
+      const left = horizontal ? after ? trigger.right + gap : trigger.left - bubble.width - gap : alignOnAxis(trigger.left, trigger.right, bubble.width, viewport.width);
       this.bubbleElement.dataset.side = side;
-      this.bubbleElement.dataset.align = align;
+      this.bubbleElement.dataset.align = horizontal ? landedAlign(top, bubble.height, trigger.top, trigger.bottom, false) : landedAlign(left, bubble.width, trigger.left, trigger.right, rtl);
       this.bubbleElement.style.top = `${Math.round(top)}px`;
       this.bubbleElement.style.left = `${Math.round(left)}px`;
       this.bubbleElement.style.setProperty(

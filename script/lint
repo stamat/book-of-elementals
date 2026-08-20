@@ -1,3 +1,17 @@
 #!/bin/bash
 
+set -e
+
 npm run lint
+
+# The compat gates read the compiled CSS and JS, so they can only run where there is a
+# dist/ to read — CI builds first and runs them unconditionally, and skipping them here is
+# how a `@media (scripting: none)` that caniuse calls unsupported went green locally and
+# red on main. A stale dist/ is still worth checking: it fails on last build's output,
+# which is a build behind rather than blind.
+if [ -d dist ]; then
+  npm run lint:browsers
+  npm run lint:es
+else
+  echo "lint: no dist/, skipping the browser and ES gates — script/build first to run them"
+fi

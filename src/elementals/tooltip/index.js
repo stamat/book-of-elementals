@@ -1,4 +1,4 @@
-import { ElementBase, define, fits, placeFlyout, placeSubmenu } from '../../core.js';
+import { ElementBase, define, placeFlyout, placeSubmenu } from '../../core.js';
 
 /**
  * Whether the words in a `title` are the trigger's *name* or a *description* of it.
@@ -91,54 +91,52 @@ export function arrowOffset(trigger, bubble, horizontal, rtl) {
 /**
  * Where the bubble starts on the axis it runs *along* - the one the caret slides on.
  *
- * Centred on the trigger when the placement asked for it, and on the edge it named
- * otherwise - `placeFlyout` is what decides between the two, and declines to centre where a
- * centred bubble would not fit.
+ * Centred on the trigger, always: a tooltip is a bubble with a caret, and a caret coming
+ * out of a corner points at whatever happens to be beside the control. The viewport is the
+ * one thing allowed to move it off the middle - the clamp slides the bubble just far enough
+ * in to fit, so a trigger near an edge keeps the most centred bubble there is room for. It
+ * does not spoil the caret, which is measured against wherever the bubble actually landed.
  *
- * The widths used to decide this instead: a control narrower than its bubble was edge-
- * aligned on the grounds that a small button centred under a long sentence puts most of that
- * sentence to one side of what it belongs to. An icon button under a one-word bubble is the
- * case that breaks the rule - barely narrower, and plainly wrong sitting off to the left of
- * the thing it names - and the caret carries the pointing at either width anyway.
- *
- * The clamp is the last word on both answers, not just on the centred one. `placeFlyout`
- * refusing to centre still leaves an edge that can run off the viewport on its own, and a
- * bubble rendered outside it is a bubble nobody reads. It does not spoil the caret, which is
- * measured against wherever the bubble actually landed.
+ * `placeFlyout`'s own alignment used to decide this: it declines to centre where a fully
+ * centred bubble would not fit and hands back the trigger's edge instead - a position that
+ * fits the viewport on its own, so the clamp never fired and the bubble jumped from centred
+ * to edge-aligned with nothing in between.
  *
  * @param {number} start Trigger's near edge on this axis, in viewport coordinates
  * @param {number} end Trigger's far edge
  * @param {number} size The bubble's extent on the same axis
  * @param {number} limit The viewport's, on that axis
- * @param {boolean} toStart Whether the placement asked for the near edge, in physical terms
- * @param {boolean} [centred=false] Whether the placement asked for the trigger's middle
  * @returns {number} Where the bubble's near edge goes
  */
-export function alignOnAxis(start, end, size, limit, toStart, centred) {
-  const at = centred ? (start + end) / 2 - size / 2 : (toStart ? start : end - size);
+export function alignOnAxis(start, end, size, limit) {
+  const at = (start + end) / 2 - size / 2;
   return Math.min(Math.max(at, 0), Math.max(limit - size, 0));
 }
 
 /**
- * Which way a bubble beside its trigger runs on the block axis.
+ * Where the bubble ended up relative to its trigger's middle, as the `data-align` a
+ * stylesheet reads.
  *
- * `placeSubmenu` answers `start` or `end` and never the middle, which is right for the thing
- * it is named after: a submenu hangs down from the item that opened it. A tooltip is a bubble
- * with a caret, and a caret out of the middle of the trigger is the whole of the pointing - so
- * the middle is asked for first, and the submenu's own answer is what is left when a centred
- * bubble would run off the top or the bottom.
+ * Measured from where the bubble landed rather than taken from what was asked for, because
+ * the centre is asked for every time now: the viewport's clamp is the only thing that can
+ * take a bubble off the middle, and the attribute is worth nothing if it says `center` for
+ * a bubble the edge of the screen has slid halfway off its trigger. `center` is the answer
+ * on a page with room, which is most of them.
  *
- * The mirror of the fifth argument `placeFlyout` takes for the other axis, kept here because
- * `placeSubmenu` has no such argument and a menu would not want one.
+ * The token names the end of the *bubble* the caret comes out near, which is the corner a
+ * stylesheet has to care about - and it is logical, so RTL names the other one.
  *
- * @param {DOMRect|object} trigger Rect of the trigger, in viewport coordinates
- * @param {number} height The bubble's
- * @param {number} limit The viewport's
- * @param {string} fallback Where the bubble goes when the middle has no room - `placeSubmenu`'s answer
- * @returns {string} `center`, or the fallback
+ * @param {number} at Where the bubble's near edge landed on this axis, in viewport coordinates
+ * @param {number} size The bubble's extent on the same axis
+ * @param {number} start Trigger's near edge on it
+ * @param {number} end Trigger's far edge
+ * @param {boolean} rtl Whether this axis runs right to left - the inline one, in RTL
+ * @returns {string} `center`, `start` or `end`
  */
-export function besideAlign(trigger, height, limit, fallback) {
-  return fits((trigger.top + trigger.bottom - height) / 2, height, limit) ? 'center' : fallback;
+export function landedAlign(at, size, start, end, rtl) {
+  const off = Math.round(at + size / 2) - Math.round((start + end) / 2);
+  if (!off) return 'center';
+  return (off > 0) !== rtl ? 'start' : 'end';
 }
 
 /**
@@ -462,35 +460,32 @@ export class TooltipElemental extends ElementBase {
       width: bubble.width + (horizontal ? gap : 0),
       height: bubble.height + (horizontal ? 0 : gap)
     };
-    // A tooltip always wants its trigger's middle - it is a bubble with a caret, and a caret
-    // coming out of a corner points at whatever happens to be beside the control. Asked for
-    // unconditionally rather than through an attribute: there is no page that wants its
-    // tooltips hanging off one edge, and an option nobody would turn off is not an option.
-    const placement = horizontal
+    // Only the side is taken from these. They answer the alignment too, in the `start` /
+    // `end` a menu hangs from the item that opened it with, and a tooltip is centred on its
+    // trigger at every width instead - `alignOnAxis` is where that is decided, and the
+    // caret is the reason.
+    const { side } = horizontal
       ? placeSubmenu(trigger, panel, viewport, rtl)
-      : placeFlyout(trigger, panel, viewport, rtl, true);
-    const { side } = placement;
-    const align = horizontal
-      ? besideAlign(trigger, bubble.height, viewport.height, placement.align)
-      : placement.align;
+      : placeFlyout(trigger, panel, viewport, rtl);
 
-    // `side` and `align` are logical and these are physical pixels, so the direction
-    // decides which edge each one names: the inline start is the left in LTR and the right
-    // in RTL, which is what both of these xors say. `center` has no side, so it falls
-    // through both of them untouched.
+    // `side` is logical and these are physical pixels, so the direction decides which edge
+    // it names: the inline start is the left in LTR and the right in RTL, which is what the
+    // xor says.
     const after = (side === 'inline-end') !== rtl;
-    const toStart = (align === 'start') !== rtl;
-    const centred = align === 'center';
 
     const top = horizontal
-      ? alignOnAxis(trigger.top, trigger.bottom, bubble.height, viewport.height, align === 'start', centred)
+      ? alignOnAxis(trigger.top, trigger.bottom, bubble.height, viewport.height)
       : (side === 'block-end' ? trigger.bottom + gap : trigger.top - bubble.height - gap);
     const left = horizontal
       ? (after ? trigger.right + gap : trigger.left - bubble.width - gap)
-      : alignOnAxis(trigger.left, trigger.right, bubble.width, viewport.width, toStart, centred);
+      : alignOnAxis(trigger.left, trigger.right, bubble.width, viewport.width);
 
     this.bubbleElement.dataset.side = side;
-    this.bubbleElement.dataset.align = align;
+    // The block axis has no direction to mirror: with `horizontal` the bubble runs down the
+    // page, where the start is the top whichever way the text goes.
+    this.bubbleElement.dataset.align = horizontal
+      ? landedAlign(top, bubble.height, trigger.top, trigger.bottom, false)
+      : landedAlign(left, bubble.width, trigger.left, trigger.right, rtl);
     this.bubbleElement.style.top = `${Math.round(top)}px`;
     this.bubbleElement.style.left = `${Math.round(left)}px`;
     this.bubbleElement.style.setProperty(
