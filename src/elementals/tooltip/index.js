@@ -238,7 +238,7 @@ let sequence = 0;
  *
  * @cssprop {<length>} [--tooltip-elemental-gap=6px] - Between the trigger and the bubble.
  * @cssprop {<length>} [--tooltip-elemental-caret=5px] - Half the caret, since it is drawn as a border.
- * @cssprop {<time>} [--tooltip-elemental-duration=120ms] - The fade, in and out. `prefers-reduced-motion` turns it off.
+ * @cssprop {<time>} [--tooltip-elemental-duration=0s] - The fade, in and out. Off by default; `prefers-reduced-motion` keeps it off however high it is turned.
  * @cssprop {<length>} [--tooltip-elemental-padding-block=0.5em] - Above and below the words.
  * @cssprop {<length>} [--tooltip-elemental-padding-inline=0.75em] - Either side of them.
  * @cssprop {<length>} [--tooltip-elemental-radius=6px] - The bubble's corners.

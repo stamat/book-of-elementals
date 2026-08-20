@@ -7704,9 +7704,9 @@
               "type": {
                 "text": "<time>"
               },
-              "description": "The fade, in and out. `prefers-reduced-motion` turns it off.",
+              "description": "The fade, in and out. Off by default; `prefers-reduced-motion` keeps it off however high it is turned.",
               "name": "--tooltip-elemental-duration",
-              "default": "120ms"
+              "default": "0s"
             },
             {
               "type": {

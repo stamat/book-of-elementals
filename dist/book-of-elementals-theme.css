@@ -1734,7 +1734,7 @@ tooltip-elemental {
   --tooltip-elemental-border-width: 1px;
   --tooltip-elemental-border-color: color-mix(in srgb, Canvas 28%, var(--tooltip-elemental-surface));
   --tooltip-elemental-caret: 5px;
-  --tooltip-elemental-duration: 120ms;
+  --tooltip-elemental-duration: 0s;
 }
 
 tooltip-elemental:where(:defined)[role=tooltip],

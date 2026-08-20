@@ -28,7 +28,11 @@ tooltip-elemental {
 
   // Half the caret. It is drawn as a border, so the visible triangle is twice this across.
   --tooltip-elemental-caret: 5px;
-  --tooltip-elemental-duration: 120ms;
+
+  // No fade by default. A tooltip is an answer to a pointer that has already stopped moving,
+  // and a bubble easing in behind it reads as lag rather than as polish - so the transition
+  // below is wired up and set to nothing, and a page that wants one turns this up.
+  --tooltip-elemental-duration: 0s;
 }
 
 // `:defined` inside `:where()` so it costs nothing on specificity: it is a guard against
@@ -48,14 +52,17 @@ tooltip-elemental:where(:defined) > [role="tooltip"] {
   font-size: 0.75rem;
   line-height: 1.5;
 
-  // The fade, and the two lines that make one possible at all. The element shows the bubble
-  // by taking `hidden` off it, and `display` does not tween - so `display` is named in the
-  // transition with `allow-discrete`, which flips it at the start of the way in and at the
-  // end of the way out, and `@starting-style` gives the browser the transparent frame to
-  // start from that an element arriving with `display` has never had.
-  // Both are Baseline 2024, which is after Safari 17.0 to 17.4 and the iOS of the same
-  // numbers - all inside this project's targets. There the tooltip appears and disappears
-  // without fading, which is the whole of the degradation.
+  // The fade a page can ask for, and the two lines that make one possible at all. The element
+  // shows the bubble by taking `hidden` off it, and `display` does not tween - so `display` is
+  // named in the transition with `allow-discrete`, which flips it at the start of the way in
+  // and at the end of the way out, and `@starting-style` gives the browser the transparent
+  // frame to start from that an element arriving with `display` has never had.
+  // Declared at a duration of zero rather than left out: written here, turning the property up
+  // is the whole of what a page has to do, and at zero the two transitions cost a frame nobody
+  // sees. Both are Baseline 2024, which is after Safari 17.0 to 17.4 and the iOS of the same
+  // numbers - all inside this project's targets. There a page that turned the duration up gets
+  // a tooltip that appears and disappears without fading, which is the whole of the
+  // degradation.
   opacity: 0;
   transition:
     opacity var(--tooltip-elemental-duration) ease,

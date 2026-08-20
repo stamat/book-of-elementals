@@ -17,6 +17,13 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Changed
 
+- **The tooltip theme no longer fades by default.** `--tooltip-elemental-duration` is `0s`
+  instead of `120ms`: a tooltip answers a pointer that has already stopped moving, and a bubble
+  easing in behind it reads as lag rather than as polish. The transition is still declared, so
+  a page that wants the fade back sets `tooltip-elemental { --tooltip-elemental-duration: 120ms }`
+  and gets exactly what it had. CSS: the bubble now appears and disappears on the frame it is
+  shown, `@starting-style` and `allow-discrete` unchanged underneath.
+
 - **The tooltip theme no longer outranks the page importing it.** Its rules were gated on
   `tooltip-elemental:defined[role="tooltip"]` / `:defined > [role="tooltip"]`, a class heavier
   than any selector an author would reach for — so `tooltip-elemental [role="tooltip"] { … }`,

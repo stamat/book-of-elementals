@@ -156,7 +156,11 @@ one would otherwise show underneath.
 ```html
 <p>
   <tooltip-elemental>
-    <button type="button" title="Saves to your drafts">Save</button>
+    <button type="button" aria-label="Save" title="Saves to your drafts">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M8 2v7m0 0L5.5 6.5M8 9l2.5-2.5M3 11v2.5h10V11" stroke="currentColor" stroke-width="1.5" />
+      </svg>
+    </button>
   </tooltip-elemental>
 
   <tooltip-elemental>
@@ -171,8 +175,7 @@ one would otherwise show underneath.
 
 ```css demo
 body { margin: 0; padding: 3rem 1rem; font: 1rem/1.5 system-ui, sans-serif; }
-button { font: inherit; padding: 0.4em 0.8em; }
-button:has(svg) { display: inline-flex; padding: 0.4em; }
+button { font: inherit; display: inline-flex; padding: 0.4em; }
 ```
 
 Where those words land depends on what the control already had, because a `title` is doing
@@ -389,8 +392,11 @@ at 5× zoom. Neither says what it means; `content: none` does.
 
 ## The fade
 
-The optional theme fades the bubble in and out over `--tooltip-elemental-duration`, which is
-`120ms` until you say otherwise. Turn it up to see it:
+The optional theme can fade the bubble in and out over `--tooltip-elemental-duration`, and
+does not: it is `0s` until you say otherwise, because a tooltip answers a pointer that has
+already stopped and a bubble easing in behind it reads as lag. The transition is wired up
+regardless, so turning the property up is the whole of what a page has to do. This demo sets
+half a second:
 
 <!-- demo tooltip style="--code-preview-height:170px" -->
 
@@ -439,9 +445,9 @@ end of the way out, and gives `@starting-style` the transparent frame to begin f
 
 Both of those are [Baseline 2024](https://developer.mozilla.org/en-US/docs/Web/CSS/@starting-style),
 which lands after Safari 17.0–17.4 and the iOS versions of the same numbers — all of which are
-inside this project's browser targets. There the tooltip appears and disappears without
-fading, and that is the whole of the degradation. `prefers-reduced-motion: reduce` turns it
-off everywhere else.
+inside this project's browser targets. There a page that turned the duration up gets a tooltip
+that appears and disappears without fading, and that is the whole of the degradation.
+`prefers-reduced-motion: reduce` keeps it off everywhere else, however high it is turned.
 
 ## Keyboard and pointer
 
@@ -552,7 +558,7 @@ uses — one decision per axis, RTL included.
 | ------------------------------------ | ------------ | ------------------------------------ |
 | `--tooltip-elemental-gap`            | `6px`        | Between the trigger and the bubble   |
 | `--tooltip-elemental-caret`          | `5px`        | Half the caret — it is drawn as a border |
-| `--tooltip-elemental-duration`       | `120ms`      | The fade, in and out                 |
+| `--tooltip-elemental-duration`       | `0s`         | The fade, in and out. Off until you turn it up |
 | `--tooltip-elemental-max-width`      | `250px`      | Where the words wrap                 |
 | `--tooltip-elemental-padding-block`  | `0.5em`      | Above and below the words            |
 | `--tooltip-elemental-padding-inline` | `0.75em`     | Either side of them                  |
