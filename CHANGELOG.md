@@ -37,6 +37,14 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Fixed
 
+- **A `horizontal` tooltip is centred on its trigger instead of hanging from its top edge.**
+  The bubble beside a control took its block-axis alignment from book-of-spells'
+  `placeSubmenu`, which only answers `start` and `end` — right for a submenu, which drops from
+  the item that opened it, and wrong for a bubble whose caret is meant to point at the middle
+  of the control. The middle is now asked for first, and that `start` / `end` is what a bubble
+  too tall for the space beside the trigger falls back to. DOM: `data-align` on the bubble now
+  reads `center` in the `horizontal` shape too, where it always could in the default one.
+
 - **`<tilt-elemental>`'s shadow no longer blinks in Safari when the pointer settles.** The
   theme's shadow is a blurred layer that only ever translates, and Safari composited it only
   while its transition was running — dropping the layer the moment the pointer stopped at the

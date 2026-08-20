@@ -78,6 +78,9 @@
     const at = centred ? (start + end) / 2 - size / 2 : toStart ? start : end - size;
     return Math.min(Math.max(at, 0), Math.max(limit - size, 0));
   }
+  function besideAlign(trigger, height, limit, fallback) {
+    return fits((trigger.top + trigger.bottom - height) / 2, height, limit) ? "center" : fallback;
+  }
   function withoutToken(list, token) {
     const kept = (list || "").split(/\s+/).filter((one) => one && one !== token);
     return kept.length ? kept.join(" ") : null;
@@ -250,7 +253,9 @@
         width: bubble.width + (horizontal ? gap : 0),
         height: bubble.height + (horizontal ? 0 : gap)
       };
-      const { side, align } = horizontal ? placeSubmenu(trigger, panel, viewport, rtl) : placeFlyout(trigger, panel, viewport, rtl, true);
+      const placement = horizontal ? placeSubmenu(trigger, panel, viewport, rtl) : placeFlyout(trigger, panel, viewport, rtl, true);
+      const { side } = placement;
+      const align = horizontal ? besideAlign(trigger, bubble.height, viewport.height, placement.align) : placement.align;
       const after = side === "inline-end" !== rtl;
       const toStart = align === "start" !== rtl;
       const centred = align === "center";

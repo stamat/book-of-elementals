@@ -15,16 +15,41 @@ keyboard arrives. Light DOM, nothing moved, nothing wrapped.
 ```html
 <p>
   <tooltip-elemental>
-    <button type="button">Save</button>
+    <button type="button" aria-label="Save">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M8 2v7m0 0L5.5 6.5M8 9l2.5-2.5M3 11v2.5h10V11" stroke="currentColor" stroke-width="1.5" />
+      </svg>
+    </button>
     <span>Saves to your drafts, without publishing</span>
+  </tooltip-elemental>
+
+  <tooltip-elemental>
+    <button type="button" aria-label="Copy link">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M6.5 9.5l3-3M7 4.5l1-1a2.5 2.5 0 013.5 3.5l-1 1M9 11.5l-1 1a2.5 2.5 0 01-3.5-3.5l1-1" stroke="currentColor" stroke-width="1.5" />
+      </svg>
+    </button>
+    <span>Anyone with the link can read this draft</span>
+  </tooltip-elemental>
+
+  <tooltip-elemental>
+    <button type="button" aria-label="Delete">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M2.5 4h11M6.5 4V2.5h3V4M4 4l.8 9.5h6.4L12 4" stroke="currentColor" stroke-width="1.5" />
+      </svg>
+    </button>
+    <span>Deleted drafts are kept for 30 days</span>
   </tooltip-elemental>
 </p>
 ```
 
 ```css demo
 body { margin: 0; padding: 3rem 1rem; font: 1rem/1.5 system-ui, sans-serif; }
-button { font: inherit; padding: 0.4em 0.8em; }
+button { font: inherit; display: inline-flex; padding: 0.4em; }
 ```
+
+Icon buttons for most of what follows, because that is where a tooltip earns its place: each
+one has a real `aria-label` for its name, and the bubble says the thing the icon could not.
 
 ## Read this before you use one
 
@@ -95,8 +120,16 @@ bubble; without one it *is* the bubble, and `for` names the control it belongs t
 
 ```html
 <p>
-  <button type="button" id="publish">Publish</button>
-  <button type="button" id="revert">Revert</button>
+  <button type="button" id="publish" aria-label="Publish">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M8 10V2.5m0 0L5.5 5M8 2.5L10.5 5M3 11v2.5h10V11" stroke="currentColor" stroke-width="1.5" />
+    </svg>
+  </button>
+  <button type="button" id="revert" aria-label="Revert">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M5 3L2 6l3 3M2 6h7a4 4 0 010 8H6" stroke="currentColor" stroke-width="1.5" />
+    </svg>
+  </button>
 </p>
 
 <tooltip-elemental for="publish">Makes this visible to everyone</tooltip-elemental>
@@ -105,7 +138,7 @@ bubble; without one it *is* the bubble, and `for` names the control it belongs t
 
 ```css demo
 body { margin: 0; padding: 3rem 1rem; font: 1rem/1.5 system-ui, sans-serif; }
-button { font: inherit; padding: 0.4em 0.8em; }
+button { font: inherit; display: inline-flex; padding: 0.4em; }
 ```
 
 With no script those two sentences read as a list under the buttons — which is the whole
@@ -128,7 +161,9 @@ one would otherwise show underneath.
 
   <tooltip-elemental>
     <button type="button" title="Delete this draft">
-      <span aria-hidden="true">🗑</span>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M2.5 4h11M6.5 4V2.5h3V4M4 4l.8 9.5h6.4L12 4" stroke="currentColor" stroke-width="1.5" />
+      </svg>
     </button>
   </tooltip-elemental>
 </p>
@@ -137,6 +172,7 @@ one would otherwise show underneath.
 ```css demo
 body { margin: 0; padding: 3rem 1rem; font: 1rem/1.5 system-ui, sans-serif; }
 button { font: inherit; padding: 0.4em 0.8em; }
+button:has(svg) { display: inline-flex; padding: 0.4em; }
 ```
 
 Where those words land depends on what the control already had, because a `title` is doing
@@ -163,27 +199,35 @@ option. The bubble still shows, and the reader hears the words once, as the name
 control and flips above it when there is no room under; `horizontal` puts it beside instead,
 and which of the two sides that turns out to be is measured, not declared.
 
-<!-- demo tooltip style="--code-preview-height:259px" -->
+<!-- demo tooltip style="--code-preview-height:243px" -->
 
 ```html
 <p>
   <tooltip-elemental>
-    <button type="button">Under, unless there is no room under</button>
-    <span>Which there is, here</span>
+    <button type="button" aria-label="Comments">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z" stroke="currentColor" stroke-width="1.5" />
+      </svg>
+    </button>
+    <span>Under the button, unless there is no room under</span>
   </tooltip-elemental>
 </p>
 
 <p>
   <tooltip-elemental horizontal>
-    <button type="button">Beside</button>
-    <span>On the inline end, unless the edge is there</span>
+    <button type="button" aria-label="Notifications">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M4 11V7a4 4 0 018 0v4l1.5 1.5h-11zM6.5 13a1.5 1.5 0 003 0" stroke="currentColor" stroke-width="1.5" />
+      </svg>
+    </button>
+    <span>Beside it, on the inline end unless the edge is there</span>
   </tooltip-elemental>
 </p>
 ```
 
 ```css demo
 body { margin: 0; padding: 2rem 1rem 6rem; font: 1rem/1.5 system-ui, sans-serif; }
-button { font: inherit; padding: 0.4em 0.8em; }
+button { font: inherit; display: inline-flex; padding: 0.4em; }
 ```
 
 There is no `placement="e"` and no `direction="n"`, which every other library offers. A fixed
@@ -201,7 +245,8 @@ The side it settled on is written back as `data-side`, so a caret can point the 
 ### How it lines up with the control
 
 **Centred on the trigger, at every width** — the bubble sits on its middle, and the caret
-comes out of the middle of both.
+comes out of the middle of both. `horizontal` asks the same of the other axis: a bubble
+beside the control is centred on its height, not hung from its top edge.
 
 Then the viewport gets the last word. A control near an edge cannot be centred on without
 the bubble hanging off, so the bubble is pulled back inside and stops at the edge. The caret
@@ -215,7 +260,9 @@ bubble has moved out from under it.
 <div class="row">
   <tooltip-elemental>
     <button type="button" title="Hard against the left edge">
-      <span aria-hidden="true">◧</span>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M2.5 2v12M13.5 8h-8m0 0L8.5 5M5.5 8l3 3" stroke="currentColor" stroke-width="1.5" />
+      </svg>
     </button>
   </tooltip-elemental>
 
@@ -226,7 +273,9 @@ bubble has moved out from under it.
 
   <tooltip-elemental>
     <button type="button" title="Hard against the right edge">
-      <span aria-hidden="true">◨</span>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M13.5 2v12M2.5 8h8m0 0L7.5 5M10.5 8l-3 3" stroke="currentColor" stroke-width="1.5" />
+      </svg>
     </button>
   </tooltip-elemental>
 </div>
@@ -236,9 +285,10 @@ bubble has moved out from under it.
 body { margin: 0; padding: 4rem 0 6rem; font: 1rem/1.5 system-ui, sans-serif; }
 .row { display: flex; justify-content: space-between; align-items: start; }
 button { font: inherit; padding: 0.4em 0.8em; }
+button:has(svg) { display: inline-flex; padding: 0.4em; }
 ```
 
-_Hover the two square buttons at the ends. Their bubbles are wider than they are and would
+_Hover the two icon buttons at the ends. Their bubbles are wider than they are and would
 run off the frame if they were centred, so each stops at the edge — and the caret slides
 along to stay over the button. The middle one has room and is centred on its trigger._
 
@@ -247,6 +297,11 @@ The decision itself is
 `center` when there is room for it and falls back to whichever edge fits when there is not.
 The clamp is applied after either answer, because the fallback edge can run off just as
 easily as the centre could.
+
+`horizontal` goes through `placeSubmenu` instead, which has no such answer — a submenu hangs
+down from the item that opened it, and that is right for a menu. So the middle is asked for
+here rather than there, and the submenu's own `start` / `end` is what a bubble too tall for
+the space beside the trigger falls back to.
 
 ### Where the caret points
 
@@ -271,6 +326,67 @@ Drawing your own caret? Read that property and clamp it to whatever your shape n
 `50%` fallback is what a bubble nothing has placed yet gets, so a caret is centred rather than
 stuck at zero.
 
+### Without one
+
+The caret is the theme's, not the element's: two pseudo-elements on the bubble, and nothing
+else depends on them. A plain box is `content: none` on both — and usually a smaller gap with
+it, since the default `6px` is exactly the caret's own reach (`--tooltip-elemental-caret` plus
+the rim it is drawn with), so a bubble that no longer points stands further off than it needs
+to.
+
+<!-- demo tooltip style="--code-preview-height:170px" -->
+
+```html
+<p>
+  <tooltip-elemental>
+    <button type="button" aria-label="Star">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M8 2l1.8 3.9 4.2.5-3.1 2.9.8 4.2L8 11.4 4.3 13.5l.8-4.2L2 6.4l4.2-.5z" stroke="currentColor" stroke-width="1.5" />
+      </svg>
+    </button>
+    <span>Starred drafts sort to the top</span>
+  </tooltip-elemental>
+
+  <tooltip-elemental horizontal>
+    <button type="button" aria-label="History">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M8 4.5V8l2.5 1.5M2 8a6 6 0 106-6 6 6 0 00-4.5 2M3.5 1.5V4h2.5" stroke="currentColor" stroke-width="1.5" />
+      </svg>
+    </button>
+    <span>Every version since the draft was created</span>
+  </tooltip-elemental>
+</p>
+```
+
+```css demo
+body { margin: 0; padding: 3rem 1rem; font: 1rem/1.5 system-ui, sans-serif; }
+button { font: inherit; display: inline-flex; padding: 0.4em; }
+
+tooltip-elemental {
+  --tooltip-elemental-gap: 4px;
+}
+
+tooltip-elemental:defined > [role="tooltip"]::before,
+tooltip-elemental:defined > [role="tooltip"]::after {
+  content: none;
+}
+```
+
+The selector is the theme's own, repeated. Its caret rules are gated on `:defined` and on the
+role — `tooltip-elemental:defined > [role="tooltip"]::before` — so a plainer selector than that
+loses on specificity and the caret stays whatever the rule says. Matching it exactly is enough,
+because your stylesheet comes after the theme's.
+
+Both demos above wrap their trigger. A bubble the `for` attribute points at *is* the element,
+so that shape wants `tooltip-elemental:defined[role="tooltip"]::before` — the same rule with the
+child combinator dropped.
+
+Turning the size down instead is the trap. `--tooltip-elemental-caret: 0` leaves a visible grey
+nub: the rim triangle's width is `calc(var(--tooltip-elemental-caret) + var(--tooltip-elemental-border-width))`,
+and a unitless zero makes that `calc()` invalid, so the border falls back to `medium` — 3px in
+Chromium, where this was measured. `0px` computes, and leaves a 1px triangle too small to see
+at 5× zoom. Neither says what it means; `content: none` does.
+
 ## The fade
 
 The optional theme fades the bubble in and out over `--tooltip-elemental-duration`, which is
@@ -281,7 +397,11 @@ The optional theme fades the bubble in and out over `--tooltip-elemental-duratio
 ```html
 <p>
   <tooltip-elemental>
-    <button type="button">Slowly</button>
+    <button type="button" aria-label="Schedule">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M8 4.5V8l2.5 1.5M8 14A6 6 0 108 2a6 6 0 000 12z" stroke="currentColor" stroke-width="1.5" />
+      </svg>
+    </button>
     <span>Half a second, so the fade is easy to watch</span>
   </tooltip-elemental>
 </p>
@@ -289,7 +409,7 @@ The optional theme fades the bubble in and out over `--tooltip-elemental-duratio
 
 ```css demo
 body { margin: 0; padding: 3rem 1rem; font: 1rem/1.5 system-ui, sans-serif; }
-button { font: inherit; padding: 0.4em 0.8em; }
+button { font: inherit; display: inline-flex; padding: 0.4em; }
 
 tooltip-elemental {
   --tooltip-elemental-duration: 500ms;
@@ -393,7 +513,7 @@ Or the single-element bundle:
 | On | What |
 | --- | --- |
 | the bubble | `role="tooltip"`, an `id` if it had none, `hidden` while it is not showing |
-| the bubble | `data-side` (`block-end`/`block-start`, or `inline-end`/`inline-start` with `horizontal`) and `data-align` (`start` / `end`), and `top` / `left` in viewport pixels |
+| the bubble | `data-side` (`block-end`/`block-start`, or `inline-end`/`inline-start` with `horizontal`) and `data-align` (`center`, or `start` / `end` where the middle had no room), and `top` / `left` in viewport pixels |
 | the bubble | `--tooltip-elemental-arrow-offset`, the middle of the trigger measured from the bubble's start edge |
 | the trigger | `aria-describedby`, appended to any it already had — or `aria-label`, when its `title` was the only name it had |
 | the trigger | its `title` removed, when those words became the bubble |
@@ -413,7 +533,7 @@ tooltip-elemental [role="tooltip"][data-side="block-start"] {
 tooltip-elemental [role="tooltip"][data-side="inline-end"] {
 } /* `horizontal`, and it went after the trigger */
 tooltip-elemental [role="tooltip"][data-align="end"] {
-} /* it had to run back the other way */
+} /* the middle had no room, so it ran back the other way */
 ```
 
 `position: fixed`, not absolute: the trigger and the bubble are not always in the same offset
@@ -458,15 +578,21 @@ spent through those two properties.
 ```html
 <p>
   <tooltip-elemental>
-    <button type="button">Turn me in the Options tab</button>
-    <span>Saves to your drafts, without publishing</span>
+    <button type="button" aria-label="Settings">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M2 4.5h4M11 4.5h3M2 11.5h3M10 11.5h4" />
+        <circle cx="8.5" cy="4.5" r="2" />
+        <circle cx="7.5" cy="11.5" r="2" />
+      </svg>
+    </button>
+    <span>Turn the properties in the Options tab and watch this bubble change</span>
   </tooltip-elemental>
 </p>
 ```
 
 ```css demo
 body { margin: 0; padding: 3rem 1rem; font: 1rem/1.5 system-ui, sans-serif; }
-button { font: inherit; padding: 0.4em 0.8em; }
+button { font: inherit; display: inline-flex; padding: 0.4em; }
 ```
 
 ## Tooltip, or something else?

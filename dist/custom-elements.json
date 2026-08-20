@@ -7617,6 +7617,46 @@
         },
         {
           "kind": "function",
+          "name": "besideAlign",
+          "parameters": [
+            {
+              "name": "trigger",
+              "description": "Rect of the trigger, in viewport coordinates",
+              "type": {
+                "text": "DOMRect|object"
+              }
+            },
+            {
+              "name": "height",
+              "description": "The bubble's",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "limit",
+              "description": "The viewport's",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "fallback",
+              "description": "Where the bubble goes when the middle has no room - `placeSubmenu`'s answer",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "description": "Which way a bubble beside its trigger runs on the block axis.\n\n`placeSubmenu` answers `start` or `end` and never the middle, which is right for the thing\nit is named after: a submenu hangs down from the item that opened it. A tooltip is a bubble\nwith a caret, and a caret out of the middle of the trigger is the whole of the pointing - so\nthe middle is asked for first, and the submenu's own answer is what is left when a centred\nbubble would run off the top or the bottom.\n\nThe mirror of the fifth argument `placeFlyout` takes for the other axis, kept here because\n`placeSubmenu` has no such argument and a menu would not want one.",
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          }
+        },
+        {
+          "kind": "function",
           "name": "withoutToken",
           "parameters": [
             {
@@ -7869,6 +7909,14 @@
           "name": "alignOnAxis",
           "declaration": {
             "name": "alignOnAxis",
+            "module": "src/elementals/tooltip/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "besideAlign",
+          "declaration": {
+            "name": "besideAlign",
             "module": "src/elementals/tooltip/index.js"
           }
         },

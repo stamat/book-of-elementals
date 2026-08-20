@@ -1,4 +1,4 @@
-import { ElementBase, define, placeFlyout, placeSubmenu } from '../../core.js';
+import { ElementBase, define, fits, placeFlyout, placeSubmenu } from '../../core.js';
 
 /**
  * Whether the words in a `title` are the trigger's *name* or a *description* of it.
@@ -117,6 +117,28 @@ export function arrowOffset(trigger, bubble, horizontal, rtl) {
 export function alignOnAxis(start, end, size, limit, toStart, centred) {
   const at = centred ? (start + end) / 2 - size / 2 : (toStart ? start : end - size);
   return Math.min(Math.max(at, 0), Math.max(limit - size, 0));
+}
+
+/**
+ * Which way a bubble beside its trigger runs on the block axis.
+ *
+ * `placeSubmenu` answers `start` or `end` and never the middle, which is right for the thing
+ * it is named after: a submenu hangs down from the item that opened it. A tooltip is a bubble
+ * with a caret, and a caret out of the middle of the trigger is the whole of the pointing - so
+ * the middle is asked for first, and the submenu's own answer is what is left when a centred
+ * bubble would run off the top or the bottom.
+ *
+ * The mirror of the fifth argument `placeFlyout` takes for the other axis, kept here because
+ * `placeSubmenu` has no such argument and a menu would not want one.
+ *
+ * @param {DOMRect|object} trigger Rect of the trigger, in viewport coordinates
+ * @param {number} height The bubble's
+ * @param {number} limit The viewport's
+ * @param {string} fallback Where the bubble goes when the middle has no room - `placeSubmenu`'s answer
+ * @returns {string} `center`, or the fallback
+ */
+export function besideAlign(trigger, height, limit, fallback) {
+  return fits((trigger.top + trigger.bottom - height) / 2, height, limit) ? 'center' : fallback;
 }
 
 /**
@@ -444,9 +466,13 @@ export class TooltipElemental extends ElementBase {
     // coming out of a corner points at whatever happens to be beside the control. Asked for
     // unconditionally rather than through an attribute: there is no page that wants its
     // tooltips hanging off one edge, and an option nobody would turn off is not an option.
-    const { side, align } = horizontal
+    const placement = horizontal
       ? placeSubmenu(trigger, panel, viewport, rtl)
       : placeFlyout(trigger, panel, viewport, rtl, true);
+    const { side } = placement;
+    const align = horizontal
+      ? besideAlign(trigger, bubble.height, viewport.height, placement.align)
+      : placement.align;
 
     // `side` and `align` are logical and these are physical pixels, so the direction
     // decides which edge each one names: the inline start is the left in LTR and the right

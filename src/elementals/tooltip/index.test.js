@@ -5,7 +5,7 @@
 // Deliberately not covered here: the wiring itself - `aria-describedby`, the `hidden`
 // toggle, the fixed-position maths - which needs a document and belongs to `script/a11y`
 // and the docs demo. The placement decision is book-of-spells' `placeFlyout`, tested there.
-import { titleRole, nextTooltipState, arrowOffset, alignOnAxis, withoutToken } from './index.js';
+import { titleRole, nextTooltipState, arrowOffset, alignOnAxis, besideAlign, withoutToken } from './index.js';
 
 test('teardown takes only its own id out of aria-describedby', () => {
   // The trigger outlives the element in the `for` shape, and a description pointing at a
@@ -132,4 +132,23 @@ test('neither answer is allowed to put the bubble outside the viewport', () => {
   // near edge of a control at the viewport's start, and to the far edge of one at its end.
   expect(alignOnAxis(-60, 20, 200, 1000, true, false)).toBe(0);
   expect(alignOnAxis(980, 1060, 200, 1000, false, false)).toBe(800);
+});
+
+// Beside the trigger, the block axis used to take `placeSubmenu`'s answer whole - and that
+// helper only knows `start` and `end`, because a submenu hangs down from the item that opened
+// it. A tooltip inherited that and sat with its top edge on the trigger's, caret pointing out
+// of its first line at whatever was above the button's middle.
+test('a bubble beside its trigger is centred on it, the same as one under it', () => {
+  // A 40-tall control at y=40 against a 24-tall bubble: the middle at 36 has room either way.
+  expect(besideAlign(WIDE, 24, 768, 'start')).toBe('center');
+  // And the caret then comes out of the middle of the bubble, since both middles are at 60.
+  expect(arrowOffset(WIDE, { ...BUBBLE, left: 506, top: 48, height: 24 }, true, false)).toBe(12);
+});
+
+test('a trigger too near an edge to centre on keeps the alignment that fits', () => {
+  // A tall bubble against a control at the top of the viewport: centred, its own top would be
+  // above the fold, so it runs down from the trigger instead.
+  expect(besideAlign({ top: 10, bottom: 50 }, 200, 768, 'start')).toBe('start');
+  // The same at the bottom, where `placeSubmenu` has already said to run the other way.
+  expect(besideAlign({ top: 700, bottom: 740 }, 200, 768, 'end')).toBe('end');
 });
