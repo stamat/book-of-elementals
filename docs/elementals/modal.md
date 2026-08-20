@@ -193,6 +193,16 @@ Three things follow from where it sits:
   browser's own rule, so it is already the containing block — nothing has to be positioned to
   make the corner work. Being out of the flow, it moves nothing; `theme.scss` gives the
   element right after it room on that side, so a heading does not run under it.
+- **A picture or a film right after it gets no room**, and the cross lands over it — which is
+  where every lightbox puts one. Reserving the gutter there would cost the image a strip of
+  dialog surface down one edge, and on a media box sized `width: 100%` without a border-box
+  reset it is 100% *plus* the gutter, which is a dialog that scrolls sideways. What the corner
+  costs instead is a repaint: the cross inherits the dialog's text colour, and no colour is
+  safe over a picture nobody chose.
+
+  ```css
+  dialog#lightbox .modal-elemental-close { color: white; background: rgb(0 0 0 / 40%); }
+  ```
 - **A dialog long enough to scroll takes the cross with it.** That is the cost of the
   corner: an absolutely positioned box scrolls with the content it is positioned against.
   Give a long modal a close button of its own at the end of the content, where the reader
@@ -227,7 +237,6 @@ walks back out the way it came in.
     <h2>Settings</h2>
     <p>Two devices are signed in.</p>
     <button type="button" command="show-modal" commandfor="confirm">Sign out everywhere</button>
-    <form method="dialog"><button type="submit">Done</button></form>
   </dialog>
 </modal-elemental>
 
@@ -375,7 +384,6 @@ nobody finds against a photograph.
       <track kind="captions" label="English" srclang="en" default
         src="https://mdn.github.io/shared-assets/misc/friday.vtt">
     </video>
-    <form method="dialog"><button type="submit">Close</button></form>
   </dialog>
 </modal-elemental>
 ```
@@ -385,6 +393,11 @@ body { margin: 0; padding: 1rem; min-block-size: 20rem; font: 1rem/1.5 system-ui
 
 modal-elemental > dialog#clip { --modal-elemental-max-width: 40rem; padding: 0.5rem; }
 #clip video { display: block; width: 100%; height: auto; }
+
+/* the element's own cross, repainted for a film: it inherits the page's text colour, and a
+   picture that moves has no colour that stays safe under it */
+#clip .modal-elemental-close { color: white; background: rgb(0 0 0 / 40%); }
+#clip .modal-elemental-close:hover { background: rgb(0 0 0 / 65%); }
 ```
 
 ```js demo

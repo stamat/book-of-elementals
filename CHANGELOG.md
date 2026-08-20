@@ -17,6 +17,19 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Fixed
 
+- **A dialog whose first thing is a picture or a film no longer scrolls sideways.** The theme
+  keeps content out from under the corner cross by padding the element right after it, so a
+  heading cannot run beneath it — and that padding landed on media as well. A `<video>` or
+  `<iframe>` sized `width: 100%` on a page with no border-box reset is then 100% *plus*
+  2.5rem, and the dialog's own `overflow: auto` turns the difference into a horizontal
+  scrollbar: measured on this project's own docs page at `scrollWidth` 696 against a 656px
+  box, in Chromium 151. CSS: `img`, `picture`, `video`, `iframe`, `embed`, `object`, `canvas`
+  and `svg` directly after the cross are now excluded from that rule and get no
+  `padding-inline-end`, so the picture fills the dialog and the cross sits over it, which is
+  where every lightbox puts one. Repaint it there — it inherits the dialog's text colour, and
+  no colour is safe over a picture nobody chose. Anything else after the cross keeps the
+  gutter exactly as before.
+
 - **A YouTube embed in a `<modal-elemental>` no longer plays on after the modal is closed.**
   Closing reloaded every `<iframe>` in the dialog by setting its `src` to the value it
   already had — and a `loading="lazy"` frame in a closed dialog is `display: none`, so that

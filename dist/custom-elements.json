@@ -3429,6 +3429,26 @@
         },
         {
           "kind": "function",
+          "name": "stopMedia",
+          "parameters": [
+            {
+              "name": "dialog"
+            }
+          ],
+          "description": "Stop whatever the modal was playing, now that it is closed.\n\nA closed dialog is `display: none`, which stops nothing: a video keeps playing and an\nembed keeps talking to a reader who has already dismissed it. `pause()` covers the\nelements; an embedded player is a cross-origin document that cannot be paused from here,\nso its frame is sent to `about:blank` instead - which discards the document, and is why\nreopening a lightbox starts the video at the beginning rather than where it was.\n\n`loading` goes to `eager` for that one navigation, and this is the whole reason the frame\nis parked rather than reloaded in place: a `lazy` frame in a `display: none` dialog is not\nnavigated when its src is set, the load is deferred until it is on screen again, and the\ndocument that was playing lives on unseen and audible - measured with a ticking frame in\nChromium 151, Firefox 153 and WebKit 26.5, all three. `about:blank` alone is not the\nanswer either: Firefox defers a navigation to it the same way. Both attributes are put\nback on the next open, so the markup an author reads is the markup they wrote."
+        },
+        {
+          "kind": "function",
+          "name": "restoreMedia",
+          "parameters": [
+            {
+              "name": "dialog"
+            }
+          ],
+          "description": "Point a parked frame back at what it was showing, now that the modal is open again.\n\n`loading` first, so a frame that said `lazy` is lazy again before the src that starts the\nfetch is set - the dialog is open by now, so a deferred load resolves immediately either\nway, and the attribute is never observed holding a value its author did not write."
+        },
+        {
+          "kind": "function",
           "name": "writesClose",
           "parameters": [
             {
@@ -3747,6 +3767,22 @@
           "name": "outside",
           "declaration": {
             "name": "outside",
+            "module": "src/elementals/modal/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "stopMedia",
+          "declaration": {
+            "name": "stopMedia",
+            "module": "src/elementals/modal/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "restoreMedia",
+          "declaration": {
+            "name": "restoreMedia",
             "module": "src/elementals/modal/index.js"
           }
         },

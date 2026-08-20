@@ -252,6 +252,34 @@ navbar-elemental {
   margin-block: 1rem;
 }
 
+// The twin of the button rule in `script/demos.js`, which cannot reach this one: a
+// `<code-preview>` sample is a srcdoc document and a demo standing in the prose is this
+// one. Same skin, so the modal page's opening demo and the six framed ones below it are
+// the same object; different palette, because there the frame has only `Canvas` and here
+// the docs tokens are what the rest of the chrome is painted from.
+// Scoped as it is there: `> button` is the sample's own trigger and never a button an
+// elemental wrote, and the cross the modal writes is out by name, since the theme repaints
+// it but never pads it and a 2rem box with padding added is a bigger box.
+.demo-block > button,
+.demo-block dialog > button:not(.modal-elemental-close),
+.demo-block dialog > form button {
+  padding: 0.4rem 0.75rem;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: var(--bg-alt);
+
+  // 35% and not the 25% a rim on a flat trigger takes, matching the frame's copy: a solid
+  // box reads bigger than an outlined one of the same size, so an outlined button standing
+  // next to a filled one needs the heavier edge to measure as its equal.
+  border: 1px solid color-mix(in srgb, currentcolor 35%, transparent);
+  border-radius: 0.375rem;
+
+  &:hover {
+    background: color-mix(in srgb, currentcolor 10%, var(--bg-alt));
+  }
+}
+
 // A list an element built is not a list someone is reading: the theme spaces `<li>` for
 // prose, and an in-page sample - unlike the `<code-preview>` ones, which are a bare
 // document in a frame - inherits that inside the popup the element writes, where a row is

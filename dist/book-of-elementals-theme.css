@@ -781,7 +781,7 @@ modal-elemental > dialog {
 modal-elemental > dialog {
   overflow: auto;
 }
-modal-elemental > dialog > .modal-elemental-close + * {
+modal-elemental > dialog > .modal-elemental-close + *:not(:is(img, picture, video, iframe, embed, object, canvas, svg)) {
   padding-inline-end: calc(var(--modal-elemental-close-size) + 0.5rem);
 }
 

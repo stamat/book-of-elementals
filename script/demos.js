@@ -84,6 +84,57 @@ const HEAD = [
   // of them - and giving those a block display and a margin would take the sample apart to
   // fix the line above it.
   'body>label{display:block;margin-block-end:0.35rem}',
+  // A sample's own buttons, which are UA chrome in a bare document - a grey box in
+  // Chrome's own font, sitting next to an elemental wearing this book's theme. Frame
+  // furniture like the padding above, for the same reason: the docs page these samples are
+  // read on has a look, and the frame has nothing.
+  // Scoped the way the label is. `body >` is a control the sample wrote, never one an
+  // elemental wrote for itself, and the dialog's own two levels are what the modal samples
+  // put in one - a trigger for a nested dialog, a `<form method="dialog">` of submits.
+  // `.modal-elemental-close` is out by name and not by specificity: the theme repaints the
+  // cross but never pads it, and a 2rem box with padding added is a bigger box.
+  // `Canvas`/`CanvasText` and no hex, like everything else in this frame - it is the whole
+  // palette a preview has, and it follows the `[data-theme]` the docs switch mirrors in.
+  'body>button,dialog>button:not(.modal-elemental-close),dialog>form button{',
+  'font:inherit;color:inherit;cursor:pointer;padding:0.4rem 0.75rem;',
+  'background:color-mix(in srgb,currentcolor 6%,Canvas);',
+  // 35% and not the 25% a rim on a flat trigger takes: the pair in a dialog is one filled
+  // button and one outlined, and a solid box reads bigger than an outlined one of the same
+  // size. They measure identical - what needs matching is the weight of the edge.
+  'border:1px solid color-mix(in srgb,currentcolor 35%,transparent);',
+  'border-radius:0.375rem}',
+  'body>button:hover,dialog>button:not(.modal-elemental-close):hover,dialog>form button:hover{',
+  'background:color-mix(in srgb,currentcolor 14%,Canvas)}',
+  // A dialog's buttons are siblings in the flow rather than a laid-out row, so the moment
+  // the box is narrow enough for two of them to wrap they sit edge to edge with only the
+  // markup's own whitespace between. The gap is on the button and not on a wrapper because
+  // the samples have no wrapper - that is the point of them.
+  'dialog>button:not(.modal-elemental-close),dialog>form button{margin-block-start:0.5rem}',
+  // The affirmative one, filled. Last rather than by name or value: these samples put the
+  // action after the way out, which is the order the platform's own dialogs use on this
+  // side of the Windows divide, and reading the order asks nothing of the sample. Only when
+  // there are two - a dialog whose single button is "Close" has no primary action to mark,
+  // and filling it would say the reader is being asked to choose.
+  // `CanvasText` on `Canvas` is the only fill this frame can make: the palette is two
+  // colors, and the inversion of them is the strongest thing in it either side of the
+  // theme switch.
+  'dialog>form button:last-of-type:not(:only-of-type){',
+  'color:Canvas;background:CanvasText;border-color:CanvasText}',
+  'dialog>form button:last-of-type:not(:only-of-type):hover{',
+  'background:color-mix(in srgb,CanvasText 85%,Canvas)}',
+  // The same field the field page draws by hand in its own sample, which is where this
+  // shape comes from - a preview that opens a form should not be the one place in the book
+  // where a text box is UA chrome. Checkboxes and radios are out: a padded, rounded box is
+  // the wrong furniture for a control the platform draws whole.
+  // The label is a grid for the same reason it is one there: a wrapping label puts its text
+  // and its control on one line, which is a field as wide as the words beside it happen to
+  // leave room for. Two rows instead - the question, then the box across the dialog.
+  'dialog label:has(input:not([type=checkbox],[type=radio])){display:grid;gap:0.35rem}',
+  'dialog input:not([type=checkbox],[type=radio]){box-sizing:border-box;font:inherit;',
+  'padding:0.6rem 0.75rem;color:CanvasText;background:Canvas;',
+  'border:1px solid color-mix(in srgb,CanvasText 30%,transparent);border-radius:0.375rem}',
+  'dialog input:not([type=checkbox],[type=radio]):focus-visible{',
+  'outline:2px solid CanvasText;outline-offset:1px}',
   '</style>',
   // A placeholder `href="#"` is a link to nowhere on an ordinary page, and something else
   // entirely in a srcdoc frame: srcdoc has no url of its own, so it borrows this page's as

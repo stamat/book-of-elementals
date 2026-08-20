@@ -70,7 +70,14 @@ modal-elemental > dialog {
   // without this a heading runs beneath it and the last word is the one that disappears -
   // and it is the *next* element rather than every one of them, because that is the line
   // the corner is on. A dialog with no cross reserves nothing.
-  > .modal-elemental-close + * {
+  // Not a picture or a film, which is the one thing that must *not* keep out of the corner:
+  // padding on a replaced element sized `width: 100%` is added to that 100% unless the page
+  // has a border-box reset, so a dialog holding a video scrolls sideways by exactly this
+  // much - and a media box that does obey the gutter is a strip of dialog surface down one
+  // edge of the picture instead. A cross over an image is where every lightbox puts it. It
+  // does inherit the dialog's text colour there, and no colour is safe over a picture
+  // nobody chose, so repaint it: `.modal-elemental-close { color: … }`.
+  > .modal-elemental-close + *:not(:is(img, picture, video, iframe, embed, object, canvas, svg)) {
     padding-inline-end: calc(var(--modal-elemental-close-size) + 0.5rem);
   }
 }

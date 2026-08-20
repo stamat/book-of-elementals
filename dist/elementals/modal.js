@@ -89,13 +89,27 @@
       new Promise((resolve) => setTimeout(resolve, limit))
     ]);
   }
+  var PARKED = "about:blank";
+  var parked = /* @__PURE__ */ new WeakMap();
   function stopMedia(dialog) {
     for (const media of dialog.querySelectorAll("video, audio")) {
       if (!media.paused) media.pause();
     }
     for (const frame of dialog.querySelectorAll("iframe[src]")) {
-      const src = frame.src;
-      frame.src = src;
+      if (parked.has(frame)) continue;
+      parked.set(frame, { src: frame.getAttribute("src"), loading: frame.getAttribute("loading") });
+      frame.loading = "eager";
+      frame.src = PARKED;
+    }
+  }
+  function restoreMedia(dialog) {
+    for (const frame of dialog.querySelectorAll("iframe")) {
+      const state = parked.get(frame);
+      if (!state) continue;
+      parked.delete(frame);
+      if (state.loading === null) frame.removeAttribute("loading");
+      else frame.setAttribute("loading", state.loading);
+      if (state.src !== null) frame.setAttribute("src", state.src);
     }
   }
   var CLOSE_CLASS = "modal-elemental-close";
@@ -188,6 +202,7 @@
       }
       dialog.getBoundingClientRect();
       dialog.dataset.state = "open";
+      restoreMedia(dialog);
       this.toggled(true);
     }
     disconnectedCallback() {
@@ -262,6 +277,7 @@
       stack.push(this);
       depths();
       dialog.showModal();
+      restoreMedia(dialog);
       dialog.getBoundingClientRect();
       dialog.dataset.state = "open";
       this.toggled(true);
