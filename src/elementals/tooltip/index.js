@@ -30,8 +30,14 @@ export function titleRole(trigger) {
  * same button is no dismissal at all - so `dismissed` outlives the press and is cleared
  * only once the reader has actually left, by pointer and by focus both.
  *
+ * Activating the trigger is deliberately not Escape's dismissal. The click has already
+ * given the button focus, and a `dismissed` waiting for that focus to leave would kill
+ * hover on the control for as long as it stays - a mouse never blurs what it clicked. So
+ * `activate` forgets both holds instead: the bubble hides now, and whichever of hover or
+ * focus arrives next opens it anew.
+ *
  * @param {{hovering: boolean, focused: boolean, dismissed: boolean, open: boolean}} state
- * @param {'pointerenter'|'pointerleave'|'focus'|'blur'|'escape'} event
+ * @param {'pointerenter'|'pointerleave'|'focus'|'blur'|'escape'|'activate'} event
  * @returns {{hovering: boolean, focused: boolean, dismissed: boolean, open: boolean}}
  */
 export function nextTooltipState(state, event) {
@@ -42,6 +48,7 @@ export function nextTooltipState(state, event) {
     case 'focus': next.focused = true; break;
     case 'blur': next.focused = false; break;
     case 'escape': next.dismissed = true; break;
+    case 'activate': next.hovering = false; next.focused = false; break;
     default: return state;
   }
   if (!next.hovering && !next.focused) next.dismissed = false;
@@ -231,6 +238,12 @@ let sequence = 0;
  * belongs in one. A control that needs its description read on every device wants visible
  * text, and one that reveals content on a press wants `<disclosure-elemental>`.
  *
+ * Activating the trigger - click, Enter, Space - hides the bubble: a used control's tooltip
+ * has said its piece, and the focus the click leaves on the button would otherwise hold it
+ * open over the neighbour's bubble the pointer goes to next. It is not Escape's held
+ * dismissal - hovering away and back, or Tab out and in, shows it again. A tap's click is
+ * the one exemption, since on Chromium the tap is how touch opens the bubble at all.
+ *
  * Light DOM, no shadow root. Nothing is moved and nothing is wrapped: the bubble is the
  * element the author wrote, given a `role`, an `id` if it had none, and a `hidden` while
  * it is not showing - which still leaves it readable, because
@@ -337,6 +350,7 @@ export class TooltipElemental extends ElementBase {
     this.onFocus = this.onFocus.bind(this);
     this.onBlur = this.onBlur.bind(this);
     this.onKeydown = this.onKeydown.bind(this);
+    this.onClick = this.onClick.bind(this);
     this.reposition = this.reposition.bind(this);
 
     for (const el of [trigger, bubble]) {
@@ -345,6 +359,7 @@ export class TooltipElemental extends ElementBase {
     }
     trigger.addEventListener('focus', this.onFocus);
     trigger.addEventListener('blur', this.onBlur);
+    trigger.addEventListener('click', this.onClick);
   }
 
   disconnectedCallback() {
@@ -357,6 +372,7 @@ export class TooltipElemental extends ElementBase {
     }
     trigger.removeEventListener('focus', this.onFocus);
     trigger.removeEventListener('blur', this.onBlur);
+    trigger.removeEventListener('click', this.onClick);
     this.stopWatching();
     clearTimeout(this.closeTimer);
 
@@ -404,6 +420,16 @@ export class TooltipElemental extends ElementBase {
     // Not prevented: Escape belongs to whatever else is listening for it too - a dialog
     // this tooltip happens to be inside has the better claim on closing.
     this.apply('escape');
+  }
+
+  onClick(e) {
+    // Every activation but a tap's. A tap opens the bubble through the focus it gives the
+    // trigger - the one way in touch has - and its own click arriving here would take the
+    // words back in the same breath. A keyboard's click carries no `pointerType`, and on an
+    // engine still raising `click` as a MouseEvent neither does a mouse's; both dismiss,
+    // which for the latter is the same answer it would get spelled out.
+    if (e.pointerType === 'touch') return;
+    this.apply('activate');
   }
 
   /** Runs one event through the state machine and draws whatever came out of it. */

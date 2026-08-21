@@ -464,7 +464,8 @@ that appears and disappears without fading, and that is the whole of the degrada
 | trigger focused | shows |
 | trigger blurred | hides |
 | <kbd>Escape</kbd> | hides, and **stays** hidden until the reader has actually left. A dismissal undone by the next twitch of the mouse is no dismissal |
-| touch | no hover, so nothing of its own — a tap shows it only where it focuses the trigger, by the row above and [not on every engine](#read-this-before-you-use-one). Tapping away is then the dismissal, since <kbd>Escape</kbd> is not one a finger has |
+| trigger activated — click, <kbd>Enter</kbd>, <kbd>Space</kbd> | hides. A used control's tooltip has said its piece — and the focus the click leaves on the button would otherwise hold it open over the neighbour's bubble. Not <kbd>Escape</kbd>'s held dismissal: hovering away and back, or <kbd>Tab</kbd> out and in, shows it again |
+| touch | no hover, so nothing of its own — a tap shows it only where it focuses the trigger, by the row above and [not on every engine](#read-this-before-you-use-one). A tap's click is exempt from the activation row, since it is the same gesture that opened the bubble. Tapping away is then the dismissal, since <kbd>Escape</kbd> is not one a finger has |
 
 Hover and focus each hold it open on their own, so a reader who tabs to a button and then
 moves the mouse away still has the words.

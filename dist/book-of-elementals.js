@@ -6104,6 +6104,10 @@
       case "escape":
         next.dismissed = true;
         break;
+      case "activate":
+        next.hovering = false;
+        next.focused = false;
+        break;
       default:
         return state;
     }
@@ -6201,6 +6205,7 @@
       this.onFocus = this.onFocus.bind(this);
       this.onBlur = this.onBlur.bind(this);
       this.onKeydown = this.onKeydown.bind(this);
+      this.onClick = this.onClick.bind(this);
       this.reposition = this.reposition.bind(this);
       for (const el2 of [trigger, bubble]) {
         el2.addEventListener("pointerenter", this.onPointer);
@@ -6208,6 +6213,7 @@
       }
       trigger.addEventListener("focus", this.onFocus);
       trigger.addEventListener("blur", this.onBlur);
+      trigger.addEventListener("click", this.onClick);
     }
     disconnectedCallback() {
       if (!this.initialized) return;
@@ -6219,6 +6225,7 @@
       }
       trigger.removeEventListener("focus", this.onFocus);
       trigger.removeEventListener("blur", this.onBlur);
+      trigger.removeEventListener("click", this.onClick);
       this.stopWatching();
       clearTimeout(this.closeTimer);
       if (this.wroteName) trigger.removeAttribute("aria-label");
@@ -6247,6 +6254,10 @@
     onKeydown(e) {
       if (e.key !== "Escape") return;
       this.apply("escape");
+    }
+    onClick(e) {
+      if (e.pointerType === "touch") return;
+      this.apply("activate");
     }
     /** Runs one event through the state machine and draws whatever came out of it. */
     apply(event) {

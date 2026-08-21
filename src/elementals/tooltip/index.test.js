@@ -51,6 +51,26 @@ test('focus shows it, and the pointer leaving does not take it away from a keybo
   expect(run(['pointerenter', 'focus', 'blur']).open).toBe(true);
 });
 
+test('focus out hides it, when no pointer is holding it open', () => {
+  expect(run(['focus', 'blur']).open).toBe(false);
+});
+
+test('activating the control hides the bubble, though the click left focus on the button', () => {
+  // A used control's tooltip has said its piece - and the focus the click leaves behind
+  // would otherwise hold it open over the neighbour's bubble the pointer goes to next.
+  expect(run(['pointerenter', 'focus', 'activate']).open).toBe(false);
+});
+
+// Not Escape's dismissal, on purpose: a `dismissed` cleared only when pointer and focus have
+// both left would kill hover on the control for as long as the click's focus stays on it -
+// and a mouse never blurs what it clicked. Activation forgets both holds instead, so the
+// next arrival by either door opens it anew.
+test('leaving and coming back after a click shows the bubble again', () => {
+  expect(run(['pointerenter', 'focus', 'activate', 'pointerleave', 'pointerenter']).open).toBe(true);
+  // The keyboard's way back is Tab out and in.
+  expect(run(['focus', 'activate', 'blur', 'focus']).open).toBe(true);
+});
+
 test('Escape dismisses it, and moving the pointer over the same control does not bring it back', () => {
   const dismissed = run(['pointerenter', 'escape']);
   expect(dismissed.open).toBe(false);

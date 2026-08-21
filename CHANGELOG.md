@@ -28,6 +28,16 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Changed
 
+- **Activating a tooltip's trigger hides the bubble.** A click focuses the button in most
+  engines, and focus holds the bubble open — so a clicked control kept its tooltip up over
+  the neighbour's bubble the pointer went to next. Click, <kbd>Enter</kbd> and
+  <kbd>Space</kbd> now hide it. Deliberately not <kbd>Escape</kbd>'s held dismissal, which
+  waits for pointer and focus to both leave: the click's own focus never leaves a button a
+  mouse is done with, and hover would stay dead on it. Activation forgets both holds
+  instead, so hovering away and back — or <kbd>Tab</kbd> out and in — shows it again. A
+  tap's click is exempt: on Chromium the tap is how touch opens the bubble at all, and its
+  click would take the words back in the same breath.
+
 - **The tooltip theme no longer fades by default.** `--tooltip-elemental-duration` is `0s`
   instead of `120ms`: a tooltip answers a pointer that has already stopped moving, and a bubble
   easing in behind it reads as lag rather than as polish. The transition is still declared, so
