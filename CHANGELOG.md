@@ -15,6 +15,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-08-21
+
 ### Added
 
 - **`--tooltip-elemental-viewport-margin` keeps a tooltip off the very edge of the screen.**
