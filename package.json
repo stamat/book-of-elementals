@@ -242,7 +242,7 @@
     "jest": "^30.4.2",
     "playwright-core": "^1.62.1",
     "poops": "^2.5.0",
-    "poops-docs-theme": "^4.4.0",
+    "poops-docs-theme": "^4.4.1",
     "sass": "^1.102.0",
     "stylelint": "^17.14.1",
     "stylelint-config-standard-scss": "^17.0.0",
