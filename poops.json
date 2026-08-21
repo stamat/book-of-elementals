@@ -99,6 +99,7 @@
         "title": "Book of Elementals",
         "brand": "book-of-elementals",
         "brandMark": "📓",
+        "docsUrl": false,
         "description": "Accessible custom elements. Light DOM, no build step required.",
         "lang": "en",
         "url": "https://stamat.github.io/book-of-elementals",
