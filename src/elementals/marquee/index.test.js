@@ -6,11 +6,11 @@
 // hard-coded pair of copies looks right on the laptop it was written on and leaves a hole
 // on a wide screen - so it is the part worth pinning to numbers rather than to a browser.
 //
-// Deliberately not covered: the cloning itself, `inert` and `aria-hidden` on the copies,
-// the pause control, and the reduced-motion branch. Jest runs under Node here with no
-// jsdom, so an element test would assert against a stub base class - and a clone the
-// keyboard can still reach is a bug only a real browser can show, so those are checked by
-// `script/a11y` over the docs page instead.
+// Deliberately not covered here: the cloning itself, `inert` and `aria-hidden` on the copies,
+// the pause control, and the reduced-motion branch. Every one of them needs something jsdom
+// does not have - a `ResizeObserver`, a width, `inert`, `matchMedia` - and a clone the keyboard
+// can still reach is a bug only a real browser can show, so those are checked by `script/a11y`
+// over the docs page instead.
 
 import { cloneCount, cycleDuration, MAX_CLONES, DEFAULT_SPEED } from './index.js';
 

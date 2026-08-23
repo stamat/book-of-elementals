@@ -3,10 +3,8 @@
 // `stepIndex`, covered in book-of-spells - including that the ends do not wrap, which is
 // what leaves Tab as the only way out.
 //
-// Deliberately not covered: the wiring. Jest runs under Node here with no jsdom, so an
-// element test would assert against a stub base class rather than a DOM - the roving
-// tabindex, the role and the focus moves are checked in a browser against the docs page,
-// and against the APG toolbar pattern this element claims to implement.
+// Deliberately not covered here: the wiring - the roving tabindex, the role and the focus
+// moves are `dom.test.js`, which runs the element itself under jsdom.
 
 import { toolbarKey } from './index.js';
 

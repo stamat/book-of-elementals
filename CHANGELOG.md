@@ -205,6 +205,23 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Fixed
 
+- **`<password-elemental>` kept masking a form it had already left.** The submit and reset
+  listeners go on the `<form>`, and teardown looked the field's form up again to take them off —
+  but `disconnectedCallback` runs *after* the node has left the tree, so by then the field has no
+  form owner and there was nothing to remove the listeners from. A removed field left a detached
+  element flipping `type` on every submit of a form it is no longer part of. The form is now held
+  from upgrade, the way `<checkbox-group-elemental>` and `<segmented-elemental>` already held
+  theirs.
+
+- **`<switch-elemental>.checkValidity()` and `.reportValidity()` threw where the form half of
+  `ElementInternals` is missing.** `attachInternals()` existing is not a promise that
+  `checkValidity` is on what it returns — jsdom hands out an `ElementInternals` with none of the
+  form-associated API — and the two methods called straight through it. `setFormValue` and
+  `setValidity` were already guarded per method; these two now are as well, so the documented
+  answer for a platform without them (a switch that always validates, having no value for a form
+  to check) is what actually happens instead of a `TypeError`. `validationMessage` and
+  `willValidate` return `''` and `false` there rather than `undefined`.
+
 - **`<slider-elemental>`'s two thumbs are under
   [WCAG 2.2's target size](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html),
   and the docs now say so and spell the fix.** Stacked, the two inputs sit exactly on top of

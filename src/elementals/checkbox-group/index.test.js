@@ -7,9 +7,9 @@
 // the part that makes it worth having: a partial selection survives a round trip through
 // the parent instead of being destroyed by the first press.
 //
-// Deliberately not covered: the wiring and the CSS. Jest runs under Node here with no
-// jsdom, so an element test would be asserting against a stub base class - the properties,
-// the events and the look are checked in a browser against the docs page.
+// Deliberately not covered here: the wiring - the two properties written onto the parent, the
+// events a press synthesizes, and the reset and back-navigation paths are `dom.test.js`, which
+// runs the element itself under jsdom. The look is checked in a browser against the docs page.
 
 import { classify, cycle } from './index.js';
 

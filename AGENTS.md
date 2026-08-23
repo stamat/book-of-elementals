@@ -32,7 +32,11 @@ script/pin-heights  # re-measure docs previews, pin heights into demo markers so
 
 - An elemental lives in `src/elementals/<name>/`: `index.js`, `index.scss`,
   `theme.scss`, plus a docs page under `docs/elementals/`.
-- Tests sit next to source as `src/**/*.test.js`.
+- Tests sit next to source in two files: `index.test.js` is the pure decisions and
+  runs under Node; `dom.test.js` opens with an `@jest-environment jsdom` docblock
+  and runs the element itself over markup. jsdom has no layout, `ResizeObserver`,
+  `IntersectionObserver`, `matchMedia`, `inert`, `<dialog>` or clipboard — anything
+  needing one of those is `script/a11y`'s, and the header says which and why.
 - New elemental → also add its export map entries in `package.json`.
 
 ## Documentation

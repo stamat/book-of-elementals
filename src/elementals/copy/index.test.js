@@ -6,11 +6,10 @@
 // and the part a code block on a docs page depends on: a trailing newline pasted into a
 // terminal runs the command the reader was still reading.
 //
-// Deliberately not covered: the clipboard write itself, the feedback timer and the
-// announcement. Jest runs under Node here with no jsdom, so an element test would be
-// asserting against a stub base class - `navigator.clipboard` needs a secure context and a
-// real live region needs a screen reader, so both are checked in a browser against the
-// docs page.
+// Deliberately not covered here: the clipboard write, the feedback timer and the announcement -
+// those are `dom.test.js`, which runs the element itself under jsdom against a stubbed
+// clipboard. What a real screen reader does with the live region, and how the button looks
+// before and after, are checked in a browser against the docs page.
 
 import { sourceText } from './index.js';
 

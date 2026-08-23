@@ -3,12 +3,12 @@
 // `selected` attribute is naming, and - when a page has asked for the sliding bar - where
 // along the strip that bar goes and how much of it it covers.
 //
-// Deliberately not covered: the roles, the roving tabindex, the panels going up and down,
-// the deep link and `beforematch`. Jest runs under Node here with no jsdom, so an element
-// test would assert against a stub base class; those are checked by `script/a11y` over the
-// docs page instead. The measuring half of the bar - the `ResizeObserver`, and reading a
-// rect out of a real layout - is the same story, which is why `barBox` takes the two rects
-// rather than going and finding them.
+// Deliberately not covered here: the roles, the roving tabindex, the panels going up and down,
+// the deep link and `beforematch` - those are `dom.test.js`, which runs the element itself under
+// jsdom. The measuring half of the bar - the `ResizeObserver`, and reading a rect out of a real
+// layout - is neither file's: jsdom has no layout, which is why `barBox` takes the two rects
+// rather than going and finding them, and why `script/a11y` over the docs page is where a bar
+// that has actually moved is seen.
 
 import { barBox, selectedIndex, tabKey } from './index.js';
 

@@ -8,10 +8,10 @@
 // from the reader, and reading that off a screen once is how a library ends up tilting the
 // wrong way on the axis nobody demoed.
 //
-// Deliberately not covered: the listeners, the reduced-motion branch, the frame batching and
-// the layer walk. Jest runs under Node here with no jsdom, so an element test would assert
-// against a stub base class — and "the card holds still for a reader who asked for less
-// motion" is a thing only a real browser shows. `script/a11y` drives the docs demo instead.
+// Deliberately not covered here: the listeners, the reduced-motion branch, the frame batching
+// and the layer walk. The tilt is a rect and the branch is a `matchMedia`, neither of which
+// jsdom has — and "the card holds still for a reader who asked for less motion" is a thing only
+// a real browser shows. `script/a11y` drives the docs demo instead.
 
 import { tiltFrom, layerDepth, DEFAULT_MAX } from './index.js';
 

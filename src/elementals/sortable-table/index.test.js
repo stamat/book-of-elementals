@@ -9,11 +9,11 @@
 // `sortKey`'s edge is `data-sort-value=""`, which is an author saying "this cell sorts as
 // empty" and is exactly the value a `||` would throw away.
 //
-// Deliberately not covered: the buttons written into the headers, the caption note, the
-// `aria-sort` bookkeeping and the row moves. Jest runs under Node here with no jsdom, so an
-// element test would assert against a stub base class — `script/a11y` drives the docs demo
-// instead. The collator is injected rather than reached for, so these run the same everywhere:
-// `Intl.Collator`'s actual orderings are ICU's business and not this element's to re-test.
+// Deliberately not covered here: the buttons written into the headers, the caption note, the
+// `aria-sort` bookkeeping and the row moves — those are `dom.test.js`, which runs the element
+// itself under jsdom. The collator is injected rather than reached for, so these run the same
+// everywhere: `Intl.Collator`'s actual orderings are ICU's business and not this element's to
+// re-test.
 
 import { sortKey, sortOrder, DEFAULT_NOTE } from './index.js';
 

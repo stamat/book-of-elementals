@@ -6,10 +6,11 @@
 // element does is wiring: reading the `<select>`, writing the roles, moving
 // `aria-activedescendant`.
 //
-// Deliberately not covered: the wiring itself, and the CSS. Jest runs under Node here
-// with no jsdom, so an element test would be asserting against a stub base class rather
-// than against a DOM - the roles, the keyboard and the popup are checked in a browser
-// against the docs page, and against the APG combobox pattern it claims to implement.
+// Deliberately not covered here: the wiring itself, and the CSS. The roles, the keyboard and
+// the popup are checked in a browser against the docs page, and against the APG combobox
+// pattern this element claims to implement - the half of the popup that decides *where* it
+// goes needs a layout, which is why `flipsUp` takes the rects rather than going and finding
+// them, and which jsdom would answer with zeroes.
 
 import { flipsUp, focusAfterRemoval, offersCustom, removeName } from './index.js';
 

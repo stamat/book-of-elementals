@@ -3,9 +3,9 @@
 // Where an arrow key lands is `nextIndex` and where the popup opens is `placeFlyout`, both
 // covered in book-of-spells.
 //
-// Deliberately not covered: the wiring. Jest runs under Node here with no jsdom, so an
-// element test would assert against a stub base class rather than a DOM - the roles, the
-// cursor and the focus behaviour are checked in a browser against the docs page, and
+// Deliberately not covered here: the wiring. The roles, the cursor and the focus behaviour are
+// checked in a browser against the docs page - the cursor scrolling the option it lands on into
+// view is a layout, which jsdom answers with zeroes - and
 // against the APG combobox pattern this element claims to implement.
 
 import { suggestAction, suggestState } from './index.js';

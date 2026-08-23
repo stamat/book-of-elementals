@@ -13,9 +13,9 @@
 // and the stylesheet sizes its first grid track out of the same subtraction — so these numbers
 // are what says the two agree.
 //
-// Deliberately not covered: the listeners, the pointer capture, the collapse-and-restore
-// bookkeeping and the ARIA the element writes. Jest runs under Node here with no jsdom, so an
-// element test would assert against a stub base class — `script/a11y` drives the docs demo
+// Deliberately not covered here: the listeners, the pointer capture, the collapse-and-restore
+// bookkeeping and the ARIA the element writes. A drag is a rect and a `setPointerCapture`, and
+// jsdom has neither — `script/a11y` drives the docs demo
 // instead, which is where a name that went missing or a value out of its range shows up.
 
 import { splitterKey, positionFrom, DEFAULT_POSITION } from './index.js';

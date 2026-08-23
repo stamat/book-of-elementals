@@ -143,7 +143,6 @@ export class PasswordElemental extends ElementBase {
     // A button in a form submits it unless told otherwise, and a reveal button that posts
     // the form away is not a reveal button.
     if (!button.hasAttribute('type')) button.type = 'button';
-    button.setAttribute('aria-pressed', this.shown ? 'true' : 'false');
     if (!button.hasAttribute('aria-label') && !button.textContent.trim()) button.setAttribute('aria-label', this.label);
     if (!button.hasAttribute('aria-controls')) {
       if (!control.id) control.id = 'password-elemental-' + (++passwordCount);
@@ -165,9 +164,14 @@ export class PasswordElemental extends ElementBase {
     this.addEventListener('click', this.onClick);
     // Masking has to happen before the value leaves, and `submit` is the last moment it can.
     // On the form rather than here, because that is where both events are raised.
-    if (control.form) {
-      control.form.addEventListener('submit', this.onForm);
-      control.form.addEventListener('reset', this.onForm);
+    //
+    // Held rather than looked up again at teardown: `disconnectedCallback` runs after the node
+    // has left the tree, so by then the field has no form owner and there is nothing to take the
+    // listener off - a detached element still masking a form it is no longer part of.
+    this.form = control.form;
+    if (this.form) {
+      this.form.addEventListener('submit', this.onForm);
+      this.form.addEventListener('reset', this.onForm);
     }
     this.render();
   }
@@ -175,11 +179,11 @@ export class PasswordElemental extends ElementBase {
   disconnectedCallback() {
     if (!this.initialized) return;
     this.removeEventListener('click', this.onClick);
-    const control = this.control;
-    if (control && control.form) {
-      control.form.removeEventListener('submit', this.onForm);
-      control.form.removeEventListener('reset', this.onForm);
+    if (this.form) {
+      this.form.removeEventListener('submit', this.onForm);
+      this.form.removeEventListener('reset', this.onForm);
     }
+    this.form = null;
     clearTimeout(this.announceTimer);
     this.initialized = false;
   }

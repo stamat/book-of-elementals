@@ -3,11 +3,11 @@
 // name a `<label>` gives it - is the browser's, because the child is a native `<progress>`.
 // There is nothing there to test that would not be testing the platform.
 //
-// Deliberately not covered: what the element writes onto itself
-// (`--progress-elemental-value`, `--progress-elemental-buffer`, `data-indeterminate`), the
-// `MutationObserver` that catches a `<progress>` being moved, and the CSS that reads any of
-// it. Jest runs under Node here with no jsdom, so an element test would be asserting
-// against a stub base class; the bar is checked in a browser against the docs page.
+// Deliberately not covered here: what the element writes onto itself
+// (`--progress-elemental-value`, `--progress-elemental-buffer`, `data-indeterminate`) and the
+// `MutationObserver` that catches a `<progress>` being moved - those are `dom.test.js`, which
+// runs the element itself under jsdom. The CSS that reads any of it is checked in a browser
+// against the docs page.
 
 import { percent } from './index.js';
 

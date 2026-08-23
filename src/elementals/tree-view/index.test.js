@@ -9,11 +9,10 @@
 // branch is simply not in it — and the tests below are written as flat lists for that reason,
 // which is also how the element hands them over.
 //
-// Deliberately not covered: the roles the element writes, the `aria-owns` that ties a branch to
-// its node, the `hidden` toggling, the roving tabindex and the type-ahead. Jest runs under Node
-// here with no jsdom, so an element test would assert against a stub base class — `script/a11y`
-// drives the docs demo instead, and the type-ahead is `typeAheadIndex` in book-of-spells, tested
-// there.
+// Deliberately not covered here: the roles the element writes, the `aria-owns` that ties a branch
+// to its node, the `hidden` toggling and the roving tabindex — those are `dom.test.js`, which runs
+// the element itself under jsdom. The type-ahead's matching is `typeAheadIndex` in book-of-spells,
+// tested there.
 
 import { treeMove } from './index.js';
 

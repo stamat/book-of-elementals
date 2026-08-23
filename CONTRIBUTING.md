@@ -87,9 +87,15 @@ which browser and assistive technology. A minimal page beats a description.
 
 ## Pull requests
 
-- **Add a test.** Tests live next to the source as `src/**/*.test.js`. A bug fix
-  gets a test that fails without the fix, and a new element gets coverage of the
-  roles and the keyboard behaviour, not just that it upgrades.
+- **Add a test.** Tests live next to the source, in two files: `index.test.js` for
+  the decisions an element makes as plain functions, and `dom.test.js` — opening
+  with an `@jest-environment jsdom` docblock — for the element itself, upgraded over
+  markup. A bug fix gets a test that fails without the fix, and a new element gets
+  coverage of the roles and the keyboard behaviour, not just that it upgrades.
+  Anything needing a layout, a `ResizeObserver`, an `IntersectionObserver`, `inert`,
+  `matchMedia` or `<dialog>` is not jsdom's to answer and belongs to `script/a11y`
+  over the built demos — say so in the file's header rather than leaving the gap
+  unexplained.
 - **Accessibility is the point.** Anything that changes roles, states, focus
   order or keyboard handling has to be checked against the APG pattern it claims
   to implement.

@@ -7,10 +7,12 @@
 // reader has only tabbed through, are both things the native bubble never does and every
 // hand-written validator does.
 //
-// Deliberately not covered: the DOM half - adopting the author's paragraph, the
-// `aria-describedby` wiring, cancelling the native bubble, and the focus below. Jest runs
-// under Node here with no jsdom, so those are checked in a browser against the docs page
-// and by `script/a11y`.
+// Deliberately not covered here: the DOM half - adopting the author's paragraph, the
+// `aria-describedby` wiring, cancelling the native bubble, and the focus below. Those are
+// checked in a browser against the docs page and by `script/a11y`. The focus half cannot be
+// checked under jsdom either way: matching `:invalid` from inside an `invalid` listener makes
+// jsdom re-dispatch `invalid`, so the one guard that keeps focus on the *first* failing field
+// recurses until the stack goes - measured on jsdom 26 and 29.
 //
 // One platform fact underneath all of this was measured rather than assumed, and it is the
 // reason the element focuses at all: cancelling `invalid` to drop the bubble drops the

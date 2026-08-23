@@ -3,9 +3,9 @@
 // when the markup gave it none, and what the `interval` attribute is allowed to mean.
 //
 // Deliberately not covered here: anything that needs a scroll container or an
-// IntersectionObserver. This project's tests run in Node with no DOM, and a scroller
-// faked in jsdom has no layout, so it would answer every question with zero and prove
-// nothing. The roles, the focus order and the rotation control are checked by
+// IntersectionObserver. jsdom has no layout and no `IntersectionObserver`, so a scroller faked
+// in one would answer every question with zero and prove nothing - which is why this element
+// has no `dom.test.js` beside this file where most of the book does. The roles, the focus order and the rotation control are checked by
 // `script/a11y` over the built demos, in a real browser. `fade`'s travelling height is here
 // as the rule that decides whether to pin one at all - the two measurements it decides on are
 // layout, and belong to the same paragraph as everything else above.

@@ -3,10 +3,10 @@
 // panel has anything worth showing. Debouncing, aborting and the sequence number that drops
 // a stale answer are the wiring around them.
 //
-// Deliberately not covered: that wiring. Jest runs under Node here with no jsdom, so an
-// element test would assert against a stub base class rather than a DOM - the states, the
-// live region and the abort are checked in a browser against the docs page, where the npm
-// sample is the one that can be made to fail, go empty and go slow on demand.
+// Deliberately not covered here: that wiring - the debounce, the abort, the sequence number,
+// the states and the live region are `dom.test.js`, which runs the element itself under jsdom
+// with the clock in hand. A real network is still the docs page's, where the npm sample is the
+// one that can be made to fail, go empty and go slow on demand.
 
 import { searchAction, searchOpen, searchStatus } from './index.js';
 

@@ -7,9 +7,9 @@
 // pressed the button would have it offered back to them in an autofill list later, on a page
 // that has nothing to do with passwords. Masking first costs nothing and is the difference.
 //
-// Deliberately not covered: the DOM half - finding the control, the `aria-pressed`, the
-// announcement, hiding the button until the script is there. Jest runs under Node here with
-// no jsdom, so those are checked in a browser against the docs page and by `script/a11y`.
+// Deliberately not covered here: the DOM half - finding the control, the `aria-pressed` and the
+// announcement are `dom.test.js`, which runs the element itself under jsdom. Hiding the button
+// until the script is there is CSS, checked in a browser against the docs page.
 //
 // One platform fact was measured rather than assumed, because a whole feature hangs on it:
 // flipping `input.type` between `password` and `text` keeps focus *and* the selection range

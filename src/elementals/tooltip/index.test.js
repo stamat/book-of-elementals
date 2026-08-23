@@ -3,7 +3,7 @@
 // back out of `aria-describedby`.
 //
 // Deliberately not covered here: the wiring itself - `aria-describedby`, the `hidden`
-// toggle, the fixed-position maths - which needs a document and belongs to `script/a11y`
+// toggle, the fixed-position maths - which needs a layout and belongs to `script/a11y`
 // and the docs demo. The side decision is book-of-spells' `placeFlyout` and `placeSubmenu`,
 // tested there.
 import { titleRole, nextTooltipState, arrowOffset, alignOnAxis, landedAlign, withoutToken } from './index.js';
