@@ -106,7 +106,10 @@ posts are leads, not sources.
 1. **Does native HTML/CSS already do it?** `<details>`, `<dialog>`, popover,
    CSS `:has()`/scroll-snap — if the platform covers it, there is no feature.
 2. **Is there an [APG pattern](https://www.w3.org/WAI/ARIA/apg/patterns/) for
-   it?** No pattern usually means it's not this project's kind of element.
+   it?** No pattern usually means it's not this project's kind of element. If there
+   is one, check *Patterns that are not coming* in [CONTRIBUTING.md](CONTRIBUTING.md)
+   first — 14 of the 30 have already been answered no, with the reason. Arguing one
+   of those back open means showing the reason is wrong, not showing an implementation.
 3. **Search for prior art.** How do similar
    libraries do it? What markup, attributes, and keyboard behaviour do they
    expose? Cite what you found — a URL per fact, no guesses. How can we improve on it?
