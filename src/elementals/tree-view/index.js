@@ -253,8 +253,12 @@ export class TreeViewElemental extends ElementBase {
   /** Open or close one branch. `announce` is false while building, where a page listening for
    * every branch the markup asked for is a page told about state it wrote itself. */
   setOpen(node, open, announce = true) {
-    const branch = node.getAttribute('aria-owns') && document.getElementById(node.getAttribute('aria-owns'));
-    if (!branch) return;
+    // The branch is found the way `build` found it - the list beside the node - rather than by
+    // resolving `aria-owns` through `document`. Same element either way in a page, and the id
+    // round-trip is the one that comes back `null` inside a shadow root, where it would leave a
+    // branch that quietly never opens. `aria-owns` stays; it is for the accessibility tree.
+    const branch = node.parentElement && node.parentElement.querySelector(':scope > ul, :scope > ol');
+    if (!branch || !node.hasAttribute('aria-owns')) return;
     node.setAttribute('aria-expanded', open ? 'true' : 'false');
     branch.toggleAttribute('hidden', !open);
     if (announce) {
