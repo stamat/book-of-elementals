@@ -38,6 +38,34 @@ export default [
     }
   },
   {
+    // The jsdom half of the tests. `index.test.js` is arithmetic and runs in node; a
+    // `dom.test.js` runs the element itself under a document, so the file is a page as much
+    // as it is a test and needs both sets of globals. The event constructors are here rather
+    // than in `browserGlobals` because the elements dispatch events, never construct them -
+    // only a test standing in for a user does.
+    files: ['**/dom.test.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        ...browserGlobals,
+        console: 'readonly',
+        process: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        describe: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        jest: 'readonly',
+        KeyboardEvent: 'readonly',
+        MouseEvent: 'readonly',
+        FocusEvent: 'readonly',
+        PointerEvent: 'readonly',
+        HashChangeEvent: 'readonly'
+      }
+    }
+  },
+  {
     // `script/a11y` twice over: named by its exact path, because eslint globs `.js` and this
     // one is an entry point in `script/`, where everything is called by its bare name - and
     // given both sets of globals, because half of it is closures handed to `page.evaluate`
