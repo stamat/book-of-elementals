@@ -284,5 +284,5 @@ once is a key that loses the reader's place. No search box; a tree is a shape, a
 ```
 
 ```javascript
-import "book-of-elementals/tree-view";
+import 'book-of-elementals/tree-view';
 ```

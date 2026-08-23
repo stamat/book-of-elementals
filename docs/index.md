@@ -22,7 +22,7 @@ npm install book-of-elementals
 Import one element and you get one element — nothing else is registered:
 
 ```javascript
-import "book-of-elementals/accordion";
+import 'book-of-elementals/accordion';
 ```
 
 ```scss
@@ -32,7 +32,7 @@ import "book-of-elementals/accordion";
 Or import the whole book:
 
 ```javascript
-import "book-of-elementals";
+import 'book-of-elementals';
 ```
 
 ```scss

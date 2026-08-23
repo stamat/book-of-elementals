@@ -59,7 +59,7 @@ follows as you type:
 ```
 
 ```javascript
-import "book-of-elementals/accordion";
+import 'book-of-elementals/accordion';
 ```
 
 ```scss
@@ -111,8 +111,8 @@ Setting `panel.open` directly works too — it just skips the animation.
 listen to. The element re-emits it on the group, bubbling:
 
 ```javascript
-document.querySelector("accordion-elemental")
-  .addEventListener("accordion-toggle", (e) => {
+document.querySelector('accordion-elemental')
+  .addEventListener('accordion-toggle', (e) => {
     console.log(e.detail.panel, e.detail.open);
   });
 ```

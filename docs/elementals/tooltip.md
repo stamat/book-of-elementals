@@ -483,7 +483,7 @@ moves the mouse away still has the words.
 ## Usage
 
 ```javascript
-import "book-of-elementals/tooltip";
+import 'book-of-elementals/tooltip';
 ```
 
 ```scss

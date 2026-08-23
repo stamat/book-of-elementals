@@ -330,5 +330,5 @@ moved it.
 ```
 
 ```javascript
-import "book-of-elementals/splitter";
+import 'book-of-elementals/splitter';
 ```

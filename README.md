@@ -57,9 +57,9 @@ npm install book-of-elementals
 Import one element and only that element is registered:
 
 ```javascript
-import "book-of-elementals/accordion";
-import "book-of-elementals/disclosure";
-import "book-of-elementals/switch";
+import 'book-of-elementals/accordion';
+import 'book-of-elementals/disclosure';
+import 'book-of-elementals/switch';
 ```
 
 ```scss
@@ -71,7 +71,7 @@ import "book-of-elementals/switch";
 Or the whole book:
 
 ```javascript
-import "book-of-elementals";
+import 'book-of-elementals';
 ```
 
 ```scss

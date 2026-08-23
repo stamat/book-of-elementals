@@ -84,7 +84,7 @@ nothing else has to be. Edit the sample and the preview above it follows as you 
 ```
 
 ```javascript
-import "book-of-elementals/combobox";
+import 'book-of-elementals/combobox';
 ```
 
 ```scss
@@ -327,21 +327,21 @@ exactly as a native one does when a reader uses it — one listener on the form 
 field in it:
 
 ```javascript
-document.querySelector("#city").addEventListener("change", (e) => e.target.value);
+document.querySelector('#city').addEventListener('change', (e) => e.target.value);
 ```
 
 Setting the value from script fires nothing — that is the platform's rule for every form
 control — so redraw with it:
 
 ```javascript
-const combobox = document.querySelector("combobox-elemental");
+const combobox = document.querySelector('combobox-elemental');
 
-combobox.value = "ns"; // the setter redraws
+combobox.value = 'ns'; // the setter redraws
 
-combobox.select.value = "ns"; // straight at the control, so say so
+combobox.select.value = 'ns'; // straight at the control, so say so
 combobox.apply();
 
-combobox.select.innerHTML = "<option>…</option>"; // new options, same call
+combobox.select.innerHTML = '<option>…</option>'; // new options, same call
 combobox.apply();
 ```
 
@@ -422,7 +422,7 @@ Nothing to wire — the `<select>` is the control:
 ```
 
 ```javascript
-new FormData(form).get("country"); // "rs" | "hr"
+new FormData(form).get('country'); // 'rs' | 'hr'
 ```
 
 A `multiple` submits the way a `<select multiple>` submits, which is the part people
@@ -444,8 +444,8 @@ no entry at all, exactly as an unchecked checkbox does, so a server reading it h
 ```
 
 ```javascript
-new FormData(form).getAll("langs"); // ["sr", "en"]
-new FormData(form).get("langs"); // "sr" — the first, which is rarely what you meant
+new FormData(form).getAll('langs'); // ['sr', 'en']
+new FormData(form).get('langs'); // 'sr' — the first, which is rarely what you meant
 ```
 
 In PHP that name wants to be `langs[]`; in Rails, `langs[]` too. Both are the framework's

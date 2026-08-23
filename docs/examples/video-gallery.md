@@ -88,9 +88,9 @@ const YOUTUBE = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|yo
 const VIMEO = /(?:www\.|player\.)?vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/[^/]*\/videos\/|album\/\d+\/video\/|video\/|)(\d+)/i;
 const FILE = /\.(?:mp4|m4v|ogv|webm|mov)(?:[?#].*)?$/i;
 
-const gallery = document.querySelector(".video-gallery");
-const dialog = document.querySelector("#player-dialog");
-const stage = dialog.querySelector(".player-stage");
+const gallery = document.querySelector('.video-gallery');
+const dialog = document.querySelector('#player-dialog');
+const stage = dialog.querySelector('.player-stage');
 
 /** The player a link asks for, or null for a link this knows nothing about. */
 function playerFor(link) {
@@ -108,40 +108,40 @@ function playerFor(link) {
 
 /** A player on somebody else's origin: an iframe, and a name for it. */
 function embed(src, title) {
-  const player = document.createElement("iframe");
+  const player = document.createElement('iframe');
   player.src = src;
   // Without this an iframe is announced as "frame", and a dialog holding one is a dialog
   // holding nothing.
   player.title = title;
-  player.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+  player.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
   player.allowFullscreen = true;
   return player;
 }
 
 /** A file you host: a real element, which is why this one can still be paused. */
 function file(link) {
-  const player = document.createElement("video");
+  const player = document.createElement('video');
   player.src = link.href;
   player.controls = true;
   player.playsInline = true;
 
   if (link.dataset.captions) {
-    const track = document.createElement("track");
-    track.kind = "captions";
+    const track = document.createElement('track');
+    track.kind = 'captions';
     track.src = link.dataset.captions;
-    track.srclang = "en";
-    track.label = "English";
+    track.srclang = 'en';
+    track.label = 'English';
     track.default = true;
     // A caption file from another origin is fetched under CORS. Without this the track loads
     // as nothing at all, and says nothing about it.
-    player.crossOrigin = "anonymous";
+    player.crossOrigin = 'anonymous';
     player.append(track);
   }
   return player;
 }
 
-gallery.addEventListener("click", (e) => {
-  const link = e.target.closest("a[href]");
+gallery.addEventListener('click', (e) => {
+  const link = e.target.closest('a[href]');
   if (!link) return;
   const player = playerFor(link);
   // Not a film this knows how to play: leave the link alone and let the browser follow it.
@@ -151,18 +151,18 @@ gallery.addEventListener("click", (e) => {
   stage.replaceChildren(player);
   // Named after what is in it, so a screen reader says "Sintel, dialog" rather than "video
   // player, dialog" four films running.
-  dialog.setAttribute("aria-label", link.textContent.trim());
+  dialog.setAttribute('aria-label', link.textContent.trim());
   dialog.showModal();
   // Autoplay is a url parameter for the embeds, because their frame is built inside this same
   // click; a `<video>` is asked directly, and a rejected promise is the browser's autoplay
   // policy rather than a bug.
-  if (player.localName === "video") player.play().catch(() => {});
+  if (player.localName === 'video') player.play().catch(() => {});
 });
 
 // Gone rather than paused, whichever kind it was. `<modal-elemental>` pauses a `<video>` and
 // parks an `<iframe>` that is still there at `about:blank` on close — this is the version
 // with nothing left to stop.
-document.addEventListener("modal-toggle", (e) => {
+document.addEventListener('modal-toggle', (e) => {
   if (!e.detail.open) stage.replaceChildren();
 });
 ```

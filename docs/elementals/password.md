@@ -234,7 +234,7 @@ table, with the values live:
 ```
 
 ```javascript
-import "book-of-elementals/password";
+import 'book-of-elementals/password';
 ```
 
 ```scss

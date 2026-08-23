@@ -140,16 +140,16 @@ sortable-table-elemental tbody tr:has(td input:checked) {
 ```
 
 ```js demo
-const group = document.querySelector("checkbox-group-elemental");
-const bar = document.querySelector(".bulk");
-const count = document.querySelector(".bulk-count");
+const group = document.querySelector('checkbox-group-elemental');
+const bar = document.querySelector('.bulk');
+const count = document.querySelector('.bulk-count');
 
 // One listener, on the group. `change` bubbles from every checkbox — including the ones the
 // select-all moved, because it fires the event each of them would have fired if clicked.
-group.addEventListener("change", () => {
-  const picked = group.querySelectorAll("tbody input:checked").length;
-  count.textContent = picked ? `${picked} selected` : "Nothing selected";
-  for (const button of bar.querySelectorAll("button")) button.disabled = !picked;
+group.addEventListener('change', () => {
+  const picked = group.querySelectorAll('tbody input:checked').length;
+  count.textContent = picked ? `${picked} selected` : 'Nothing selected';
+  for (const button of bar.querySelectorAll('button')) button.disabled = !picked;
 });
 ```
 

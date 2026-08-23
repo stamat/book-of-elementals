@@ -59,7 +59,7 @@ preview above it follows as you type:
 ```
 
 ```javascript
-import "book-of-elementals/disclosure";
+import 'book-of-elementals/disclosure';
 ```
 
 ```scss
@@ -111,7 +111,7 @@ one spelling.
 ```
 
 ```javascript
-const disclosure = document.querySelector("disclosure-elemental");
+const disclosure = document.querySelector('disclosure-elemental');
 disclosure.open = true; // slides, and fires disclosure-toggle
 ```
 
@@ -124,8 +124,8 @@ so there is one place to read the state and one place to watch it.
 the state change, not with the slide:
 
 ```javascript
-document.querySelector("disclosure-elemental")
-  .addEventListener("disclosure-toggle", (e) => {
+document.querySelector('disclosure-elemental')
+  .addEventListener('disclosure-toggle', (e) => {
     console.log(e.detail.region, e.detail.open);
   });
 ```

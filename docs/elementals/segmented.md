@@ -48,7 +48,7 @@ the preview above it follows as you type:
 ```
 
 ```javascript
-import "book-of-elementals/segmented";
+import 'book-of-elementals/segmented';
 ```
 
 ```scss
@@ -116,9 +116,9 @@ None of its own. The radios are native, so use `change` — it fires on the inpu
 bubbles, which means one listener on the group, or on the form, hears every segment:
 
 ```javascript
-const range = document.querySelector("segmented-elemental");
+const range = document.querySelector('segmented-elemental');
 
-range.addEventListener("change", (e) => e.target.value); // "day" | "week" | "month"
+range.addEventListener('change', (e) => e.target.value); // 'day' | 'week' | 'month'
 ```
 
 Setting `.checked` from script fires nothing — that is the platform's rule for every form
@@ -230,7 +230,7 @@ honours `required` on any one of the radios, and goes down with a `<fieldset dis
 ```
 
 ```javascript
-new FormData(form).get("period"); // "monthly" | "yearly"
+new FormData(form).get('period'); // 'monthly' | 'yearly'
 form.querySelector('input[name="period"]:checked').value; // the same, live
 ```
 

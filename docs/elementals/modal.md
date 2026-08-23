@@ -81,7 +81,7 @@ reader's own cursor cannot wander out either.
 ## Usage
 
 ```javascript
-import "book-of-elementals/modal";
+import 'book-of-elementals/modal';
 ```
 
 ```scss
@@ -403,9 +403,9 @@ modal-elemental > dialog#clip { --modal-elemental-max-width: 40rem; padding: 0.5
 ```js demo
 // One listener for every modal on the page: `modal-toggle` bubbles, and its detail carries
 // the dialog that opened.
-document.addEventListener("modal-toggle", (e) => {
+document.addEventListener('modal-toggle', (e) => {
   if (!e.detail.open) return;
-  const video = e.detail.dialog.querySelector("video");
+  const video = e.detail.dialog.querySelector('video');
   if (!video) return;
   // A rejected promise here is the browser's autoplay policy, not a bug: a modal opened
   // from the URL arrives with no click behind it, and sound needs one.

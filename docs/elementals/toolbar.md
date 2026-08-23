@@ -163,5 +163,5 @@ and the controls in it.
 ```
 
 ```javascript
-import "book-of-elementals/toolbar";
+import 'book-of-elementals/toolbar';
 ```

@@ -248,5 +248,5 @@ element around it.
 ```
 
 ```javascript
-import "book-of-elementals/sortable-table";
+import 'book-of-elementals/sortable-table';
 ```

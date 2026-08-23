@@ -79,15 +79,15 @@ arrows, Enter and Escape behave the way the pattern says.
 // the element never sees the query: it is handed a list, and this is the page deciding what
 // goes in it. `replaceChildren` moves the original rows, so there is no markup to build and
 // nothing to escape
-const field = document.getElementById("jump");
-const panel = document.querySelector("suggest-elemental");
-const rows = [...panel.querySelectorAll("li")];
+const field = document.getElementById('jump');
+const panel = document.querySelector('suggest-elemental');
+const rows = [...panel.querySelectorAll('li')];
 
-field.addEventListener("input", () => {
+field.addEventListener('input', () => {
   const query = field.value.trim().toLowerCase();
   const hits = rows.filter((row) => row.textContent.toLowerCase().includes(query));
-  panel.querySelector("ul").replaceChildren(...hits);
-  panel.open = query !== "" && hits.length > 0;
+  panel.querySelector('ul').replaceChildren(...hits);
+  panel.open = query !== '' && hits.length > 0;
 });
 ```
 
@@ -232,34 +232,34 @@ the popup, the arrows, `aria-activedescendant` and the ARIA on the field.
 // Shortcode to glyph, because that is the shape this data has everywhere else — the rows the
 // panel wants are built off it below.
 const EMOJI = {
-  tada: "🎉", fire: "🔥", rocket: "🚀", sparkles: "✨", bug: "🐛", eyes: "👀",
-  joy: "😂", smile: "😄", wink: "😉", thinking: "🤔", sob: "😭", rage: "😡",
-  sunglasses: "😎", heart: "❤️", thumbsup: "👍", thumbsdown: "👎", clap: "👏",
-  pray: "🙏", muscle: "💪", wave: "👋", ok_hand: "👌", brain: "🧠", skull: "💀",
-  ghost: "👻", robot: "🤖", poop: "💩", star: "⭐", zap: "⚡", boom: "💥",
-  rainbow: "🌈", coffee: "☕", beer: "🍺", pizza: "🍕", cake: "🎂", gift: "🎁",
-  bell: "🔔", lock: "🔒", key: "🔑", hammer: "🔨", wrench: "🔧", gear: "⚙️",
-  package: "📦", books: "📚", memo: "📝", chart: "📈", calendar: "📅", mag: "🔍",
-  warning: "⚠️", construction: "🚧", white_check_mark: "✅", x: "❌",
-  question: "❓", snake: "🐍", whale: "🐳", cat: "🐱", dog: "🐶", unicorn: "🦄",
-  penguin: "🐧"
+  tada: '🎉', fire: '🔥', rocket: '🚀', sparkles: '✨', bug: '🐛', eyes: '👀',
+  joy: '😂', smile: '😄', wink: '😉', thinking: '🤔', sob: '😭', rage: '😡',
+  sunglasses: '😎', heart: '❤️', thumbsup: '👍', thumbsdown: '👎', clap: '👏',
+  pray: '🙏', muscle: '💪', wave: '👋', ok_hand: '👌', brain: '🧠', skull: '💀',
+  ghost: '👻', robot: '🤖', poop: '💩', star: '⭐', zap: '⚡', boom: '💥',
+  rainbow: '🌈', coffee: '☕', beer: '🍺', pizza: '🍕', cake: '🎂', gift: '🎁',
+  bell: '🔔', lock: '🔒', key: '🔑', hammer: '🔨', wrench: '🔧', gear: '⚙️',
+  package: '📦', books: '📚', memo: '📝', chart: '📈', calendar: '📅', mag: '🔍',
+  warning: '⚠️', construction: '🚧', white_check_mark: '✅', x: '❌',
+  question: '❓', snake: '🐍', whale: '🐳', cat: '🐱', dog: '🐶', unicorn: '🦄',
+  penguin: '🐧'
 };
 
 const ROWS = {
-  "@": [
-    { value: "@stamat", hint: "Nikola Stamatović" },
-    { value: "@koyev", hint: "Marko Jević" },
-    { value: "@msavin", hint: "Max Savin" },
-    { value: "@jesussandreas", hint: "Jesus Sandrea" }
+  '@': [
+    { value: '@stamat', hint: 'Nikola Stamatović' },
+    { value: '@koyev', hint: 'Marko Jević' },
+    { value: '@msavin', hint: 'Max Savin' },
+    { value: '@jesussandreas', hint: 'Jesus Sandrea' }
   ],
-  ":": Object.entries(EMOJI).map(([name, glyph]) => ({ value: glyph, hint: `:${name}:` }))
+  ':': Object.entries(EMOJI).map(([name, glyph]) => ({ value: glyph, hint: `:${name}:` }))
 };
 
-const field = document.getElementById("note");
-const panel = document.querySelector("suggest-elemental");
-const anchor = document.querySelector(".at-caret");
+const field = document.getElementById('note');
+const panel = document.querySelector('suggest-elemental');
+const anchor = document.querySelector('.at-caret');
 
-const escapeText = (value) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+const escapeText = (value) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 
 // a trigger character at a word start, and the word after it — at a word start so an
 // e-mail address and a `10:30` do not open the panel
@@ -276,12 +276,12 @@ function token() {
 // getSelection reaches inside a form control
 function caretPoint() {
   const style = getComputedStyle(field);
-  const mirror = document.createElement("div");
-  for (const prop of ["font", "padding", "border", "width", "boxSizing", "letterSpacing"]) mirror.style[prop] = style[prop];
-  mirror.style.cssText += ";position:absolute;visibility:hidden;white-space:pre-wrap;overflow-wrap:break-word";
+  const mirror = document.createElement('div');
+  for (const prop of ['font', 'padding', 'border', 'width', 'boxSizing', 'letterSpacing']) mirror.style[prop] = style[prop];
+  mirror.style.cssText += ';position:absolute;visibility:hidden;white-space:pre-wrap;overflow-wrap:break-word';
   mirror.textContent = field.value.slice(0, field.selectionStart);
-  const caret = mirror.appendChild(document.createElement("span"));
-  caret.textContent = ".";
+  const caret = mirror.appendChild(document.createElement('span'));
+  caret.textContent = '.';
   document.body.append(mirror);
   const point = {
     x: field.offsetLeft + caret.offsetLeft,
@@ -301,14 +301,14 @@ function refresh() {
   // prefix before anywhere: typing `:fi` wants `:fire:` at the top, not every emoji with an
   // `f` somewhere in it
   const hits = ROWS[now.trigger]
-    .map((row) => ({ row, rank: (row.value + " " + row.hint).toLowerCase().indexOf(now.query) }))
+    .map((row) => ({ row, rank: (row.value + ' ' + row.hint).toLowerCase().indexOf(now.query) }))
     .filter((scored) => scored.rank >= 0)
     .sort((a, b) => a.rank - b.rank)
     .map((scored) => scored.row);
 
-  panel.innerHTML = "<ul>" + hits.map((row) =>
+  panel.innerHTML = '<ul>' + hits.map((row) =>
     `<li><a href="#" data-value="${escapeText(row.value)}">${escapeText(row.value)}<small>${escapeText(row.hint)}</small></a></li>`
-  ).join("") + "</ul>";
+  ).join('') + '</ul>';
 
   const point = caretPoint();
   anchor.style.transform = `translate(${point.x}px, ${point.y}px)`;
@@ -323,25 +323,25 @@ function refresh() {
 function accept(value) {
   const now = token();
   if (!now) return;
-  const before = field.value.slice(0, now.at) + value + " ";
+  const before = field.value.slice(0, now.at) + value + ' ';
   field.value = before + field.value.slice(field.selectionStart);
   field.setSelectionRange(before.length, before.length);
   field.focus();
 }
 
-field.addEventListener("input", refresh);
-field.addEventListener("click", refresh);
+field.addEventListener('input', refresh);
+field.addEventListener('click', refresh);
 
 // the arrows are the panel's while it is open — re-rendering on them would clear the cursor
 // the arrow just moved, and Enter would fall through to the field as a newline
-field.addEventListener("keyup", (event) => {
-  if (!panel.open && (event.key.startsWith("Arrow") || event.key === "Home" || event.key === "End")) refresh();
+field.addEventListener('keyup', (event) => {
+  if (!panel.open && (event.key.startsWith('Arrow') || event.key === 'Home' || event.key === 'End')) refresh();
 });
 
 // the rows are `<a href="#">` because that is the only thing the element counts as an
 // option, and a token is not a destination, so nothing here is allowed to navigate
-panel.addEventListener("click", (event) => {
-  const row = event.target.closest("a[data-value]");
+panel.addEventListener('click', (event) => {
+  const row = event.target.closest('a[data-value]');
   if (!row) return;
   event.preventDefault();
   accept(row.dataset.value);
@@ -419,5 +419,5 @@ styles your `<input>`**: that control is yours, and styling it is what a design 
 ```
 
 ```javascript
-import "book-of-elementals/suggest";
+import 'book-of-elementals/suggest';
 ```

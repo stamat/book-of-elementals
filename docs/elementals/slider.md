@@ -47,7 +47,7 @@ add a second `<input type="range">` and watch it grow a thumb:
 ```
 
 ```javascript
-import "book-of-elementals/slider";
+import 'book-of-elementals/slider';
 ```
 
 ```scss
@@ -141,10 +141,10 @@ settles — both fire on the input and bubble, which means one listener on the e
 the form, hears every thumb:
 
 ```javascript
-const price = document.querySelector("slider-elemental");
+const price = document.querySelector('slider-elemental');
 
-price.addEventListener("input", (e) => e.target.value); // during the drag
-price.addEventListener("change", (e) => e.target.value); // when it settles
+price.addEventListener('input', (e) => e.target.value); // during the drag
+price.addEventListener('change', (e) => e.target.value); // when it settles
 ```
 
 The values are already clamped by the time either reaches you. The element listens in the

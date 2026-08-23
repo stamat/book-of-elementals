@@ -383,5 +383,5 @@ a book of elements.
 ```
 
 ```javascript
-import "book-of-elementals/tilt";
+import 'book-of-elementals/tilt';
 ```

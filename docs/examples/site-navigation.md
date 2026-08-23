@@ -261,14 +261,14 @@ switch-elemental svg { width: 0.8rem; height: 0.8rem; }
 
 ```js demo
 const root = document.documentElement;
-const theme = document.querySelector("switch-elemental");
+const theme = document.querySelector('switch-elemental');
 
 // the page arrives carrying a theme, so the switch starts where it is rather than at "off"
-theme.checked = root.dataset.theme === "dark";
+theme.checked = root.dataset.theme === 'dark';
 
 // `color-scheme` is what the whole page is painted out of, and it follows this attribute
-theme.addEventListener("switch-toggle", (event) => {
-  root.dataset.theme = event.detail.checked ? "dark" : "light";
+theme.addEventListener('switch-toggle', (event) => {
+  root.dataset.theme = event.detail.checked ? 'dark' : 'light';
 });
 ```
 

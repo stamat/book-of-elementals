@@ -40,22 +40,22 @@ shadow root, form-associated, nothing moved or wrapped.
 ```
 
 ```javascript
-const toggle = document.getElementById("switch-theme-demo");
+const toggle = document.getElementById('switch-theme-demo');
 const root = document.documentElement;
 if (!toggle) return;
 // The starting state is `checked-if`'s. This is the other half: writing the theme
 // back out, and following the topbar's switch when that one is the one flipped.
 const sync = () => {
-  toggle.checked = root.dataset.theme === "dark";
+  toggle.checked = root.dataset.theme === 'dark';
 };
-toggle.addEventListener("switch-toggle", (e) => {
-  root.dataset.theme = e.detail.checked ? "dark" : "light";
+toggle.addEventListener('switch-toggle', (e) => {
+  root.dataset.theme = e.detail.checked ? 'dark' : 'light';
   try {
-    localStorage.setItem("theme", root.dataset.theme);
+    localStorage.setItem('theme', root.dataset.theme);
   } catch (err) {}
   sync();
 });
-new MutationObserver(sync).observe(root, { attributeFilter: ["data-theme"] });
+new MutationObserver(sync).observe(root, { attributeFilter: ['data-theme'] });
 ```
 
 ## Usage
@@ -75,7 +75,7 @@ a switch:
 ```
 
 ```javascript
-import "book-of-elementals/switch";
+import 'book-of-elementals/switch';
 ```
 
 ```scss
@@ -134,9 +134,9 @@ instantiate, no init call to forget.
 and bubbles:
 
 ```javascript
-const toggle = document.querySelector("switch-elemental");
+const toggle = document.querySelector('switch-elemental');
 
-toggle.addEventListener("switch-toggle", (e) => e.detail.checked);
+toggle.addEventListener('switch-toggle', (e) => e.detail.checked);
 
 toggle.checked = true; // also fires it
 ```
@@ -300,7 +300,7 @@ enables:
 ```javascript
 // One switch gating another is a line: the fieldset owns the disabling, and every
 // control under it goes with it.
-tier.addEventListener("switch-toggle", (e) => {
+tier.addEventListener('switch-toggle', (e) => {
   beta.disabled = !e.detail.checked;
 });
 ```
@@ -317,14 +317,14 @@ tier.addEventListener("switch-toggle", (e) => {
 ### Reading it
 
 ```javascript
-const form = document.querySelector("form");
+const form = document.querySelector('form');
 
-new FormData(form).get("autoplay"); // "on", or null when off
+new FormData(form).get('autoplay'); // 'on', or null when off
 form.querySelector('[name="autoplay"]').checked; // the live boolean
 
 // There is no `change` event — the control is a button — but `switch-toggle`
 // bubbles, so one listener on the form hears every switch in it.
-form.addEventListener("switch-toggle", (e) => {
+form.addEventListener('switch-toggle', (e) => {
   console.log(e.target.name, e.detail.checked);
 });
 ```
@@ -353,9 +353,9 @@ toggle.checkValidity(); // false while it is off
 toggle.validity.valueMissing; // true
 toggle.reportValidity(); // checks and shows the bubble
 
-// Your own constraint, for what the browser cannot know. "" clears it.
+// Your own constraint, for what the browser cannot know. '' clears it.
 toggle.setCustomValidity(
-  data.get("beta") && !data.get("tier") ? "Beta needs Pro." : "",
+  data.get('beta') && !data.get('tier') ? 'Beta needs Pro.' : '',
 );
 ```
 
@@ -382,8 +382,8 @@ Three levels, most specific first:
 
 ```javascript
 // 2. every switch on the page, one line at boot
-import { SwitchElemental } from "book-of-elementals/switch";
-SwitchElemental.requiredMessage = "Veuillez activer ceci.";
+import { SwitchElemental } from 'book-of-elementals/switch';
+SwitchElemental.requiredMessage = 'Veuillez activer ceci.';
 
 // 3. nothing set — the browser's translated checkbox message
 ```
@@ -412,9 +412,9 @@ does not — which is what `checked-if` is for:
 <!-- in <head>, before any CSS: stamp the saved theme before first paint -->
 <script>
   (function () {
-    var t = localStorage.getItem("theme");
+    var t = localStorage.getItem('theme');
     if (!t)
-      t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     document.documentElement.dataset.theme = t;
   })();
 </script>
@@ -427,9 +427,9 @@ does not — which is what `checked-if` is for:
 ```javascript
 const root = document.documentElement;
 
-document.querySelector("switch-elemental").addEventListener("switch-toggle", (e) => {
-  root.dataset.theme = e.detail.checked ? "dark" : "light";
-  localStorage.setItem("theme", root.dataset.theme);
+document.querySelector('switch-elemental').addEventListener('switch-toggle', (e) => {
+  root.dataset.theme = e.detail.checked ? 'dark' : 'light';
+  localStorage.setItem('theme', root.dataset.theme);
 });
 ```
 

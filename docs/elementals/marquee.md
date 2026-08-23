@@ -255,5 +255,5 @@ them out until hover would be a design system's answer written into a book of el
 ```
 
 ```javascript
-import "book-of-elementals/marquee";
+import 'book-of-elementals/marquee';
 ```

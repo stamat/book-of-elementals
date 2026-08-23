@@ -278,7 +278,7 @@ before your rule ran, and the message would clear a keystroke late.
 ```
 
 ```javascript
-import "book-of-elementals/field";
+import 'book-of-elementals/field';
 ```
 
 ```scss

@@ -76,19 +76,19 @@ that swap is the first thing it does.
 
 ```javascript
 const clock = (s) =>
-  Number.isFinite(s) ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}` : "0:00";
+  Number.isFinite(s) ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}` : '0:00';
 
 function wire(player) {
-  const media = player.querySelector("audio, video");
-  const bar = player.querySelector("toolbar-elemental");
-  const scrubber = player.querySelector(".scrubber");
-  const volume = player.querySelector(".volume");
-  const seek = scrubber.querySelector("input");
-  const level = volume.querySelector("input");
-  const play = player.querySelector(".play");
-  const mute = player.querySelector(".mute");
-  const now = player.querySelector(".now");
-  const total = player.querySelector(".total");
+  const media = player.querySelector('audio, video');
+  const bar = player.querySelector('toolbar-elemental');
+  const scrubber = player.querySelector('.scrubber');
+  const volume = player.querySelector('.volume');
+  const seek = scrubber.querySelector('input');
+  const level = volume.querySelector('input');
+  const play = player.querySelector('.play');
+  const mute = player.querySelector('.mute');
+  const now = player.querySelector('.now');
+  const total = player.querySelector('.total');
 
   // the swap: the browser's controls go and ours arrive, and only now that there is script here
   media.controls = false;
@@ -99,38 +99,38 @@ function wire(player) {
   scrubber.format = clock;
   volume.format = (value) => `${Math.round(value * 100)}%`;
 
-  media.addEventListener("loadedmetadata", () => {
+  media.addEventListener('loadedmetadata', () => {
     seek.max = media.duration;
     total.textContent = clock(media.duration);
     scrubber.apply();
   });
 
   let scrubbing = false;
-  seek.addEventListener("pointerdown", () => { scrubbing = true; });
-  document.addEventListener("pointerup", () => { scrubbing = false; });
+  seek.addEventListener('pointerdown', () => { scrubbing = true; });
+  document.addEventListener('pointerup', () => { scrubbing = false; });
 
-  media.addEventListener("timeupdate", () => {
+  media.addEventListener('timeupdate', () => {
     if (!scrubbing) {
       seek.value = media.currentTime;
       scrubber.apply();
     }
     now.textContent = clock(media.currentTime);
-    seek.setAttribute("aria-valuetext", `${clock(media.currentTime)} of ${clock(media.duration)}`);
+    seek.setAttribute('aria-valuetext', `${clock(media.currentTime)} of ${clock(media.duration)}`);
   });
 
-  media.addEventListener("play", () => { player.dataset.playing = ""; play.setAttribute("aria-label", "Pause"); });
-  media.addEventListener("pause", () => { delete player.dataset.playing; play.setAttribute("aria-label", "Play"); });
+  media.addEventListener('play', () => { player.dataset.playing = ''; play.setAttribute('aria-label', 'Pause'); });
+  media.addEventListener('pause', () => { delete player.dataset.playing; play.setAttribute('aria-label', 'Play'); });
 
-  play.addEventListener("click", () => (media.paused ? media.play() : media.pause()));
-  seek.addEventListener("input", () => { media.currentTime = Number(seek.value); });
-  level.addEventListener("input", () => { media.volume = Number(level.value); });
-  mute.addEventListener("click", () => {
+  play.addEventListener('click', () => (media.paused ? media.play() : media.pause()));
+  seek.addEventListener('input', () => { media.currentTime = Number(seek.value); });
+  level.addEventListener('input', () => { media.volume = Number(level.value); });
+  mute.addEventListener('click', () => {
     media.muted = !media.muted;
-    mute.setAttribute("aria-pressed", String(media.muted));
+    mute.setAttribute('aria-pressed', String(media.muted));
   });
 }
 
-document.querySelectorAll(".player").forEach(wire);
+document.querySelectorAll('.player').forEach(wire);
 ```
 
 Forty lines, ten of them a `querySelector`, and every one of the rest is about the *media* —
@@ -187,7 +187,7 @@ A range input at 137 announces *137*, and 137 of what is the reader's problem. S
 `aria-valuetext` on it:
 
 ```javascript
-seek.setAttribute("aria-valuetext", `${clock(media.currentTime)} of ${clock(media.duration)}`);
+seek.setAttribute('aria-valuetext', `${clock(media.currentTime)} of ${clock(media.duration)}`);
 ```
 
 That is the page's job rather than the element's, and deliberately.

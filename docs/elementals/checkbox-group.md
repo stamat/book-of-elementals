@@ -111,7 +111,7 @@ has to be for the reader anyway. Everything after it is a child. There is no att
 set and nothing to name:
 
 ```javascript
-import "book-of-elementals/checkbox-group";
+import 'book-of-elementals/checkbox-group';
 ```
 
 ```scss
@@ -169,7 +169,7 @@ None of its own. The checkboxes are native, so listen for `change` — and the p
 one on **every child it changes**, exactly as clicking each of them would have:
 
 ```javascript
-form.addEventListener("change", (e) => e.target.value);
+form.addEventListener('change', (e) => e.target.value);
 ```
 
 A select-all that moved twelve checkboxes silently would leave every listener downstream of
@@ -180,7 +180,7 @@ Setting `.checked` from script fires nothing — that is the platform's rule for
 control — so redraw with it:
 
 ```javascript
-const group = document.querySelector("checkbox-group-elemental");
+const group = document.querySelector('checkbox-group-elemental');
 
 group.checkboxes[0].checked = true;
 group.apply();
@@ -218,7 +218,7 @@ themselves, and a `<fieldset disabled>` takes the whole group down.
 ```
 
 ```javascript
-new FormData(form).getAll("n"); // ["mentions"]
+new FormData(form).getAll('n'); // ['mentions']
 ```
 
 Checkboxes sharing a name submit one entry each, and none at all when none are ticked — so

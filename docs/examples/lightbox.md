@@ -77,10 +77,10 @@ on rather than of the tallest one.
 ## The glue
 
 ```javascript
-const carousel = document.querySelector("#lightbox-dialog carousel-elemental");
+const carousel = document.querySelector('#lightbox-dialog carousel-elemental');
 
-document.querySelector(".gallery").addEventListener("click", (e) => {
-  const button = e.target.closest("[data-index]");
+document.querySelector('.gallery').addEventListener('click', (e) => {
+  const button = e.target.closest('[data-index]');
   if (button) carousel.to(Number(button.dataset.index));
 });
 ```
@@ -167,23 +167,23 @@ the first time somebody opens it:
 ```
 
 ```javascript
-const gallery = document.querySelector(".gallery");
-const dialog = document.querySelector("#gallery-dialog");
-const carousel = dialog.querySelector("carousel-elemental");
+const gallery = document.querySelector('.gallery');
+const dialog = document.querySelector('#gallery-dialog');
+const carousel = dialog.querySelector('carousel-elemental');
 
-gallery.addEventListener("click", (e) => {
-  const link = e.target.closest("a[href]");
+gallery.addEventListener('click', (e) => {
+  const link = e.target.closest('a[href]');
   if (!link) return;
   e.preventDefault();
 
-  const links = [...gallery.querySelectorAll("a[href]")];
+  const links = [...gallery.querySelectorAll('a[href]')];
   if (!carousel.slides.length) {
     carousel.scroller.append(
       ...links.map((a) => {
-        const li = document.createElement("li");
+        const li = document.createElement('li');
         const img = new Image();
         img.src = a.href;
-        img.alt = a.querySelector("img").alt;
+        img.alt = a.querySelector('img').alt;
         li.append(img);
         return li;
       })

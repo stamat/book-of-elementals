@@ -130,10 +130,10 @@ here so the sample runs on its own. The toolbar's share is the twenty-odd lines 
 ```
 
 ```js demo
-const field = document.getElementById("body");
-const bar = document.querySelector("toolbar-elemental");
-const panel = document.querySelector("suggest-elemental");
-const anchor = document.querySelector(".at-caret");
+const field = document.getElementById('body');
+const bar = document.querySelector('toolbar-elemental');
+const panel = document.querySelector('suggest-elemental');
+const anchor = document.querySelector('.at-caret');
 
 // `insertText` rather than assigning to `value`, and this is the whole reason the buttons
 // are worth having: setting `value` wipes the field's undo stack, so the first Ctrl+Z after
@@ -141,7 +141,7 @@ const anchor = document.querySelector(".at-caret");
 // only way to write into a textarea as if it had been typed.
 function type(text) {
   field.focus();
-  document.execCommand("insertText", false, text);
+  document.execCommand('insertText', false, text);
 }
 
 // Bold, Italic, Code: wrap what is selected, or open a pair and sit between the marks.
@@ -158,11 +158,11 @@ function wrap(mark) {
 // selection reached their ends.
 function prefix(mark) {
   const { selectionStart: start, selectionEnd: end, value } = field;
-  const from = value.lastIndexOf("\n", start - 1) + 1;
-  const breakAfter = value.indexOf("\n", end);
+  const from = value.lastIndexOf('\n', start - 1) + 1;
+  const breakAfter = value.indexOf('\n', end);
   const to = breakAfter === -1 ? value.length : breakAfter;
   field.setSelectionRange(from, to);
-  type(value.slice(from, to).split("\n").map((line) => mark + line).join("\n"));
+  type(value.slice(from, to).split('\n').map((line) => mark + line).join('\n'));
 }
 
 // Mention, Emoji: plant the trigger the panel watches for and let the `input` event that
@@ -171,11 +171,11 @@ function prefix(mark) {
 // click with the caret against a word would otherwise write an `@` that nothing completes.
 function insert(trigger) {
   const before = field.value.slice(0, field.selectionStart);
-  type(/\S$/.test(before) ? " " + trigger : trigger);
+  type(/\S$/.test(before) ? ' ' + trigger : trigger);
 }
 
-bar.addEventListener("click", (event) => {
-  const button = event.target.closest("button");
+bar.addEventListener('click', (event) => {
+  const button = event.target.closest('button');
   if (!button) return;
   if (button.dataset.wrap) wrap(button.dataset.wrap);
   else if (button.dataset.prefix) prefix(button.dataset.prefix);
@@ -185,30 +185,30 @@ bar.addEventListener("click", (event) => {
 // Shortcode to glyph, because that is the shape this data has everywhere else — the rows the
 // panel wants are built off it below.
 const EMOJI = {
-  tada: "🎉", fire: "🔥", rocket: "🚀", sparkles: "✨", bug: "🐛", eyes: "👀",
-  joy: "😂", smile: "😄", wink: "😉", thinking: "🤔", sob: "😭", rage: "😡",
-  sunglasses: "😎", heart: "❤️", thumbsup: "👍", thumbsdown: "👎", clap: "👏",
-  pray: "🙏", muscle: "💪", wave: "👋", ok_hand: "👌", brain: "🧠", skull: "💀",
-  ghost: "👻", robot: "🤖", poop: "💩", star: "⭐", zap: "⚡", boom: "💥",
-  rainbow: "🌈", coffee: "☕", beer: "🍺", pizza: "🍕", cake: "🎂", gift: "🎁",
-  bell: "🔔", lock: "🔒", key: "🔑", hammer: "🔨", wrench: "🔧", gear: "⚙️",
-  package: "📦", books: "📚", memo: "📝", chart: "📈", calendar: "📅", mag: "🔍",
-  warning: "⚠️", construction: "🚧", white_check_mark: "✅", x: "❌",
-  question: "❓", snake: "🐍", whale: "🐳", cat: "🐱", dog: "🐶", unicorn: "🦄",
-  penguin: "🐧"
+  tada: '🎉', fire: '🔥', rocket: '🚀', sparkles: '✨', bug: '🐛', eyes: '👀',
+  joy: '😂', smile: '😄', wink: '😉', thinking: '🤔', sob: '😭', rage: '😡',
+  sunglasses: '😎', heart: '❤️', thumbsup: '👍', thumbsdown: '👎', clap: '👏',
+  pray: '🙏', muscle: '💪', wave: '👋', ok_hand: '👌', brain: '🧠', skull: '💀',
+  ghost: '👻', robot: '🤖', poop: '💩', star: '⭐', zap: '⚡', boom: '💥',
+  rainbow: '🌈', coffee: '☕', beer: '🍺', pizza: '🍕', cake: '🎂', gift: '🎁',
+  bell: '🔔', lock: '🔒', key: '🔑', hammer: '🔨', wrench: '🔧', gear: '⚙️',
+  package: '📦', books: '📚', memo: '📝', chart: '📈', calendar: '📅', mag: '🔍',
+  warning: '⚠️', construction: '🚧', white_check_mark: '✅', x: '❌',
+  question: '❓', snake: '🐍', whale: '🐳', cat: '🐱', dog: '🐶', unicorn: '🦄',
+  penguin: '🐧'
 };
 
 const ROWS = {
-  "@": [
-    { value: "@stamat", hint: "Nikola Stamatović" },
-    { value: "@koyev", hint: "Marko Jević" },
-    { value: "@msavin", hint: "Max Savin" },
-    { value: "@jesussandreas", hint: "Jesus Sandrea" }
+  '@': [
+    { value: '@stamat', hint: 'Nikola Stamatović' },
+    { value: '@koyev', hint: 'Marko Jević' },
+    { value: '@msavin', hint: 'Max Savin' },
+    { value: '@jesussandreas', hint: 'Jesus Sandrea' }
   ],
-  ":": Object.entries(EMOJI).map(([name, glyph]) => ({ value: glyph, hint: `:${name}:` }))
+  ':': Object.entries(EMOJI).map(([name, glyph]) => ({ value: glyph, hint: `:${name}:` }))
 };
 
-const escapeText = (value) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+const escapeText = (value) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 const TOKEN = /(?:^|\s)([@:])([\p{L}\p{N}_+-]*)$/u;
 
 function token() {
@@ -219,12 +219,12 @@ function token() {
 
 function caretPoint() {
   const style = getComputedStyle(field);
-  const mirror = document.createElement("div");
-  for (const prop of ["font", "padding", "border", "width", "boxSizing", "letterSpacing"]) mirror.style[prop] = style[prop];
-  mirror.style.cssText += ";position:absolute;visibility:hidden;white-space:pre-wrap;overflow-wrap:break-word";
+  const mirror = document.createElement('div');
+  for (const prop of ['font', 'padding', 'border', 'width', 'boxSizing', 'letterSpacing']) mirror.style[prop] = style[prop];
+  mirror.style.cssText += ';position:absolute;visibility:hidden;white-space:pre-wrap;overflow-wrap:break-word';
   mirror.textContent = field.value.slice(0, field.selectionStart);
-  const caret = mirror.appendChild(document.createElement("span"));
-  caret.textContent = ".";
+  const caret = mirror.appendChild(document.createElement('span'));
+  caret.textContent = '.';
   document.body.append(mirror);
   const point = {
     x: field.offsetLeft + caret.offsetLeft,
@@ -240,10 +240,10 @@ function refresh() {
     panel.open = false;
     return;
   }
-  const hits = ROWS[now.trigger].filter((row) => (row.value + " " + row.hint).toLowerCase().includes(now.query));
-  panel.innerHTML = "<ul>" + hits.map((row) =>
+  const hits = ROWS[now.trigger].filter((row) => (row.value + ' ' + row.hint).toLowerCase().includes(now.query));
+  panel.innerHTML = '<ul>' + hits.map((row) =>
     `<li><a href="#" data-value="${escapeText(row.value)}">${escapeText(row.value)}<small>${escapeText(row.hint)}</small></a></li>`
-  ).join("") + "</ul>";
+  ).join('') + '</ul>';
 
   const point = caretPoint();
   anchor.style.transform = `translate(${point.x}px, ${point.y}px)`;
@@ -251,17 +251,17 @@ function refresh() {
   if (panel.open) queueMicrotask(() => panel.moveTo(0));
 }
 
-field.addEventListener("input", refresh);
-field.addEventListener("click", refresh);
+field.addEventListener('input', refresh);
+field.addEventListener('click', refresh);
 
-panel.addEventListener("click", (event) => {
-  const row = event.target.closest("a[data-value]");
+panel.addEventListener('click', (event) => {
+  const row = event.target.closest('a[data-value]');
   if (!row) return;
   event.preventDefault();
   const now = token();
   if (!now) return;
   field.setSelectionRange(now.at, field.selectionStart);
-  type(row.dataset.value + " ");
+  type(row.dataset.value + ' ');
 });
 ```
 

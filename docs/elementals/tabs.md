@@ -57,7 +57,7 @@ turned off, not every way a script can fail to run.
 ## Usage
 
 ```javascript
-import "book-of-elementals/tabs";
+import 'book-of-elementals/tabs';
 ```
 
 ```scss
@@ -152,9 +152,9 @@ not a state this pattern has.
 and bubbles:
 
 ```javascript
-const tabs = document.querySelector("tabs-elemental");
+const tabs = document.querySelector('tabs-elemental');
 
-tabs.addEventListener("tabs-select", (e) => {
+tabs.addEventListener('tabs-select', (e) => {
   e.detail.index; // 2
   e.detail.tab; // the <a> or <button>
   e.detail.panel; // what it shows
@@ -234,9 +234,9 @@ line does it where you want it anyway, and the element re-wires itself when the 
 changes:
 
 ```javascript
-const wide = matchMedia("(min-width: 60rem)");
+const wide = matchMedia('(min-width: 60rem)');
 const sync = () => (tabs.vertical = wide.matches);
-wide.addEventListener("change", sync);
+wide.addEventListener('change', sync);
 sync();
 ```
 
@@ -276,11 +276,11 @@ Nothing watches the markup. Add a tab, remove one, rename them, and `wire()` is 
 call that says so:
 
 ```javascript
-tabs.querySelector("ul").insertAdjacentHTML(
-  "beforeend",
+tabs.querySelector('ul').insertAdjacentHTML(
+  'beforeend',
   '<li><a href="#reports">Reports</a></li>',
 );
-tabs.insertAdjacentHTML("beforeend", '<div id="reports">…</div>');
+tabs.insertAdjacentHTML('beforeend', '<div id="reports">…</div>');
 tabs.wire();
 ```
 

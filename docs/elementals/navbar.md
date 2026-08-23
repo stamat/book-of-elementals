@@ -105,7 +105,7 @@ main { padding: 1rem; min-block-size: 11rem; }
 ```
 
 ```javascript
-import "book-of-elementals/navbar";
+import 'book-of-elementals/navbar';
 ```
 
 ```scss
@@ -177,7 +177,7 @@ reaches the box the row is measured in, so it cannot take width from a bar it is
 bubbles.
 
 ```javascript
-document.querySelector("navbar-elemental").addEventListener("navbar-toggle", (e) => {
+document.querySelector('navbar-elemental').addEventListener('navbar-toggle', (e) => {
   console.log(e.detail.panel, e.detail.open);
 });
 ```

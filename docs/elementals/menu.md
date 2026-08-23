@@ -79,7 +79,7 @@ menu-elemental > button {
 ```
 
 ```javascript
-import "book-of-elementals/menu";
+import 'book-of-elementals/menu';
 ```
 
 ```scss
@@ -118,7 +118,7 @@ like — every level is wired the same way.
 and every submenu — and bubbles.
 
 ```javascript
-document.querySelector("menu-elemental").addEventListener("menu-toggle", (e) => {
+document.querySelector('menu-elemental').addEventListener('menu-toggle', (e) => {
   console.log(e.detail.menu, e.detail.open);
 });
 ```

@@ -114,7 +114,7 @@ the reader meets again later, with nothing behind it.
 ## Usage
 
 ```javascript
-import "book-of-elementals/copy";
+import 'book-of-elementals/copy';
 ```
 
 ```scss
@@ -216,8 +216,8 @@ has upgraded **and** found something to write with.
 | `copy-done` | `ok` — whether it landed. `text` — what went on the clipboard |
 
 ```javascript
-document.addEventListener("copy-done", (e) => {
-  if (e.detail.ok) analytics.track("copied", e.detail.text.length);
+document.addEventListener('copy-done', (e) => {
+  if (e.detail.ok) analytics.track('copied', e.detail.text.length);
 });
 ```
 

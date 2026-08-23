@@ -42,7 +42,7 @@ and watch it go indeterminate:
 ```
 
 ```javascript
-import "book-of-elementals/progress";
+import 'book-of-elementals/progress';
 ```
 
 ```scss
@@ -131,11 +131,11 @@ the bar and you already know it moved.
 Set the value on the element, or on the `<progress>` — both land in the same place:
 
 ```javascript
-const bar = document.querySelector("progress-elemental");
+const bar = document.querySelector('progress-elemental');
 
 bar.value = 60; // through the element
 bar.progress.value = 60; // straight at the child
-bar.progress.setAttribute("value", 60); // or as an attribute
+bar.progress.setAttribute('value', 60); // or as an attribute
 ```
 
 All three work because `<progress>`'s `value` and `max` are
@@ -204,7 +204,7 @@ The buffer is one span from the start, not the
 actually keeps. Hand it `media.buffered.end(0)`, which is what a scrubber draws anyway:
 
 ```javascript
-video.addEventListener("progress", () => {
+video.addEventListener('progress', () => {
   if (!video.duration || !video.buffered.length) return;
   bar.max = video.duration;
   bar.buffer = video.buffered.end(0);
@@ -275,10 +275,10 @@ and a [`<slider-elemental>`](slider.html) over the top for the seeking:
 // Neither element moves the other on its own, and neither should. In a player the media is
 // what sits between them — a seek sets `video.currentTime`, and it is `timeupdate` coming
 // back that moves the bar. There is no video on this page, so this stands in for it.
-const bar = document.querySelector(".scrubber progress-elemental");
-const seek = document.querySelector(".scrubber input[type=range]");
+const bar = document.querySelector('.scrubber progress-elemental');
+const seek = document.querySelector('.scrubber input[type=range]');
 
-seek.addEventListener("input", () => {
+seek.addEventListener('input', () => {
   bar.value = seek.value;
 });
 ```

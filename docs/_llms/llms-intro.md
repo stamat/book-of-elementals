@@ -14,8 +14,8 @@ no constructor to call and no init step — elements upgrade themselves wherever
 they appear, including markup inserted later.
 
 ```javascript
-import "book-of-elementals/accordion"; // one element
-import "book-of-elementals";           // the whole book
+import 'book-of-elementals/accordion'; // one element
+import 'book-of-elementals';           // the whole book
 ```
 
 ```scss

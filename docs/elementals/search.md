@@ -132,38 +132,38 @@ small { display: block; opacity: 0.65; }
 // no loading state to draw. `wait()` is never called, and the element settles the moment
 // this listener returns.
 const PAGES = [
-  { title: "Accordion", hint: "a set of headings that open one at a time", url: "accordion.html" },
-  { title: "Carousel", hint: "a scroll-snapping list of slides", url: "carousel.html" },
-  { title: "Combobox", hint: "a select you can type your way down", url: "combobox.html" },
-  { title: "Disclosure", hint: "a button and the thing it shows", url: "disclosure.html" },
-  { title: "Menu", hint: "a menu button, nested", url: "menu.html" },
-  { title: "Modal", hint: "a dialog on native dialog", url: "modal.html" },
-  { title: "Suggest", hint: "the results panel this one fills", url: "suggest.html" },
-  { title: "Tabs", hint: "one panel at a time, on in-page links", url: "tabs.html" }
+  { title: 'Accordion', hint: 'a set of headings that open one at a time', url: 'accordion.html' },
+  { title: 'Carousel', hint: 'a scroll-snapping list of slides', url: 'carousel.html' },
+  { title: 'Combobox', hint: 'a select you can type your way down', url: 'combobox.html' },
+  { title: 'Disclosure', hint: 'a button and the thing it shows', url: 'disclosure.html' },
+  { title: 'Menu', hint: 'a menu button, nested', url: 'menu.html' },
+  { title: 'Modal', hint: 'a dialog on native dialog', url: 'modal.html' },
+  { title: 'Suggest', hint: 'the results panel this one fills', url: 'suggest.html' },
+  { title: 'Tabs', hint: 'one panel at a time, on in-page links', url: 'tabs.html' }
 ];
 
-const list = document.querySelector("suggest-elemental ul");
+const list = document.querySelector('suggest-elemental ul');
 
 // The clear button is the page's, and so is telling anyone it was pressed: setting `.value`
 // from script fires no `input` event, and without one the element never hears that the
 // query is gone — the panel would sit there answering a field that is now empty.
-const field = document.getElementById("q");
-document.querySelector(".clear").addEventListener("click", () => {
-  field.value = "";
-  field.dispatchEvent(new Event("input", { bubbles: true }));
+const field = document.getElementById('q');
+document.querySelector('.clear').addEventListener('click', () => {
+  field.value = '';
+  field.dispatchEvent(new Event('input', { bubbles: true }));
   field.focus();
 });
 
 // Escaped where it is interpolated, once, because a title with a quote in it would
 // otherwise close the attribute it sits in.
-const escapeText = (value) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+const escapeText = (value) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 
-document.querySelector("search-elemental").addEventListener("search-query", (event) => {
+document.querySelector('search-elemental').addEventListener('search-query', (event) => {
   const query = event.detail.query.toLowerCase();
-  const hits = PAGES.filter((page) => (page.title + " " + page.hint).toLowerCase().includes(query));
+  const hits = PAGES.filter((page) => (page.title + ' ' + page.hint).toLowerCase().includes(query));
   list.innerHTML = hits.map((page) =>
     `<li><a href="${escapeText(page.url)}" target="_blank">${escapeText(page.title)}<small>${escapeText(page.hint)}</small></a></li>`
-  ).join("");
+  ).join('');
 });
 ```
 
@@ -365,23 +365,23 @@ search-elemental .none { padding: 0.5rem; opacity: 0.7; }
 ```js demo
 // The npm registry's own search endpoint, which sends `access-control-allow-origin: *` and
 // wants no key: https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md
-const API = "https://registry.npmjs.org/-/v1/search?size=8&text=";
+const API = 'https://registry.npmjs.org/-/v1/search?size=8&text=';
 
-const search = document.querySelector("search-elemental");
-const list = document.querySelector("suggest-elemental ul");
+const search = document.querySelector('search-elemental');
+const list = document.querySelector('suggest-elemental ul');
 
-const field = document.getElementById("pkg");
-document.querySelector(".clear").addEventListener("click", () => {
-  field.value = "";
+const field = document.getElementById('pkg');
+document.querySelector('.clear').addEventListener('click', () => {
+  field.value = '';
   // `.value` from script fires nothing, and the element only listens for `input` — without
   // this the panel keeps answering a query the reader has just thrown away
-  field.dispatchEvent(new Event("input", { bubbles: true }));
+  field.dispatchEvent(new Event('input', { bubbles: true }));
   field.focus();
 });
 
-const escapeText = (value) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+const escapeText = (value) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 
-search.addEventListener("search-query", (event) => {
+search.addEventListener('search-query', (event) => {
   // `signal` goes into the fetch, so the request for the query before last is cancelled
   // rather than left running. The element drops its answer either way.
   event.detail.wait(
@@ -402,7 +402,7 @@ search.addEventListener("search-query", (event) => {
           // The same sentence for the reader who cannot see the row. One string, written
           // once: a static `empty-text` could not name the query, and a live region saying
           // "No results" under a row saying something else is two answers to one question.
-          search.setAttribute("empty-text", message);
+          search.setAttribute('empty-text', message);
           return;
         }
         // A package name is already a url path — `@scope/name` keeps its slash, which
@@ -410,8 +410,8 @@ search.addEventListener("search-query", (event) => {
         // encoded: what it has to survive here is the attribute it sits in.
         list.innerHTML = data.objects.map((hit) =>
           `<li><a href="https://www.npmjs.com/package/${escapeText(hit.package.name)}" target="_blank">` +
-          `${escapeText(hit.package.name)}<small>${escapeText(hit.package.description || "")}</small></a></li>`
-        ).join("");
+          `${escapeText(hit.package.name)}<small>${escapeText(hit.package.description || '')}</small></a></li>`
+        ).join('');
       })
   );
 });
@@ -602,6 +602,6 @@ with one dark quarter reads as an icon rather than as waiting.
 ```
 
 ```javascript
-import "book-of-elementals/search";
-import "book-of-elementals/suggest";
+import 'book-of-elementals/search';
+import 'book-of-elementals/suggest';
 ```

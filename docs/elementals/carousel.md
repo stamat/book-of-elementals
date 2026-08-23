@@ -84,7 +84,7 @@ setting. [`fade`](#fade) is slideswap's stack with all of that on it, minus
 ## Usage
 
 ```javascript
-import "book-of-elementals/carousel";
+import 'book-of-elementals/carousel';
 ```
 
 ```scss
@@ -226,9 +226,9 @@ vocabulary here the way there is on [`<modal-elemental>`](modal.html) —
 swipe, a fragment link into a slide, a window resize that changes how many fit — and bubbles:
 
 ```javascript
-const carousel = document.querySelector("carousel-elemental");
+const carousel = document.querySelector('carousel-elemental');
 
-carousel.addEventListener("carousel-change", (e) => {
+carousel.addEventListener('carousel-change', (e) => {
   e.detail.index; // 2
   e.detail.slide; // the <li>
 });
@@ -582,7 +582,7 @@ Nothing watches the markup. Add a slide, remove one, reorder them, and `wire()` 
 call that says so:
 
 ```javascript
-carousel.querySelector("ul").insertAdjacentHTML("beforeend", "<li>…</li>");
+carousel.querySelector('ul').insertAdjacentHTML('beforeend', '<li>…</li>');
 carousel.wire();
 ```
 

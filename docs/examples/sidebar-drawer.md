@@ -175,13 +175,13 @@ disclosure-elemental[data-mode="free"] .nav-toggle { display: inline-flex; }
 ```
 
 ```js demo
-const drawer = document.querySelector("disclosure-elemental");
+const drawer = document.querySelector('disclosure-elemental');
 
 // the drawer is not modal, so light dismiss is the page's to add. `pinned` is the rail,
 // which no dismissal may touch: the query writes `open` when it *changes*, so nothing
 // would put back a rail Escape closed
 const close = () => {
-  if (!drawer.open || drawer.dataset.mode === "pinned") return;
+  if (!drawer.open || drawer.dataset.mode === 'pinned') return;
   // focus first, while the panel is still rendered: closing hides it, and a link
   // focused inside would drop focus to <body>
   if (drawer.region.contains(document.activeElement)) drawer.button.focus();
@@ -190,19 +190,19 @@ const close = () => {
 
 // the transition arrives with the first tap, so a drawer nobody has touched cannot slide
 // itself shut on load. The reflow is what keeps that first tap animated
-drawer.button.addEventListener("click", () => {
-  drawer.region.classList.add("sidebar-ready");
+drawer.button.addEventListener('click', () => {
+  drawer.region.classList.add('sidebar-ready');
   void drawer.region.offsetWidth;
 }, { once: true });
 
 // the panel is far from its button in tab order, so opening hands focus over
-drawer.addEventListener("disclosure-toggle", (e) => {
-  if (!e.detail.open || drawer.dataset.mode !== "free") return;
-  drawer.region.querySelector("[aria-current], a").focus();
+drawer.addEventListener('disclosure-toggle', (e) => {
+  if (!e.detail.open || drawer.dataset.mode !== 'free') return;
+  drawer.region.querySelector('[aria-current], a').focus();
 });
 
-document.querySelector(".scrim").addEventListener("click", close);
-addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+document.querySelector('.scrim').addEventListener('click', close);
+addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
 ```
 
 ## The button is in the header, the panel is not
@@ -315,8 +315,8 @@ What is left for the page is light dismiss, because
 the scrim is behaviour the pattern owes you:
 
 ```javascript
-document.querySelector(".scrim").addEventListener("click", close);
-addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+document.querySelector('.scrim').addEventListener('click', close);
+addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
 ```
 
 No breakpoint test in either, because the one that is needed is in `close()` and covers both.
@@ -328,7 +328,7 @@ already passes through:
 
 ```javascript
 const close = () => {
-  if (!drawer.open || drawer.dataset.mode === "pinned") return;
+  if (!drawer.open || drawer.dataset.mode === 'pinned') return;
   // …
 };
 ```
@@ -347,9 +347,9 @@ panel that then takes five tabs to reach is a panel that opened for the mouse on
 So the page hands focus over, on the one mode where the panel is an overlay:
 
 ```javascript
-drawer.addEventListener("disclosure-toggle", (e) => {
-  if (!e.detail.open || drawer.dataset.mode !== "free") return;
-  drawer.region.querySelector("[aria-current], a").focus();
+drawer.addEventListener('disclosure-toggle', (e) => {
+  if (!e.detail.open || drawer.dataset.mode !== 'free') return;
+  drawer.region.querySelector('[aria-current], a').focus();
 });
 ```
 
@@ -365,7 +365,7 @@ back to the button first, while the panel is still rendered:
 
 ```javascript
 const close = () => {
-  if (!drawer.open || drawer.dataset.mode === "pinned") return;
+  if (!drawer.open || drawer.dataset.mode === 'pinned') return;
   if (drawer.region.contains(document.activeElement)) drawer.button.focus();
   drawer.open = false;
 };
@@ -425,8 +425,8 @@ difference, and the page's opening move is the navigation sliding off-screen. No
 until something asks for one, and nothing has asked yet:
 
 ```javascript
-drawer.button.addEventListener("click", () => {
-  drawer.region.classList.add("sidebar-ready");
+drawer.button.addEventListener('click', () => {
+  drawer.region.classList.add('sidebar-ready');
   void drawer.region.offsetWidth;
 }, { once: true });
 ```
