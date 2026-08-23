@@ -1,55 +1,78 @@
 /* book-of-elementals v1.0.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 tree-view-elemental {
-  --tree-view-elemental-indent: 1.25rem;
-  --tree-view-elemental-gap: 0.15rem;
-  --tree-view-elemental-marker-color: currentcolor;
+  --tree-view-elemental-indent: 1.4rem;
+  --tree-view-elemental-gap: 0.05rem;
+  --tree-view-elemental-radius: 0.375rem;
+  --tree-view-elemental-marker-color: color-mix(in srgb, currentcolor 60%, transparent);
+  --tree-view-elemental-node-color: color-mix(in srgb, currentcolor 70%, transparent);
+  --tree-view-elemental-hover: color-mix(in srgb, currentcolor 8%, transparent);
+  --tree-view-elemental-rail: color-mix(in srgb, currentcolor 20%, transparent);
   --tree-view-elemental-current-color: currentcolor;
 }
 
-tree-view-elemental:where(:defined) ul {
+tree-view-elemental:where(:defined) ul,
+tree-view-elemental:where(:defined) ol {
   padding: 0;
   margin: 0;
   list-style: none;
 }
 
 tree-view-elemental:where(:defined) [role=group] {
-  padding-inline-start: var(--tree-view-elemental-indent);
+  margin-inline-start: calc(var(--tree-view-elemental-indent) - 0.5rem);
+  padding-inline-start: 0.5rem;
+  border-inline-start: 1px solid var(--tree-view-elemental-rail);
 }
 
 tree-view-elemental:where(:defined) [role=treeitem] {
   display: flex;
   gap: 0.4em;
-  align-items: baseline;
-  padding-block: var(--tree-view-elemental-gap);
+  align-items: center;
+  padding: 0.3rem 0.5rem;
+  margin-block: var(--tree-view-elemental-gap);
+  color: var(--tree-view-elemental-node-color);
   text-decoration: none;
+  border-radius: var(--tree-view-elemental-radius);
+}
+
+tree-view-elemental:where(:defined) [role=treeitem]:hover {
+  color: inherit;
+  background: var(--tree-view-elemental-hover);
 }
 
 tree-view-elemental:where(:defined) [role=treeitem]::before {
   flex: none;
-  width: 0;
-  height: 0;
+  width: 1em;
+  height: 1em;
   content: "";
-  border-top: 0.3em solid transparent;
-  border-bottom: 0.3em solid transparent;
-  border-inline-start: 0.4em solid transparent;
-  align-self: center;
+}
+
+tree-view-elemental:where(:defined) [aria-expanded]::before {
+  background: var(--tree-view-elemental-marker-color);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/%3E%3C/svg%3E") center/contain no-repeat;
+  transition: rotate 200ms ease;
 }
 
 tree-view-elemental:where(:defined) [aria-expanded=false]::before {
-  border-inline-start-color: var(--tree-view-elemental-marker-color);
+  rotate: -90deg;
 }
 
 tree-view-elemental:where(:defined) [aria-expanded=true]::before {
-  border-top: 0.4em solid var(--tree-view-elemental-marker-color);
-  border-right: 0.3em solid transparent;
-  border-bottom: 0;
-  border-left: 0.3em solid transparent;
+  rotate: 0deg;
 }
 
-tree-view-elemental:where(:defined) [aria-current] {
-  border-inline-start: 2px solid var(--tree-view-elemental-current-color);
-  margin-inline-start: -0.6rem;
-  padding-inline-start: calc(0.6rem - 2px);
+@media (forced-colors: active) {
+  tree-view-elemental:where(:defined) [aria-expanded]::before {
+    background: CanvasText;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  tree-view-elemental:where(:defined) [aria-expanded]::before {
+    transition: none;
+  }
+}
+tree-view-elemental:where(:defined) [aria-current]:not([aria-current=false]) {
   font-weight: 600;
+  color: var(--tree-view-elemental-current-color);
+  background: color-mix(in srgb, var(--tree-view-elemental-current-color) 15%, transparent);
 }
 /*# sourceMappingURL=tree-view-theme.css.map */

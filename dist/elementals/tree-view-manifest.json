@@ -48,9 +48,9 @@
               "type": {
                 "text": "<length>"
               },
-              "description": "Theme. How far a branch sits in from the node above it.",
+              "description": "Theme. How far a branch sits in from the node above it, rail included.",
               "name": "--tree-view-elemental-indent",
-              "default": "1.25rem"
+              "default": "1.4rem"
             },
             {
               "type": {
@@ -58,21 +58,53 @@
               },
               "description": "Theme. Between one node and the next.",
               "name": "--tree-view-elemental-gap",
-              "default": "0.15rem"
+              "default": "0.05rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Theme. The corner on a node's row, which the hover fill and the current-page tint are painted into.",
+              "name": "--tree-view-elemental-radius",
+              "default": "0.375rem"
             },
             {
               "type": {
                 "text": "<color>"
               },
-              "description": "Theme. The twisty on a node that has a branch under it.",
+              "description": "Theme. The chevron on a node that has a branch under it.",
               "name": "--tree-view-elemental-marker-color",
-              "default": "currentcolor"
+              "default": "currentcolor 60%"
             },
             {
               "type": {
                 "text": "<color>"
               },
-              "description": "Theme. The bar beside the node marked `aria-current`.",
+              "description": "Theme. A node at rest; hovering it restores the tree's own colour.",
+              "name": "--tree-view-elemental-node-color",
+              "default": "currentcolor 70%"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. The fill under the node the pointer is on.",
+              "name": "--tree-view-elemental-hover",
+              "default": "currentcolor 8%"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. The hairline down the inside of an open branch.",
+              "name": "--tree-view-elemental-rail",
+              "default": "currentcolor 20%"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. The node marked `aria-current` - its text, and the tint behind it. The page's accent goes here.",
               "name": "--tree-view-elemental-current-color",
               "default": "currentcolor"
             }
@@ -104,7 +136,7 @@
             {
               "kind": "field",
               "name": "list",
-              "description": "The list that becomes the tree. Direct child, so a tree inside a node of this one keeps its\nown.",
+              "description": "The list that becomes the tree: a direct child, so a stray `<ul>` deeper in the markup is\nnot mistaken for the root of one.\n\nA `<tree-view-elemental>` nested inside a node of this one is not supported - `build` and\n`allNodes` sweep the whole subtree, so the outer tree would claim the inner one's items. A\ntree of trees is a tree, written as one list.",
               "readonly": true
             },
             {

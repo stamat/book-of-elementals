@@ -35,6 +35,8 @@
 
   // src/elementals/tree-view/index.js
   var groupCount = 0;
+  var GROUP_ID = "tree-view-elemental-group-";
+  var CURRENT = '[aria-current]:not([aria-current="false"])';
   function treeMove(nodes, current, key) {
     const node = nodes[current];
     if (!node) return null;
@@ -71,8 +73,12 @@
       __publicField(this, "buffer", "");
       __publicField(this, "bufferTimer", 0);
     }
-    /** The list that becomes the tree. Direct child, so a tree inside a node of this one keeps its
-     * own. */
+    /** The list that becomes the tree: a direct child, so a stray `<ul>` deeper in the markup is
+     * not mistaken for the root of one.
+     *
+     * A `<tree-view-elemental>` nested inside a node of this one is not supported - `build` and
+     * `allNodes` sweep the whole subtree, so the outer tree would claim the inner one's items. A
+     * tree of trees is a tree, written as one list. */
     get list() {
       return this.querySelector(":scope > ul, :scope > ol");
     }
@@ -113,7 +119,7 @@
       for (const list of this.querySelectorAll("ul, ol")) {
         list.removeAttribute("role");
         list.removeAttribute("hidden");
-        list.removeAttribute("id");
+        if (list.id.startsWith(GROUP_ID)) list.removeAttribute("id");
       }
       for (const item of this.querySelectorAll("li")) item.removeAttribute("role");
       for (const node of this.allNodes) {
@@ -143,20 +149,20 @@
         node.setAttribute("tabindex", "-1");
         if (!branch) continue;
         branch.setAttribute("role", "group");
-        if (!branch.id) branch.id = "tree-view-elemental-group-" + ++groupCount;
+        if (!branch.id) branch.id = GROUP_ID + ++groupCount;
         node.setAttribute("aria-owns", branch.id);
-        const open = item.hasAttribute("data-tree-open") || !!item.querySelector("[aria-current]");
+        const open = item.hasAttribute("data-tree-open") || !!item.querySelector(CURRENT);
         this.setOpen(node, open, false);
       }
-      const current = this.allNodes.find((node) => node.hasAttribute("aria-current"));
+      const current = this.allNodes.find((node) => node.matches(CURRENT));
       const first = current || this.nodes[0];
       if (first) first.setAttribute("tabindex", "0");
     }
     /** Open or close one branch. `announce` is false while building, where a page listening for
      * every branch the markup asked for is a page told about state it wrote itself. */
     setOpen(node, open, announce = true) {
-      const branch = node.getAttribute("aria-owns") && document.getElementById(node.getAttribute("aria-owns"));
-      if (!branch) return;
+      const branch = node.parentElement && node.parentElement.querySelector(":scope > ul, :scope > ol");
+      if (!branch || !node.hasAttribute("aria-owns")) return;
       node.setAttribute("aria-expanded", open ? "true" : "false");
       branch.toggleAttribute("hidden", !open);
       if (announce) {
@@ -202,7 +208,6 @@
         return;
       }
       if (event.key.length !== 1 || event.key === " ") return;
-      event.preventDefault();
       this.buffer += event.key;
       if (this.bufferTimer) window.clearTimeout(this.bufferTimer);
       this.bufferTimer = window.setTimeout(() => {
@@ -210,7 +215,9 @@
       }, 500);
       const labels = nodes.map((each) => (each.textContent || "").trim());
       const to = typeAheadIndex(labels, current, this.buffer);
-      if (to !== null) this.focusNode(nodes[to]);
+      if (to === null) return;
+      event.preventDefault();
+      this.focusNode(nodes[to]);
     }
     /** One node, as `treeMove` reads it: how deep it sits, and whether it is a branch and open.
      * The depth is counted off the DOM rather than written into `aria-level`, so the nesting stays
