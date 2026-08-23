@@ -37,7 +37,10 @@ may already be targeting**, since neither shows up in a function signature.
   if it has none, and writes `--splitter-elemental-position` into its own `style`. CSS: the
   layout is three grid tracks — primary pane, handle, other pane — gated on
   `[data-splitter-panes]` rather than on `:defined`, so an element written with a single child is
-  left in normal flow instead of being squeezed into half a grid. The handle is `24px` thick
+  left in normal flow instead of being squeezed into half a grid. The handle sits at
+  `position: relative; z-index: 1`, because paint order inside the grid is DOM order and the
+  handle is written between the panes — so a pane that positions its own content would otherwise
+  paint over the focus ring drawn round the control between them. The handle is `24px` thick
   because that is [WCAG 2.2 2.5.8](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)'s
   minimum target size; the theme's visible line is a `1px` pseudo-element inside it.
 

@@ -62,7 +62,16 @@ splitter-elemental[vertical][data-splitter-panes] {
     minmax(0, 1fr);
 }
 
+// **The handle paints over the panes, and the focus ring is why.** Paint order inside the grid
+// is DOM order once anything is positioned, and the handle is written between the two panes -
+// so a pane that gives itself a `position` to lay its own content out, which is what the
+// before/after sample on the docs page does, paints over the ring drawn round the handle and
+// takes the focus indicator with it. `1` rather than a bigger number: it has to beat its two
+// siblings, not a page's own layers.
 splitter-elemental[data-splitter-panes] > [data-splitter-handle] {
+  position: relative;
+  z-index: 1;
+
   // A drag on the handle is not the page being scrolled. Without this a touch drag is claimed
   // by the browser's own scroll gesture before a `pointermove` is ever dispatched, which is a
   // splitter that works with a mouse and not with a finger.
