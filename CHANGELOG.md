@@ -15,6 +15,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-08-23
+
 ### Added
 
 - **`<tabs-elemental sliding>` — the selection marked by a bar that travels to the tab.** The
