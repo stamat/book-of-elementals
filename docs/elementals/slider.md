@@ -504,6 +504,8 @@ Named rather than worked around:
 | Two thumbs, not N                                  | The clamp is a pair. Three inputs still work as plain range inputs, unclamped and undrawn |
 | Horizontal only                                    | `writing-mode: vertical-lr` on the input is the platform's answer for one thumb; the stacking here has not been built for it |
 | `tooltip` is pointer-only, and there is no pinned mode | A keyboard reader never sees it, and a touch reader only while pressing, so nothing goes in it that is not elsewhere too. Pin a value with an `<output>` placed on `--slider-elemental-end` |
+| The bubble is centred on the thumb and is not clamped to anything | At either end the thumb's centre is half a thumb from the edge, so a bubble wider than that hangs past the control — and past whatever box the control is in. Nothing here measures the bubble, so nothing can pull it back. Leave room at the ends, or keep `tooltip` off the slider that sits against an edge |
+| The gap is measured from the slider, not from what it is inside | `--slider-elemental-tooltip-gap` is the distance above this element's box. A slider inside a padded, bordered bar wants the bar's padding and border added to it, or the bubble lands on the bar's own top edge |
 | The buffer-style second bar is not here            | That is [`<progress-elemental>`](progress.html), and the two compose — see [the scrubber](progress.html#a-scrubber) |
 
 ## Degrading

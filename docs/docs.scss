@@ -901,6 +901,13 @@ switch-elemental:not([checked]) + .demo-state .on {
 
   // The scrubber takes what the fixed parts leave; the volume gets a fixed share, so the bar
   // does not re-lay-out when the time readout goes from `0:00` to `10:00`.
+  // The bubble is placed a gap above the *slider*, which inside a padded, bordered bar is a
+  // gap that lands on the bar's own top edge - a black box cut in half by a border. Measured
+  // from the bar instead: its padding and its border, and then the gap the element meant.
+  > slider-elemental {
+    --slider-elemental-tooltip-gap: calc(0.5rem + 1px + 0.375rem);
+  }
+
   > .demo-media-scrubber {
     flex: 1 1 auto;
     min-inline-size: 4rem;
