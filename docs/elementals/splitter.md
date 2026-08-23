@@ -131,6 +131,46 @@ why no height is declared for you.
 splitter-elemental[vertical] { block-size: 24rem; }
 ```
 
+That selector is also what a splitter stacking itself lands on — see
+[Stacking on a narrow screen](#stacking-on-a-narrow-screen).
+
+## Stacking on a narrow screen
+
+Two panes side by side on a phone are two panes of about 170px each. Stacked, they are two of
+about half the viewport's height, which is the layout you want — and the separator is worth
+keeping rather than hiding, because a screen where space is scarce is the one where being able
+to give it to one pane matters most.
+
+`vertical-below` is that switch, and it is the same `vertical` at the other end of it:
+
+```html
+<splitter-elemental vertical-below="40rem">
+  <nav>…</nav>
+  <main>…</main>
+</splitter-elemental>
+```
+
+Below `40rem` the element writes `vertical` on itself and takes it off again above, so
+everything already keyed to that attribute follows with it: the grid turns its columns into
+rows, the cursor becomes `row-resize`, the theme's line turns with the seam, the arrows become
+<kbd>Up</kbd> and <kbd>Down</kbd>, and `aria-orientation` flips. `position` is a percentage, so
+30% of the width becomes 30% of the height and the split you had is the split you keep.
+
+**The height rule above still applies, and bites harder here** — at this breakpoint you are not
+otherwise writing any CSS, so it is easy to arrive at a stacked splitter that appears to ignore
+`position` and have nothing to blame. The `[vertical]` rule in that section is the fix, and it
+needs nothing added to it: the element writes the same attribute, so one selector covers a
+splitter you stacked by hand and one that stacked itself.
+
+The breakpoint is a length in `px`, `rem`, `em` or `ch`, and nothing else is accepted — not a
+bare `40`, which would be this element guessing you meant pixels, and not anything carrying a
+bracket or a comma, which is a value that could close the media query it is put inside and open
+a wider one. A value that is not a length is ignored, and the splitter stays as you wrote it.
+
+**A `vertical` you wrote yourself wins.** Both attributes on one element is a splitter you have
+said is stacked at every width, so the breakpoint has nothing to add and does not take your
+attribute off above it.
+
 ## How far the panes may go
 
 `min` and `max` are percentages, and they are `aria-valuemin` and `aria-valuemax` verbatim —
@@ -199,6 +239,7 @@ framework, a fragment — is complete before it is ever connected, so nothing wa
 | `min` | number | `0` | How far the primary pane may shrink. `aria-valuemin`, and the floor for <kbd>Enter</kbd> as well as for the drag |
 | `max` | number | `100` | How far it may grow. `aria-valuemax` |
 | `vertical` | boolean | off | The panes are stacked down the page rather than side by side |
+| `vertical-below` | length | — | A breakpoint. Narrower than this, the element writes `vertical` itself |
 | `label-text` | string | `Resize` | The handle's accessible name |
 
 **`label-text` is worth setting.** The pattern asks for the separator to be named after the

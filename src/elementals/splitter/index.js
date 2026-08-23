@@ -99,6 +99,31 @@ export function positionFrom(rect, x, y, options = {}) {
   return (!vertical && rtl ? 1 - ratio : ratio) * 100;
 }
 
+/** The lengths a breakpoint may be written in. Not every CSS length the platform knows: a
+ * breakpoint in `vw` is the viewport measured against itself, and one in `pt` is a print unit
+ * asked a question about a screen. */
+const BREAKPOINT = /^\d*\.?\d+(px|rem|em|ch)$/i;
+
+/**
+ * The media query `vertical-below` stands for, or `null` where the value is not a breakpoint.
+ *
+ * **The value is refused rather than repaired.** It is an attribute, which is a string some
+ * template wrote, and it is interpolated into a query - so `40rem) or (width > 0px` closes the
+ * condition it was put inside, adds one of its own, and parses, which leaves a splitter stacked
+ * on every screen and nothing downstream able to tell that was not the intent. A length and
+ * nothing else is the whole gate, and it lives here rather than at the call site so the second
+ * caller does not have to remember it.
+ *
+ * @param {string|null} value The attribute, as `getAttribute` returns it.
+ * @returns {string|null}
+ * @example
+ * stackQuery('40rem') // => '(width < 40rem)'
+ */
+export function stackQuery(value) {
+  const length = typeof value === 'string' ? value.trim() : '';
+  return BREAKPOINT.test(length) ? `(width < ${length})` : null;
+}
+
 /**
  * `<splitter-elemental>` custom element.
  *
@@ -151,6 +176,7 @@ export function positionFrom(rect, x, y, options = {}) {
  * @attr {number} [min=0] - How far the primary pane may shrink, as a percentage. The floor for the pointer, the arrows and <kbd>Enter</kbd> alike, and `aria-valuemin`.
  * @attr {number} [max=100] - How far it may grow. `aria-valuemax`.
  * @attr {boolean} [vertical=false] - The panes are stacked down the page rather than side by side. Swaps the arrow keys with them.
+ * @attr {string} [vertical-below] - A breakpoint, as a length in `px`, `rem`, `em` or `ch`. Narrower than this the element writes `vertical` itself and takes it off again above; a page that wrote `vertical` by hand meant it at every width and keeps it. Give the element a height for the stacked case - a percentage row track against an `auto` height resolves as `auto`, which is two panes at their content height and a separator that appears to do nothing.
  * @attr {string} [label-text=Resize] - The handle's accessible name. The pattern asks for the separator to be named after the primary pane, so a page with a sidebar behind it says `label-text="Sidebar"`.
  *
  * `--splitter-elemental-position` is deliberately not tagged below. The element writes it into
@@ -168,7 +194,7 @@ export function positionFrom(rect, x, y, options = {}) {
  */
 export class SplitterElemental extends ElementBase {
   static get observedAttributes() {
-    return ['position', 'min', 'max', 'vertical', 'label-text'];
+    return ['position', 'min', 'max', 'vertical', 'vertical-below', 'label-text'];
   }
 
   /** The handle, `null` until there are two panes to put one between. */
@@ -182,6 +208,14 @@ export class SplitterElemental extends ElementBase {
   /** The pointer id of the drag in progress, `null` when there is none. Held so a second
    * finger arriving mid-drag is ignored rather than fighting the first. */
   pointerId = null;
+
+  /** The `vertical-below` breakpoint being watched, `null` when there is none. */
+  mql = null;
+
+  /** Whether the `vertical` attribute on this element is one this element wrote. It is what
+   * keeps a page that stacked its own panes stacked: once the breakpoint has flipped the
+   * attribute on, the attribute alone can no longer say who meant it. */
+  autoVertical = false;
 
   /** The writing direction as it was when the drag started. Read once per gesture: `direction`
    * is inherited, and re-reading it per frame is a style resolution inside a pointer handler. */
@@ -240,6 +274,20 @@ export class SplitterElemental extends ElementBase {
     this.toggleAttribute('vertical', !!value);
   }
 
+  /** The width below which the panes stack themselves, as it was written. `null` where there
+   * is none, and also where what was written is not a length - the query it would have built
+   * is the thing that was refused, and this says so rather than reporting a breakpoint that
+   * nothing is watching. */
+  get verticalBelow() {
+    const raw = this.getAttribute('vertical-below');
+    return stackQuery(raw) === null ? null : raw.trim();
+  }
+
+  set verticalBelow(value) {
+    if (value === null) this.removeAttribute('vertical-below');
+    else this.setAttribute('vertical-below', value);
+  }
+
   /** The handle's accessible name. */
   get labelText() {
     return this.getAttribute('label-text') || 'Resize';
@@ -268,9 +316,13 @@ export class SplitterElemental extends ElementBase {
     this.onPointerDown = this.onPointerDown.bind(this);
     this.onPointerMove = this.onPointerMove.bind(this);
     this.onPointerUp = this.onPointerUp.bind(this);
+    this.onViewportChange = this.onViewportChange.bind(this);
 
     this.build();
     this.render();
+    // After the render, not before: the first reading of the breakpoint can flip `vertical`,
+    // and a flip arriving before there is a handle is an `aria-orientation` written on null.
+    this.watchViewport();
   }
 
   disconnectedCallback() {
@@ -278,6 +330,7 @@ export class SplitterElemental extends ElementBase {
     this.initialized = false;
 
     this.endDrag();
+    this.unwatchViewport();
     this.removeAttribute('data-splitter-panes');
     if (this.handle) {
       this.handle.removeEventListener('keydown', this.onKeyDown);
@@ -294,7 +347,59 @@ export class SplitterElemental extends ElementBase {
   attributeChangedCallback(name, previous, value) {
     if (!this.initialized || previous === value) return;
     if (name === 'label-text') this.handle.setAttribute('aria-label', this.labelText);
+    else if (name === 'vertical-below') this.watchViewport();
     else this.render();
+  }
+
+  /**
+   * Watch the `vertical-below` breakpoint, and stack the panes now if the viewport is already
+   * under it.
+   *
+   * The breakpoint is read through `matchMedia` rather than measured: the browser is already
+   * evaluating media queries and will say when this one changes, where a `ResizeObserver` on
+   * the element would answer a different question - its own box, which a stacking splitter
+   * changes, and which is not the viewport the author wrote a breakpoint about.
+   *
+   * Safe to call again; a `vertical-below` that changed is the old query dropped and a new one
+   * taken out.
+   */
+  watchViewport() {
+    this.unwatchViewport();
+    const query = stackQuery(this.getAttribute('vertical-below'));
+    if (query === null) return;
+
+    this.mql = window.matchMedia(query);
+    this.mql.addEventListener('change', this.onViewportChange);
+    this.onViewportChange(this.mql);
+  }
+
+  /** Stop watching, and put back the markup as it was written: a `vertical` this element added
+   * is this element's to take away, and one left behind on an element nothing is driving is a
+   * layout with no breakpoint under it. */
+  unwatchViewport() {
+    if (this.mql) {
+      this.mql.removeEventListener('change', this.onViewportChange);
+      this.mql = null;
+    }
+    if (!this.autoVertical) return;
+    this.autoVertical = false;
+    this.removeAttribute('vertical');
+  }
+
+  /**
+   * The viewport has crossed the breakpoint, or is being read for the first time.
+   *
+   * `MediaQueryList` and the change event both carry `matches`, so the initial reading is this
+   * same method called with the list itself rather than a second path that can drift from it.
+   *
+   * @param {MediaQueryList|MediaQueryListEvent} event
+   */
+  onViewportChange(event) {
+    // A page that wrote `vertical` by hand meant it at every width, and the breakpoint has
+    // nothing to add to a splitter that is already stacked.
+    if (this.hasAttribute('vertical') && !this.autoVertical) return;
+    this.autoVertical = event.matches;
+    this.toggleAttribute('vertical', event.matches);
   }
 
   /**

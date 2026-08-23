@@ -24,8 +24,13 @@ may already be targeting**, since neither shows up in a function signature.
   its prose: arrows a per cent at a time, <kbd>Home</kbd> and <kbd>End</kbd> to the smallest and
   largest size the primary pane is allowed, <kbd>Enter</kbd> to collapse it and put it back. The
   arrows on the other axis are left to the page, so a reader inside a pane can still scroll it.
-  `position`, `min`, `max`, `vertical` and `label-text`; `min` and `max` are `aria-valuemin` and
-  `aria-valuemax` verbatim and bound the pointer and the keys alike.
+  `position`, `min`, `max`, `vertical`, `vertical-below` and `label-text`; `min` and `max` are
+  `aria-valuemin` and `aria-valuemax` verbatim and bound the pointer and the keys alike.
+  `vertical-below` takes a breakpoint — a length in `px`, `rem`, `em` or `ch` — and below it the
+  element writes `vertical` on itself and takes it off again above, which is how a splitter
+  stacks on a phone without the page wiring up a `matchMedia` of its own. A `vertical` the page
+  wrote by hand is left alone, and a breakpoint that is not a length is ignored rather than
+  interpolated into a media query.
 
   DOM: the element writes one `<div data-splitter-handle role="separator" tabindex="0">` between
   its first two element children, `data-splitter-panes` on itself, gives the first child an `id`
