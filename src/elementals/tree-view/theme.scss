@@ -120,7 +120,10 @@ tree-view-elemental:where(:defined) [aria-expanded="true"]::before {
 // half that survives forced-colors, where the tint is dropped along with every other author
 // background. `--tree-view-elemental-current-color` is the page's accent to set; left at
 // `currentcolor` it is a grey the palette cannot clash with.
-tree-view-elemental:where(:defined) [aria-current] {
+
+// `aria-current="false"` is excluded because it is a valid value meaning *not* current, and a
+// router that writes it on every inactive link would otherwise tint the whole sidebar.
+tree-view-elemental:where(:defined) [aria-current]:not([aria-current="false"]) {
   font-weight: 600;
   color: var(--tree-view-elemental-current-color);
   background: color-mix(in srgb, var(--tree-view-elemental-current-color) 15%, transparent);

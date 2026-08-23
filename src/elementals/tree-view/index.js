@@ -4,6 +4,15 @@ import { ElementBase, define, typeAheadIndex } from '../../core.js';
 let groupCount = 0;
 
 /**
+ * The node saying which page the reader is on.
+ *
+ * `aria-current="false"` is a valid value and it means *not* current - which routers emit on every
+ * link that is not the active one, so a bare `[aria-current]` would find the first link in the
+ * sidebar and open every branch in the tree.
+ */
+const CURRENT = '[aria-current]:not([aria-current="false"])';
+
+/**
  * Where a key takes a tree, given the nodes a reader can currently see.
  *
  * The list is the *visible* nodes in document order - a collapsed branch is not in it - which is
@@ -223,13 +232,13 @@ export class TreeViewElemental extends ElementBase {
       // Closed unless the page said otherwise, or unless the page the reader is on is somewhere
       // inside - a sidebar that opened on the reader's own page is the only opening state anyone
       // has ever wanted by default.
-      const open = item.hasAttribute('data-tree-open') || !!item.querySelector('[aria-current]');
+      const open = item.hasAttribute('data-tree-open') || !!item.querySelector(CURRENT);
       this.setOpen(node, open, false);
     }
 
     // The tab stop starts where the reader already is. `allNodes` rather than `nodes`, since the
     // current page's node is inside branches this loop has just opened.
-    const current = this.allNodes.find((node) => node.hasAttribute('aria-current'));
+    const current = this.allNodes.find((node) => node.matches(CURRENT));
     const first = current || this.nodes[0];
     if (first) first.setAttribute('tabindex', '0');
   }

@@ -95,7 +95,8 @@ The nested list a sidebar is already written as:
 - **`data-tree-open` on an `<li>`** starts that branch open.
 - **`aria-current` on a node** says which page the reader is on. The element opens every branch
   above it and starts the tab stop there — so a server-rendered sidebar hands the keyboard the
-  reader's own page rather than the top of the list.
+  reader's own page rather than the top of the list. `aria-current="false"` is read as what it
+  means — *not* current — so a router writing it on every inactive link is safe.
 
 ## What it writes
 
