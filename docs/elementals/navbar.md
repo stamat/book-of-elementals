@@ -17,7 +17,7 @@ with one addition the APG has no opinion about, because it is not an accessibili
 question: **the breakpoint is measured rather than declared.** Light DOM, no shadow root,
 nothing you wrote is moved or wrapped.
 
-<navbar-elemental class="demo-navbar" media="(min-width: 40rem)" hover>
+<navbar-elemental class="demo-navbar" bar-when="(min-width: 40rem)" hover>
   <div class="demo-navbar-rail">
     <ul>
       <li><a href="#navbar-elemental">Overview</a></li>
@@ -61,7 +61,7 @@ become a drawer — the element is measuring, not guessing, so it answers a real
 <!-- demo navbar viewport-widths="375 768 1024" style="--code-preview-height:263px" -->
 
 ```html
-<navbar-elemental class="bar" media="(min-width: 40rem)" hover>
+<navbar-elemental class="bar" bar-when="(min-width: 40rem)" hover>
   <div class="rail">
     <ul>
       <li><a href="/overview">Overview</a></li>
@@ -135,7 +135,8 @@ the panel laid out as its own element wrote it.
 
 | Attribute | Type    | Default | Description                                                                     |
 | --------- | ------- | ------- | ------------------------------------------------------------------------------- |
-| `media`   | string  | none    | The media query the bar exists in. Outside it, the drawer. Unset means a bar at every width — until the links stop fitting. |
+| `bar-when`   | string  | none    | The media query the bar exists in. Outside it, the drawer. Unset means a bar at every width — until the links stop fitting. |
+| `media`   | string  | none    | Deprecated spelling of `bar-when`, still honoured. `bar-when` wins where both are written. |
 | `min-bar-items` | number | `1` | How many links have to fit for this to still be a bar. `2` says one link beside an overflow button is a drawer instead. |
 | `open`    | boolean | `false` | Whether the drawer is showing. Reflected, so `[open]` is a styling hook.          |
 | `hover`   | boolean | `false` | A mouse also opens a panel by [pointing at it](#opening-on-hover). Never on touch, never stacked. |
@@ -291,20 +292,20 @@ Three things move on their own here, and each one only ever pushes in one direct
   back — so everything still fits.
 - **The drawer.** Switching to it hides the row but not the clone, so the measurement
   survives being collapsed. A bar with nothing left to measure could never come back out.
-- **`media`.** A query cannot oscillate, because nothing the element does changes the
+- **`bar-when`.** A query cannot oscillate, because nothing the element does changes the
   width of the window.
 
 Which is also the one trap worth knowing about when you style this thing: **do not key
 anything that changes the bar's own width off `data-mode`.** Moving a call to action out of
 the bar when it goes to `stack`, say, hands the row a hundred and fifty pixels, which lets
 the links fit, which puts the button back, which takes the room away again. That is what
-`media` is for — see [the example](../examples/site-navigation.html), which does exactly
+`bar-when` is for — see [the example](../examples/site-navigation.html), which does exactly
 this and explains why.
 
 ## Two modes
 
 `data-mode` is which widget the bar is right now, and the element writes it so a
-stylesheet reads the mode back off the element rather than repeating the query in `media`
+stylesheet reads the mode back off the element rather than repeating the query in `bar-when`
 and drifting from it.
 
 | | `bar` | `stack` |
@@ -374,7 +375,7 @@ instruction to close the others, since they overlap and only one of them can be 
 time:
 
 ```html
-<navbar-elemental hover media="(min-width: 40rem)">…</navbar-elemental>
+<navbar-elemental hover bar-when="(min-width: 40rem)">…</navbar-elemental>
 ```
 
 It is an addition and never a replacement: click, <kbd>Enter</kbd> and the arrow keys work
@@ -424,7 +425,7 @@ along.
 With scripting on, the stylesheet paints the waiting markup as its best guess at the bar
 instead: panels closed, the row a single line, so the expanded tree does not flash and
 collapse on the first frame. A guess, because the mode is unknowable until the script
-reads `media` — a page about to stack shows a row of links for the length of the bundle
+reads `bar-when` — a page about to stack shows a row of links for the length of the bundle
 fetch, and the overflow folds one frame after upgrade. The line that gate draws is worth
 knowing: a bundle that never arrives *while scripting is on* — blocked, 404 — leaves the
 panels closed with nothing to open them. The fallback covers scripting turned off, not
@@ -490,7 +491,7 @@ navbar-elemental[data-mode="stack"] .rail > ul:not([data-navbar-probe]) {
 quite `Canvas` wants its panels to match the page rather than the browser. Turn it in the
 **Options** tab and copy the rule out of the bottom of the panel:
 
-<!-- demo navbar tab="options" viewport-widths="375 768 1024" style="--code-preview-options-height:615px" -->
+<!-- demo navbar tab="options" viewport-widths="375 768 1024" style="--code-preview-options-height:646px" -->
 
 ```html
 <navbar-elemental class="bar">

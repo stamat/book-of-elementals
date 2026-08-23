@@ -99,25 +99,6 @@
           }
         },
         {
-          "kind": "function",
-          "name": "stackQuery",
-          "parameters": [
-            {
-              "name": "value",
-              "description": "The attribute, as `getAttribute` returns it.",
-              "type": {
-                "text": "string|null"
-              }
-            }
-          ],
-          "description": "The media query `vertical-below` stands for, or `null` where the value is not a breakpoint.\n\n**The value is refused rather than repaired.** It is an attribute, which is a string some\ntemplate wrote, and it is interpolated into a query - so `40rem) or (width > 0px` closes the\ncondition it was put inside, adds one of its own, and parses, which leaves a splitter stacked\non every screen and nothing downstream able to tell that was not the intent. A length and\nnothing else is the whole gate, and it lives here rather than at the call site so the second\ncaller does not have to remember it.",
-          "return": {
-            "type": {
-              "text": "string|null"
-            }
-          }
-        },
-        {
           "kind": "class",
           "description": "`<splitter-elemental>` custom element.\n\nTwo panes and a handle between them that resizes both: the\n[APG Window Splitter pattern](https://www.w3.org/WAI/ARIA/apg/patterns/windowsplitter/),\nover the two boxes you were going to write anyway.\n\n**The pattern has no reference example.** The APG page carries the roles, the states and the\nkeys, and where the example would be it says work on one is tracked by\n[issue 130](https://github.com/w3c/aria-practices/issues/130). So the keyboard here is read\noff the pattern's own prose rather than copied from a demo: arrows move the separator,\n<kbd>Home</kbd> and <kbd>End</kbd> take the primary pane to the smallest and largest size it\nis allowed, and <kbd>Enter</kbd> collapses it and puts it back.\n\nThe first element child is the primary pane - the one `aria-valuenow` is about, the one\n`aria-controls` names, and the one <kbd>Enter</kbd> collapses. The second is the other pane.\nThe handle is written between them, and it is the only node this element adds.\n\n**`vertical` is the panes' word, not the separator's, and the two are opposites.** Stacked\npanes are split by a separator lying across the page, so `vertical` writes\n`aria-orientation=\"horizontal\"` - which is also the role's own default, and therefore the\nvalue that is left off. The APG spends the word the other way round and calls the splitter\nbetween a left and a right pane a vertical one; ARIA is describing the separator, this\nelement's attribute is describing the layout, and both are right about different things.\n\n`min` and `max` are the floor and the ceiling for everything - the pointer, the keys, and\n<kbd>Enter</kbd> too. They are `aria-valuemin` and `aria-valuemax` verbatim, which is what\nthe pattern says those two properties are: the positions where the primary pane is at its\nsmallest and its largest. So a `min` above zero is an author saying the pane may not\ndisappear, and <kbd>Enter</kbd> takes it down to that floor rather than through it. The\npattern's collapse is what the default `min=\"0\"` gives you.\n\nPercentages and nothing else. A `min-width` in pixels on a pane is a size this element\ncannot see, and grid honours it while `aria-valuenow` goes on reporting the position that\nwas asked for - two numbers disagreeing about the same pane. The bound belongs on `min`.\n\nLight DOM, no shadow root. With no script it is two boxes in normal flow, in the order you\nwrote them, and no handle - there is nothing to resize when there is nothing listening.\n\nponytail: no persistence, no `localStorage`, no session key. `position` is reflected, so\nsaving it is `splitter.addEventListener('splitter-change', e => store(e.detail.position))`\nand restoring it is an attribute in the markup - an element that owned a storage key would\nbe an element with an opinion about which one.\n\nponytail: two panes, not n. Three panes is two splitters, and a splitter that shared its\nneighbour's space would need a layout model of the whole row rather than of itself.",
           "name": "SplitterElemental",
@@ -196,7 +177,7 @@
                 "text": "null"
               },
               "default": "null",
-              "description": "The `vertical-below` breakpoint being watched, `null` when there is none."
+              "description": "The `vertical-when` query being watched, `null` when there is none."
             },
             {
               "kind": "field",
@@ -253,8 +234,8 @@
             },
             {
               "kind": "field",
-              "name": "verticalBelow",
-              "description": "The width below which the panes stack themselves, as it was written. `null` where there\nis none, and also where what was written is not a length - the query it would have built\nis the thing that was refused, and this says so rather than reporting a breakpoint that\nnothing is watching."
+              "name": "verticalWhen",
+              "description": "The media query that stacks the panes, as it was written. `null` where there is none."
             },
             {
               "kind": "field",
@@ -264,7 +245,7 @@
             {
               "kind": "method",
               "name": "watchViewport",
-              "description": "Watch the `vertical-below` breakpoint, and stack the panes now if the viewport is already\nunder it.\n\nThe breakpoint is read through `matchMedia` rather than measured: the browser is already\nevaluating media queries and will say when this one changes, where a `ResizeObserver` on\nthe element would answer a different question - its own box, which a stacking splitter\nchanges, and which is not the viewport the author wrote a breakpoint about.\n\nSafe to call again; a `vertical-below` that changed is the old query dropped and a new one\ntaken out."
+              "description": "Watch the `vertical-when` query, and stack the panes now if it already matches.\n\nThe query is watched through `matchMedia` rather than measured: the browser is already\nevaluating media queries and will say when this one changes, where a `ResizeObserver` on\nthe element would answer a different question - its own box, which a stacking splitter\nchanges, and which is not the viewport the author wrote a query about. A query the browser\ncannot parse is one that never matches, which is a splitter left exactly as it was written.\n\nSafe to call again; a `vertical-when` that changed is the old query dropped and a new one\ntaken out."
             },
             {
               "kind": "method",
@@ -407,11 +388,11 @@
               "default": "false"
             },
             {
-              "name": "vertical-below",
+              "name": "vertical-when",
               "type": {
                 "text": "string"
               },
-              "description": "A breakpoint, as a length in `px`, `rem`, `em` or `ch`. Narrower than this the element writes `vertical` itself and takes it off again above; a page that wrote `vertical` by hand meant it at every width and keeps it. Give the element a height for the stacked case - a percentage row track against an `auto` height resolves as `auto`, which is two panes at their content height and a separator that appears to do nothing."
+              "description": "A media query that owns `vertical`: the panes stack while it matches and go back side by side when it stops. The same shape as `open-when` on [`<disclosure-elemental>`](disclosure.html). A page that wrote `vertical` by hand meant it at every width and keeps it. Give the element a height for the stacked case - a percentage row track against an `auto` height resolves as `auto`, which is two panes at their content height and a separator that appears to do nothing."
             },
             {
               "name": "label-text",
@@ -460,14 +441,6 @@
           "name": "positionFrom",
           "declaration": {
             "name": "positionFrom",
-            "module": "src/elementals/splitter/index.js"
-          }
-        },
-        {
-          "kind": "js",
-          "name": "stackQuery",
-          "declaration": {
-            "name": "stackQuery",
             "module": "src/elementals/splitter/index.js"
           }
         },

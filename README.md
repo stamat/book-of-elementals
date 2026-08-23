@@ -419,9 +419,10 @@ ARIA there is.
 | --------- | ------- | ------- | -------------------------------------------------------------------- |
 | `open`    | boolean | `false` | Whether the region is showing. Reflected — it tracks the live state. |
 | `for`     | string  | —       | `id` of the region. Defaults to the button's next element sibling.   |
-| `media`   | string  | —       | A media query that owns `open`: held open while it matches, closed when it stops. |
+| `open-when`   | string  | —       | A media query that owns `open`: held open while it matches, closed when it stops. |
+| `media`   | string  | —       | Deprecated spelling of `open-when`, still honoured. |
 
-`media` is for the disclosures that stop being disclosures at a width — a rail that is a
+`open-when` is for the disclosures that stop being disclosures at a width — a rail that is a
 drawer on a phone, a long description that is prose beside the figure when there is room.
 The state stays in the one place that already holds it, instead of a media query showing
 the panel while `aria-expanded` still says `false`. With it set, the element writes
@@ -560,7 +561,7 @@ opinion about, because it is a layout question: below a breakpoint the whole
 thing stops being a menu.
 
 ```html
-<menu-elemental media="(min-width: 60rem)">
+<menu-elemental flyout-when="(min-width: 60rem)">
   <button>Account</button>
   <ul>
     <li><a href="/profile/">Profile</a></li>
@@ -576,10 +577,11 @@ thing stops being a menu.
 
 | Attribute | Type    | Default | Description                                                                       |
 | --------- | ------- | ------- | --------------------------------------------------------------------------------- |
-| `media`   | string  | —       | The query the flyout exists in. Outside it, nested disclosures. Unset means always a menu. |
+| `flyout-when`   | string  | —       | The query the flyout exists in. Outside it, nested disclosures. Unset means always a menu. |
+| `media`   | string  | —       | Deprecated spelling of `flyout-when`, still honoured. |
 | `open`    | boolean | `false` | Whether the root list is showing. Reflected.                                       |
 
-Inside `media` it is the [APG Menu
+Inside `flyout-when` it is the [APG Menu
 Button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/): `role="menu"`,
 items out of the tab order, arrows and <kbd>Home</kbd>/<kbd>End</kbd> to move,
 <kbd>Right</kbd>/<kbd>Left</kbd> in and out of a branch, type-ahead,
@@ -671,7 +673,7 @@ plus the two things such a row always ends up needing — somewhere for the ones
 that do not fit to go, and a way to be a drawer instead on a narrow screen.
 
 ```html
-<navbar-elemental media="(min-width: 40rem)" hover>
+<navbar-elemental bar-when="(min-width: 40rem)" hover>
   <div class="rail">
     <ul>
       <li><a href="/overview">Overview</a></li>
@@ -696,7 +698,8 @@ that do not fit to go, and a way to be a drawer instead on a narrow screen.
 
 | Attribute | Type    | Default | Description                                                                  |
 | --------- | ------- | ------- | ----------------------------------------------------------------------------- |
-| `media`   | string  | —       | The query the bar exists in. Outside it, the drawer. Unset means a bar at every width. |
+| `bar-when`   | string  | —       | The query the bar exists in. Outside it, the drawer. Unset means a bar at every width. |
+| `media`   | string  | —       | Deprecated spelling of `bar-when`, still honoured. |
 | `open`    | boolean | `false` | Whether the drawer is showing. Reflected.                                     |
 | `hover`   | boolean | `false` | A mouse opens a panel by pointing at it too. Never on touch, never stacked.   |
 
@@ -713,7 +716,7 @@ is why a hand-picked width hides three short links on a tablet with room to
 spare. An `IntersectionObserver` watches a copy of the row instead: items that do
 not fit leave it one at a time and reappear under the overflow button. The copy
 and not the row, because an observer watching the box it is also changing is an
-infinite loop that eats a navigation one frame at a time. `media` is the separate
+infinite loop that eats a navigation one frame at a time. `bar-when` is the separate
 question of when the whole bar becomes a drawer, and it is a query because
 nothing the element does can change the width of the window.
 

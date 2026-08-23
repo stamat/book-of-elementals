@@ -1,5 +1,5 @@
-// The three sums this element does: which way a key moves the primary pane, where a pointer
-// puts the separator, and which breakpoints it will build a media query out of.
+// The two sums this element does: which way a key moves the primary pane, and where a pointer
+// puts the separator.
 //
 // The key map is the part worth pinning to numbers rather than to a screen, because the answer
 // moves twice. It moves with the axis — an Up arrow on a splitter between a left and a right
@@ -18,7 +18,7 @@
 // element test would assert against a stub base class — `script/a11y` drives the docs demo
 // instead, which is where a name that went missing or a value out of its range shows up.
 
-import { splitterKey, positionFrom, stackQuery, DEFAULT_POSITION } from './index.js';
+import { splitterKey, positionFrom, DEFAULT_POSITION } from './index.js';
 
 /** A 200x100 box at the origin. Wider than it is tall, so a bug that swaps the two axes cannot
  * hide behind a square. */
@@ -132,39 +132,4 @@ test('a handle size that is not a length is no handle, rather than a track of Na
   // assumed — and a measurement taken while the element is display:none is not a number.
   expect(positionFrom(box, 100, 50, { size: NaN })).toBe(50);
   expect(positionFrom(box, 100, 50, { size: -20 })).toBe(50);
-});
-
-// `vertical-below` turns an author's breakpoint into a media query. The value arrives as an
-// attribute, which is a string a template wrote and therefore a string that can be anything,
-// and it is interpolated into a query — so the sum worth pinning is which values are refused.
-
-test('a breakpoint becomes a query for viewports narrower than it', () => {
-  expect(stackQuery('40rem')).toBe('(width < 40rem)');
-  expect(stackQuery('640px')).toBe('(width < 640px)');
-  expect(stackQuery('  40rem  ')).toBe('(width < 40rem)');
-});
-
-test('a breakpoint with a bracket in it cannot widen the query it sits in', () => {
-  // The attack, in one attribute: the value closes the condition it was interpolated into and
-  // adds one of its own, and `40rem) or (width > 0px` is a splitter permanently stacked on
-  // every screen. Refused before it reaches `matchMedia`, because a media query that parses is
-  // one nothing downstream can tell was not meant.
-  expect(stackQuery('40rem) or (width > 0px')).toBe(null);
-  expect(stackQuery('40rem,screen')).toBe(null);
-  expect(stackQuery('40rem;')).toBe(null);
-});
-
-test('a breakpoint with no unit is refused rather than guessed at', () => {
-  // `40` is not a length, and a guess at `px` would be this element deciding what the page
-  // meant. `0` is refused for the same reason: no viewport is narrower than nothing.
-  expect(stackQuery('40')).toBe(null);
-  expect(stackQuery('0')).toBe(null);
-  expect(stackQuery('-40rem')).toBe(null);
-  expect(stackQuery('40 rem')).toBe(null);
-});
-
-test('no breakpoint is no query, so the panes stay the way they were written', () => {
-  expect(stackQuery(null)).toBe(null);
-  expect(stackQuery('')).toBe(null);
-  expect(stackQuery('   ')).toBe(null);
 });

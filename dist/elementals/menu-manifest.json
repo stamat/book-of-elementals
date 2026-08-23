@@ -347,11 +347,18 @@
               "default": "false"
             },
             {
-              "name": "media",
+              "name": "flyout-when",
               "type": {
                 "text": "string"
               },
               "description": "The media query the flyout exists in. Outside it, nested disclosures. Unset means a menu at every width."
+            },
+            {
+              "name": "media",
+              "type": {
+                "text": "string"
+              },
+              "description": "Deprecated spelling of `flyout-when`, still honoured. `flyout-when` wins where both are written."
             },
             {
               "type": {

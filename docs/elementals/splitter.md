@@ -141,20 +141,28 @@ about half the viewport's height, which is the layout you want — and the separ
 keeping rather than hiding, because a screen where space is scarce is the one where being able
 to give it to one pane matters most.
 
-`vertical-below` is that switch, and it is the same `vertical` at the other end of it:
+`vertical-when` is that switch, and it is the same `vertical` at the other end of it:
 
 ```html
-<splitter-elemental vertical-below="40rem">
+<splitter-elemental vertical-when="(width < 40rem)">
   <nav>…</nav>
   <main>…</main>
 </splitter-elemental>
 ```
 
-Below `40rem` the element writes `vertical` on itself and takes it off again above, so
-everything already keyed to that attribute follows with it: the grid turns its columns into
-rows, the cursor becomes `row-resize`, the theme's line turns with the seam, the arrows become
-<kbd>Up</kbd> and <kbd>Down</kbd>, and `aria-orientation` flips. `position` is a percentage, so
-30% of the width becomes 30% of the height and the split you had is the split you keep.
+While the query matches, the element writes `vertical` on itself, and takes it off again when it
+stops — so everything already keyed to that attribute follows with it: the grid turns its columns
+into rows, the cursor becomes `row-resize`, the theme's line turns with the seam, the arrows
+become <kbd>Up</kbd> and <kbd>Down</kbd>, and `aria-orientation` flips. `position` is a
+percentage, so 30% of the width becomes 30% of the height and the split you had is the split you
+keep.
+
+**It takes a whole media query, not a width**, so `(orientation: portrait)` and `(pointer: coarse)`
+are as available as a breakpoint — and it is the same shape as `open-when` on
+[`<disclosure-elemental>`](disclosure.html), `bar-when` on [`<navbar-elemental>`](navbar.html) and
+`flyout-when` on [`<menu-elemental>`](menu.html). A query the browser cannot parse is a query that
+never matches, so a typo leaves the splitter exactly as you wrote it rather than stacking it at
+every width.
 
 **The height rule above still applies, and bites harder here** — at this breakpoint you are not
 otherwise writing any CSS, so it is easy to arrive at a stacked splitter that appears to ignore
@@ -168,8 +176,11 @@ bracket or a comma, which is a value that could close the media query it is put 
 a wider one. A value that is not a length is ignored, and the splitter stays as you wrote it.
 
 **A `vertical` you wrote yourself wins.** Both attributes on one element is a splitter you have
-said is stacked at every width, so the breakpoint has nothing to add and does not take your
-attribute off above it.
+said is stacked at every width, so the query has nothing to add and does not take your attribute
+off when it stops matching.
+
+[Before and after](../examples/before-and-after.html) is this attribute working on a picture: the
+same reveal side by side on a wide screen and stacked on a narrow one.
 
 ## How far the panes may go
 
@@ -239,7 +250,7 @@ framework, a fragment — is complete before it is ever connected, so nothing wa
 | `min` | number | `0` | How far the primary pane may shrink. `aria-valuemin`, and the floor for <kbd>Enter</kbd> as well as for the drag |
 | `max` | number | `100` | How far it may grow. `aria-valuemax` |
 | `vertical` | boolean | off | The panes are stacked down the page rather than side by side |
-| `vertical-below` | length | — | A breakpoint. Narrower than this, the element writes `vertical` itself |
+| `vertical-when` | string | — | A media query that owns `vertical`: the panes stack while it matches |
 | `label-text` | string | `Resize` | The handle's accessible name |
 
 **`label-text` is worth setting.** The pattern asks for the separator to be named after the

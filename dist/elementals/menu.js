@@ -81,7 +81,7 @@
   }
   var MenuElemental = class extends ElementBase {
     static get observedAttributes() {
-      return ["open", "media"];
+      return ["open", "flyout-when", "media"];
     }
     /**
      * Whether a mouse opens the menu by pointing at it rather than by clicking.
@@ -227,7 +227,7 @@
     // ---- wiring ----
     watchMedia() {
       if (this.query) this.query.removeEventListener("change", this.onMediaChange);
-      const media = this.getAttribute("media");
+      const media = this.getAttribute("flyout-when") ?? this.getAttribute("media");
       this.query = media && window.matchMedia ? window.matchMedia(media) : null;
       if (this.query) this.query.addEventListener("change", this.onMediaChange);
     }
@@ -357,7 +357,7 @@
      */
     attributeChangedCallback(name, previous, current) {
       if (!this.initialized || previous === current) return;
-      if (name === "media") {
+      if (name === "flyout-when" || name === "media") {
         this.watchMedia();
         this.onMediaChange();
         return;

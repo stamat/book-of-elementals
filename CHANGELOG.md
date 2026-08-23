@@ -17,6 +17,19 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Added
 
+- **`open-when`, `bar-when` and `flyout-when` — the `media` attribute renamed after what it
+  switches.** `<disclosure-elemental media>` said *a* media query without saying which state it
+  owned, and `<navbar-elemental>` and `<menu-elemental>` spelled the same idea the same vague way.
+  Each is now named for the thing it drives: `open-when` holds `open`, `bar-when` chooses the bar
+  over the drawer, `flyout-when` chooses the flyout over nested disclosures, and
+  `<splitter-elemental>`'s new `vertical-when` joins them. The value is unchanged — a whole media
+  query, so `(orientation: portrait)` is as available as a breakpoint.
+
+  `media` still works everywhere it worked before and is not removed in this release; the new
+  spelling wins where a page writes both. It is marked for removal at the next major, with a
+  `TODO` on each of the three fallbacks.
+
+
 - **`<splitter-elemental>` — two panes and a draggable seam between them.** The
   [APG Window Splitter pattern](https://www.w3.org/WAI/ARIA/apg/patterns/windowsplitter/), which
   is the one pattern in the APG with no reference example to copy from
@@ -24,13 +37,11 @@ may already be targeting**, since neither shows up in a function signature.
   its prose: arrows a per cent at a time, <kbd>Home</kbd> and <kbd>End</kbd> to the smallest and
   largest size the primary pane is allowed, <kbd>Enter</kbd> to collapse it and put it back. The
   arrows on the other axis are left to the page, so a reader inside a pane can still scroll it.
-  `position`, `min`, `max`, `vertical`, `vertical-below` and `label-text`; `min` and `max` are
+  `position`, `min`, `max`, `vertical`, `vertical-when` and `label-text`; `min` and `max` are
   `aria-valuemin` and `aria-valuemax` verbatim and bound the pointer and the keys alike.
-  `vertical-below` takes a breakpoint — a length in `px`, `rem`, `em` or `ch` — and below it the
-  element writes `vertical` on itself and takes it off again above, which is how a splitter
-  stacks on a phone without the page wiring up a `matchMedia` of its own. A `vertical` the page
-  wrote by hand is left alone, and a breakpoint that is not a length is ignored rather than
-  interpolated into a media query.
+  `vertical-when` takes a media query and owns `vertical` while it matches, which is how a
+  splitter stacks on a phone without the page wiring up a `matchMedia` of its own. A `vertical`
+  the page wrote by hand is left alone.
 
   DOM: the element writes one `<div data-splitter-handle role="separator" tabindex="0">` between
   its first two element children, `data-splitter-panes` on itself, gives the first child an `id`

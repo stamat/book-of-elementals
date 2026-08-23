@@ -50,7 +50,8 @@ function set(element, name, value) {
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/menu/
  *
  * @tag menu-elemental
- * @attr {string} media - The media query the flyout exists in. Outside it, nested disclosures. Unset means a menu at every width.
+ * @attr {string} flyout-when - The media query the flyout exists in. Outside it, nested disclosures. Unset means a menu at every width.
+ * @attr {string} media - Deprecated spelling of `flyout-when`, still honoured. `flyout-when` wins where both are written.
  * @attr {boolean} [open=false] - Whether the root list is showing. Reflected, so `[open]` is a styling hook.
  * @attr {boolean} [hover=false] - A mouse also opens it by pointing at it. Never on touch, never inline.
  *
@@ -68,7 +69,7 @@ function set(element, name, value) {
  */
 export class MenuElemental extends ElementBase {
   static get observedAttributes() {
-    return ['open', 'media'];
+    return ['open', 'flyout-when', 'media'];
   }
 
   /**
@@ -262,7 +263,9 @@ export class MenuElemental extends ElementBase {
 
   watchMedia() {
     if (this.query) this.query.removeEventListener('change', this.onMediaChange);
-    const media = this.getAttribute('media');
+    // TODO: drop the `media` fallback at the next major - `flyout-when` is the name, and this pair
+    // is the whole of the deprecation.
+    const media = this.getAttribute('flyout-when') ?? this.getAttribute('media');
     this.query = media && window.matchMedia ? window.matchMedia(media) : null;
     if (this.query) this.query.addEventListener('change', this.onMediaChange);
   }
@@ -430,7 +433,7 @@ export class MenuElemental extends ElementBase {
    */
   attributeChangedCallback(name, previous, current) {
     if (!this.initialized || previous === current) return;
-    if (name === 'media') {
+    if (name === 'flyout-when' || name === 'media') {
       this.watchMedia();
       this.onMediaChange();
       return;

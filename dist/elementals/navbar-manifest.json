@@ -548,11 +548,18 @@
           ],
           "attributes": [
             {
-              "name": "media",
+              "name": "bar-when",
               "type": {
                 "text": "string"
               },
               "description": "The media query the bar exists in. Outside it, the drawer. Unset means a bar at every width, until the links stop fitting."
+            },
+            {
+              "name": "media",
+              "type": {
+                "text": "string"
+              },
+              "description": "Deprecated spelling of `bar-when`, still honoured. `bar-when` wins where both are written."
             },
             {
               "name": "min-bar-items",

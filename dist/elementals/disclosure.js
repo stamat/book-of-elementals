@@ -164,7 +164,7 @@
   var regionCount = 0;
   var DisclosureElemental = class extends ElementBase {
     static get observedAttributes() {
-      return ["open", "media"];
+      return ["open", "open-when", "media"];
     }
     /** The `<button>` that toggles the region. Direct child, so a button inside the
      * region - or inside a nested disclosure - is not mistaken for the trigger. */
@@ -258,7 +258,7 @@
      * before. Both halves matter: the attribute can be rewritten at runtime. */
     watchMedia() {
       if (this.query) this.query.removeEventListener("change", this.onMediaChange);
-      const media = this.getAttribute("media");
+      const media = this.getAttribute("open-when") ?? this.getAttribute("media");
       this.query = media && window.matchMedia ? window.matchMedia(media) : null;
       if (this.query) this.query.addEventListener("change", this.onMediaChange);
     }
@@ -303,7 +303,7 @@
      */
     attributeChangedCallback(name, previous, current) {
       if (!this.initialized || previous === current) return;
-      if (name === "media") {
+      if (name === "open-when" || name === "media") {
         this.watchMedia();
         this.onMediaChange();
         return;

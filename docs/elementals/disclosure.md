@@ -92,7 +92,8 @@ instantiate, no init call to forget.
 | --------- | ------- | ------- | ------------------------------------------------------------------- |
 | `open`    | boolean | `false` | Whether the region is showing. Reflected — it tracks the live state. |
 | `for`     | string  | —       | `id` of the region. Defaults to the button's next element sibling.   |
-| `media`   | string  | —       | A media query that owns `open`: held open while it matches, closed when it stops. |
+| `open-when`   | string  | —       | A media query that owns `open`: held open while it matches, closed when it stops. |
+| `media`   | string  | —       | Deprecated spelling of `open-when`, still honoured. `open-when` wins where both are written. |
 
 `for` is also read as `data-for`. `open` is not — it is state, not configuration, so it has
 one spelling.
@@ -144,7 +145,7 @@ document.querySelector("disclosure-elemental")
 | `hidden`        | the region | `until-found` while closed, absent while open — set at the end of the close slide |
 | `data-state`    | the region | `open` / `closed`, flipped with the click rather than with the slide              |
 | `class`         | the region | `disclosure-elemental-region` added, nothing removed                              |
-| `data-mode`     | both       | `pinned` / `free`, only while `media` is set — see [A breakpoint that owns it](#a-breakpoint-that-owns-it) |
+| `data-mode`     | both       | `pinned` / `free`, only while `open-when` is set — see [A breakpoint that owns it](#a-breakpoint-that-owns-it) |
 
 `type="button"` because a `<button>` in a form submits it unless told otherwise, and a
 disclosure that posts the page away on its first click is not a disclosure.
@@ -168,7 +169,7 @@ disclosure-elemental[open] { }                       /* the host, reflected stat
 disclosure-elemental > button[aria-expanded="true"] { } /* what the theme keys off */
 .disclosure-elemental-region { }                     /* the region, wherever it lives */
 .disclosure-elemental-region[data-state="closed"] { } /* the region, from the click onwards */
-[data-mode="free"] { }                               /* the element and the region, with `media` set */
+[data-mode="free"] { }                               /* the element and the region, with `open-when` set */
 disclosure-elemental:not(:defined) { }               /* before upgrade */
 ```
 
@@ -243,10 +244,10 @@ bundle deferred or at the end of the body, it is.
 Some disclosures stop being disclosures at a width. A navigation rail is a drawer on a
 phone and simply _there_ on a desktop; a long description is a toggle in a narrow column
 and prose beside the figure when there is room. That is one widget whose state belongs to
-the viewport rather than to the reader, and `media` is how you say so:
+the viewport rather than to the reader, and `open-when` is how you say so:
 
 ```html
-<disclosure-elemental for="sidebar" media="(min-width: 60rem)">
+<disclosure-elemental for="sidebar" open-when="(min-width: 60rem)">
   <button aria-label="Documentation navigation">…</button>
 </disclosure-elemental>
 ```
@@ -273,7 +274,7 @@ exist — and hiding the button with `display: none` does not make its lie quiet
 removes the only control that could have corrected it. Scott O'Hara's
 [responsive accessibility](https://www.scottohara.me/blog/2022/11/07/responsive-accessibility.html)
 walks through the CSS-only version of this and calls it "a little hacky", needing script
-anyway. `media` is that script, once, in the element that already owns the state.
+anyway. `open-when` is that script, once, in the element that already owns the state.
 
 > [!NOTE]
 > The query owns the state at each _change_, not every moment in between. Within one side
@@ -288,12 +289,12 @@ animating something nobody asked for.
 
 ### The mode is on both ends
 
-Setting `media` also puts `data-mode` on the element **and on the region** — `pinned` while
+Setting `open-when` also puts `data-mode` on the element **and on the region** — `pinned` while
 the query matches, `free` while it does not, and nothing at all on an element with no
-`media`:
+`open-when`:
 
 ```html
-<disclosure-elemental for="sidebar" media="(min-width: 60rem)" data-mode="free">…</disclosure-elemental>
+<disclosure-elemental for="sidebar" open-when="(min-width: 60rem)" data-mode="free">…</disclosure-elemental>
 
 <aside class="sidebar" id="sidebar" data-mode="free" hidden="until-found">…</aside>
 ```
@@ -431,7 +432,7 @@ untouched. One property:
 Turn it in the **Options** tab and copy the rule out of the bottom of the panel — the same
 table, with the values live:
 
-<!-- demo disclosure tab="options" style="--code-preview-options-height:333px" -->
+<!-- demo disclosure tab="options" style="--code-preview-options-height:364px" -->
 
 ```html
 <disclosure-elemental>

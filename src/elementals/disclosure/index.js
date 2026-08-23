@@ -116,7 +116,8 @@ let regionCount = 0;
  * @tag disclosure-elemental
  * @attr {boolean} [open=false] - Whether the region is showing. Reflected - it tracks the live state.
  * @attr {string} for - `id` of the region. Also read as `data-for`. Defaults to the button's next element sibling.
- * @attr {string} media - A media query that owns `open`: held open while it matches, closed when it stops. Unset means the button is the only thing that opens it.
+ * @attr {string} open-when - A media query that owns `open`: held open while it matches, closed when it stops. Unset means the button is the only thing that opens it.
+ * @attr {string} media - Deprecated spelling of `open-when`, still honoured. `open-when` wins where both are written.
  *
  * @cssprop {<time>} [--disclosure-elemental-duration=250ms] - How long the region takes to slide. Override it on the region, which is where the element reads it back out of the computed styles - `0s` toggles instantly.
  * @cssprop {<easing-function>} [--disclosure-elemental-easing=ease] - How the slide moves. On the region, like the duration.
@@ -128,7 +129,7 @@ let regionCount = 0;
  */
 export class DisclosureElemental extends ElementBase {
   static get observedAttributes() {
-    return ['open', 'media'];
+    return ['open', 'open-when', 'media'];
   }
 
   /** The `<button>` that toggles the region. Direct child, so a button inside the
@@ -263,7 +264,9 @@ export class DisclosureElemental extends ElementBase {
    * before. Both halves matter: the attribute can be rewritten at runtime. */
   watchMedia() {
     if (this.query) this.query.removeEventListener('change', this.onMediaChange);
-    const media = this.getAttribute('media');
+    // TODO: drop the `media` fallback at the next major - `open-when` is the name, and this pair
+    // is the whole of the deprecation.
+    const media = this.getAttribute('open-when') ?? this.getAttribute('media');
     this.query = media && window.matchMedia ? window.matchMedia(media) : null;
     if (this.query) this.query.addEventListener('change', this.onMediaChange);
   }
@@ -317,7 +320,7 @@ export class DisclosureElemental extends ElementBase {
   attributeChangedCallback(name, previous, current) {
     if (!this.initialized || previous === current) return;
 
-    if (name === 'media') {
+    if (name === 'open-when' || name === 'media') {
       this.watchMedia();
       this.onMediaChange();
       return;

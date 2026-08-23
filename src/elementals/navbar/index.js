@@ -146,7 +146,8 @@ let navbarCount = 0;
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/
  *
  * @tag navbar-elemental
- * @attr {string} media - The media query the bar exists in. Outside it, the drawer. Unset means a bar at every width, until the links stop fitting.
+ * @attr {string} bar-when - The media query the bar exists in. Outside it, the drawer. Unset means a bar at every width, until the links stop fitting.
+ * @attr {string} media - Deprecated spelling of `bar-when`, still honoured. `bar-when` wins where both are written.
  * @attr {number} [min-bar-items=1] - How many links have to fit for this to still be a bar. `2` says one link beside an overflow button is a drawer.
  * @attr {boolean} [open=false] - Whether the drawer is showing. Reflected, so `[open]` is a styling hook.
  * @attr {boolean} [hover=false] - A mouse also opens a panel by pointing at it. Never on touch, never stacked.
@@ -169,7 +170,7 @@ let navbarCount = 0;
  */
 export class NavbarElemental extends ElementBase {
   static get observedAttributes() {
-    return ['media', 'min-bar-items', 'open'];
+    return ['bar-when', 'media', 'min-bar-items', 'open'];
   }
 
   /**
@@ -491,7 +492,9 @@ export class NavbarElemental extends ElementBase {
 
   watchMedia() {
     if (this.query) this.query.removeEventListener('change', this.onMediaChange);
-    const media = this.getAttribute('media');
+    // TODO: drop the `media` fallback at the next major - `bar-when` is the name, and this pair
+    // is the whole of the deprecation.
+    const media = this.getAttribute('bar-when') ?? this.getAttribute('media');
     this.query = media && window.matchMedia ? window.matchMedia(media) : null;
     if (this.query) this.query.addEventListener('change', this.onMediaChange);
   }
@@ -652,7 +655,7 @@ export class NavbarElemental extends ElementBase {
 
   attributeChangedCallback(name, previous, current) {
     if (!this.initialized || previous === current) return;
-    if (name === 'media') {
+    if (name === 'bar-when' || name === 'media') {
       this.watchMedia();
       this.apply();
       return;

@@ -45,7 +45,7 @@
   var navbarCount = 0;
   var NavbarElemental = class extends ElementBase {
     static get observedAttributes() {
-      return ["media", "min-bar-items", "open"];
+      return ["bar-when", "media", "min-bar-items", "open"];
     }
     /**
      * The row: the first list in the element that no other custom element between them owns. A
@@ -309,7 +309,7 @@
     // ---- wiring ----
     watchMedia() {
       if (this.query) this.query.removeEventListener("change", this.onMediaChange);
-      const media = this.getAttribute("media");
+      const media = this.getAttribute("bar-when") ?? this.getAttribute("media");
       this.query = media && window.matchMedia ? window.matchMedia(media) : null;
       if (this.query) this.query.addEventListener("change", this.onMediaChange);
     }
@@ -432,7 +432,7 @@
     }
     attributeChangedCallback(name, previous, current) {
       if (!this.initialized || previous === current) return;
-      if (name === "media") {
+      if (name === "bar-when" || name === "media") {
         this.watchMedia();
         this.apply();
         return;

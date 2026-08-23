@@ -54,11 +54,6 @@
     const ratio = clamp(along / track, 0, 1);
     return (!vertical && rtl ? 1 - ratio : ratio) * 100;
   }
-  var BREAKPOINT = /^\d*\.?\d+(px|rem|em|ch)$/i;
-  function stackQuery(value) {
-    const length = typeof value === "string" ? value.trim() : "";
-    return BREAKPOINT.test(length) ? `(width < ${length})` : null;
-  }
   var SplitterElemental = class extends ElementBase {
     constructor() {
       super(...arguments);
@@ -71,7 +66,7 @@
       /** The pointer id of the drag in progress, `null` when there is none. Held so a second
        * finger arriving mid-drag is ignored rather than fighting the first. */
       __publicField(this, "pointerId", null);
-      /** The `vertical-below` breakpoint being watched, `null` when there is none. */
+      /** The `vertical-when` query being watched, `null` when there is none. */
       __publicField(this, "mql", null);
       /** Whether the `vertical` attribute on this element is one this element wrote. It is what
        * keeps a page that stacked its own panes stacked: once the breakpoint has flipped the
@@ -85,7 +80,7 @@
       __publicField(this, "dragMoved", false);
     }
     static get observedAttributes() {
-      return ["position", "min", "max", "vertical", "vertical-below", "label-text"];
+      return ["position", "min", "max", "vertical", "vertical-when", "label-text"];
     }
     /** The panes: every element child that is not the handle. The handle is written between
      * them, so it has to come out of the count that decides where it goes. */
@@ -127,17 +122,13 @@
     set vertical(value) {
       this.toggleAttribute("vertical", !!value);
     }
-    /** The width below which the panes stack themselves, as it was written. `null` where there
-     * is none, and also where what was written is not a length - the query it would have built
-     * is the thing that was refused, and this says so rather than reporting a breakpoint that
-     * nothing is watching. */
-    get verticalBelow() {
-      const raw = this.getAttribute("vertical-below");
-      return stackQuery(raw) === null ? null : raw.trim();
+    /** The media query that stacks the panes, as it was written. `null` where there is none. */
+    get verticalWhen() {
+      return this.getAttribute("vertical-when");
     }
-    set verticalBelow(value) {
-      if (value === null) this.removeAttribute("vertical-below");
-      else this.setAttribute("vertical-below", value);
+    set verticalWhen(value) {
+      if (value === null) this.removeAttribute("vertical-when");
+      else this.setAttribute("vertical-when", value);
     }
     /** The handle's accessible name. */
     get labelText() {
@@ -176,25 +167,25 @@
     attributeChangedCallback(name, previous, value) {
       if (!this.initialized || previous === value) return;
       if (name === "label-text") this.handle.setAttribute("aria-label", this.labelText);
-      else if (name === "vertical-below") this.watchViewport();
+      else if (name === "vertical-when") this.watchViewport();
       else this.render();
     }
     /**
-     * Watch the `vertical-below` breakpoint, and stack the panes now if the viewport is already
-     * under it.
+     * Watch the `vertical-when` query, and stack the panes now if it already matches.
      *
-     * The breakpoint is read through `matchMedia` rather than measured: the browser is already
+     * The query is watched through `matchMedia` rather than measured: the browser is already
      * evaluating media queries and will say when this one changes, where a `ResizeObserver` on
      * the element would answer a different question - its own box, which a stacking splitter
-     * changes, and which is not the viewport the author wrote a breakpoint about.
+     * changes, and which is not the viewport the author wrote a query about. A query the browser
+     * cannot parse is one that never matches, which is a splitter left exactly as it was written.
      *
-     * Safe to call again; a `vertical-below` that changed is the old query dropped and a new one
+     * Safe to call again; a `vertical-when` that changed is the old query dropped and a new one
      * taken out.
      */
     watchViewport() {
       this.unwatchViewport();
-      const query = stackQuery(this.getAttribute("vertical-below"));
-      if (query === null) return;
+      const query = this.getAttribute("vertical-when");
+      if (!query) return;
       this.mql = window.matchMedia(query);
       this.mql.addEventListener("change", this.onViewportChange);
       this.onViewportChange(this.mql);

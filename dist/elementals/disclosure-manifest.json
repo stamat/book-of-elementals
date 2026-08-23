@@ -212,11 +212,18 @@
               "default": "false"
             },
             {
-              "name": "media",
+              "name": "open-when",
               "type": {
                 "text": "string"
               },
               "description": "A media query that owns `open`: held open while it matches, closed when it stops. Unset means the button is the only thing that opens it."
+            },
+            {
+              "name": "media",
+              "type": {
+                "text": "string"
+              },
+              "description": "Deprecated spelling of `open-when`, still honoured. `open-when` wins where both are written."
             },
             {
               "type": {

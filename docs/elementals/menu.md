@@ -14,7 +14,7 @@ breakpoint the whole thing stops being a menu. Light DOM, no shadow root, nothin
 moved or wrapped.
 
 <div class="demo-row">
-  <menu-elemental id="menu-demo" media="(min-width: 40rem)">
+  <menu-elemental id="menu-demo" flyout-when="(min-width: 40rem)">
     <button>Account</button>
     <ul>
       <li><a href="#menu-elemental">Profile</a></li>
@@ -40,13 +40,13 @@ markup.
 ## Usage
 
 Edit the sample and the preview above it follows as you type. The width buttons are the
-point here — `media` is what decides whether this is a flyout or a stack of disclosures,
+point here — `flyout-when` is what decides whether this is a flyout or a stack of disclosures,
 and 375px is the width where it stops being a menu:
 
 <!-- demo menu viewport-widths="375 768" style="--code-preview-height:246px" -->
 
 ```html
-<menu-elemental media="(min-width: 40rem)">
+<menu-elemental flyout-when="(min-width: 40rem)">
   <button>Account</button>
   <ul>
     <li><a href="/profile/">Profile</a></li>
@@ -97,7 +97,8 @@ like — every level is wired the same way.
 
 | Attribute | Type    | Default | Description                                                                     |
 | --------- | ------- | ------- | ------------------------------------------------------------------------------- |
-| `media`   | string  | none    | The media query the flyout exists in. Outside it, nested disclosures. Unset means a menu at every width. |
+| `flyout-when`   | string  | none    | The media query the flyout exists in. Outside it, nested disclosures. Unset means a menu at every width. |
+| `media`   | string  | none    | Deprecated spelling of `flyout-when`, still honoured. `flyout-when` wins where both are written. |
 | `open`    | boolean | `false` | Whether the root list is showing. Reflected, so `[open]` is a styling hook.      |
 | `hover`   | boolean | `false` | A mouse also opens it by [pointing at it](#opening-on-hover). Never on touch, never inline. |
 
@@ -190,7 +191,7 @@ see below.
 | `[hidden]`                            | A closed list                     |
 
 The element writes `data-mode` itself, so a stylesheet reads the breakpoint back off
-the element rather than repeating the query in `media` and drifting from it. It writes
+the element rather than repeating the query in `flyout-when` and drifting from it. It writes
 [`data-side` and `data-align`](#staying-on-screen) on the lists for the same reason.
 
 ## Two modes
@@ -201,10 +202,10 @@ order. None of that survives being 380px wide. There, the same markup wants to b
 stack of nested disclosures in a drawer: links you tab through, submenus that stay
 open where you left them, no floating anything.
 
-`media` is which is which. Inside the query, the flyout. Outside it, the stack.
+`flyout-when` is which is which. Inside the query, the flyout. Outside it, the stack.
 
 ```html
-<menu-elemental media="(min-width: 60rem)">…</menu-elemental>
+<menu-elemental flyout-when="(min-width: 60rem)">…</menu-elemental>
 ```
 
 What changes is not only the CSS. `role="menu"` is a promise that the arrows work and
@@ -316,7 +317,7 @@ from its own item, and a branch closed again by pointing at any other item of th
 list:
 
 <div class="demo-row">
-  <menu-elemental class="hamburger" hover media="(min-width: 40rem)">
+  <menu-elemental class="hamburger" hover flyout-when="(min-width: 40rem)">
     <button>Menu</button>
     <ul>
       <li><a href="#opening-on-hover">Dashboard</a></li>
@@ -333,7 +334,7 @@ list:
 </div>
 
 ```html
-<menu-elemental hover media="(min-width: 40rem)">…</menu-elemental>
+<menu-elemental hover flyout-when="(min-width: 40rem)">…</menu-elemental>
 ```
 
 It is an addition and never a replacement: click, <kbd>Enter</kbd> and the arrow keys
@@ -431,7 +432,7 @@ Turn them in the **Options** tab and copy the rule out of the bottom of the pane
 table, with the values live. `--menu-elemental-surface` is the one to try first: `Canvas` is
 the page's own background, and it is what to re-point when the menu opens over a card:
 
-<!-- demo menu tab="options" style="--code-preview-options-height:459px" -->
+<!-- demo menu tab="options" style="--code-preview-options-height:490px" -->
 
 ```html
 <menu-elemental>
@@ -469,14 +470,14 @@ button's label, masked rather than painted so it takes the button's own colour a
 follows a theme switch:
 
 <div class="demo-row">
-  <menu-elemental class="hamburger" media="(min-width: 40rem)">
+  <menu-elemental class="hamburger" flyout-when="(min-width: 40rem)">
     <button>Menu</button>
     <ul>
       <li><a href="#the-hamburger">Dashboard</a></li>
       <li><a href="#the-hamburger">Settings</a></li>
     </ul>
   </menu-elemental>
-  <menu-elemental class="hamburger" media="(min-width: 40rem)">
+  <menu-elemental class="hamburger" flyout-when="(min-width: 40rem)">
     <button aria-label="Menu"></button>
     <ul>
       <li><a href="#the-hamburger">Dashboard</a></li>

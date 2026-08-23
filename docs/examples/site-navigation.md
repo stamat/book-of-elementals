@@ -27,7 +27,7 @@ those are the element's business — which is the point of this page. Here is th
 </svg>
 
 <nav aria-label="Kestrel">
-  <navbar-elemental class="bar" media="(min-width: 48rem)" min-bar-items="2" hover>
+  <navbar-elemental class="bar" bar-when="(min-width: 48rem)" min-bar-items="2" hover>
     <a class="brand" href="#"><span aria-hidden="true">🪶</span> Kestrel</a>
 
     <div class="rail">
@@ -337,7 +337,7 @@ media query swaps them:
 }
 ```
 
-That number is the one in `media` on the element, and it has to be: a `data-navbar-stack`
+That number is the one in `bar-when` on the element, and it has to be: a `data-navbar-stack`
 item only shows in the drawer, so furniture taken off the bar at a width where the element
 is still a bar is furniture that has gone nowhere. Pinning both to 48rem means the moment
 the icons leave the bar, the drawer they moved into is the thing on screen.
@@ -352,7 +352,7 @@ that is a header showing one link beside an overflow button — a drawer wearing
 clothes. The threshold is the element's because only the element knows how many fitted:
 
 ```html
-<navbar-elemental media="(min-width: 48rem)" min-bar-items="2" hover>
+<navbar-elemental bar-when="(min-width: 48rem)" min-bar-items="2" hover>
 ```
 
 ## Why the buttons move on a query and the links do not
@@ -459,7 +459,7 @@ Everything on this page that is not the furniture:
 
 - **The links fold into More one at a time** as the room runs out, measured rather than
   guessed — including after a webfont lands and changes every label's width.
-- **The bar becomes a drawer** below the breakpoint `media` names, and above it as soon as
+- **The bar becomes a drawer** below the breakpoint `bar-when` names, and above it as soon as
   fewer links fit than `min-bar-items` asks for.
 - **The hamburger crosses into an X** while the drawer is open, out of the theme, on a
   `<span>` the element writes into the button — three bars need three boxes and a button

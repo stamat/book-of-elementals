@@ -21,7 +21,7 @@ media query. Here is the assembly.
 
 ```html
 <header class="topbar">
-  <disclosure-elemental for="sidebar" media="(min-width: 60rem)">
+  <disclosure-elemental for="sidebar" open-when="(min-width: 60rem)">
     <button class="nav-toggle" aria-label="Documentation navigation">
       <svg class="icon-expand" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
         <path d="m4.177 7.823 2.396-2.396A.25.25 0 0 1 7 5.604v4.792a.25.25 0 0 1-.427.177L4.177 8.177a.25.25 0 0 1 0-.354Z"/>
@@ -269,7 +269,7 @@ disclosures are always open is a question about the viewport — so the query go
 element and the desktop story is over:
 
 ```html
-<disclosure-elemental for="sidebar" media="(min-width: 60rem)">
+<disclosure-elemental for="sidebar" open-when="(min-width: 60rem)">
 ```
 
 Above 60rem the panel is open and the button that would close it is `display: none`. Narrow
@@ -291,7 +291,7 @@ responsive drawer is pure CSS:
 ```
 
 The panel appears, and every assistive technology on the page is still being told it is
-hidden and its button collapsed. `media` moves that decision to the one place already
+hidden and its button collapsed. `open-when` moves that decision to the one place already
 holding the state, so there is nothing to disagree with.
 
 And it takes the number with it. The element reflects which side of its query it is on, as
@@ -321,7 +321,7 @@ addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
 
 No breakpoint test in either, because the one that is needed is in `close()` and covers both.
 The scrim is not on screen above the breakpoint, but the keyboard is at every width, and a
-rail closed by Escape is a rail nothing brings back: `media` writes `open` when the query
+rail closed by Escape is a rail nothing brings back: `open-when` writes `open` when the query
 _changes_, and a query that is still matching changes nothing — so the panel is gone, with the
 button that would reopen it `display: none` up here. The guard goes where every dismissal
 already passes through:
@@ -333,7 +333,7 @@ const close = () => {
 };
 ```
 
-`pinned` rather than not-`free`, because a disclosure with no `media` attribute has no mode at
+`pinned` rather than not-`free`, because a disclosure with no `open-when` attribute has no mode at
 all and is a drawer at every width.
 
 ## Focus, which is the page's too
@@ -568,7 +568,7 @@ Everything on this page that is not furniture:
 - **`aria-expanded`, `aria-controls` and `hidden` stay in step**, across a click, the
   breakpoint, the scrim, Escape and find-in-page, because all five write one boolean.
 - **The breakpoint is an attribute**, so the rail is not a mode with its own code path —
-  `media` holds the region open while the query matches and hands it back when it stops.
+  `open-when` holds the region open while the query matches and hands it back when it stops.
 - **The layout never repeats the breakpoint**, because `data-mode` lands on the element and
   the panel, which also means none of it can apply before the script does.
 - **The panel is not moved or wrapped**, so it stays the flex item its layout expects and

@@ -17,7 +17,7 @@ it is worth knowing why it works, because what it is doing is not what it looks 
 <!-- demo splitter style="--code-preview-height:501px" -->
 
 ```html
-<splitter-elemental class="reveal" vertical-below="32rem" label-text="Reveal the graded picture">
+<splitter-elemental class="reveal" vertical-when="(width < 32rem)" label-text="Reveal the graded picture">
   <div><img src="https://picsum.photos/id/62/1200/800" alt="Rolling hills at dawn, before grading"></div>
   <div><img class="graded" src="https://picsum.photos/id/62/1200/800" alt="The same hills, graded to black and white"></div>
 </splitter-elemental>
@@ -66,8 +66,8 @@ takes its height from the pictures in it, and `size` once there is a handle, bec
 block axis and `aspect-ratio` is what makes that one definite. Measured on a 600px splitter: both
 pictures 600 wide at the same x, and still there after the separator has moved to 144.
 
-**It turns with the screen.** `vertical-below="32rem"` is the only thing in the markup that is not
-the element's usual two panes, and narrower than that the reveal is a top and a bottom rather than
+**It turns with the screen.** `vertical-when="(width < 32rem)"` is the only thing in the markup that is not
+the element's usual two panes, and while that matches the reveal is a top and a bottom rather than
 a left and a right — the same frame, the same drag, one axis over. Nothing in the CSS is about the
 new axis: a corner pin is the same instruction read either way round, and the height does not
 change with the flip because `aspect-ratio` is what sets it — which is also the height a

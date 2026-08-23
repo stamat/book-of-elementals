@@ -224,9 +224,11 @@ axis, and puts the strip beside the panels instead of above them:
 </tabs-elemental>
 ```
 
-There is no `media` attribute to make it vertical on wide screens only — the orientation is
-a keyboard contract as much as a layout, and CSS cannot swap the arrow keys. One line does
-it, and the element re-wires itself when the property changes:
+There is no `vertical-when` the way [`<splitter-elemental>`](splitter.html) has one — the
+orientation is a keyboard contract as much as a layout, and a tab list that changed which
+arrow key walks it as the window resized is a contract moving under the reader's hands. One
+line does it where you want it anyway, and the element re-wires itself when the property
+changes:
 
 ```javascript
 const wide = matchMedia("(min-width: 60rem)");
