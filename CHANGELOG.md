@@ -15,6 +15,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-08-23
+
 ### Fixed
 
 - **`<accordion-elemental>`: an open panel no longer jumps on load.** The theme's inset sits on
