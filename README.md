@@ -1407,6 +1407,12 @@ Land your change under `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md) as you 
 because a Pages artifact is a single directory — nothing above the site root exists once
 deployed, so the live demos need their bundle inside it.
 
+## Thanks
+
+The GitHub accessibility team, lovely people, taught me most of what I know about
+accessibility and left me caring about it. This project is what that turned into. I hope
+they are [proud](https://www.youtube.com/watch?v=XOf6HXPPeQ4). ❤️
+
 
 ---
 

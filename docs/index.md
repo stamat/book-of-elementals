@@ -107,3 +107,10 @@ One thing here is not an element. [**The drawn checkbox**](checkbox.html) is a
 stylesheet `<checkbox-group-elemental>` could not be drawn without — the mixed
 state's dash is the one part `accent-color` cannot touch — and it is opt-in with
 a class, so every other checkbox on the page can wear the same look.
+
+## Thanks
+
+The GitHub accessibility team, lovely people, taught me most of what I know
+about accessibility and left me caring about it. This project is what that
+turned into. I hope they are
+[proud](https://www.youtube.com/watch?v=XOf6HXPPeQ4). ❤️

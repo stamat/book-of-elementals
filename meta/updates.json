@@ -32,8 +32,8 @@
     "updated": "2026-08-17T21:17:28.365Z"
   },
   "docs/elementals/index.md": {
-    "hash": "721279b8faa348b4be601213481bd90046351ddc",
-    "updated": "2026-08-23T13:21:49.233Z"
+    "hash": "d1f11350ee0f3f3ac6edab1a68abcd2a3a6020d2",
+    "updated": "2026-08-23T14:59:51.725Z"
   },
   "docs/elementals/marquee.md": {
     "hash": "5ac64586fa56b17f2a01ede37781b0f3996b0f21",
@@ -76,8 +76,8 @@
     "updated": "2026-08-23T13:25:30.311Z"
   },
   "docs/elementals/splitter.md": {
-    "hash": "804d5045ee54ef3ccfd4eacd0f41a3e1af02af3f",
-    "updated": "2026-08-23T12:42:51.749Z"
+    "hash": "fc525258a24229d3cd4ecaa3b1e372cb366fc73e",
+    "updated": "2026-08-23T14:57:40.966Z"
   },
   "docs/elementals/suggest.md": {
     "hash": "fbb5aaceb888f1ac22a5a8913f0b1462829760ac",
@@ -123,6 +123,10 @@
     "hash": "68a22c1f97724b1eebb2f67ed1380113058c18b4",
     "updated": "2026-08-17T21:18:15.363Z"
   },
+  "docs/examples/media-player.md": {
+    "hash": "c856f1bfff191e432ccfa02fc295c738e836d118",
+    "updated": "2026-08-23T14:59:02.869Z"
+  },
   "docs/examples/sidebar-drawer.md": {
     "hash": "deb47d89b912e4de813c64a1afe7110c13d99ec7",
     "updated": "2026-08-17T21:18:17.378Z"
@@ -136,7 +140,7 @@
     "updated": "2026-08-18T11:33:29.537Z"
   },
   "docs/index.md": {
-    "hash": "5edf728057fc1185628f181ef9cb03d769721dcb",
-    "updated": "2026-08-17T16:12:56.134Z"
+    "hash": "e8b2116aff38ed1ab3e8205ceafa536b51855cd7",
+    "updated": "2026-08-23T13:38:45.376Z"
   }
 }
