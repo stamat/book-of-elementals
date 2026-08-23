@@ -59,13 +59,23 @@ that is fine.
 
 ## Not in the book
 
-More pages are being written. Elements published separately today —
-[compare-images-slider](https://github.com/stamat/compare-images-slider),
-[youtube-background](https://github.com/stamat/youtube-background) — keep their
-own packages; this book does not break anyone's install to absorb them.
+More pages are being written, and three custom elements are published separately
+today. They keep their own packages, because this book does not break anyone's
+install to absorb them.
 
-The first of those is worth telling apart from
-[`<splitter-elemental>`](splitter.html), because both put `role="separator"` on a
-handle you drag. A splitter *resizes* two panes that share a width. The compare
-slider *reveals*: its two layers are both full size, one clipped over the other,
-and nothing on the page changes size at all.
+| Element | What it is |
+| ------- | ---------- |
+| [`<media-player>`](https://github.com/stamat/media-player) | A player over the `<audio>` or `<video>` you already wrote — and **you** write the controls, in your markup, in the order you put them. `npm i media-player-element` |
+| [`<compare-images-slider>`](https://github.com/stamat/compare-images-slider) | A before/after reveal: two layers, one clipped over the other, and a handle between them |
+| [`<code-preview>`](https://github.com/stamat/code-preview-element) | A code block that renders itself in an isolated iframe. It is what builds the live previews on these pages |
+
+**`<media-player>` is worth a look even if you never want a player**, because it is
+the only worked example of these elements composing into something bigger: its
+control bar is a `<toolbar-elemental>` with a `<slider-elemental>` scrubber inside
+it, wired up from the markup.
+
+**`<compare-images-slider>` is worth telling apart from
+[`<splitter-elemental>`](splitter.html)**, because both put `role="separator"` on a
+handle you drag and they do opposite things. A splitter *resizes* two panes that
+share a width. The compare slider *reveals*: its two layers are both full size,
+one clipped over the other, and nothing on the page changes size at all.

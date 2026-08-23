@@ -1308,6 +1308,22 @@ Nothing is selected: these are destinations, like [`<suggest-elemental>`](#sugge
 options. No multi-select, no checkboxes, no lazy loading, no drag. Without script it is a nested
 list of links with every branch showing.
 
+## Elsewhere
+
+Three custom elements of mine that are not in the book, because they have their own packages
+and this one does not break anyone's install to absorb them:
+
+- [**`<media-player>`**](https://github.com/stamat/media-player) — a player over the `<audio>`
+  or `<video>` you already wrote, where *you* write the controls. Worth a look even if you never
+  want a player: its control bar is a `<toolbar-elemental>` with a `<slider-elemental>` scrubber
+  inside it, which makes it the one worked example of these elements composing into something
+  bigger. `npm i media-player-element`
+- [**`<compare-images-slider>`**](https://github.com/stamat/compare-images-slider) — a
+  before/after reveal. Not [`<splitter-elemental>`](#splitter-elemental), which wears the same
+  `role="separator"` and does the opposite thing with it.
+- [**`<code-preview>`**](https://github.com/stamat/code-preview-element) — a code block that
+  renders itself in an isolated iframe. It is what builds the live previews in these docs.
+
 ## Live samples in the docs
 
 Every sample marked `<!-- demo <element> -->` in `docs/` becomes a live, editable preview on
