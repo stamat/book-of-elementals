@@ -316,30 +316,35 @@ knowing why it works — because what it is doing is not what it looks like.
 <!-- demo splitter style="--code-preview-height:501px" -->
 
 ```html
-<splitter-elemental class="reveal" label-text="Reveal the graded picture">
+<splitter-elemental class="reveal" vertical-below="32rem" label-text="Reveal the graded picture">
   <div><img src="https://picsum.photos/id/62/1200/800" alt="Rolling hills at dawn, before grading"></div>
   <div><img class="graded" src="https://picsum.photos/id/62/1200/800" alt="The same hills, graded to black and white"></div>
 </splitter-elemental>
 ```
 
 ```css demo
-/* the handle and the two tracks are the element's; the illusion is these four rules */
+/* the handle and the two tracks are the element's; the illusion is these four rules.
+   `size` rather than `inline-size` once there is a handle, because the picture is measured
+   against both axes below and `cqh` needs the block one — and `aspect-ratio` is what makes
+   that height definite. Ungated it would be size containment with nothing to resolve
+   against, which is a splitter 0 tall before the script arrives */
 splitter-elemental.reveal { container-type: inline-size; }
-.reveal[data-splitter-panes] { aspect-ratio: 3 / 2; }
+.reveal[data-splitter-panes] { container-type: size; aspect-ratio: 3 / 2; }
 .reveal[data-splitter-panes] > div { position: relative; overflow: hidden; }
 
-/* each pane holds a picture as wide as the whole splitter, pinned to opposite edges — so the
-   two halves are the same frame and line up across the seam */
+/* each pane holds a picture the size of the whole splitter, pinned to the corner its pane
+   never leaves — so the two halves are the same frame and line up across the seam. Both
+   corners, so the pins turn with the panes: pinning the first to the top left and the second
+   to the bottom right is the same instruction side by side and stacked */
 .reveal[data-splitter-panes] img {
   position: absolute;
-  inset-block: 0;
   inline-size: 100cqw;
   max-inline-size: none;
-  block-size: 100%;
+  block-size: 100cqh;
   object-fit: cover;
 }
-.reveal[data-splitter-panes] > div:first-child img { inset-inline-start: 0; }
-.reveal[data-splitter-panes] > div:last-child img { inset-inline-end: 0; }
+.reveal[data-splitter-panes] > div:first-child img { inset-block-start: 0; inset-inline-start: 0; }
+.reveal[data-splitter-panes] > div:last-child img { inset-block-end: 0; inset-inline-end: 0; }
 
 /* the "after". A filter here so the sample needs one photograph rather than two */
 .reveal .graded { filter: grayscale(1) contrast(1.15); }
@@ -352,11 +357,21 @@ _Photograph by Daniel Genser, from [Unsplash](https://unsplash.com/license), ser
 [Lorem Picsum](https://picsum.photos)._
 
 **Nothing is being revealed.** The two panes genuinely resize, exactly as they do everywhere else
-on this page; the illusion is that each one holds a picture as wide as the whole splitter, pinned
-to the edge its pane never leaves. `100cqw` is what makes "as wide as the whole splitter" a
-number the panes cannot change, which is why `container-type: inline-size` is the first rule and
-not a detail. Measured on a 600px splitter: both pictures 600 wide at the same x, and still there
-after the separator has moved to 144.
+on this page; the illusion is that each one holds a picture the size of the whole splitter, pinned
+to the corner its pane never leaves — the first to the top left, the second to the bottom right.
+`100cqw` and `100cqh` are what make "the size of the whole splitter" numbers the panes cannot
+change, which is why the two `container-type` declarations are the first rules and not a detail:
+`inline-size` on the bare tag, so the no-script version still takes its height from the pictures
+in it, and `size` once there is a handle, because `cqh` needs a block axis and `aspect-ratio` is
+what makes that one definite. Measured on a 600px splitter: both pictures 600 wide at the same x,
+and still there after the separator has moved to 144.
+
+**It turns with the screen.** `vertical-below="32rem"` is the only thing in the markup that is not
+the element's usual two panes, and narrower than that the reveal is a top and a bottom rather than
+a left and a right — the same frame, the same drag, one axis over. Nothing in the CSS is about the
+new axis: a corner pin is the same instruction read either way round, and the height does not
+change with the flip because `aspect-ratio` is what sets it — which is also the height a
+[stacked splitter needs](#which-way-round-vertical-is) and would otherwise have to be given.
 
 **The handle is a band of missing picture.** It has a column of its own here, as it does
 everywhere else on this page, so the two halves are `--splitter-elemental-size` apart rather than
