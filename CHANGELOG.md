@@ -184,6 +184,25 @@ may already be targeting**, since neither shows up in a function signature.
   `€96.00` does not sort above `€1,240.00`. A tick travels with its row, so a sort changes no
   selection and fires nothing.
 
+### Changed
+
+- **`<slider-elemental>`'s value bubble follows the value during a drag, rather than the
+  pointer.** A press already pins the bubble to the thumb it grabbed — a thumb snaps to notches
+  while a finger moves smoothly, so the pointer is beside the thumb half the time and off the
+  control past either end. The pointer therefore carries nothing the bubble reads during a drag,
+  and yet every move measured the control twice over to work that out, and so did every `input`
+  arriving underneath it. One drag of sixty steps did **280 forced style-and-layout passes,
+  17.58 ms**; the same drag now does **81, and 0.85 ms**.
+
+  A pointer move while a thumb is held now returns immediately, and `apply()` — where every way
+  a value moves already lands, script, `clamp`, `reset` and back-navigation included — redraws
+  the pinned bubble from the value alone. Hovering is untouched: the value under a pointer is
+  the one thing only a layout can answer.
+
+  **What a page can notice:** a `format` callback is called once per value change instead of
+  once per pointer move. Same numbers, fewer calls. No DOM or CSS change, and nothing cached —
+  the drag path reads the inputs and their values, which cost nothing to read, and never a rect.
+
 ### Fixed
 
 - **`<slider-elemental>`'s two thumbs are under

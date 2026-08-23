@@ -603,7 +603,13 @@ export class SliderElemental extends ElementBase {
     // remembered coordinate rather than skipped: a thumb arrowed under a resting pointer
     // moves out from under it, so which thumb is being pointed at is a question with a new
     // answer even though no pointer event has fired.
-    if (this.tooltipX !== null) this.showTooltipAt(this.tooltipX, this.tooltipY);
+    //
+    // Except while a thumb is held, when the question has no new answer - the press decided
+    // which thumb this bubble belongs to and holds it until the release. So the drag is drawn
+    // from the value alone, and the two rects `showTooltipAt` would measure to answer a
+    // question nobody asked are never read.
+    if (this.dragging >= 0) this.showDraggedValue();
+    else if (this.tooltipX !== null) this.showTooltipAt(this.tooltipX, this.tooltipY);
   }
 
   /**
@@ -664,7 +670,38 @@ export class SliderElemental extends ElementBase {
     if (e.pointerType === 'touch' && !this.pressed) return;
     this.tooltipX = e.clientX;
     this.tooltipY = e.clientY;
+    // A held thumb has stopped answering the pointer - the press pinned the bubble to it, so
+    // the only thing that can move it now is the value, and `onInput` is where that arrives.
+    // Redrawing here would measure two rects per move for a number already written on the
+    // input, and a rect read after the browser has moved the thumb is a forced layout.
+    if (this.dragging >= 0) return;
     this.showTooltipAt(e.clientX, e.clientY);
+  }
+
+  /**
+   * Redraw the bubble for the thumb being dragged, from the value alone.
+   *
+   * Nothing here measures, and that is the point: a pinned bubble sits at `ratio` of the
+   * scale and reads out the input's own text, both of which are on the input already. The
+   * two attributes saying which way it is nudged are not rewritten either - they were read
+   * live when the press drew the bubble, and neither the writing mode nor the direction
+   * changes while a thumb is held.
+   *
+   * Only for a bubble that is already showing: `tooltip="track"` alone hides it on a thumb,
+   * and a drag is not the moment to overrule that.
+   */
+  showDraggedValue() {
+    const bubble = this.tooltipElement;
+    if (!bubble || bubble.hidden) return;
+    const inputs = this.inputs;
+    const input = inputs[this.dragging];
+    if (!input) return;
+    // The scale off the first input, the way every other sum in here reads it: the thumbs
+    // share a track, so a second `min` on the second input would be two scales on one.
+    const min = bound(inputs[0].min, 0);
+    const max = bound(inputs[0].max, 100);
+    bubble.textContent = this.formatValue(Number(input.value), input.value);
+    bubble.style.setProperty('--slider-elemental-at', ratio(bound(input.value, min), min, max));
   }
 
   /** A press pins the bubble to whatever it is about to drag, for as long as it is held. */

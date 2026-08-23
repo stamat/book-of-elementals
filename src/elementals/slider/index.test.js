@@ -8,12 +8,16 @@
 // there to test that would not be testing the platform.
 //
 // Deliberately not covered: what the element writes onto itself
-// (`--slider-elemental-start`, `--slider-elemental-end`, `data-stacked`), the value bubble
-// it appends for `tooltip` and the `--slider-elemental-at`, `data-vertical` and
-// `data-reversed` on it, the pointer routing the stylesheet does, and the CSS that reads
-// any of it. Jest runs under Node here with no
+// (`--slider-elemental-start`, `--slider-elemental-end`, `data-stacked`), the `data-vertical`
+// and `data-reversed` it writes on the bubble, the pointer routing the stylesheet does, and
+// the CSS that reads any of it. Jest runs under Node here with no
 // jsdom, so an element test would be asserting against a stub base class; the track and the
 // bubble are checked in a browser against the docs page.
+//
+// The bubble's own routing - which of a press, a pointer move and an `input` may redraw it,
+// and what each of them measures to do it - is `dom.test.js`, which runs the element under a
+// document. What is left here is the half that needs no document: what a press pins, and what
+// a release lets go of.
 //
 // `format` is the one bubble concern that is covered, because deciding what the bubble says
 // is arithmetic rather than drawing: `formatValue` reads one field and touches no DOM. Where
@@ -79,13 +83,20 @@ const move = (slider, pointerType, clientX) => SliderElemental.prototype.onPoint
 const press = (slider, pointerType, clientX) => SliderElemental.prototype.onTooltipDown.call(slider, { pointerType, clientX });
 const release = (slider, pointerType, clientX, clientY) => SliderElemental.prototype.onTooltipUp.call(slider, { pointerType, clientX, clientY });
 
-test('a finger dragging the thumb gets the bubble, and one that never pressed does not', () => {
+test('a finger dragging the thumb gets the bubble on the press, and the drag redraws nothing', () => {
   const slider = gestures();
   move(slider, 'touch', 40);
   expect(slider.drawn).toEqual([]); // a touch move with nothing held is a finger that is not on the screen
   press(slider, 'touch', 40);
   move(slider, 'touch', 60);
-  expect(slider.drawn).toEqual([40, 60]); // the press, then the drag that follows it
+  // The press drew it and pinned it to the thumb it grabbed. From there the value moves it -
+  // `apply`, on the `input` the browser is already firing, which `dom.test.js` pins. Drawing
+  // here as well would measure the control once a move, for the length of the drag, to answer
+  // a question the press has already answered.
+  expect(slider.drawn).toEqual([40]);
+  // Still remembered, though: the release reads it to decide whether the finger let go inside
+  // the control.
+  expect(slider.tooltipX).toBe(60);
 });
 
 test('a lifted finger takes the bubble with it, wherever inside the control it let go', () => {
