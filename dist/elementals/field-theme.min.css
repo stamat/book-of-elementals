@@ -1,2 +1,2 @@
-/* book-of-elementals v1.0.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v2.0.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 field-elemental{--field-elemental-error-color: color-mix(in srgb, currentcolor 30%, #e5484d);--field-elemental-message-size: .85em;--field-elemental-gap: 0}field-elemental>.field-elemental-error{margin-block:var(--field-elemental-gap) 0;font-size:var(--field-elemental-message-size);color:var(--field-elemental-error-color)}
