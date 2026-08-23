@@ -389,19 +389,33 @@ export class SliderElemental extends ElementBase {
     this.setAttribute('gap', value);
   }
 
-  /** Whether the control runs right to left. Computed style rather than `:dir()`, which
-   * throws on the browsers that do not know it instead of quietly not matching. */
+  /**
+   * The two things about this element's own layout that the arithmetic needs: which way the
+   * track runs, and which end of it is the start.
+   *
+   * One read, because everything that measures wants both, and a computed style is the one
+   * thing here that can make the browser recalculate one. Computed style rather than
+   * `:dir()`, which throws on the browsers that do not know it instead of quietly not
+   * matching. Read from this element and not from an input: the track and the fill are drawn
+   * on this box in logical properties, so this is the writing mode they resolve against, and
+   * an input turned on its side by itself would be a thumb running one way over a track
+   * running the other.
+   */
+  get layout() {
+    if (typeof getComputedStyle !== 'function') return { rtl: false, writingMode: '' };
+    const style = getComputedStyle(this);
+    return { rtl: style.direction === 'rtl', writingMode: style.writingMode };
+  }
+
+  /** Whether the control runs right to left. */
   get rtl() {
-    return typeof getComputedStyle === 'function' && getComputedStyle(this).direction === 'rtl';
+    return this.layout.rtl;
   }
 
   /** The writing mode the control is laid out in, which is what says whether the track runs
-   * across the page or down it. Read from this element and not from an input: the track and
-   * the fill are drawn on this box in logical properties, so this is the writing mode they
-   * resolve against, and an input turned on its side by itself would be a thumb running one
-   * way over a track running the other. */
+   * across the page or down it. */
   get writingMode() {
-    return typeof getComputedStyle === 'function' ? getComputedStyle(this).writingMode : '';
+    return this.layout.writingMode;
   }
 
   connectedCallback() {
@@ -660,7 +674,7 @@ export class SliderElemental extends ElementBase {
     this.dragging = m ? draggedThumb(m.under, m.inputs.length) : -1;
     this.tooltipX = e.clientX;
     this.tooltipY = e.clientY;
-    this.showTooltipAt(e.clientX, e.clientY);
+    this.showTooltipAt(e.clientX, e.clientY, m);
   }
 
   /**
@@ -708,11 +722,11 @@ export class SliderElemental extends ElementBase {
     const inputs = this.inputs;
     if (!inputs.length) return null;
     const rect = this.getBoundingClientRect();
+    const { rtl, writingMode } = this.layout;
     // The stylesheet sizes each input across the track to the thumb, so the input's own box
     // measures the thumb without this having to parse a custom property out of a computed
     // style.
-    const axis = trackAxis(this.writingMode, rect, inputs[0].getBoundingClientRect(), x, y);
-    const rtl = this.rtl;
+    const axis = trackAxis(writingMode, rect, inputs[0].getBoundingClientRect(), x, y);
     const min = bound(inputs[0].min, 0);
     const max = bound(inputs[0].max, 100);
     const ratios = inputs.map((input) => ratio(bound(input.value, min), min, max));
@@ -732,10 +746,13 @@ export class SliderElemental extends ElementBase {
    * to, and it holds until the release. Without it the bubble answers where the pointer is,
    * which during a drag is beside the thumb half the time.
    */
-  showTooltipAt(x, y) {
+  showTooltipAt(x, y, measured) {
     const bubble = this.tooltipElement;
     if (!bubble) return;
-    const m = this.metrics(x, y);
+    // A caller that has just measured hands its own in - the press does, since it has to
+    // measure to know which thumb it is about to drag, and measuring twice for one press is
+    // two forced layouts where one would do.
+    const m = measured || this.metrics(x, y);
     if (!m) return;
 
     const modes = tooltipModes(this.getAttribute('tooltip'));
@@ -803,17 +820,18 @@ export class SliderElemental extends ElementBase {
     if (inputs.length < 2) return;
 
     const rect = this.getBoundingClientRect();
+    const { rtl, writingMode } = this.layout;
     // The stylesheet sizes each input across the track to the thumb, so the input's own box
     // measures the thumb without this having to parse a custom property out of a computed
     // style.
-    const axis = trackAxis(this.writingMode, rect, inputs[0].getBoundingClientRect(), e.clientX, e.clientY);
+    const axis = trackAxis(writingMode, rect, inputs[0].getBoundingClientRect(), e.clientX, e.clientY);
     // A control with no room to travel has one position and `alongTrack` answers it, but a
     // press there is a press on nothing - so it moves no thumb and fires no events.
     if (axis.size <= axis.thumb) return;
 
     const min = bound(inputs[0].min, 0);
     const max = bound(inputs[0].max, 100);
-    const value = min + alongTrack(axis.coord, axis.start, axis.size, axis.thumb, this.rtl) * (max - min);
+    const value = min + alongTrack(axis.coord, axis.start, axis.size, axis.thumb, rtl) * (max - min);
 
     const input = inputs[nearerThumb(value, bound(inputs[0].value, min), bound(inputs[1].value, max)) === 'start' ? 0 : 1];
     input.value = value;
