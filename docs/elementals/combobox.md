@@ -224,15 +224,15 @@ the words that have them:
 | `бео`      | Београд     |
 
 The folding is `removeAccents` from
-[book-of-spells](https://github.com/stamat/book-of-spells) — NFKD, the combining marks
-dropped, and the ligatures that are two letters wearing one glyph (`œ`, `æ`, `ß`) spelled
-out — plus one pass of this element's own for `đ`, `ø` and `ł`, which are single letters
-with no mark to strip and survive decomposition unchanged.
+[book-of-spells](https://github.com/stamat/book-of-spells): one table pass for the letters
+whose mark is written through the glyph — `đ`, `ø`, `ł`, and the ligatures that are two
+letters wearing one glyph (`œ`, `æ`, `ß`) — then NFKD with the combining marks dropped,
+which is what the rest decompose into.
 
 Not `slugify`, which sits next to it in the same file and looks like the same job: it is
-for URLs, so it drops everything outside `[\w0-9-]`. `Београд` comes out empty, `北京`
-comes out empty, `Đorđe` comes out as `ore`. A search box that cannot find a Cyrillic city
-on a Serbian site is not a smaller bug than one that cannot fold an accent.
+for URLs, so it drops everything outside `[\w0-9-]`. `Београд` comes out empty and `北京`
+comes out empty, where the search fold finds both. A search box that cannot find a Cyrillic
+city on a Serbian site is not a smaller bug than one that cannot fold an accent.
 
 ## Values that are not in the list
 
