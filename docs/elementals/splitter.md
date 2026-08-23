@@ -308,7 +308,7 @@ splitter-elemental.reveal { container-type: inline-size; }
 ```
 
 _Photograph by Daniel Genser, from [Unsplash](https://unsplash.com/license), served through
-[Lorem Picsum](https://picsum.photos) — convenient for docs, wrong for a site you ship._
+[Lorem Picsum](https://picsum.photos)._
 
 **Nothing is being revealed.** The two panes genuinely resize, exactly as they do everywhere else
 on this page; the illusion is that each one holds a picture as wide as the whole splitter, pinned

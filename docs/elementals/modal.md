@@ -368,7 +368,7 @@ picture is the whole of it. The close button is not in the markup because the el
 it; the CSS above only repaints it, since a cross in the page's own text colour is a cross
 nobody finds against a photograph.
 
-<p class="demo-credit">Photograph by Marcin Czerwinski, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a> — convenient for docs, wrong for a site you ship: self-host yours.</p>
+<p class="demo-credit">Photograph by Marcin Czerwinski, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a>.</p>
 
 ### A video
 

@@ -38,7 +38,7 @@ region can live _inside_ the trigger's element. This is for [when it cannot](#wh
     </div>
   </disclosure-elemental>
 </figure>
-<p class="demo-credit">Photograph from <a href="https://unsplash.com/photos/Xne1N4yZuOY">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a> — convenient for docs, wrong for a site you ship: self-host yours.</p>
+<p class="demo-credit">Photograph from <a href="https://unsplash.com/photos/Xne1N4yZuOY">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a>.</p>
 <br>
 
 _The numbers behind a figure, in the table beside it, for the reader the `alt` cannot carry
@@ -219,7 +219,7 @@ then lives wherever the markup needs it:
     low sun over water usually are.</p>
   </figcaption>
 </figure>
-<p class="demo-credit">Photograph by Charlie Foster, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a> — convenient for docs, wrong for a site you ship: self-host yours.</p>
+<p class="demo-credit">Photograph by Charlie Foster, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a>.</p>
 <br>
 
 ```html

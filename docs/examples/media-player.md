@@ -1,7 +1,7 @@
 ---
 layout: poops-docs-theme/docs
 title: Media player
-description: A play button, a scrubber and a volume over the audio element you already wrote — toolbar-elemental holding two slider-elementals, and the twenty lines that wire them to the media.
+description: A play button, a scrubber and a volume over the audio or video element you already wrote — toolbar-elemental holding two slider-elementals, and the twenty lines that wire them to the media.
 order: 8
 ---
 
@@ -35,7 +35,7 @@ point: neither of them knows what media is, and neither needed a line of new cod
   </toolbar-elemental>
 </figure>
 
-<p class="demo-credit">Audio: <a href="https://github.com/mdn/shared-assets">MDN's shared assets</a>, the same source the <a href="video-gallery.html">video gallery</a> plays from — convenient for docs, wrong for a site you ship: host your own.</p>
+<p class="demo-credit">Audio: <a href="https://github.com/mdn/shared-assets">MDN's shared assets</a>, the same source the <a href="video-gallery.html">video gallery</a> plays from.</p>
 
 _<kbd>Tab</kbd> through the bar and it is three stops for four controls: the two buttons share
 one, because that is what a toolbar is, and each slider keeps its own. <kbd>→</kbd> on the play
