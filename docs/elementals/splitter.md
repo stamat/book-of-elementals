@@ -267,6 +267,77 @@ separate package, and worth knowing about before you reach for the wrong one:
 The tell is whether anything changes size. If the two things are the *same* thing in two states,
 you want the compare slider. If they are two different things sharing a width, you want this.
 
+## Faking one anyway
+
+You can get a before/after out of this element with four rules of your own CSS, and it is worth
+knowing why it works — because what it is doing is not what it looks like.
+
+<!-- demo splitter style="--code-preview-height:501px" -->
+
+```html
+<splitter-elemental class="reveal" label-text="Reveal the graded picture">
+  <div><img src="https://picsum.photos/id/62/1200/800" alt="Rolling hills at dawn, before grading"></div>
+  <div><img class="graded" src="https://picsum.photos/id/62/1200/800" alt="The same hills, graded to black and white"></div>
+</splitter-elemental>
+```
+
+```css demo
+/* the handle and the two tracks are the element's; the illusion is these four rules */
+splitter-elemental.reveal { container-type: inline-size; }
+.reveal[data-splitter-panes] { aspect-ratio: 3 / 2; }
+.reveal[data-splitter-panes] > div { position: relative; overflow: hidden; }
+
+/* each pane holds a picture as wide as the whole splitter, pinned to opposite edges — so the
+   two halves are the same frame and line up across the seam */
+.reveal[data-splitter-panes] img {
+  position: absolute;
+  inset-block: 0;
+  inline-size: 100cqw;
+  max-inline-size: none;
+  block-size: 100%;
+  object-fit: cover;
+}
+.reveal[data-splitter-panes] > div:first-child img { inset-inline-start: 0; }
+.reveal[data-splitter-panes] > div:last-child img { inset-inline-end: 0; }
+
+/* the "after". A filter here so the sample needs one photograph rather than two */
+.reveal .graded { filter: grayscale(1) contrast(1.15); }
+
+/* ungated, so the picture is still a picture before the script arrives */
+.reveal img { display: block; inline-size: 100%; }
+```
+
+_Photograph by Daniel Genser, from [Unsplash](https://unsplash.com/license), served through
+[Lorem Picsum](https://picsum.photos) — convenient for docs, wrong for a site you ship._
+
+**Nothing is being revealed.** The two panes genuinely resize, exactly as they do everywhere else
+on this page; the illusion is that each one holds a picture as wide as the whole splitter, pinned
+to the edge its pane never leaves. `100cqw` is what makes "as wide as the whole splitter" a
+number the panes cannot change, which is why `container-type: inline-size` is the first rule and
+not a detail. Measured on a 600px splitter: both pictures 600 wide at the same x, and still there
+after the separator has moved to 144.
+
+**The handle is a band of missing picture.** It has a column of its own here, as it does
+everywhere else on this page, so the two halves are `--splitter-elemental-size` apart rather than
+edge to edge — where a real reveal has a hairline over a continuous image. You can narrow it, and
+what you are spending is the [24px target](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)
+that made it a control anyone can hit.
+
+**It is images only.** A pane holding text would reflow as it narrows, because it is genuinely
+narrowing — there is nothing to pin. That is the difference from a real reveal, where the layer
+in front is full size and clipped, and it is why
+[`<compare-images-slider>`](https://github.com/stamat/compare-images-slider) can put anything
+behind the handle and this cannot.
+
+**Without script it is two pictures, one above the other** — before over after, in reading order,
+which is the honest flat version of a before/after. Every rule above but the last is gated on
+`data-splitter-panes`, so none of them applies until there is a handle; the ungated one is what
+keeps the pictures inside the column in the meantime.
+
+So: use it when the two things are the same frame and you want no dependency. Reach for the real
+one when you want inertia, a double-tap to either extreme, a drag that starts anywhere, or
+anything but an image behind the seam.
+
 ## What it will not do
 
 Two panes, not *n*: three panes is two splitters, and a splitter that shared its neighbour's
