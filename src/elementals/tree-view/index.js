@@ -141,8 +141,12 @@ export class TreeViewElemental extends ElementBase {
   buffer = '';
   bufferTimer = 0;
 
-  /** The list that becomes the tree. Direct child, so a tree inside a node of this one keeps its
-   * own. */
+  /** The list that becomes the tree: a direct child, so a stray `<ul>` deeper in the markup is
+   * not mistaken for the root of one.
+   *
+   * A `<tree-view-elemental>` nested inside a node of this one is not supported - `build` and
+   * `allNodes` sweep the whole subtree, so the outer tree would claim the inner one's items. A
+   * tree of trees is a tree, written as one list. */
   get list() {
     return this.querySelector(':scope > ul, :scope > ol');
   }
