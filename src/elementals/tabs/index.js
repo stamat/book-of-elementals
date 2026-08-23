@@ -417,7 +417,11 @@ export class TabsElemental extends ElementBase {
     // replaced.
     if (!this.observer) return;
     const list = this.tablist;
-    const tab = this.tabs[this.selected];
+    // `selectedIndex` off a list read once, rather than `this.selected`, which reads the tabs
+    // again to find out how many there are - two passes over the strip on every frame of a
+    // resize, for a number this line already has.
+    const tabs = this.tabs;
+    const tab = tabs[selectedIndex(this.getAttribute('selected'), tabs.length)];
     if (!list || !tab) return;
     const rtl = getComputedStyle(list).direction === 'rtl';
     const box = barBox(list.getBoundingClientRect(), tab.getBoundingClientRect(), this.vertical, rtl);
