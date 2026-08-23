@@ -172,10 +172,11 @@ export class SortableTableElemental extends ElementBase {
       // `aria-sort` stays. The rows are still in the order it describes, and removing it would
       // leave a sorted table saying it is not.
     }
-    if (this.note) {
-      this.note.remove();
-      this.note = null;
-    }
+    // Everything `build` put in the caption comes back out, the space and an element-created
+    // caption included. A move in the DOM is a disconnect and a connect, so anything left behind
+    // here is appended again on the way back in - one more space per move, forever.
+    for (const node of [this.note, this.noteSpace, this.ownCaption]) if (node) node.remove();
+    this.note = this.noteSpace = this.ownCaption = null;
   }
 
   attributeChangedCallback(name, previous, value) {
@@ -204,10 +205,14 @@ export class SortableTableElemental extends ElementBase {
     // sentence about buttons once per column.
     const table = this.table;
     let caption = table.querySelector(':scope > caption');
+    // Held only when this element is the one that created it, so teardown knows the difference
+    // between a caption it can take away and the page's own.
+    this.ownCaption = null;
     if (!caption) {
       caption = document.createElement('caption');
       // First child or it is not a caption - the parser puts one there and the DOM requires it.
       table.prepend(caption);
+      this.ownCaption = caption;
     }
     this.note = document.createElement('span');
     this.note.className = 'sortable-table-elemental-note';
@@ -217,7 +222,11 @@ export class SortableTableElemental extends ElementBase {
     // there - `Peaks` and the note with nothing between them is announced as `PeaksColumn`. Not
     // added to an empty caption: a lone space is a line box, and a caption that was invisible
     // because it was empty would gain a line's height on upgrade.
-    if (caption.childNodes.length) caption.append(' ');
+    this.noteSpace = null;
+    if (caption.childNodes.length) {
+      this.noteSpace = document.createTextNode(' ');
+      caption.append(this.noteSpace);
+    }
     caption.append(this.note);
   }
 

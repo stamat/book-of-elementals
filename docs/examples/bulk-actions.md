@@ -1,7 +1,7 @@
 ---
 layout: poops-docs-theme/docs
 title: Bulk actions
-description: The select-all in a table header and the toolbar under it — checkbox-group-elemental, the drawn checkbox, and the one event that keeps a count honest.
+description: The select-all in a table header and the toolbar under it — checkbox-group-elemental over sortable-table-elemental, the drawn checkbox, and the one event that keeps a count honest.
 order: 1
 ---
 
@@ -15,10 +15,11 @@ rows are picked is
 a property with no HTML attribute behind it.
 
 [`<checkbox-group-elemental>`](../elementals/checkbox-group.html) is that checkbox and
-nothing else. The toolbar, the count, the disabled buttons and the layout are the page's,
-which is the point of this example. Here is the assembly.
+nothing else, and [`<sortable-table-elemental>`](../elementals/sortable-table.html) inside it
+is the header buttons and nothing else. The toolbar, the count, the disabled buttons and the
+layout are the page's, which is the point of this example. Here is the assembly.
 
-<!-- demo checkbox-group style="--code-preview-height:311px" -->
+<!-- demo checkbox-group sortable-table style="--code-preview-height:335px" -->
 
 ```html
 <div class="bulk" role="toolbar" aria-label="Row actions">
@@ -29,54 +30,59 @@ which is the point of this example. Here is the assembly.
 </div>
 
 <checkbox-group-elemental>
-  <table>
-    <thead>
-      <tr>
-        <th class="pick">
-          <!-- `hidden` until the element upgrades: with no script this ticks itself and
-               commands nothing, and CSS cannot reach a parent this deep to hide it -->
-          <input type="checkbox" aria-label="Select all rows" hidden />
-        </th>
-        <th>Invoice</th>
-        <th>Client</th>
-        <th class="num">Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="pick"><input type="checkbox" name="id" value="2401" aria-labelledby="r1" /></td>
-        <td id="r1">INV-2401</td>
-        <td>Kestrel Cloud</td>
-        <td class="num">€1,240.00</td>
-      </tr>
-      <tr>
-        <td class="pick"><input type="checkbox" name="id" value="2402" aria-labelledby="r2" /></td>
-        <td id="r2">INV-2402</td>
-        <td>Pumpjack Ltd</td>
-        <td class="num">€380.00</td>
-      </tr>
-      <tr>
-        <td class="pick"><input type="checkbox" name="id" value="2403" aria-labelledby="r3" /></td>
-        <td id="r3">INV-2403</td>
-        <td>Sulphuris</td>
-        <td class="num">€2,905.50</td>
-      </tr>
-      <tr>
-        <td class="pick"><input type="checkbox" name="id" value="2404" aria-labelledby="r4" /></td>
-        <td id="r4">INV-2404</td>
-        <td>Argoyle</td>
-        <td class="num">€96.00</td>
-      </tr>
-      <tr>
-        <td class="pick">
-          <input type="checkbox" name="id" value="2405" aria-labelledby="r5" disabled />
-        </td>
-        <td id="r5">INV-2405 <span class="note">paid</span></td>
-        <td>Poops</td>
-        <td class="num">€1,010.00</td>
-      </tr>
-    </tbody>
-  </table>
+  <sortable-table-elemental>
+    <table>
+      <caption>Open invoices</caption>
+      <thead>
+        <tr>
+          <!-- `data-sort="none"`: nothing to sort by, and a header that sorted would have
+               its content moved into the button it writes — this checkbox inside it -->
+          <th class="pick" data-sort="none">
+            <!-- `hidden` until the element upgrades: with no script this ticks itself and
+                 commands nothing, and CSS cannot reach a parent this deep to hide it -->
+            <input type="checkbox" aria-label="Select all rows" hidden />
+          </th>
+          <th>Invoice</th>
+          <th>Client</th>
+          <th class="num">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="pick"><input type="checkbox" name="id" value="2401" aria-labelledby="r1" /></td>
+          <td id="r1">INV-2401</td>
+          <td>Kestrel Cloud</td>
+          <td class="num" data-sort-value="1240.00">€1,240.00</td>
+        </tr>
+        <tr>
+          <td class="pick"><input type="checkbox" name="id" value="2402" aria-labelledby="r2" /></td>
+          <td id="r2">INV-2402</td>
+          <td>Pumpjack Ltd</td>
+          <td class="num" data-sort-value="380.00">€380.00</td>
+        </tr>
+        <tr>
+          <td class="pick"><input type="checkbox" name="id" value="2403" aria-labelledby="r3" /></td>
+          <td id="r3">INV-2403</td>
+          <td>Sulphuris</td>
+          <td class="num" data-sort-value="2905.50">€2,905.50</td>
+        </tr>
+        <tr>
+          <td class="pick"><input type="checkbox" name="id" value="2404" aria-labelledby="r4" /></td>
+          <td id="r4">INV-2404</td>
+          <td>Argoyle</td>
+          <td class="num" data-sort-value="96.00">€96.00</td>
+        </tr>
+        <tr>
+          <td class="pick">
+            <input type="checkbox" name="id" value="2405" aria-labelledby="r5" disabled />
+          </td>
+          <td id="r5">INV-2405 <span class="note">paid</span></td>
+          <td>Poops</td>
+          <td class="num" data-sort-value="1010.00">€1,010.00</td>
+        </tr>
+      </tbody>
+    </table>
+  </sortable-table-elemental>
 </checkbox-group-elemental>
 ```
 
@@ -107,6 +113,8 @@ body {
 .bulk .danger:hover:not(:disabled) { color: #d33; border-color: currentcolor; }
 
 table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+/* the table's name, and where the sort note is appended off screen */
+caption { margin-block-end: 0.35rem; text-align: start; font-size: 0.8rem; opacity: 0.7; }
 th, td { padding: 0.5rem 0.6rem; text-align: start; border-bottom: 1px solid var(--line); }
 th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; opacity: 0.7; }
 .num { text-align: end; font-variant-numeric: tabular-nums; }
@@ -166,6 +174,29 @@ table more than anywhere else: on two hundred rows, the two you picked are two h
 clicks to rebuild if one press of the header throws them away. The combination is remembered
 every time the group becomes mixed, so the one that comes back is the one you built.
 
+## Sorting under the selection
+
+The header cells are buttons because
+[`<sortable-table-elemental>`](../elementals/sortable-table.html) is around the table, and the
+two elements never meet: one owns the checkboxes, the other owns the header row and the order
+of the rows under it.
+
+**A tick travels with its row.** Sorting moves whole `<tr>`s, so a row picked before a sort is
+the same picked row after it — the count in the toolbar does not move, and nothing fires,
+because nothing about the selection changed. Pick two rows, sort by amount, and they are still
+your two.
+
+**The checkbox column is `data-sort="none"`, and that is not a matter of taste.** The element
+writes its button by moving the header's own nodes into it, so a sortable checkbox column would
+put the select-all *inside* a `<button>` — which
+[the content model forbids](https://html.spec.whatwg.org/multipage/form-elements.html#the-button-element)
+outright, a `<button>` having no interactive content among its descendants. Sorting by
+"is it ticked" is not worth wanting either; `data-sort="none"` says both at once.
+
+**Amount carries `data-sort-value`.** `€1,240.00` against `€96.00` compares `€1` against `€9`
+and puts the larger first, so each cell says what it sorts by in digits. The invoice numbers
+and the client names need nothing: they sort as the text they already are.
+
 ## The header checkbox needs a name
 
 `<th>` gives it a column, not a name. In a header cell there is no visible text to be
@@ -180,10 +211,13 @@ fifth anonymous checkbox in a list of five.
 ## Without the script
 
 The header checkbox is written `hidden`, and the element removes that attribute when it
-upgrades. That is the whole of the degradation, and it is deliberate: with no script it
-would be a checkbox that ticks itself and commands nothing, which is worse than no
-select-all at all — the rows are still there, still tickable, still submitted under their
-own `name`.
+upgrades. That is the whole of the degradation on the selection side, and it is deliberate:
+with no script it would be a checkbox that ticks itself and commands nothing, which is worse
+than no select-all at all — the rows are still there, still tickable, still submitted under
+their own `name`.
+
+The sorting degrades to nothing at all, which needs no attribute: the headers are plain text
+until something wraps them in buttons, and a table in the order the server sent it is a table.
 
 The element's stylesheet does the same job with `:not(:defined)` for the flat markup on the
 [element's own page](../elementals/checkbox-group.html), where the parent is a direct child
@@ -199,7 +233,7 @@ handler on `<tr>` has to guess which clicks were meant for it, and a keyboard us
 target they cannot reach at all. If a row should be openable, put a link in it — that is
 what the invoice number is for.
 
-## What the element brought
+## What the elements brought
 
 Everything on this page that is not furniture:
 
@@ -215,8 +249,13 @@ Everything on this page that is not furniture:
   listening are told the same thing at the same time.
 - **No roles and no `aria-checked`**, because the checkboxes are real ones and a native
   checkbox with `indeterminate` set is already announced as mixed.
+- **The header text became a button and stayed looking like a header**, which is the part of
+  a hand-rolled sorter that is always half done.
+- **`aria-sort` on the column**, so the order is a state a reader can find where they would
+  look for it, rather than an arrow only some of us can see.
 
 What is left for the page is a toolbar, a count and a table — and none of it is about a
-checkbox.
+checkbox or a sort order.
 
 <script src="{{ relativePathPrefix }}dist/elementals/checkbox-group.js"></script>
+<script src="{{ relativePathPrefix }}dist/elementals/sortable-table.js"></script>

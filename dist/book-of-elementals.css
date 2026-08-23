@@ -727,7 +727,7 @@ sortable-table-elemental {
   display: contents;
 }
 
-sortable-table-elemental th > button {
+sortable-table-elemental > table > thead > tr:last-of-type > th:not([data-sort=none]) > button {
   display: block;
   inline-size: 100%;
   padding: 0;

@@ -80,7 +80,21 @@ may already be targeting**, since neither shows up in a function signature.
   about it, which is not what
   [WCAG 2.2 4.1.3](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html) covers. CSS:
   the element is `display: contents`, and its stylesheet puts the header button's font, colour,
-  background, border and alignment back to the cell's so the upgrade is invisible.
+  background, border and alignment back to the cell's so the upgrade is invisible. Both
+  stylesheets are scoped to the buttons it wrote — its own table, the last row of the `<thead>`,
+  and not a header marked `data-sort="none"` — so a button of your own in a `<th scope="row">`
+  keeps its look and gets no arrow. No spanning cells in the body: the column a header sorts by
+  is that header's position in its row, so one `colspan` shifts every cell after it along and the
+  column sorts by its neighbour's text, and a `rowspan` sorting tears apart. The element checks
+  for neither, and says so on its page.
+
+  It composes with the rest of the book: the
+  [bulk actions example](https://stamat.github.io/book-of-elementals/examples/bulk-actions.html)
+  is now `<checkbox-group-elemental>` over `<sortable-table-elemental>` — the select-all column
+  is `data-sort="none"`, because a sortable header moves its own nodes into the button it writes
+  and that checkbox would end up inside one, and the amount column carries `data-sort-value` so
+  `€96.00` does not sort above `€1,240.00`. A tick travels with its row, so a sort changes no
+  selection and fires nothing.
 
 ### Fixed
 

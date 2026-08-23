@@ -192,6 +192,10 @@ The button is `inline-size: 100%`, so the target is the column rather than the f
 It stops at the cell's padding, because reaching into that would mean moving your padding onto
 this button.
 
+Both stylesheets reach only the buttons this element wrote — its own table, the last row of the
+`<thead>`, and not a header marked `data-sort="none"`. A button of your own in a
+`<th scope="row">` keeps its look and gets no arrow.
+
 | Custom property | Default | What it does |
 | --- | --- | --- |
 | `--sortable-table-elemental-indicator-color` | `currentcolor` | Theme. The arrow on the sorted column |
@@ -215,8 +219,13 @@ is what says *this* column is the sorted one.
 No multi-column sort — a second sort key is a comparator the markup has nowhere to put. No
 sort-on-load, no persistence, no paging, no filtering, no column resizing, no row selection; those
 are a data grid, and a data grid is [the APG's Grid pattern](https://www.w3.org/WAI/ARIA/apg/patterns/grid/)
-and a different project. No `rowspan` in the body, which sorting would tear apart — the element
-does not check for it, and a table that has one should not have this element around it.
+and a different project.
+
+No spanning cells in the body. `rowspan` sorting would tear apart; `colspan` is quieter and worse
+— the column a header sorts by is that header's position in its row, so one spanning cell shifts
+every cell after it along and the column sorts by its neighbour's text, in an order that looks
+like an order. The element checks for neither, and a table with either should not have this
+element around it.
 
 ```scss
 @use "book-of-elementals/sortable-table/style.scss";

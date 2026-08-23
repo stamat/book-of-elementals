@@ -82,10 +82,8 @@
           button.replaceWith(...button.childNodes);
         }
       }
-      if (this.note) {
-        this.note.remove();
-        this.note = null;
-      }
+      for (const node of [this.note, this.noteSpace, this.ownCaption]) if (node) node.remove();
+      this.note = this.noteSpace = this.ownCaption = null;
     }
     attributeChangedCallback(name, previous, value) {
       if (!this.initialized || previous === value) return;
@@ -108,14 +106,20 @@
       }
       const table = this.table;
       let caption = table.querySelector(":scope > caption");
+      this.ownCaption = null;
       if (!caption) {
         caption = document.createElement("caption");
         table.prepend(caption);
+        this.ownCaption = caption;
       }
       this.note = document.createElement("span");
       this.note.className = "sortable-table-elemental-note";
       this.note.textContent = this.noteText;
-      if (caption.childNodes.length) caption.append(" ");
+      this.noteSpace = null;
+      if (caption.childNodes.length) {
+        this.noteSpace = document.createTextNode(" ");
+        caption.append(this.noteSpace);
+      }
       caption.append(this.note);
     }
     onClick(event) {

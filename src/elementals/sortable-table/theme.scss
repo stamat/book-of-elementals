@@ -21,43 +21,50 @@ sortable-table-elemental {
 // carried correctly, by `aria-sort` would be announced a second time as an arrow nobody asked
 // about. A triangle made of borders has nothing to read.
 
-// Inline rather than laid out with flex, which is what keeps this rule from having an opinion
-// about where the header's text sits: the arrow flows after the label, so a centred header
-// centres both together and a start-aligned one keeps the arrow against the words. Reading
-// `text-align` in CSS is not possible, and every version of this that tried - a `justify-content`
-// guessed from an attribute, an `auto` margin - got one of the two alignments wrong.
-sortable-table-elemental:where(:defined) th > button::after {
-  display: inline-block;
-  width: 0;
-  height: 0;
-  margin-inline-start: 0.4em;
-  vertical-align: middle;
-  content: "";
+// The chain mirrors `headers` in `index.js` exactly - own table, last row of the `<thead>` - so
+// the arrow can only land on a button this element wrote. A plain `th > button` would also
+// reach a button the *author* put in a `<th scope="row">` and tell the reader that row header
+// sorts the table.
+sortable-table-elemental:where(:defined) > table > thead > tr:last-of-type {
+  // Inline rather than laid out with flex, which is what keeps this rule from having an opinion
+  // about where the header's text sits: the arrow flows after the label, so a centred header
+  // centres both together and a start-aligned one keeps the arrow against the words. Reading
+  // `text-align` in CSS is not possible, and every version of this that tried - a
+  // `justify-content` guessed from an attribute, an `auto` margin - got one of the two
+  // alignments wrong.
+  > th:not([data-sort="none"]) > button::after {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-inline-start: 0.4em;
+    vertical-align: middle;
+    content: "";
 
-  // Transparent sides and a solid bottom is a triangle pointing up, which is the direction the
-  // first press sorts - so the faint arrow on an unsorted column is not decoration, it is what
-  // that press is going to do. Sized in `em` so it follows the header's own font rather than a
-  // length this file guessed at.
-  border-right: 0.3em solid transparent;
-  border-bottom: 0.35em solid var(--sortable-table-elemental-indicator-color);
-  border-left: 0.3em solid transparent;
+    // Transparent sides and a solid bottom is a triangle pointing up, which is the direction the
+    // first press sorts - so the faint arrow on an unsorted column is not decoration, it is what
+    // that press is going to do. Sized in `em` so it follows the header's own font rather than a
+    // length this file guessed at.
+    border-right: 0.3em solid transparent;
+    border-bottom: 0.35em solid var(--sortable-table-elemental-indicator-color);
+    border-left: 0.3em solid transparent;
 
-  // **Shown on every sortable column, not only on the one under the pointer.** A control nobody
-  // can see is a control nobody presses, and hover is not a state a reader has before they have
-  // already guessed the feature exists - which leaves a keyboard reader finding it by tabbing
-  // into it and a touch reader not at all. Faint enough to be an affordance rather than a state:
-  // full weight is what says *this* column is the sorted one.
-  opacity: var(--sortable-table-elemental-hint-opacity);
-}
+    // **Shown on every sortable column, not only on the one under the pointer.** A control
+    // nobody can see is a control nobody presses, and hover is not a state a reader has before
+    // they have already guessed the feature exists - which leaves a keyboard reader finding it
+    // by tabbing into it and a touch reader not at all. Faint enough to be an affordance rather
+    // than a state: full weight is what says *this* column is the sorted one.
+    opacity: var(--sortable-table-elemental-hint-opacity);
+  }
 
-sortable-table-elemental:where(:defined) th[aria-sort] > button::after {
-  opacity: 1;
-}
+  > th[aria-sort] > button::after {
+    opacity: 1;
+  }
 
-// Descending points the other way. Drawn as its own triangle rather than rotated: a rotation of
-// a zero-height box lands half a pixel off the un-rotated one, which is visible as a twitch on
-// every press.
-sortable-table-elemental:where(:defined) th[aria-sort="descending"] > button::after {
-  border-top: 0.35em solid var(--sortable-table-elemental-indicator-color);
-  border-bottom: 0;
+  // Descending points the other way. Drawn as its own triangle rather than rotated: a rotation
+  // of a zero-height box lands half a pixel off the un-rotated one, which is visible as a twitch
+  // on every press.
+  > th[aria-sort="descending"] > button::after {
+    border-top: 0.35em solid var(--sortable-table-elemental-indicator-color);
+    border-bottom: 0;
+  }
 }

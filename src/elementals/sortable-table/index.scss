@@ -16,7 +16,11 @@ sortable-table-elemental {
 // colour, background, border and centre alignment, none of which is the header's - so every
 // one of them is put back to what the cell already had. Nothing here is a look; it is the
 // upgrade being invisible, which is why it is in this file and not in the theme.
-sortable-table-elemental th > button {
+// The chain is long because it mirrors `headers` in `index.js` exactly - own table, last row
+// of the `<thead>`, not marked `data-sort="none"`. A plain `th > button` would also reach a
+// button the *author* put in a `<th scope="row">`, and flatten a control the element never
+// wrote into something that reads as text.
+sortable-table-elemental > table > thead > tr:last-of-type > th:not([data-sort="none"]) > button {
   // Full width so the target is the column and not the four words in it, which is
   // `--splitter-elemental-size`'s argument in a different shape. It stops at the cell's
   // padding: reaching into that would mean moving the page's own padding onto this button.

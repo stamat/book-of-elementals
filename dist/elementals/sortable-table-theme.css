@@ -4,7 +4,7 @@ sortable-table-elemental {
   --sortable-table-elemental-hint-opacity: 0.35;
 }
 
-sortable-table-elemental:where(:defined) th > button::after {
+sortable-table-elemental:where(:defined) > table > thead > tr:last-of-type > th:not([data-sort=none]) > button::after {
   display: inline-block;
   width: 0;
   height: 0;
@@ -16,12 +16,10 @@ sortable-table-elemental:where(:defined) th > button::after {
   border-left: 0.3em solid transparent;
   opacity: var(--sortable-table-elemental-hint-opacity);
 }
-
-sortable-table-elemental:where(:defined) th[aria-sort] > button::after {
+sortable-table-elemental:where(:defined) > table > thead > tr:last-of-type > th[aria-sort] > button::after {
   opacity: 1;
 }
-
-sortable-table-elemental:where(:defined) th[aria-sort=descending] > button::after {
+sortable-table-elemental:where(:defined) > table > thead > tr:last-of-type > th[aria-sort=descending] > button::after {
   border-top: 0.35em solid var(--sortable-table-elemental-indicator-color);
   border-bottom: 0;
 }
