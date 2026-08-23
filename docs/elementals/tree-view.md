@@ -150,7 +150,7 @@ three attributes per node rewritten on every toggle are three chances to say it 
 | <kbd>Home</kbd> <kbd>End</kbd> | The first and last node you can see |
 | <kbd>Enter</kbd> | Follows a node that is a link; toggles one that is not |
 | <kbd>Space</kbd> | Toggles a branch heading. On a link it is left alone, because there it is the page scrolling |
-| a letter | Jumps to the next node starting with it; keep typing and it narrows |
+| a letter | Jumps to the next node starting with it; keep typing and it narrows. One that lands on no node is left to the page, so <kbd>/</kbd> still reaches Firefox's quick-find |
 
 **<kbd>→</kbd> and <kbd>←</kbd> each do two things, and the pair is what makes it a tree.** Hold
 Right and you walk down and in; hold Left and you walk up and out — without ever having to know

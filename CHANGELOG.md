@@ -74,7 +74,9 @@ may already be targeting**, since neither shows up in a function signature.
   `aria-current="false"` is read as what it means — *not* the current page — in both the script
   and the theme, so a router writing it on every inactive link neither opens every branch nor
   tints the whole sidebar. Teardown puts back only what upgrade wrote: an `id` the page put on a
-  branch list survives, where before every `id` in the tree came off with the roles. The closed chevron does not turn round under
+  branch list survives, where before every `id` in the tree came off with the roles. Type-ahead
+  takes only the keystrokes that land on a node, so a letter matching nothing — <kbd>/</kbd>, and
+  Firefox's quick-find with it — is left to the page. The closed chevron does not turn round under
   `dir="rtl"`: <kbd>→</kbd> opens in both directions, so a mirrored mark would point away from the
   key that works it.
 

@@ -323,14 +323,21 @@ export class TreeViewElemental extends ElementBase {
     // Type-ahead. One printable character, which is what the pattern asks for, and a buffer on
     // top of it so a name typed quickly narrows instead of cycling the same first letter.
     if (event.key.length !== 1 || event.key === ' ') return;
-    event.preventDefault();
     this.buffer += event.key;
     if (this.bufferTimer) window.clearTimeout(this.bufferTimer);
     this.bufferTimer = window.setTimeout(() => { this.buffer = ''; }, 500);
 
     const labels = nodes.map((each) => (each.textContent || '').trim());
     const to = typeAheadIndex(labels, current, this.buffer);
-    if (to !== null) this.focusNode(nodes[to]);
+
+    // **Only a keystroke that lands on a node is this element's.** Swallowing every printable key
+    // takes `/` and `'` away from Firefox's quick-find, and an access key away from the page, from
+    // a reader who was only passing through - the same reason `<toolbar-elemental>` leaves the
+    // arrows off its axis alone. Matching rather than an exclusion list, so a file tree with a
+    // `/usr/bin` in it can still be typed at.
+    if (to === null) return;
+    event.preventDefault();
+    this.focusNode(nodes[to]);
   }
 
   /** One node, as `treeMove` reads it: how deep it sits, and whether it is a branch and open.
