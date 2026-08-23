@@ -126,6 +126,7 @@ pairing with a fragment or `aria-controls` and position stops mattering.
 | `selected` | number  | `0`     | Index of the selected tab. Reflected — markup, script and CSS read the same thing. |
 | `vertical` | boolean | `false` | The strip runs down the page. The arrow keys go with it.                       |
 | `manual`   | boolean | `false` | Arrows move focus without selecting; <kbd>Enter</kbd> or <kbd>Space</kbd> selects. |
+| `sliding`  | boolean | `false` | Mark the selection with a bar that travels to the tab rather than a border on it. [What it costs](#a-bar-that-slides). |
 
 Anything `selected` cannot be read as an index in range — a typo, an index left behind by
 a tab that has since been removed — is the first tab. A tab set with nothing selected is
@@ -138,6 +139,7 @@ not a state this pattern has.
 | `selected`         | number            | Get/set the index. Writes the attribute.                        |
 | `vertical`         | boolean           | Get/set.                                                        |
 | `manual`           | boolean           | Get/set.                                                        |
+| `sliding`          | boolean           | Get/set. Turning it off takes the measuring with it.            |
 | `tabs`             | `Element[]`       | Read-only, in order.                                            |
 | `panels`           | `Element[]`       | Read-only, in tab order. A tab with nothing to show is `null`.  |
 | `tablist`          | `Element`         | Read-only.                                                      |
@@ -169,6 +171,7 @@ tabs.selected = 2; // also fires it
 | each `<li>`  | `role="none"`                                                           |
 | each tab     | `role="tab"`, `aria-selected`, `aria-controls`, `tabindex`, an `id` if it had none |
 | each panel   | `role="tabpanel"`, `aria-labelledby`, `hidden` when not selected, `data-tabs-panel`, an `id` if it had none |
+| the element  | only under `sliding`: `data-tabs-sliding`, and `--tabs-elemental-tab-start` / `--tabs-elemental-tab-size` |
 
 `role="none"` on the `<li>`s because inside a tablist the list semantics are noise — a
 screen reader counting list items in a tab strip is counting the wrong thing, and the
@@ -283,7 +286,8 @@ tabs.wire();
 
 It re-reads everything and is safe to call as often as you like. A panel whose tab has gone
 is handed back to the page as it was found — nothing left `hidden` by an element that no
-longer has anything to show it with.
+longer has anything to show it with. Under [`sliding`](#a-bar-that-slides) it is also what
+puts a tab that has just appeared under the observer.
 
 That is a line on the pages that build their tabs, instead of a `MutationObserver` running
 on every page that never touches them.
@@ -335,11 +339,13 @@ sits in whatever palette the page has:
 | `--tabs-elemental-border`          | 20% of `currentcolor`  | The rule the tabs sit on                        |
 | `--tabs-elemental-hover`           | 10% of `currentcolor`  | Tab background under the pointer                |
 | `--tabs-elemental-muted`           | 65% of `currentcolor`  | Text of a tab that is not selected              |
+| `--tabs-elemental-duration`        | `250ms`                | Travel of the `sliding` bar. Nothing else moves |
+| `--tabs-elemental-easing`          | `ease-in-out`          | Travel of the `sliding` bar                     |
 
 Turn them in the **Options** tab and copy the rule out of the bottom of the panel — the same
 table, with the values live:
 
-<!-- demo tabs tab="options" style="--code-preview-options-height:524px" -->
+<!-- demo tabs tab="options" style="--code-preview-options-height:611px" -->
 
 ```html
 <tabs-elemental>
@@ -354,10 +360,9 @@ table, with the values live:
 </tabs-elemental>
 ```
 
-The selected tab is marked with a border rather than with a bar that slides between them. A
-sliding one has to be re-measured after every reflow — a webfont landing, a label
-translated, the strip wrapping — and a border needs no script and can never disagree with
-where the tab actually is.
+The selected tab is marked with a border, and a border needs no script and can never
+disagree with where the tab actually is. That is the default because it is free.
+[`sliding`](#a-bar-that-slides) buys the other one, and the price is on the label.
 
 The mark is the strip's own rule filled in: the tab is pulled down over it by exactly the
 rule's thickness, so the two are one line rather than two stacked ones. Which is why the
@@ -365,14 +370,98 @@ strip wraps instead of scrolling — a scroll container clips at its padding box
 where the mark is drawn.
 
 Under `forced-colors` the mark is repainted in `Highlight`, since it is the only thing
-telling the selected tab apart. There is no motion in the theme at all, so there is nothing
-for `prefers-reduced-motion` to switch off.
+telling the selected tab apart. Nothing in the theme moves except the `sliding` bar, and
+`prefers-reduced-motion: reduce` stops that one.
+
+### A bar that slides
+
+`sliding` marks the selection with a bar that travels to the tab instead of a border sitting
+on it. It is an attribute rather than a stylesheet because it cannot be drawn from CSS alone:
+tabs are as wide as their labels, so something has to measure the selected one.
+
+<!-- demo tabs style="--code-preview-height:115px" -->
+
+```html
+<tabs-elemental sliding>
+  <ul>
+    <li><a href="#slide-day">Day</a></li>
+    <li><a href="#slide-week">The last seven days</a></li>
+    <li><a href="#slide-month">Month</a></li>
+  </ul>
+  <div id="slide-day">Yesterday and today.</div>
+  <div id="slide-week">Seven of them.</div>
+  <div id="slide-month">Since the first.</div>
+</tabs-elemental>
+```
+
+The element measures the selected tab against the strip and writes two numbers onto itself —
+`--tabs-elemental-tab-start`, how far along the strip the tab begins, and
+`--tabs-elemental-tab-size`, how much of it the tab takes. Both are logical: `start` is
+measured from the edge the strip *starts* at, which is the right one in RTL, and a `vertical`
+strip is measured down it instead. The theme draws one `::after` on the strip from them, in
+the same border band the border mark was in — so the two marks are the same line, and
+swapping one for the other moves nothing else on the page. `--tabs-elemental-duration` and
+`--tabs-elemental-easing` are the travel, and `prefers-reduced-motion: reduce` switches it off.
+
+Which is all it takes for [`vertical`](#vertical) to be the same feature turned a quarter
+turn — the bar travels down the strip's own rule, and the arrow keys that move it are
+<kbd>↑</kbd> and <kbd>↓</kbd>:
+
+<!-- demo tabs style="--code-preview-height:161px" -->
+
+```html
+<tabs-elemental sliding vertical>
+  <ul>
+    <li><a href="#slide-general">General</a></li>
+    <li><a href="#slide-profile">Profile and photo</a></li>
+    <li><a href="#slide-billing">Billing</a></li>
+  </ul>
+  <div id="slide-general">Language, time zone, and what the week starts on.</div>
+  <div id="slide-profile">The name and the face other people see.</div>
+  <div id="slide-billing">The card on file, and what it was last charged.</div>
+</tabs-elemental>
+```
+
+**It re-measures whenever the strip or any tab in it changes size** — a webfont landing, a
+label translated, a tab added, the strip wrapping. Watching the strip alone is the bug every
+measured indicator in the field ships with: a label that grows leaves the container exactly
+the size it was, so nothing fires and the bar stays under where the tab used to be. It is
+[open against Base UI](https://github.com/mui/base-ui/issues/4156) as this is written, and
+MUI has had the same family of it for years — [measured before the webfont
+lands](https://github.com/mui/material-ui/issues/7187), [the container resized rather than
+the window](https://github.com/mui/material-ui/issues/9337), [a scrollbar appearing
+later](https://github.com/mui/material-ui/issues/13263), [the number of tabs
+changing](https://github.com/mui/material-ui/issues/8379). Watching every tab is what answers
+all four at once, which is what `<marquee-elemental>` does with its track for the same reason.
+
+What it costs, honestly:
+
+| | Border, the default | `sliding` |
+| --- | --- | --- |
+| Script | none | a `ResizeObserver` on the strip and every tab, and two rects per change |
+| When the bundle never arrives | the mark is still there | no mark travels; the border stays |
+| Forced colors | `Highlight` on the border | the bar is dropped, the border comes back |
+| A label that changes length | nothing to do | re-measured, without `wire()` — the tab resized, so the observer fired |
+
+The second row is the one to read twice. The theme keys the bar on `data-tabs-sliding`, which
+the element writes only once it has measured — never on `[sliding]`, which is only the page
+asking. No script, or a browser with no `ResizeObserver`, leaves the attribute standing with
+no numbers behind it, and the selected tab keeps its border. A page that took the border off
+on the strength of the attribute alone would be a tab set with nothing marking the selection.
+
+> [!NOTE]
+> The two numbers are measured rect to rect, with no border taken off. The theme puts a border
+> on the strip's block-end when it is horizontal and on its inline-end when it is vertical, and
+> neither is on the edge being measured from — but a page that borders the strip's *other*
+> edges moves the bar by that much.
 
 ### Styling hooks
 
 ```css
 tabs-elemental[selected="1"] {
 } /* the host, reflected state */
+tabs-elemental[data-tabs-sliding] > [data-tabs-list]::after {
+} /* the sliding bar, once it has been measured */
 tabs-elemental > [data-tabs-list] {
 } /* the strip */
 tabs-elemental > [data-tabs-list] > li > [aria-selected="true"] {

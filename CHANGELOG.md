@@ -17,6 +17,26 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Added
 
+- **`<tabs-elemental sliding>` — the selection marked by a bar that travels to the tab.** The
+  default is still a border on the selected tab, which needs no script and cannot disagree with
+  where the tab is; `sliding` is for a page that wants the mark to move. The element measures the
+  selected tab against the strip and writes `--tabs-elemental-tab-start` and
+  `--tabs-elemental-tab-size` onto itself, plus `data-tabs-sliding`, and the theme draws one
+  `::after` on the strip from them — in the same border band the border mark was in, so the two
+  are the same line. Works in both orientations and in RTL.
+
+  It re-measures on a `ResizeObserver` watching the strip **and every tab in it**, which is the
+  half most implementations miss: a label that grows leaves the container the size it was, so a
+  strip-only observer never fires and the bar stays where the tab used to be.
+
+  **DOM and CSS:** nothing changes unless the attribute is set. Under it the element gains
+  `data-tabs-sliding` and the two custom properties, and the theme takes the border mark off the
+  selected tab — the marker, not the attribute, is what a stylesheet keys on, so no script or no
+  `ResizeObserver` leaves the border mark exactly as it was. Two new theme properties,
+  `--tabs-elemental-duration` (`250ms`) and `--tabs-elemental-easing` (`ease-in-out`), are the
+  travel; `prefers-reduced-motion: reduce` switches it off and `forced-colors` puts the border
+  mark back.
+
 - **`<slider-elemental>` runs down the page when the CSS says so — no attribute for it.**
   `writing-mode: vertical-rl` with `direction: rtl` is
   [the platform's own way](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_writing_modes/Vertical_controls)

@@ -50,6 +50,15 @@ tabs-elemental > [data-tabs-panel] {
   grid-area: 2 / 1;
 }
 
+// The strip is the box the sliding bar is placed in, and the box its two numbers were
+// measured against. Structure and not theme, for the reason the theme cannot cover: the
+// theme is what draws the bar, and a bar positioned against the page instead of against the
+// strip is not a smaller bug. Only under the marker, so a tab set nobody asked a bar of is
+// left as it was found.
+tabs-elemental[data-tabs-sliding] > [data-tabs-list] {
+  position: relative;
+}
+
 // ---- Vertical ----
 // The strip beside the panels rather than above them. `auto` for the strip, so it is as wide
 // as its labels, and `minmax(0, 1fr)` for the panels, so a wide table inside one shrinks it

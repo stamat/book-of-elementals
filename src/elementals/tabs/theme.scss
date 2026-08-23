@@ -6,10 +6,10 @@
 // whatever palette the page already has - including a theme switch - with nothing to
 // configure.
 
-// The selected tab is marked with a border rather than with a bar that slides between them.
-// A sliding one has to be measured after every reflow - a webfont landing, a label
-// translated, the strip wrapping - and a border needs no script and never disagrees with
-// where the tab actually is.
+// The selected tab is marked with a border, and a border needs no script and never disagrees
+// with where the tab actually is. The bar that travels instead is at the bottom of this file,
+// behind the element's `sliding` attribute, because it is the one look here that has to
+// measure a layout to be drawn at all.
 
 tabs-elemental {
   --tabs-elemental-gap: 0.25rem;
@@ -21,6 +21,10 @@ tabs-elemental {
   --tabs-elemental-border: color-mix(in srgb, currentcolor 20%, transparent);
   --tabs-elemental-hover: color-mix(in srgb, currentcolor 10%, transparent);
   --tabs-elemental-muted: color-mix(in srgb, currentcolor 65%, transparent);
+
+  // Only the `sliding` bar moves. Nothing else in this file has a transition to spend them on.
+  --tabs-elemental-duration: 250ms;
+  --tabs-elemental-easing: ease-in-out;
 }
 
 // The strip, and the rule the tabs sit on. It wraps rather than scrolling, and that is not a
@@ -170,4 +174,82 @@ tabs-elemental[vertical] > [data-tabs-list] > li > [aria-selected="true"] {
 tabs-elemental[vertical] > [data-tabs-panel] {
   padding-block-start: 0;
   padding-inline-start: var(--tabs-elemental-panel-inset);
+}
+
+// ---- The bar that slides ----
+// Keyed on `data-tabs-sliding`, which the element writes only once it has measured, and never
+// on `[sliding]`, which is only the page asking. The difference is the whole of the
+// degradation: no script, or a browser with no `ResizeObserver`, leaves the attribute
+// standing with no numbers behind it, and a stylesheet that took the border mark off on the
+// strength of the attribute would leave the selection with nothing marking it at all.
+
+// `translate` rather than an inset, so the travel is one composited property and the numbers
+// the element writes are read in one place. The size is transitioned with it: a bar that
+// slides to the next tab and then resizes to fit it reads as two moves.
+@mixin bar-travel {
+  transition:
+    translate var(--tabs-elemental-duration) var(--tabs-elemental-easing),
+    inline-size var(--tabs-elemental-duration) var(--tabs-elemental-easing),
+    block-size var(--tabs-elemental-duration) var(--tabs-elemental-easing);
+}
+
+tabs-elemental[data-tabs-sliding] > [data-tabs-list]::after {
+  @include bar-travel;
+
+  content: "";
+  position: absolute;
+
+  // In the strip's own border band, which is where the border mark this replaces was drawn -
+  // the two are the same line, so swapping one for the other moves nothing else on the page.
+  inset-block-end: calc(-1 * var(--tabs-elemental-indicator-size));
+  inset-inline-start: 0;
+  inline-size: var(--tabs-elemental-tab-size);
+  block-size: var(--tabs-elemental-indicator-size);
+  background: var(--tabs-elemental-indicator);
+  translate: var(--tabs-elemental-tab-start);
+}
+
+// The border mark off, since the bar is the mark now. The colour and not
+// `--tabs-elemental-indicator`, which also paints the focus ring on a panel that takes one -
+// setting that to `transparent` would take the ring with it.
+tabs-elemental[data-tabs-sliding] > [data-tabs-list] > li > [aria-selected="true"] {
+  border-block-end-color: transparent;
+}
+
+// `translate` has no logical form, so the one direction the element measured logically has to
+// be turned back around here. Horizontal only: the block axis runs top to bottom in both
+// directions, and a vertical strip travels down it.
+tabs-elemental[data-tabs-sliding]:not([vertical]):dir(rtl) > [data-tabs-list]::after {
+  translate: calc(-1 * var(--tabs-elemental-tab-start));
+}
+
+tabs-elemental[vertical][data-tabs-sliding] > [data-tabs-list]::after {
+  inset-block: 0 auto;
+  inset-inline: auto calc(-1 * var(--tabs-elemental-indicator-size));
+  inline-size: var(--tabs-elemental-indicator-size);
+  block-size: var(--tabs-elemental-tab-size);
+  translate: 0 var(--tabs-elemental-tab-start);
+}
+
+tabs-elemental[vertical][data-tabs-sliding] > [data-tabs-list] > li > [aria-selected="true"] {
+  border-inline-end-color: transparent;
+}
+
+// Forced colors drops the bar's background, so the border mark is put back rather than left
+// transparent - the selection would otherwise be marked by nothing at all in the one mode
+// that cannot be styled around.
+@media (forced-colors: active) {
+  tabs-elemental[data-tabs-sliding] > [data-tabs-list] > li > [aria-selected="true"] {
+    border-block-end-color: Highlight;
+  }
+
+  tabs-elemental[vertical][data-tabs-sliding] > [data-tabs-list] > li > [aria-selected="true"] {
+    border-inline-end-color: Highlight;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  tabs-elemental[data-tabs-sliding] > [data-tabs-list]::after {
+    transition: none;
+  }
 }

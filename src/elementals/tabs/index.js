@@ -41,6 +41,32 @@ export function selectedIndex(value, length) {
 }
 
 /**
+ * Where the sliding bar goes: how far along the strip the selected tab starts, and how much
+ * of the strip it takes.
+ *
+ * Two rects in, two numbers out, because that is the whole of the geometry - the caller
+ * finds the rects, and this stays something a test can pin without a layout. Logical rather
+ * than physical: `start` is measured from the edge the strip *starts* at, which is the right
+ * one in RTL, so the bar can be placed with `inset-inline-start` and the stylesheet needs no
+ * second copy of the sum. The block axis runs top to bottom either way, so a vertical
+ * tablist has one answer and not two.
+ *
+ * Rect to rect, with no border taken off: the theme puts a border on the strip's block-end
+ * when it is horizontal and on its inline-end when it is vertical, and neither is on the
+ * edge being measured from. A page that borders the other edges moves the bar by that much.
+ *
+ * @param {DOMRect} strip - The tablist's rect.
+ * @param {DOMRect} tab - The selected tab's rect.
+ * @param {boolean} vertical - Whether the tablist runs down the page.
+ * @param {boolean} rtl - Whether it is running right to left.
+ * @returns {{start: number, size: number}} Both in pixels, unrounded.
+ */
+export function barBox(strip, tab, vertical, rtl) {
+  if (vertical) return { start: tab.top - strip.top, size: tab.height };
+  return { start: rtl ? strip.right - tab.right : tab.left - strip.left, size: tab.width };
+}
+
+/**
  * What counts as something the keyboard can already reach inside a panel.
  *
  * ponytail: a heuristic, and deliberately not a focusability engine - disabled controls
@@ -83,10 +109,14 @@ let tabsCount = 0;
  * are not authored `hidden`. The element is what turns the list into a tablist, and it is
  * the only thing that ever hides a panel.
  *
- * ponytail: no `<dialog>`-style platform primitive to build on here, and no sliding
- * indicator either. An indicator that follows the selected tab has to be measured every
- * time the strip reflows; a border on the selected tab needs no script at all and says
- * the same thing.
+ * The selected tab is marked with a border, which needs no script and cannot disagree with
+ * where the tab is. `sliding` is the other answer, for a page that wants the mark to travel:
+ * the element measures the selected tab against the strip and writes the two numbers a bar
+ * can be drawn from, re-measuring whenever the strip or any tab in it changes size. That is
+ * a `ResizeObserver` and two rects per change, which is why it is asked for rather than
+ * given - and why the strip is watched *with* every tab in it, since a label that grows
+ * inside a strip that stays the size it was moves every tab after it without the container
+ * ever resizing.
  *
  * Light DOM, no shadow root. Nothing is moved and nothing is wrapped - the panels stay
  * where the markup put them, which is what lets a page lay them out with the element's
@@ -98,6 +128,7 @@ let tabsCount = 0;
  * @attr {number} [selected=0] - Index of the selected tab. Reflected, so `[selected]` is a styling hook.
  * @attr {boolean} [vertical=false] - The tablist runs down the page rather than across it. Swaps the arrow keys with it.
  * @attr {boolean} [manual=false] - Arrows move focus without selecting; Enter or Space selects. Automatic otherwise.
+ * @attr {boolean} [sliding=false] - Mark the selection with a bar that travels to the tab rather than a border on it. Costs a `ResizeObserver`.
  *
  * @cssprop {<length>} [--tabs-elemental-gap=0.25rem] - Between the tabs.
  * @cssprop {<length>} [--tabs-elemental-inset=0.5rem 0.75rem] - Padding inside a tab.
@@ -108,6 +139,8 @@ let tabsCount = 0;
  * @cssprop {<color>} [--tabs-elemental-border=color-mix(in srgb, currentcolor 20%, transparent)] - The rule the tabs sit on.
  * @cssprop {<color>} [--tabs-elemental-hover=color-mix(in srgb, currentcolor 10%, transparent)] - Tab background under the pointer.
  * @cssprop {<color>} [--tabs-elemental-muted=color-mix(in srgb, currentcolor 65%, transparent)] - Text of a tab that is not selected.
+ * @cssprop {<time>} [--tabs-elemental-duration=250ms] - How long the `sliding` bar takes to travel. Nothing else in the theme moves.
+ * @cssprop {ease | ease-in | ease-out | ease-in-out | linear} [--tabs-elemental-easing=ease-in-out] - How the `sliding` bar travels.
  *
  * @fires tabs-select - `detail.tab` is the tab now selected, `detail.panel` what it shows, `detail.index` where it is.
  *
@@ -115,7 +148,7 @@ let tabsCount = 0;
  */
 export class TabsElemental extends ElementBase {
   static get observedAttributes() {
-    return ['selected', 'vertical'];
+    return ['selected', 'vertical', 'sliding'];
   }
 
   /** The tablist: the first list in the element. A nested `<tabs-elemental>` keeps its own. */
@@ -191,6 +224,18 @@ export class TabsElemental extends ElementBase {
     this.toggleAttribute('manual', !!value);
   }
 
+  /**
+   * Whether the selection is marked with a bar that travels to the tab rather than with a
+   * border on it. Opt-in because it is the one thing here that has to measure a layout.
+   */
+  get sliding() {
+    return this.hasAttribute('sliding');
+  }
+
+  set sliding(value) {
+    this.toggleAttribute('sliding', !!value);
+  }
+
   connectedCallback() {
     // Wait until the light-DOM children have been parsed. The bundle is loaded deferred or
     // at the end of the body, so by upgrade time they are there.
@@ -220,6 +265,7 @@ export class TabsElemental extends ElementBase {
     this.removeEventListener('click', this.onClick);
     this.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('hashchange', this.onHashChange);
+    this.unobserve();
 
     const list = this.tablist;
     if (list) {
@@ -315,7 +361,69 @@ export class TabsElemental extends ElementBase {
       if (!this.wired.includes(panel)) this.release(panel);
     }
 
+    // After the panels and before `apply`, so a tab added since the last pass is watched
+    // before anything measures against it.
+    this.observe();
     this.apply();
+  }
+
+  /**
+   * Watch everything whose size can move the bar: the strip, and every tab in it.
+   *
+   * The strip on its own is the observer every measured indicator ships with and the bug
+   * that comes with it - a label that grows leaves the container exactly the size it was,
+   * so nothing fires and the bar stays under where the tab used to be. Watching the tabs
+   * catches the webfont landing and the label translated too, which are the same event seen
+   * from the other end.
+   *
+   * Idempotent, and safe to call when nothing has asked for a bar: it is how `sliding` going
+   * on and off is served, and how `wire()` picks up a tab the page has added.
+   */
+  observe() {
+    this.unobserve();
+    // A browser with no `ResizeObserver` keeps the border mark rather than getting a bar
+    // that measures itself once and then lies for the rest of the page's life.
+    if (!this.sliding || typeof ResizeObserver !== 'function') return;
+    this.observer = new ResizeObserver(() => this.measure());
+    const list = this.tablist;
+    if (list) this.observer.observe(list);
+    for (const tab of this.tabs) this.observer.observe(tab);
+    this.measure();
+  }
+
+  /** Stop watching, and take the measurement back off - state nobody is keeping up to date
+   * is worse than none. */
+  unobserve() {
+    if (this.observer) this.observer.disconnect();
+    this.observer = null;
+    this.removeAttribute('data-tabs-sliding');
+    this.style.removeProperty('--tabs-elemental-tab-start');
+    this.style.removeProperty('--tabs-elemental-tab-size');
+  }
+
+  /**
+   * Measure the selected tab against the strip and write the two numbers onto this element.
+   *
+   * `data-tabs-sliding` is written with them and never before them: CSS cannot ask whether a
+   * custom property was set, so the attribute is what tells a stylesheet the numbers are
+   * there. `[sliding]` alone is what the page asked for, and a theme that took the border
+   * mark off on the strength of the asking would leave a tab set with nothing marking the
+   * selection every time the script did not arrive.
+   */
+  measure() {
+    // The observer is the licence to measure: a browser without one, or a page that has not
+    // asked for a bar, gets no number rather than one taken once and never corrected - which
+    // would be a bar parked under a tab that has since moved, and worse than the border it
+    // replaced.
+    if (!this.observer) return;
+    const list = this.tablist;
+    const tab = this.tabs[this.selected];
+    if (!list || !tab) return;
+    const rtl = getComputedStyle(list).direction === 'rtl';
+    const box = barBox(list.getBoundingClientRect(), tab.getBoundingClientRect(), this.vertical, rtl);
+    this.style.setProperty('--tabs-elemental-tab-start', box.start + 'px');
+    this.style.setProperty('--tabs-elemental-tab-size', box.size + 'px');
+    this.setAttribute('data-tabs-sliding', '');
   }
 
   /**
@@ -353,6 +461,10 @@ export class TabsElemental extends ElementBase {
       if (panel.querySelector(FOCUSABLE)) panel.removeAttribute('tabindex');
       else panel.tabIndex = 0;
     });
+
+    // The selection is the one move no observer sees: nothing resized, the bar simply
+    // belongs somewhere else now.
+    this.measure();
   }
 
   /**
@@ -363,6 +475,11 @@ export class TabsElemental extends ElementBase {
     if (!this.initialized || previous === current) return;
     if (name === 'vertical') {
       this.wire();
+      return;
+    }
+    // Not `apply`, and no `tabs-select`: the selection has not changed, only how it is drawn.
+    if (name === 'sliding') {
+      this.observe();
       return;
     }
     this.apply();
