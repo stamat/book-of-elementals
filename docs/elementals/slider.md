@@ -101,6 +101,9 @@ a range input fires `input` and `change`, and both bubble.
 | `gap`     | number | `0`     | Least distance between the two thumbs, in the scale's own units. Ignored with one thumb. |
 | `tooltip` | token list | absent | A value bubble that follows the pointer. `thumb` over the thumb it is on, `track` for the value under it elsewhere, `thumb track` for both; a bare `tooltip` is `thumb`. [See below](#the-value-bubble) |
 
+There is no attribute for the axis. A track runs down the page when the CSS says so —
+[see below](#down-the-page).
+
 ### What it writes on itself
 
 | What                        | Value                                                                          |
@@ -116,7 +119,9 @@ They are ratios rather than percentages, and that is the point —
 With `tooltip` set there is one more thing, and it is the only markup this element ever
 writes: an `<output aria-hidden="true" data-tooltip="thumb|track">` appended as the last
 child, carrying `--slider-elemental-at` — where the bubble is, on that same `0` to `1`
-scale. It goes again when the attribute does, or when the element leaves the page.
+scale. It also carries `data-vertical` and `data-reversed` while the track runs down the
+page or backwards, because centring it is a `translate` and `translate` has no logical form.
+It goes again when the attribute does, or when the element leaves the page.
 
 ### Properties
 
@@ -171,6 +176,7 @@ is that pair written out.
 | `slider-elemental:has(> input[type="range"] ~ input[type="range"])` | Two thumbs rather than one |
 | `slider-elemental > output[data-tooltip]`     | The value bubble, showing or `hidden`          |
 | `slider-elemental > output[data-tooltip="thumb"]` / `="track"` | Which of the two it is showing |
+| `slider-elemental > output[data-tooltip][data-vertical]` | The bubble on a track running down the page |
 
 ## One thumb, or two
 
@@ -193,6 +199,109 @@ Two thumbs share one scale, so both inputs need the same `min`, `max` and `step`
 element reads them off the first, because two rulers drawn on top of each other is not a
 control anyone can use. A third input still works as a plain range input; it is not clamped
 and not drawn, because the fill is between the first two.
+
+> **Give a two-thumb control a bigger thumb.** Stacked, the two inputs sit exactly on top of
+> each other, so neither has any clear space around it and each is judged on its own size
+> against [WCAG 2.2's 24px target minimum](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)
+> — which the `1rem` default is 8px short of, on either axis. One declaration answers it:
+>
+> ```css
+> slider-elemental:has(> input[type="range"] ~ input[type="range"]) {
+>   --slider-elemental-thumb-size: 1.5rem;
+> }
+> ```
+>
+> The theme does not do this for you. The fix is a size, and a stylesheet that silently made
+> one control a third thicker than the next would be deciding a layout question on your page's
+> behalf — so it is named here rather than taken. One thumb needs nothing: it has room around
+> it and passes on the spacing clause instead.
+
+## Down the page
+
+There is no `vertical` attribute, because `writing-mode` already is one. It is
+[the platform's switch for turning a form control on its side](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_writing_modes/Vertical_controls),
+the browser keeps the whole keyboard and pointer contract across it, and the track, the fill
+and the thumbs here are drawn in logical properties — so all three turn with it and there is
+nothing to configure. The element reads the writing mode and measures the pointer down the
+page instead of across it, which is the one part CSS cannot do for itself:
+
+<!-- demo slider style="--code-preview-height:223px" -->
+
+```html
+<label for="temperature">Temperature</label>
+<slider-elemental class="vertical" tooltip>
+  <input type="range" id="temperature" name="temperature" min="0" max="40" value="21" />
+</slider-elemental>
+```
+
+```css demo
+slider-elemental.vertical {
+  writing-mode: vertical-rl;
+  direction: rtl;
+  height: 10rem;
+}
+
+/* Room for the bubble, which hangs off the right of the control and outside its box */
+body {
+  padding-inline-end: 4rem;
+}
+```
+
+Three declarations, and each settles a different thing:
+
+| Declaration                | What it settles                                                  |
+| -------------------------- | ---------------------------------------------------------------- |
+| `writing-mode: vertical-rl` | The track runs down the page. `vertical-lr` does the same thing — the two differ in which way the block axis runs, and a slider has nothing on that axis to show it, so pick either |
+| `direction: rtl`           | The minimum is at the **bottom**. Without it it is at the top — MDN: *"including `direction: ltr` on a vertical slider sets the lowest value at the top of the slider and the highest value at the bottom"* — which is right for a scrollbar and wrong for a volume knob |
+| `height`                   | A track down the page has no length of its own, exactly as one across the page has no width of its own. Without it there is nothing to drag along |
+
+**Put them on the element, not on the input.** The element is the box the track and the fill
+are drawn on, so it is the writing mode they resolve against — turn the input alone and you
+get a thumb running one way over a track running the other. Nothing here reads an input's own
+writing mode.
+
+`direction` is the axis here and not the language: in a vertical writing mode it says which
+end the minimum is at and nothing else. That is why the value bubble is laid back out
+horizontally and left to decide its own text direction from its own content — laid out in the
+control's, it would be a number on its side in an order nothing asked for. It hangs off the
+**right** of a vertical control, a `--slider-elemental-tooltip-gap` clear of it, rather than
+above; move it with `left` if that is the wrong side for where the control sits.
+
+An `<output>` you put inside is your markup and keeps the writing mode it inherits, so a
+readout in a vertical slider wants a `writing-mode: horizontal-tb` of its own.
+
+Two thumbs turn over with it. The press that jumps the nearer thumb is measured down the
+track, the clamp is the same clamp, and `gap` is still in the scale's own units:
+
+<!-- demo slider style="--code-preview-height:249px" -->
+
+```html
+<span id="band-label">Frequency band</span>
+<slider-elemental
+  class="vertical"
+  aria-labelledby="band-label"
+  gap="10"
+  tooltip="thumb track"
+>
+  <input type="range" aria-label="Lowest" min="0" max="100" value="30" />
+  <input type="range" aria-label="Highest" min="0" max="100" value="70" />
+</slider-elemental>
+```
+
+```css demo
+slider-elemental.vertical {
+  writing-mode: vertical-rl;
+  direction: rtl;
+  height: 12rem;
+
+  /* 24px, so two stacked thumbs meet WCAG 2.2 target size — see below */
+  --slider-elemental-thumb-size: 1.5rem;
+}
+
+body {
+  padding-inline-end: 4rem;
+}
+```
 
 ## Step, and how fast the keyboard moves
 
@@ -312,10 +421,11 @@ body > label {
 }
 ```
 
-**The bubble hangs outside the element's box**, a `--slider-elemental-tooltip-gap` above the
-thumb, so it is drawn over whatever the page put above the control — the label in that
-sample would be under it without the margin. Leave the room, or move the bubble with the
-gap; it is not clipped and it does not push anything aside.
+**The bubble hangs outside the element's box**, a `--slider-elemental-tooltip-gap` clear of
+the thumb, so it is drawn over whatever the page put there — the label in that sample would
+be under it without the margin. Leave the room, or move the bubble with the gap; it is not
+clipped and it does not push anything aside. Above the control across the page, and to its
+right [down it](#down-the-page).
 
 | Token | Where the bubble appears | What it says |
 | --- | --- | --- |
@@ -452,9 +562,9 @@ it takes the inputs with it.
 
 ## Why ratios and not percentages
 
-A range input's thumb does not travel the full width of the control. Its centre starts half
-a thumb in and stops half a thumb short, so a fill placed at `45%` of the width sits next to
-a thumb that is not at 45% of the width — the misalignment nearly every two-input slider on
+A range input's thumb does not travel the full length of the control. Its centre starts half
+a thumb in and stops half a thumb short, so a fill placed at `45%` of the box sits next to
+a thumb that is not at 45% of the box — the misalignment nearly every two-input slider on
 the web has at its ends. Handing CSS a ratio instead of a percentage is what lets the
 stylesheet do the arithmetic that fixes it:
 
@@ -502,10 +612,12 @@ Named rather than worked around:
 | -------------------------------------------------- | --------------------------------------------------------------------------- |
 | A press on the track jumps the nearer thumb but does not carry on into a drag | Two stacked inputs need their pointer events on the thumbs, so the track press is the element's rather than the input's — and the input never learns it happened. Grab the thumb to drag |
 | Two thumbs, not N                                  | The clamp is a pair. Three inputs still work as plain range inputs, unclamped and undrawn |
-| Horizontal only                                    | `writing-mode: vertical-lr` on the input is the platform's answer for one thumb; the stacking here has not been built for it |
+| Two thumbs on the default thumb are under [WCAG 2.2's target size](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html) | 16px against a 24px minimum, on either axis, and stacked inputs have no clear space around them to pass on instead. Not taken by the theme, because the fix is a size and that is a layout question — [set it yourself](#one-thumb-or-two), one declaration |
+| A track down the page has to be given a length     | `writing-mode` turns the control, and a block box down the page is as long as its content — which is the input asking to be as long as the box. Give it a `height`, [see above](#down-the-page) |
+| The writing mode has to be on the element, not on an input | The track and the fill are drawn on the element in logical properties, so that is the box they resolve against. An input turned on its own is a thumb crossing a track that did not turn |
 | `tooltip` is pointer-only, and there is no pinned mode | A keyboard reader never sees it, and a touch reader only while pressing, so nothing goes in it that is not elsewhere too. Pin a value with an `<output>` placed on `--slider-elemental-end` |
 | The bubble is centred on the thumb and is not clamped to anything | At either end the thumb's centre is half a thumb from the edge, so a bubble wider than that hangs past the control — and past whatever box the control is in. Nothing here measures the bubble, so nothing can pull it back. Leave room at the ends, or keep `tooltip` off the slider that sits against an edge |
-| The gap is measured from the slider, not from what it is inside | `--slider-elemental-tooltip-gap` is the distance above this element's box. A slider inside a padded, bordered bar wants the bar's padding and border added to it, or the bubble lands on the bar's own top edge |
+| The gap is measured from the slider, not from what it is inside | `--slider-elemental-tooltip-gap` is the distance from this element's own box. A slider inside a padded, bordered bar wants the bar's padding and border added to it, or the bubble lands on the bar's own edge |
 | The buffer-style second bar is not here            | That is [`<progress-elemental>`](progress.html), and the two compose — see [the scrubber](progress.html#a-scrubber) |
 
 ## Degrading
@@ -542,7 +654,7 @@ engine that fills the track on its own and would otherwise draw a second fill fr
 start.
 
 The rail is half a thumb short at each end, because that is where the thumb's centre starts
-and stops. A rail run the full width has a stretch at each end the thumb can never reach —
+and stops. A rail run the full length has a stretch at each end the thumb can never reach —
 a gap before zero and another past the maximum — and at those two values the fill and the
 rail disagree about where the track begins. The thumb overhangs the rail by half its own
 width at both extremes, which is what the inset buys.
@@ -574,7 +686,7 @@ that silently draws something else.
 
 | Custom property                    | Default                                              | What it does                                        |
 | ---------------------------------- | ---------------------------------------------------- | --------------------------------------------------- |
-| `--slider-elemental-thumb-size`    | `1rem`                                               | Thumb width and height. Also the control's height, what the fill is inset by, and the strip the track is centred on |
+| `--slider-elemental-thumb-size`    | `1rem`                                               | Thumb width and height. Also the control's thickness across the track, what the fill is inset by, and the strip the track is centred on. Two thumbs want `1.5rem`, for [target size](#one-thumb-or-two) |
 | `--slider-elemental-track-size`    | `0.375rem`                                           | Track thickness                                     |
 | `--slider-elemental-radius`        | `999px`                                              | Track corners. A big number is a pill               |
 | `--slider-elemental-thumb-radius`  | `50%`                                                | Thumb shape. `50%` is a circle, `0` a square        |
@@ -583,7 +695,7 @@ that silently draws something else.
 | `--slider-elemental-thumb`         | `var(--slider-elemental-fill)`                       | Thumb fill. Follows the selection unless you set it |
 | `--slider-elemental-focus-width`   | `3px`                                                | Ring around a focused thumb                         |
 | `--slider-elemental-focus-color`   | `color-mix(in srgb, currentcolor 35%, transparent)`  | Ring colour                                         |
-| `--slider-elemental-tooltip-gap`   | `0.375rem`                                           | Between the thumb and the bubble above it           |
+| `--slider-elemental-tooltip-gap`   | `0.375rem`                                           | Between the thumb and the bubble — above the control across the page, to its right down it |
 | `--slider-elemental-tooltip-padding-block` | `0.25em`                                     | Above and below the number in it                    |
 | `--slider-elemental-tooltip-padding-inline` | `0.5em`                                     | Either side of it                                   |
 | `--slider-elemental-tooltip-radius` | `6px`                                               | The bubble's corners                                |
@@ -626,7 +738,7 @@ took focus is one thumb on it. In forced-colors mode, where shadows are dropped,
 back to being an outline and the fill is repainted in `Highlight`.
 
 The value bubble is the one part that does not mix out of `currentcolor` — it takes
-`CanvasText` on `Canvas`, the page's own two extremes swapped, because it hangs above the
+`CanvasText` on `Canvas`, the page's own two extremes swapped, because it hangs outside the
 control over content this element knows nothing about and has to be legible on all of it.
 That also means it follows a light/dark switch with nothing to configure. In forced-colors
 mode it turns the right way up and grows a `CanvasText` rim, since a box painted in the

@@ -44,6 +44,16 @@ import { ElementBase, define } from '../../core.js';
  * A thumb dragged under a fingertip is the one place the number is genuinely hard to read,
  * which is the case for showing it there rather than against.
  *
+ * Down the page is `writing-mode` and nothing of this element's own. A range input turns on
+ * its side when the CSS around it does - `vertical-rl` with `direction: rtl` is a track
+ * running up the page with its minimum at the bottom - and the track, the fill and the
+ * thumbs are drawn here in logical properties, so all three turn with it for free. What does
+ * not turn on its own is what this element took off the author in the first place: a pointer
+ * carries two coordinates and only one of them is along the track. `trackAxis` is which, and
+ * an attribute beside `writing-mode` would only be a second switch free to disagree with the
+ * CSS drawing the control. The author owes it a length: a track down the page has no
+ * intrinsic one, exactly as a track across the page has no intrinsic width.
+ *
  * Light DOM, no shadow root, and nothing is moved or wrapped. The bubble is the only thing
  * inserted, only where `tooltip` asked for it, and it goes again when the attribute or the
  * element does.
@@ -139,21 +149,51 @@ export function nearerThumb(value, start, end) {
 }
 
 /**
+ * The axis a track runs on: which coordinate of a pointer is along it, where it starts,
+ * how long it is, and how thick a thumb is across it.
+ *
+ * Read off `writing-mode`, because that is what the platform turns a range input on its
+ * side with - [MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_writing_modes/Vertical_controls)
+ * - and an attribute of this element's own beside it would be a second switch free to
+ * disagree with the CSS actually drawing the control. `sideways-*` counts for the reason
+ * `vertical-*` does: it turns the inline axis down the page, and the inline axis is the
+ * track. Anything else, including the empty string a missing computed style answers with,
+ * is a track across the page.
+ *
+ * The thumb is measured across the track and never along it, and the stylesheet sizes an
+ * input to one thumb that way - so which side of the input's own box carries the number
+ * turns over with the axis.
+ *
+ * Which end is the minimum is not decided here. That is `direction`, in both axes alike,
+ * and `alongTrack` and `thumbUnder` take it as the flag they already had.
+ */
+export function trackAxis(writingMode, rect, box, x, y) {
+  const vertical = /^(vertical|sideways)/.test(String(writingMode || ''));
+  if (vertical) return { vertical, coord: y, start: rect.top, size: rect.height, thumb: box.width };
+  return { vertical, coord: x, start: rect.left, size: rect.width, thumb: box.height };
+}
+
+/**
  * Where a point on the control sits along the thumb's travel, as `0` to `1`.
  *
- * On the scale's own axis, not the screen's: `0` is `min` in both writing directions, which
+ * On the scale's own axis, not the screen's: `0` is `min` in every writing direction, which
  * is the same axis `--slider-elemental-start` and `--slider-elemental-end` are measured on
  * and the same one `inset-inline-start` spends them on.
  *
- * The travel is the box less one thumb, because a thumb's centre starts half a width in and
- * stops half a width short - the same arithmetic the fill is placed with, and the reason a
- * bare percentage of the width is off by half a thumb at both ends. A control with no room
- * to travel answers `0`, for the reason `ratio` does: there is one place a thumb can be.
+ * Which axis that is on screen is `trackAxis`'s answer, not this one's - this is handed a
+ * coordinate, an origin and a length, and a track down the page is the same arithmetic with
+ * `y`, `top` and `height` in them. `rtl` is the whole of the reversal in both: reading down
+ * the page is a minimum at the top, and reading up it is a minimum at the bottom.
+ *
+ * The travel is the box less one thumb, because a thumb's centre starts half a thumb in and
+ * stops half a thumb short - the same arithmetic the fill is placed with, and the reason a
+ * bare percentage of the box is off by half a thumb at both ends. A control with no room to
+ * travel answers `0`, for the reason `ratio` does: there is one place a thumb can be.
  */
-export function alongTrack(x, left, width, thumb, rtl) {
-  const travel = width - thumb;
+export function alongTrack(coord, start, size, thumb, rtl) {
+  const travel = size - thumb;
   if (!(travel > 0)) return 0;
-  const along = (x - left - thumb / 2) / travel;
+  const along = (coord - start - thumb / 2) / travel;
   return Math.min(Math.max(rtl ? 1 - along : along, 0), 1);
 }
 
@@ -220,13 +260,15 @@ export function stepOf(input) {
  * same value, so there is nothing to choose between what either would read out.
  *
  * `ratios` are on the scale's axis and this is screen pixels, which is the whole of the
- * `rtl` flip - the low thumb of a range runs to the right-hand end when the page does.
+ * `rtl` flip - the low thumb of a range runs to the far end when the control does. Which
+ * screen axis those pixels are on is the caller's to resolve, the same way `alongTrack`
+ * has it resolved for it.
  */
-export function thumbUnder(x, left, width, thumb, ratios, rtl) {
-  const travel = Math.max(width - thumb, 0);
+export function thumbUnder(coord, start, size, thumb, ratios, rtl) {
+  const travel = Math.max(size - thumb, 0);
   for (let i = 0; i < ratios.length; i++) {
     const at = rtl ? 1 - ratios[i] : ratios[i];
-    if (Math.abs(x - (left + thumb / 2 + at * travel)) <= thumb / 2) return i;
+    if (Math.abs(coord - (start + thumb / 2 + at * travel)) <= thumb / 2) return i;
   }
   return -1;
 }
@@ -283,16 +325,17 @@ function bound(value, fallback) {
  * tables, editor autocomplete and the live options panel all come out of that one file.
  *
  * Curated by omission: `--slider-elemental-start`, `--slider-elemental-end`,
- * `--slider-elemental-at` and `data-stacked` are written by the element and are not tagged.
- * They are the state, not knobs to turn, and setting one by hand parks the fill or the
- * bubble somewhere the thumbs are not.
+ * `--slider-elemental-at`, `data-stacked` and the bubble's `data-vertical`/`data-reversed`
+ * are written by the element and are not tagged. They are the state, not knobs to turn, and
+ * setting one by hand parks the fill or the bubble somewhere the thumbs are not. There is no
+ * tag for the axis either, because there is no attribute: `writing-mode` is the switch.
  *
  * @tag slider-elemental
  * @attr {number} [gap=0] - Least distance between the two thumbs, in the scale's own units. Ignored with one thumb.
- * @attr {string} tooltip - A value bubble that follows the pointer. `thumb` over the thumb it is on, `track` for the value under it elsewhere, `thumb track` for both; a bare `tooltip` is `thumb`. Pointer only, and `aria-hidden` — the input announces its own value. Touch draws it for the length of a press, since a finger has no hover to rest in.
+ * @attr {string} tooltip - A value bubble that follows the pointer. Follows the track's axis too, so a slider turned on its side gets it beside the thumb rather than above it. `thumb` over the thumb it is on, `track` for the value under it elsewhere, `thumb track` for both; a bare `tooltip` is `thumb`. Pointer only, and `aria-hidden` — the input announces its own value. Touch draws it for the length of a press, since a finger has no hover to rest in.
  * @prop {?function} format - What the `tooltip` bubble says, called as `(value, element)` and returning what lands in it. A number is all the bubble can say on its own, and a scrubber needs `01:12` where a price needs `€40` — neither is something an attribute could spell. Unset, or returning nothing, leaves the browser's own spelling of the value. Does not touch what the input announces: assistive technology reads the range, which still says the number.
  *
- * @cssprop {<length>} [--slider-elemental-thumb-size=1rem] - Thumb width and height. This is also the height of the control, and what the fill is inset by so its ends meet the thumb centres.
+ * @cssprop {<length>} [--slider-elemental-thumb-size=1rem] - Thumb width and height. This is also the thickness of the control across the track, and what the fill is inset by so its ends meet the thumb centres. Two thumbs want `1.5rem` — that is WCAG 2.2's 24px target size, which stacked inputs have no clear space around them to pass on instead.
  * @cssprop {<length>} [--slider-elemental-track-size=0.375rem] - Track thickness.
  * @cssprop {<length-percentage>} [--slider-elemental-radius=999px] - Track corners. A big number is a pill at any height.
  * @cssprop {<length-percentage>} [--slider-elemental-thumb-radius=50%] - Thumb shape. `50%` is a circle, `0` a square.
@@ -301,7 +344,7 @@ function bound(value, fallback) {
  * @cssprop {<color>} [--slider-elemental-thumb=var(--slider-elemental-fill)] - Thumb fill. Follows the selection unless you set it.
  * @cssprop {<length>} [--slider-elemental-focus-width=3px] - Ring around a focused thumb.
  * @cssprop {<color>} [--slider-elemental-focus-color=color-mix(in srgb, currentcolor 35%, transparent)] - Ring colour.
- * @cssprop {<length>} [--slider-elemental-tooltip-gap=0.375rem] - Between the thumb and the `tooltip` bubble above it.
+ * @cssprop {<length>} [--slider-elemental-tooltip-gap=0.375rem] - Between the thumb and the `tooltip` bubble — above the control when the track runs across the page, and to its right when it runs down it.
  * @cssprop {<length>} [--slider-elemental-tooltip-padding-block=0.25em] - Above and below the number in the bubble.
  * @cssprop {<length>} [--slider-elemental-tooltip-padding-inline=0.5em] - Either side of it.
  * @cssprop {<length-percentage>} [--slider-elemental-tooltip-radius=6px] - The bubble's corners.
@@ -352,6 +395,15 @@ export class SliderElemental extends ElementBase {
     return typeof getComputedStyle === 'function' && getComputedStyle(this).direction === 'rtl';
   }
 
+  /** The writing mode the control is laid out in, which is what says whether the track runs
+   * across the page or down it. Read from this element and not from an input: the track and
+   * the fill are drawn on this box in logical properties, so this is the writing mode they
+   * resolve against, and an input turned on its side by itself would be a thumb running one
+   * way over a track running the other. */
+  get writingMode() {
+    return typeof getComputedStyle === 'function' ? getComputedStyle(this).writingMode : '';
+  }
+
   connectedCallback() {
     if (this.initialized) return;
     // Nothing to coordinate until the light-DOM children are parsed. The bundle is loaded
@@ -373,7 +425,12 @@ export class SliderElemental extends ElementBase {
     // kept because the bubble has to be redrawn by things that are not pointer moves - a
     // value arriving from script, a `reset`, a restore - and the pointer may not have moved
     // since, so there would be no event carrying the coordinate to redraw it at.
+    //
+    // Both coordinates, and not the one along the track: `writing-mode` can change under a
+    // resting pointer - a media query is enough - and a point remembered as a distance along
+    // an axis the control has since stopped using is a bubble redrawn somewhere it never was.
     this.tooltipX = null;
+    this.tooltipY = null;
     this.tooltipElement = null;
     // What the bubble says, when the number alone is not it. A property rather than an
     // attribute because the answer is a function - `01:12` from 72, a currency, a name for a
@@ -532,7 +589,7 @@ export class SliderElemental extends ElementBase {
     // remembered coordinate rather than skipped: a thumb arrowed under a resting pointer
     // moves out from under it, so which thumb is being pointed at is a question with a new
     // answer even though no pointer event has fired.
-    if (this.tooltipX !== null) this.showTooltipAt(this.tooltipX);
+    if (this.tooltipX !== null) this.showTooltipAt(this.tooltipX, this.tooltipY);
   }
 
   /**
@@ -566,7 +623,7 @@ export class SliderElemental extends ElementBase {
     // The attribute may have changed under a pointer that has not moved since - dropping
     // `track` while the bubble is showing a track value has to take that bubble away now,
     // not at the next pointer move that may never come.
-    if (this.tooltipElement && this.tooltipX !== null) this.showTooltipAt(this.tooltipX);
+    if (this.tooltipElement && this.tooltipX !== null) this.showTooltipAt(this.tooltipX, this.tooltipY);
   }
 
   /** The bubble and the listeners that draw it, gone together. The element wrote the bubble,
@@ -581,6 +638,7 @@ export class SliderElemental extends ElementBase {
     this.tooltipElement.remove();
     this.tooltipElement = null;
     this.tooltipX = null;
+    this.tooltipY = null;
     this.dragging = -1;
     this.pressed = false;
   }
@@ -591,16 +649,18 @@ export class SliderElemental extends ElementBase {
     // a bubble ends up stuck on a phone, parked where a finger last was.
     if (e.pointerType === 'touch' && !this.pressed) return;
     this.tooltipX = e.clientX;
-    this.showTooltipAt(e.clientX);
+    this.tooltipY = e.clientY;
+    this.showTooltipAt(e.clientX, e.clientY);
   }
 
   /** A press pins the bubble to whatever it is about to drag, for as long as it is held. */
   onTooltipDown(e) {
     this.pressed = true;
-    const m = this.metrics(e.clientX);
+    const m = this.metrics(e.clientX, e.clientY);
     this.dragging = m ? draggedThumb(m.under, m.inputs.length) : -1;
     this.tooltipX = e.clientX;
-    this.showTooltipAt(e.clientX);
+    this.tooltipY = e.clientY;
+    this.showTooltipAt(e.clientX, e.clientY);
   }
 
   /**
@@ -626,7 +686,7 @@ export class SliderElemental extends ElementBase {
     }
     const rect = this.getBoundingClientRect();
     const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
-    if (inside) this.showTooltipAt(e.clientX);
+    if (inside) this.showTooltipAt(e.clientX, e.clientY);
     else this.onPointerLeave();
   }
 
@@ -635,29 +695,32 @@ export class SliderElemental extends ElementBase {
     // is still worth reading. The release is what ends it.
     if (this.dragging >= 0) return;
     this.tooltipX = null;
+    this.tooltipY = null;
     if (this.tooltipElement) this.tooltipElement.hidden = true;
   }
 
   /**
-   * Everything a bubble is drawn from, measured in one go: the scale, where each thumb sits
-   * on it, and which one a pointer at `x` is over. `null` where there is nothing to measure.
+   * Everything a bubble is drawn from, measured in one go: the axis the track is on, the
+   * scale, where each thumb sits on it, and which one a pointer at `x`, `y` is over. `null`
+   * where there is nothing to measure.
    */
-  metrics(x) {
+  metrics(x, y) {
     const inputs = this.inputs;
     if (!inputs.length) return null;
     const rect = this.getBoundingClientRect();
-    // The stylesheet sizes each input's height to the thumb, so the input's own box measures
-    // the thumb without this having to parse a custom property out of a computed style.
-    const thumb = inputs[0].getBoundingClientRect().height;
+    // The stylesheet sizes each input across the track to the thumb, so the input's own box
+    // measures the thumb without this having to parse a custom property out of a computed
+    // style.
+    const axis = trackAxis(this.writingMode, rect, inputs[0].getBoundingClientRect(), x, y);
     const rtl = this.rtl;
     const min = bound(inputs[0].min, 0);
     const max = bound(inputs[0].max, 100);
     const ratios = inputs.map((input) => ratio(bound(input.value, min), min, max));
-    return { inputs, rect, thumb, rtl, min, max, ratios, under: thumbUnder(x, rect.left, rect.width, thumb, ratios, rtl) };
+    return { inputs, rect, axis, rtl, min, max, ratios, under: thumbUnder(axis.coord, axis.start, axis.size, axis.thumb, ratios, rtl) };
   }
 
   /**
-   * Draw the bubble for a pointer at `x`, in viewport coordinates, or hide it where the
+   * Draw the bubble for a pointer at `x`, `y`, in viewport coordinates, or hide it where the
    * attribute did not ask for a bubble at that spot.
    *
    * A thumb reads out its input's own `value`, which the browser has already put on a step
@@ -669,10 +732,10 @@ export class SliderElemental extends ElementBase {
    * to, and it holds until the release. Without it the bubble answers where the pointer is,
    * which during a drag is beside the thumb half the time.
    */
-  showTooltipAt(x) {
+  showTooltipAt(x, y) {
     const bubble = this.tooltipElement;
     if (!bubble) return;
-    const m = this.metrics(x);
+    const m = this.metrics(x, y);
     if (!m) return;
 
     const modes = tooltipModes(this.getAttribute('tooltip'));
@@ -691,7 +754,7 @@ export class SliderElemental extends ElementBase {
     let text = over < 0 ? '' : m.inputs[over].value;
     let value = over < 0 ? 0 : Number(m.inputs[over].value);
     if (over < 0) {
-      at = alongTrack(x, m.rect.left, m.rect.width, m.thumb, m.rtl);
+      at = alongTrack(m.axis.coord, m.axis.start, m.axis.size, m.axis.thumb, m.rtl);
       // `step="any"` is the one value meaning no step at all, and `parseFloat` would read it
       // as the missing attribute's default of 1.
       value = snapToStep(m.min + at * (m.max - m.min), m.min, m.max, stepOf(m.inputs[0]));
@@ -699,6 +762,13 @@ export class SliderElemental extends ElementBase {
     }
 
     bubble.dataset.tooltip = on;
+    // Which way the bubble is nudged off the point it reads out, as two attributes rather
+    // than as CSS the stylesheet could work out for itself: centring is `translate`, which
+    // has no logical form, and `:dir()` answers the `dir` attribute rather than the
+    // `direction` property - so a control turned on its side in CSS alone, which is the
+    // ordinary way to do it, would have the arithmetic here reversed and the bubble not.
+    bubble.toggleAttribute('data-vertical', m.axis.vertical);
+    bubble.toggleAttribute('data-reversed', m.rtl);
     bubble.textContent = this.formatValue(value, text);
     bubble.style.setProperty('--slider-elemental-at', at);
     bubble.hidden = false;
@@ -733,16 +803,17 @@ export class SliderElemental extends ElementBase {
     if (inputs.length < 2) return;
 
     const rect = this.getBoundingClientRect();
-    // The stylesheet sizes each input's height to the thumb, so the input's own box measures
-    // the thumb without this having to parse a custom property out of a computed style.
-    const thumb = inputs[0].getBoundingClientRect().height;
+    // The stylesheet sizes each input across the track to the thumb, so the input's own box
+    // measures the thumb without this having to parse a custom property out of a computed
+    // style.
+    const axis = trackAxis(this.writingMode, rect, inputs[0].getBoundingClientRect(), e.clientX, e.clientY);
     // A control with no room to travel has one position and `alongTrack` answers it, but a
     // press there is a press on nothing - so it moves no thumb and fires no events.
-    if (rect.width <= thumb) return;
+    if (axis.size <= axis.thumb) return;
 
     const min = bound(inputs[0].min, 0);
     const max = bound(inputs[0].max, 100);
-    const value = min + alongTrack(e.clientX, rect.left, rect.width, thumb, this.rtl) * (max - min);
+    const value = min + alongTrack(axis.coord, axis.start, axis.size, axis.thumb, this.rtl) * (max - min);
 
     const input = inputs[nearerThumb(value, bound(inputs[0].value, min), bound(inputs[1].value, max)) === 'start' ? 0 : 1];
     input.value = value;

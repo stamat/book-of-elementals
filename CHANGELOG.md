@@ -17,6 +17,33 @@ may already be targeting**, since neither shows up in a function signature.
 
 ### Added
 
+- **`<slider-elemental>` runs down the page when the CSS says so — no attribute for it.**
+  `writing-mode: vertical-rl` with `direction: rtl` is
+  [the platform's own way](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_writing_modes/Vertical_controls)
+  of turning a range input on its side, and the browser keeps the whole keyboard and pointer
+  contract across it. The track, the fill and the thumbs were already drawn in logical
+  properties, so all three turned with it on their own — what did not was the half this element
+  took over: the pointer arithmetic read `clientX` and the control's width, so a slider stood on
+  end had a value bubble reading the wrong number and, with two thumbs, a dead track. It now
+  reads the writing mode and measures along whichever axis the track is on. Which end is the
+  minimum stays `direction`'s, in both axes alike.
+
+  An attribute was considered and dropped: it would have been a second switch beside the CSS the
+  author writes anyway, free to disagree with it, and there would still have been a `height` to
+  set. `slider-orientation` in [CSS Forms](https://drafts.csswg.org/css-forms-1/) resolves
+  through `writing-mode` when it lands, so reading the writing mode picks that up for free.
+
+  Give a vertical control a `height` — a track down the page has no length of its own.
+
+  DOM: the value bubble now carries `data-vertical` and `data-reversed` while the track runs
+  down the page or backwards. CSS: the bubble hangs off the right of a vertical control rather
+  than above it, is laid back out `horizontal-tb` so the number is not turned on its side with
+  the track, and takes its text direction from its own content. Its centring stopped keying off
+  `:dir(rtl)` and now keys off `data-reversed` — `:dir()` answers the `dir` attribute, not the
+  `direction` property, so a slider reversed in CSS alone had the arithmetic flipped and the
+  bubble not.
+
+
 - **`open-when`, `bar-when` and `flyout-when` — the `media` attribute renamed after what it
   switches.** `<disclosure-elemental media>` said *a* media query without saying which state it
   owned, and `<navbar-elemental>` and `<menu-elemental>` spelled the same idea the same vague way.
@@ -138,6 +165,20 @@ may already be targeting**, since neither shows up in a function signature.
   selection and fires nothing.
 
 ### Fixed
+
+- **`<slider-elemental>`'s two thumbs are under
+  [WCAG 2.2's target size](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html),
+  and the docs now say so and spell the fix.** Stacked, the two inputs sit exactly on top of
+  each other, so neither has any clear space around it to pass on and each is judged on its own
+  16px against the 24px minimum — on either axis, and since the element shipped.
+  `--slider-elemental-thumb-size: 1.5rem` on a two-thumb control clears it, and the vertical
+  range sample on the page is written that way.
+
+  Nothing changed in the theme, deliberately: the fix is a size, and a stylesheet that silently
+  made one control a third thicker than the next would be answering a layout question on the
+  page's behalf. One thumb needs nothing — it has room around it and passes on the spacing
+  clause instead.
+
 
 - **Every element now upgrades when its bundle is included before its markup.** A custom
   element is upgraded the moment its opening tag is parsed, which is before a single one of its

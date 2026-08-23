@@ -1,15 +1,17 @@
-// The seven things this element decides: where a thumb sits on the track, what stops two of
-// them crossing, which one is on top when they are piled together, which one a press on the
-// track belongs to, where a pointer sits along the travel, which thumb it is over, and what
-// value it would land on once the step has had it. Everything else a slider needs - the
+// The eight things this element decides: which axis the track runs on, where a thumb sits
+// along it, what stops two of them crossing, which one is on top when they are piled
+// together, which one a press on the track belongs to, where a pointer sits along the
+// travel, which thumb it is over, and what value it would land on once the step has had it.
+// Everything else a slider needs - the
 // arrow keys, `Home`, `End`, `PageUp`/`PageDown`, `step`, touch, submission, `reset`,
 // restore - is the browser's, because the thumbs are native range inputs. There is nothing
 // there to test that would not be testing the platform.
 //
 // Deliberately not covered: what the element writes onto itself
 // (`--slider-elemental-start`, `--slider-elemental-end`, `data-stacked`), the value bubble
-// it appends for `tooltip` and the `--slider-elemental-at` on it, the pointer routing the
-// stylesheet does, and the CSS that reads any of it. Jest runs under Node here with no
+// it appends for `tooltip` and the `--slider-elemental-at`, `data-vertical` and
+// `data-reversed` on it, the pointer routing the stylesheet does, and the CSS that reads
+// any of it. Jest runs under Node here with no
 // jsdom, so an element test would be asserting against a stub base class; the track and the
 // bubble are checked in a browser against the docs page.
 //
@@ -23,7 +25,7 @@
 // touch rule is worth a spec, because a bubble left parked where a finger last was is the
 // failure that made touch a refusal here in the first place.
 
-import { alongTrack, clampPair, draggedThumb, nearerThumb, ratio, snapToStep, stackedThumb, thumbUnder, tooltipModes, SliderElemental } from './index.js';
+import { alongTrack, clampPair, draggedThumb, nearerThumb, ratio, snapToStep, stackedThumb, thumbUnder, tooltipModes, trackAxis, SliderElemental } from './index.js';
 
 // `formatValue` touches no DOM, so it is reachable here even without jsdom: called against a
 // stand-in carrying the one field it reads.
@@ -207,6 +209,50 @@ test('with the thumbs piled up, the press moves the one it is pointing at', () =
   // - the clamp puts a low thumb dragged past the high one straight back.
   expect(nearerThumb(80, 50, 50)).toBe('end');
   expect(nearerThumb(20, 50, 50)).toBe('start');
+});
+
+test('the axis a track runs on is the writing mode the control is laid out in', () => {
+  const rect = { left: 100, top: 20, width: 116, height: 300 };
+  const box = { width: 16, height: 24 };
+  // Across the page, a pointer's `x` is the one along the track and the box is as long as
+  // the control is wide. Down it, both turn over - and so does the side of the input's own
+  // box that measures the thumb, because a thumb is measured across the track and never
+  // along it.
+  expect(trackAxis('horizontal-tb', rect, box, 158, 40)).toEqual({ vertical: false, coord: 158, start: 100, size: 116, thumb: 24 });
+  expect(trackAxis('vertical-rl', rect, box, 158, 40)).toEqual({ vertical: true, coord: 40, start: 20, size: 300, thumb: 16 });
+});
+
+test('every writing mode that turns the inline axis down the page is a vertical track', () => {
+  // The inline axis is the track, so what counts is which way that one runs - `vertical-lr`
+  // and `vertical-rl` differ in where the *next* line goes, which is the side the value
+  // bubble ends up on and nothing the arithmetic here can see.
+  const rect = { left: 0, top: 0, width: 100, height: 200 };
+  const box = { width: 16, height: 24 };
+  const vertical = (mode) => trackAxis(mode, rect, box, 0, 0).vertical;
+  expect(vertical('vertical-rl')).toBe(true);
+  expect(vertical('vertical-lr')).toBe(true);
+  expect(vertical('sideways-lr')).toBe(true);
+  expect(vertical('sideways-rl')).toBe(true);
+  expect(vertical('horizontal-tb')).toBe(false);
+});
+
+test('a writing mode nobody set is a track across the page, not a crash on the first press', () => {
+  // `getComputedStyle` is missing outside a browser and answers an empty string for a
+  // property an engine does not know, and neither is a reason for a press to throw.
+  const rect = { left: 0, top: 0, width: 100, height: 200 };
+  const box = { width: 16, height: 24 };
+  expect(trackAxis(undefined, rect, box, 50, 50).vertical).toBe(false);
+  expect(trackAxis('', rect, box, 50, 50).vertical).toBe(false);
+});
+
+test('down the page, the minimum is the bottom end only because `direction` says so', () => {
+  // The travel arithmetic never learns which axis it is on: it is handed a coordinate, an
+  // origin and a length, and reversing it is `direction`'s job in both. A 216px-tall
+  // control with a 16px thumb has 200px of travel starting 8px down - so 8px from the top
+  // is the minimum reading down the page, and the maximum reading up it.
+  expect(alongTrack(8, 0, 216, 16, false)).toBe(0);
+  expect(alongTrack(8, 0, 216, 16, true)).toBe(1);
+  expect(alongTrack(108, 0, 216, 16, true)).toBe(0.5);
 });
 
 test('a point on the control is measured against the thumb travel, not the full width', () => {

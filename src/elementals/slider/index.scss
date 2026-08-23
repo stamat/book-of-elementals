@@ -14,9 +14,14 @@ slider-elemental {
 
     // Blockified, because a range input is inline-level by default and an inline box sits
     // on a baseline with the line's leading above and its descender space below. That is a
-    // couple of pixels of offset between the top of this element and the top of the thumb,
-    // and the track is drawn against the top of this element - so without this the two are
+    // couple of pixels of offset between the near edge of this element and the near edge of
+    // the thumb, and the track is drawn against this element's - so without this the two are
     // never quite on the same line.
+
+    // The length is the whole control along the track, which is the one measurement an
+    // element turned on its side cannot find for itself: a block box down the page is as
+    // long as its content, and its content is this input asking to be as long as the box.
+    // Give the control a `height` and the circle is broken.
     display: block;
     inline-size: 100%;
     margin: 0;
@@ -33,9 +38,11 @@ slider-elemental {
     > input[type="range"] {
       grid-area: 1 / 1;
 
-      // The height is the thumb, and the JavaScript measures the thumb by reading this box
-      // back - a thumb travels from half its own width to half a width short of the far
-      // end, and a press on the track has to be turned into a value on that same scale.
+      // One thumb thick across the track, and the JavaScript measures the thumb by reading
+      // this box back - a thumb travels from half its own size to half a size short of the
+      // far end, and a press on the track has to be turned into a value on that same scale.
+      // Logical, so a control turned on its side keeps its thickness on the other axis and
+      // the measurement follows it there.
       block-size: var(--slider-elemental-thumb-size, 1rem);
 
       // Two stacked inputs mean the one on top covers the other completely, so its track
@@ -119,9 +126,10 @@ slider-elemental {
   > output[data-tooltip] {
     position: absolute;
 
-    // The thumbs are the first thing in the box and exactly one thumb tall, so a gap above
-    // the top of this element is a gap above the thumb - which `100%` of a control made
-    // taller by an `<output>`, a caption or a pair of end labels would not be.
+    // Off the far side of the control in the block axis, which is the side the track does
+    // not run along. The thumbs are the first thing in the box and exactly one thumb thick
+    // that way, so this clears the thumb rather than clearing a control made thicker by an
+    // `<output>`, a caption or a pair of end labels.
     inset-block-end: calc(100% + var(--slider-elemental-tooltip-gap, 0.375rem));
 
     // The thumb's real centre, which is the arithmetic the fill is placed with and the
@@ -130,15 +138,55 @@ slider-elemental {
     inset-inline-start: calc(var(--slider-elemental-at, 0) * (100% - var(--slider-elemental-thumb-size, 1rem)) + var(--slider-elemental-thumb-size, 1rem) / 2);
     translate: -50%;
 
-    // The bubble hangs outside this element's box, over whatever the page put above the
+    // The bubble hangs outside this element's box, over whatever the page put beside the
     // control - so it must not be what a press there lands on.
     pointer-events: none;
   }
 
-  // `translate` has no logical form, so the one thing here that is not already a logical
-  // property is turned around by hand: `inset-inline-start` measures from the right in RTL,
-  // and centring the bubble on that point means moving it right rather than left.
-  &:dir(rtl) > output[data-tooltip] {
+  // `translate` is the one thing in here with no logical form, so the axis and the direction
+  // are turned around by hand - off the two attributes the element writes on the bubble, and
+  // not off `:dir()`, which answers the `dir` attribute rather than the `direction`
+  // property. A slider is turned on its side in CSS alone, so `:dir()` would not match it
+  // and the bubble would be the one thing on the control still centred on the other axis.
+
+  // Every one of these is measured out to beat the rule before it rather than relying on the
+  // order they are written in, because what is at stake is a bubble sitting a whole bubble's
+  // width off the thumb it is reading out.
+  > output[data-tooltip][data-reversed]:not([data-vertical]) {
     translate: 50%;
+  }
+
+  > output[data-tooltip][data-vertical] {
+    // A vertical control is a vertical control, not vertical text: left in the writing mode
+    // it hangs off, the number in the bubble would be turned on its side with the track. And
+    // `direction` in a vertical writing mode is which end the minimum is rather than what
+    // language the number is in, so the bubble is not laid out in that either. `plaintext`
+    // stops the second half of that being a lie the other way round: a bubble whose own text
+    // does run right to left still does, because its first strong character decides and not
+    // this rule. Which leaves `format` returning `€40` reading as `€40` on a control whose
+    // minimum is at the bottom, and an Arabic one reading as Arabic.
+    writing-mode: horizontal-tb;
+    direction: ltr;
+    unicode-bidi: plaintext;
+
+    // Which is exactly why the placement above cannot be reused, and this one is physical:
+    // an absolutely positioned box resolves its own logical insets against its own writing
+    // mode, not against the containing block's. The bubble having just been laid back out
+    // horizontally, `inset-block-end` on it is its own bottom rather than the far side of
+    // the track, and `100%` of the wrong axis is a bubble parked off the end of the control.
+    // Measured against the same box either way: percentages on `top` and `bottom` are the
+    // containing block's height, which down the page is the track's own length.
+    inset-block-end: auto;
+    inset-inline-start: auto;
+    left: calc(100% + var(--slider-elemental-tooltip-gap, 0.375rem));
+    top: calc(var(--slider-elemental-at, 0) * (100% - var(--slider-elemental-thumb-size, 1rem)) + var(--slider-elemental-thumb-size, 1rem) / 2);
+    translate: 0 -50%;
+  }
+
+  // Reading up the page, the thumb is measured from the bottom - and so is the bubble on it.
+  > output[data-tooltip][data-vertical][data-reversed] {
+    top: auto;
+    bottom: calc(var(--slider-elemental-at, 0) * (100% - var(--slider-elemental-thumb-size, 1rem)) + var(--slider-elemental-thumb-size, 1rem) / 2);
+    translate: 0 50%;
   }
 }

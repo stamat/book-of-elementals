@@ -14,6 +14,11 @@
 // file on specificity - an override that reads as though it should work and silently does
 // not. `style.scss` reads the thumb size too, which is the other reason it is out here.
 slider-elemental {
+  // `1rem` for one thumb and for two alike. Two stacked inputs are 8px under WCAG 2.2's
+  // 24px target size and one thumb is not - it has clear space around it to pass on instead -
+  // but the fix is a size, and a theme that silently made one control a third thicker than
+  // the next would be deciding a layout question on the page's behalf. The docs name it and
+  // spell the one declaration; this file leaves the choice where it can be seen.
   --slider-elemental-thumb-size: 1rem;
   --slider-elemental-track-size: 0.375rem;
   --slider-elemental-radius: 999px; // a pill at any height
