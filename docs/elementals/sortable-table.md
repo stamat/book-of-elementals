@@ -43,11 +43,11 @@ every button's name.
 ```
 
 ```css demo
-/* every line of this is the page's — the element styles no table */
+/* the rule under the header row and the stripes are the theme's; every line here is the page's */
 table { border-collapse: collapse; inline-size: 100%; }
 caption { margin-block-end: 0.5rem; font-weight: 600; text-align: start; }
+/* a hairline under each cell and none over it — the row above already drew this row's top */
 th, td { padding: 0.4rem 0.6rem; text-align: start; border-block-end: 1px solid color-mix(in srgb, CanvasText 20%, transparent); }
-thead th { border-block-end-width: 2px; }
 tbody th { font-weight: 400; }
 ```
 
@@ -182,11 +182,14 @@ all, upgraded or not; give it `display: block` in your own CSS if you want somet
 
 ## Styling
 
-The element styles no table. What its own stylesheet does is make the upgrade invisible: a
-`<button>` inside a `<th>` arrives with the UA's font, colour, background, border and centre
-alignment, and every one of them is put back to what the cell already had. That is not a look —
-it is the header not starting to look like a form control because it became one — which is why it
-is in the structure file and not the theme.
+The element's own stylesheet styles no table. What it does is make the upgrade invisible: a
+`<button>` inside a `<th>` arrives with the UA's font, colour, background, border, centre
+alignment — and, less famously, its own `text-transform`, `letter-spacing`, `word-spacing`,
+`line-height`, `text-indent` and `text-shadow`. Every one of them is put back to what the cell
+already had. That last six is what a header written `text-transform: uppercase` needs to still be
+uppercase once it is a button; measured in Chromium, a `<th>` computing `uppercase` hands its
+button `none`. None of this is a look — it is the header not starting to look like a form control
+because it became one — which is why it is in the structure file and not the theme.
 
 The button is `inline-size: 100%`, so the target is the column rather than the four words in it.
 It stops at the cell's padding, because reaching into that would mean moving your padding onto
@@ -200,11 +203,23 @@ Both stylesheets reach only the buttons this element wrote — its own table, th
 | --- | --- | --- |
 | `--sortable-table-elemental-indicator-color` | `currentcolor` | Theme. The arrow on the sorted column |
 | `--sortable-table-elemental-hint-opacity` | `0.35` | Theme. How visible the arrow is on a column that is not the sorted one — the affordance, shown on every sortable header |
+| `--sortable-table-elemental-rule` | `currentcolor` at 20% | Theme. The 2px rule under the header row |
+| `--sortable-table-elemental-stripe` | `currentcolor` at 4% | Theme. The tint on every second body row |
+
+**The theme has two opinions about the table itself, and no more.** A 2px rule under the header
+row, and a stripe on every second body row — both of them what a *sortable* table needs
+rather than what a pretty one wants: the rule separates the row you press from the rows you are
+reading, and the stripe is how an eye keeps its place across a row once the order under it can
+change. The stripes are `nth-child`, so they stay where they are on the screen and the rows
+travel through them; a stripe that moved with its row would be a second thing changing on every
+press. Nothing about padding, fonts or cell borders — that part is a design system's answer, and
+yours. Both colours are mixed out of `currentcolor`, so they land in the palette the page already
+has, dark mode included.
 
 The arrow is drawn with borders rather than written as `▲`, for the reason
-[`<tree-view-elemental>`](tree-view.html)'s twisty is: text in a pseudo-element is read out by some
-screen readers, and `aria-sort` already says which way this column is sorted, in the reader's own
-language. It is laid out inline rather than with flex so that this stylesheet has no opinion about
+[`<tree-view-elemental>`](tree-view.html)'s chevron is a masked icon: text in a pseudo-element is
+read out by some screen readers, and `aria-sort` already says which way this column is sorted, in
+the reader's own language. It is laid out inline rather than with flex so that this stylesheet has no opinion about
 where your header text sits — CSS cannot read `text-align`, and every version of this that tried
 to guess it got one alignment or the other wrong.
 

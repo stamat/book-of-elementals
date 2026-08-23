@@ -19,7 +19,7 @@ nothing else, and [`<sortable-table-elemental>`](../elementals/sortable-table.ht
 is the header buttons and nothing else. The toolbar, the count, the disabled buttons and the
 layout are the page's, which is the point of this example. Here is the assembly.
 
-<!-- demo checkbox-group sortable-table style="--code-preview-height:335px" -->
+<!-- demo checkbox-group sortable-table style="--code-preview-height:342px" -->
 
 ```html
 <div class="bulk" role="toolbar" aria-label="Row actions">
@@ -114,9 +114,13 @@ body {
 
 table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 /* the table's name, and where the sort note is appended off screen */
-caption { margin-block-end: 0.35rem; text-align: start; font-size: 0.8rem; opacity: 0.7; }
+caption { margin-block-end: 0.4rem; text-align: start; font-weight: 600; }
+/* a hairline under each cell and none over it — the row above already drew this row's top */
 th, td { padding: 0.5rem 0.6rem; text-align: start; border-bottom: 1px solid var(--line); }
-th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; opacity: 0.7; }
+/* the caps and the letter-spacing carry the hierarchy, and nothing is dimmed to get it: every
+   one of these is a button now, and `opacity` on a control takes its focus ring and the sort
+   arrow inside it down by the same amount */
+th { text-transform: uppercase; letter-spacing: 0.04em; }
 .num { text-align: end; font-variant-numeric: tabular-nums; }
 .note { font-size: 0.75rem; opacity: 0.6; }
 /* the checkbox column is as wide as a checkbox and no wider */
@@ -126,8 +130,13 @@ th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; opaci
    on the row instead */
 .pick input { display: block; }
 
-/* the row the reader has picked, marked by more than the tick in it */
-tr:has(td input:checked) { background: color-mix(in srgb, currentcolor 5%, transparent); }
+/* the row the reader has picked, marked by more than the tick in it. Twice the theme's stripe,
+   so a picked row on a striped one is still the darker of the two — and named through the
+   element so it outranks the stripe, which is a `:nth-child` and carries a class's worth of
+   specificity of its own */
+sortable-table-elemental tbody tr:has(td input:checked) {
+  background: color-mix(in srgb, currentcolor 9%, transparent);
+}
 ```
 
 ```js demo

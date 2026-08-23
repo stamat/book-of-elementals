@@ -85,6 +85,22 @@
               "description": "Theme. How visible the arrow is on a column that is only being hovered or focused - the affordance, shown before the column is the sorted one.",
               "name": "--sortable-table-elemental-hint-opacity",
               "default": "0.35"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. The 2px rule under the header row.",
+              "name": "--sortable-table-elemental-rule",
+              "default": "currentcolor at 20%"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. The tint on every second body row.",
+              "name": "--sortable-table-elemental-stripe",
+              "default": "currentcolor at 4%"
             }
           ],
           "slots": [

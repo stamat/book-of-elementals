@@ -2,8 +2,17 @@
 sortable-table-elemental {
   --sortable-table-elemental-indicator-color: currentcolor;
   --sortable-table-elemental-hint-opacity: 0.35;
+  --sortable-table-elemental-rule: color-mix(in srgb, currentcolor 20%, transparent);
+  --sortable-table-elemental-stripe: color-mix(in srgb, currentcolor 4%, transparent);
 }
 
+sortable-table-elemental:where(:defined) > table > tbody > tr:nth-child(even) {
+  background: var(--sortable-table-elemental-stripe);
+}
+
+sortable-table-elemental:where(:defined) > table > thead > tr:last-of-type > th {
+  border-block-end: 2px solid var(--sortable-table-elemental-rule);
+}
 sortable-table-elemental:where(:defined) > table > thead > tr:last-of-type > th:not([data-sort=none]) > button::after {
   display: inline-block;
   width: 0;

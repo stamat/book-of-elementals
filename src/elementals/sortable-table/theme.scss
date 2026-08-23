@@ -2,9 +2,13 @@
 // not in its bundle: that one writes the buttons and un-does the UA's button look, which every
 // page needs. This is the arrow, which is a look.
 
-// Nothing here has an opinion about the table - no rules, no zebra stripes, no cell padding. A
-// table is something a page has already styled by the time it wants sorting on it, and a theme
-// that restyled it would be a design system's answer written into a book of elements.
+// Two opinions about the table and no more: a rule under the header row and a stripe on every
+// second body row. Both are what a *sortable* table needs rather than what a pretty one wants -
+// the rule separates the row you press from the rows you are reading, and the stripe is how an
+// eye keeps its place across a row after the order under it has changed. Nothing about padding,
+// fonts or cell borders: a table is something a page has already styled by the time it wants
+// sorting on it, and that part would be a design system's answer written into a book of
+// elements.
 
 // On the bare tag and not behind a gate, so a page replacing one writes a plain
 // `sortable-table-elemental { … }` rule and wins.
@@ -14,6 +18,18 @@ sortable-table-elemental {
   // The arrow on a column that is *not* the sorted one. Faint on purpose: it is the affordance -
   // this column sorts, and a press will sort it that way - and not the state.
   --sortable-table-elemental-hint-opacity: 0.35;
+
+  // Mixed out of `currentcolor` rather than named, so both land in whatever palette the page is
+  // already painting in, dark mode included, with nothing to configure.
+  --sortable-table-elemental-rule: #{color-mix(in srgb, currentcolor 20%, transparent)};
+  --sortable-table-elemental-stripe: #{color-mix(in srgb, currentcolor 4%, transparent)};
+}
+
+// Zebra by *position*, not by row: `nth-child` re-counts after a sort, so the stripes stay where
+// they are on the screen and the rows travel through them. A stripe that moved with its row would
+// be a second thing changing on every press, and the reader is already tracking the first.
+sortable-table-elemental:where(:defined) > table > tbody > tr:nth-child(even) {
+  background: var(--sortable-table-elemental-stripe);
 }
 
 // **Drawn with borders rather than written as `▲`.** A character in `content` is text, and text
@@ -26,6 +42,12 @@ sortable-table-elemental {
 // reach a button the *author* put in a `<th scope="row">` and tell the reader that row header
 // sorts the table.
 sortable-table-elemental:where(:defined) > table > thead > tr:last-of-type {
+  // Twice the weight a body row's border would be drawn at, which is the whole of the
+  // separation: the header is not another row, and the eye should not read it as one.
+  > th {
+    border-block-end: 2px solid var(--sortable-table-elemental-rule);
+  }
+
   // Inline rather than laid out with flex, which is what keeps this rule from having an opinion
   // about where the header's text sits: the arrow flows after the label, so a centred header
   // centres both together and a start-aligned one keeps the arrow against the words. Reading

@@ -64,7 +64,17 @@ may already be targeting**, since neither shows up in a function signature.
   `aria-posinset`: the pattern asks for those only when the nodes are not all in the DOM. CSS: the
   list markers come off in the element's own stylesheet rather than the theme, because a
   `::marker` beside a node is the `listitem` the roles just removed showing through — measured, an
-  unstyled tree carried a `StaticText("• ")` per node in Chromium's accessibility tree.
+  unstyled tree carried a `StaticText("• ")` per node in Chromium's accessibility tree. The
+  optional theme is a docs sidebar: a padded row per node that fills on hover, a tint and a weight
+  on `aria-current`, a hairline rail down an open branch, and the same masked chevron
+  `<menu-elemental>` draws — on every node, empty on a leaf, so labels stay level. Eight custom
+  properties, `--tree-view-elemental-` prefixed: `indent`, `gap`, `radius`, `marker-color`,
+  `node-color`, `hover`, `rail`, `current-color`. Every colour is mixed out of `currentcolor`, so
+  set `current-color` to your accent and the rest follows the page's palette on its own.
+  `aria-current="false"` is read as what it means — *not* the current page — in both the script
+  and the theme, so a router writing it on every inactive link neither opens every branch nor
+  tints the whole sidebar. Teardown puts back only what upgrade wrote: an `id` the page put on a
+  branch list survives, where before every `id` in the tree came off with the roles.
 
 - **`<sortable-table-elemental>` — a table whose column headers sort it.** No APG pattern, because
   `<table>` already is one; this adds only what the
@@ -83,13 +93,26 @@ may already be targeting**, since neither shows up in a function signature.
   about it, which is not what
   [WCAG 2.2 4.1.3](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html) covers. CSS:
   the element is `display: contents`, and its stylesheet puts the header button's font, colour,
-  background, border and alignment back to the cell's so the upgrade is invisible. Both
+  background, border and alignment back to the cell's so the upgrade is invisible — and with them
+  the six the UA also resets on a form control and nobody remembers: `text-transform`,
+  `letter-spacing`, `word-spacing`, `line-height`, `text-indent`, `text-shadow`. Without those a
+  `<th>` styled `text-transform: uppercase`, which is what a design system does to a header row,
+  came back sentence case and untracked the moment it became a button. Both
   stylesheets are scoped to the buttons it wrote — its own table, the last row of the `<thead>`,
   and not a header marked `data-sort="none"` — so a button of your own in a `<th scope="row">`
   keeps its look and gets no arrow. No spanning cells in the body: the column a header sorts by
   is that header's position in its row, so one `colspan` shifts every cell after it along and the
   column sorts by its neighbour's text, and a `rowspan` sorting tears apart. The element checks
   for neither, and says so on its page.
+
+  The optional theme has two opinions about the table itself and no more: a 2px rule under the
+  header row (`--sortable-table-elemental-rule`) and a tint on every second body row
+  (`--sortable-table-elemental-stripe`), both mixed out of `currentcolor` so they land in the
+  page's own palette. Both are what a *sortable* table needs rather than what a pretty one wants
+  — the rule separates the row you press from the rows you read, and the stripe is how an eye
+  keeps its place across a row once the order under it can change. The stripes are `nth-child`,
+  so they stay put and the rows travel through them. Still nothing about padding, fonts or cell
+  borders.
 
   It composes with the rest of the book: the
   [bulk actions example](https://stamat.github.io/book-of-elementals/examples/bulk-actions.html)

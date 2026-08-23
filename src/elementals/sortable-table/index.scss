@@ -26,9 +26,22 @@ sortable-table-elemental > table > thead > tr:last-of-type > th:not([data-sort="
   // padding: reaching into that would mean moving the page's own padding onto this button.
   display: block;
   inline-size: 100%;
+  margin: 0;
   padding: 0;
   font: inherit;
   color: inherit;
+
+  // The rest of what the UA hands a form control, put back one line each. `font` and `color`
+  // are the two everyone remembers; these six are the ones that make an uppercase, tracked
+  // header - which is what a design system does to a `<th>` - come back as sentence case with
+  // no tracking the moment it becomes a button. Measured in Chromium: a `<th>` computing
+  // `text-transform: uppercase` handed its button `none`.
+  letter-spacing: inherit;
+  word-spacing: inherit;
+  line-height: inherit;
+  text-transform: inherit;
+  text-indent: inherit;
+  text-shadow: inherit;
 
   // `inherit` and not `start`: a `<th>` is centred by default and a page that changed that
   // meant it for the header, which this now is.

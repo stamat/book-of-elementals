@@ -104,6 +104,8 @@ export function sortOrder(keys, descending, collator) {
  *
  * @cssprop {<color>} [--sortable-table-elemental-indicator-color=currentcolor] - Theme. The arrow on the sorted column.
  * @cssprop {<opacity>} [--sortable-table-elemental-hint-opacity=0.35] - Theme. How visible the arrow is on a column that is only being hovered or focused - the affordance, shown before the column is the sorted one.
+ * @cssprop {<color>} [--sortable-table-elemental-rule=currentcolor at 20%] - Theme. The 2px rule under the header row.
+ * @cssprop {<color>} [--sortable-table-elemental-stripe=currentcolor at 4%] - Theme. The tint on every second body row.
  *
  * @fires sortable-table-sort - The table has been re-sorted by a press on a header button. `detail.column` is the header's index in its row, `detail.key` the header's text, and `detail.direction` `ascending` or `descending`.
  */
