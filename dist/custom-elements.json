@@ -5461,16 +5461,38 @@
         },
         {
           "kind": "function",
-          "name": "alongTrack",
+          "name": "trackAxis",
           "parameters": [
+            {
+              "name": "writingMode"
+            },
+            {
+              "name": "rect"
+            },
+            {
+              "name": "box"
+            },
             {
               "name": "x"
             },
             {
-              "name": "left"
+              "name": "y"
+            }
+          ],
+          "description": "The axis a track runs on: which coordinate of a pointer is along it, where it starts,\nhow long it is, and how thick a thumb is across it.\n\nRead off `writing-mode`, because that is what the platform turns a range input on its\nside with - [MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_writing_modes/Vertical_controls)\n- and an attribute of this element's own beside it would be a second switch free to\ndisagree with the CSS actually drawing the control. `sideways-*` counts for the reason\n`vertical-*` does: it turns the inline axis down the page, and the inline axis is the\ntrack. Anything else, including the empty string a missing computed style answers with,\nis a track across the page.\n\nThe thumb is measured across the track and never along it, and the stylesheet sizes an\ninput to one thumb that way - so which side of the input's own box carries the number\nturns over with the axis.\n\nWhich end is the minimum is not decided here. That is `direction`, in both axes alike,\nand `alongTrack` and `thumbUnder` take it as the flag they already had."
+        },
+        {
+          "kind": "function",
+          "name": "alongTrack",
+          "parameters": [
+            {
+              "name": "coord"
             },
             {
-              "name": "width"
+              "name": "start"
+            },
+            {
+              "name": "size"
             },
             {
               "name": "thumb"
@@ -5479,7 +5501,7 @@
               "name": "rtl"
             }
           ],
-          "description": "Where a point on the control sits along the thumb's travel, as `0` to `1`.\n\nOn the scale's own axis, not the screen's: `0` is `min` in both writing directions, which\nis the same axis `--slider-elemental-start` and `--slider-elemental-end` are measured on\nand the same one `inset-inline-start` spends them on.\n\nThe travel is the box less one thumb, because a thumb's centre starts half a width in and\nstops half a width short - the same arithmetic the fill is placed with, and the reason a\nbare percentage of the width is off by half a thumb at both ends. A control with no room\nto travel answers `0`, for the reason `ratio` does: there is one place a thumb can be."
+          "description": "Where a point on the control sits along the thumb's travel, as `0` to `1`.\n\nOn the scale's own axis, not the screen's: `0` is `min` in every writing direction, which\nis the same axis `--slider-elemental-start` and `--slider-elemental-end` are measured on\nand the same one `inset-inline-start` spends them on.\n\nWhich axis that is on screen is `trackAxis`'s answer, not this one's - this is handed a\ncoordinate, an origin and a length, and a track down the page is the same arithmetic with\n`y`, `top` and `height` in them. `rtl` is the whole of the reversal in both: reading down\nthe page is a minimum at the top, and reading up it is a minimum at the bottom.\n\nThe travel is the box less one thumb, because a thumb's centre starts half a thumb in and\nstops half a thumb short - the same arithmetic the fill is placed with, and the reason a\nbare percentage of the box is off by half a thumb at both ends. A control with no room to\ntravel answers `0`, for the reason `ratio` does: there is one place a thumb can be."
         },
         {
           "kind": "function",
@@ -5518,13 +5540,13 @@
           "name": "thumbUnder",
           "parameters": [
             {
-              "name": "x"
+              "name": "coord"
             },
             {
-              "name": "left"
+              "name": "start"
             },
             {
-              "name": "width"
+              "name": "size"
             },
             {
               "name": "thumb"
@@ -5536,7 +5558,7 @@
               "name": "rtl"
             }
           ],
-          "description": "Which thumb the pointer is over, by index, or `-1` for the track beside or between them.\n\nA pointer within half a thumb of a thumb's centre is on it, because that is the thumb's\nown box - one `--slider-elemental-thumb-size` across, centred on where it sits. The first\nmatch wins, and with two thumbs piled on one value that is the low one: they carry the\nsame value, so there is nothing to choose between what either would read out.\n\n`ratios` are on the scale's axis and this is screen pixels, which is the whole of the\n`rtl` flip - the low thumb of a range runs to the right-hand end when the page does."
+          "description": "Which thumb the pointer is over, by index, or `-1` for the track beside or between them.\n\nA pointer within half a thumb of a thumb's centre is on it, because that is the thumb's\nown box - one `--slider-elemental-thumb-size` across, centred on where it sits. The first\nmatch wins, and with two thumbs piled on one value that is the low one: they carry the\nsame value, so there is nothing to choose between what either would read out.\n\n`ratios` are on the scale's axis and this is screen pixels, which is the whole of the\n`rtl` flip - the low thumb of a range runs to the far end when the control does. Which\nscreen axis those pixels are on is the caller's to resolve, the same way `alongTrack`\nhas it resolved for it."
         },
         {
           "kind": "function",
@@ -5563,14 +5585,14 @@
         },
         {
           "kind": "class",
-          "description": "One or two native range inputs sharing a track, with the fill position CSS cannot work\nout on its own. The prose above is the whole story; these tags are the same API in the\nform a machine can read - `custom-elements.json` is generated from them, and the docs\ntables, editor autocomplete and the live options panel all come out of that one file.\n\nCurated by omission: `--slider-elemental-start`, `--slider-elemental-end`,\n`--slider-elemental-at` and `data-stacked` are written by the element and are not tagged.\nThey are the state, not knobs to turn, and setting one by hand parks the fill or the\nbubble somewhere the thumbs are not.",
+          "description": "One or two native range inputs sharing a track, with the fill position CSS cannot work\nout on its own. The prose above is the whole story; these tags are the same API in the\nform a machine can read - `custom-elements.json` is generated from them, and the docs\ntables, editor autocomplete and the live options panel all come out of that one file.\n\nCurated by omission: `--slider-elemental-start`, `--slider-elemental-end`,\n`--slider-elemental-at`, `data-stacked` and the bubble's `data-vertical`/`data-reversed`\nare written by the element and are not tagged. They are the state, not knobs to turn, and\nsetting one by hand parks the fill or the bubble somewhere the thumbs are not. There is no\ntag for the axis either, because there is no attribute: `writing-mode` is the switch.",
           "name": "SliderElemental",
           "cssProperties": [
             {
               "type": {
                 "text": "<length>"
               },
-              "description": "Thumb width and height. This is also the height of the control, and what the fill is inset by so its ends meet the thumb centres.",
+              "description": "Thumb width and height. This is also the thickness of the control across the track, and what the fill is inset by so its ends meet the thumb centres. Two thumbs want `1.5rem` — that is WCAG 2.2's 24px target size, which stacked inputs have no clear space around them to pass on instead.",
               "name": "--slider-elemental-thumb-size",
               "default": "1rem"
             },
@@ -5642,7 +5664,7 @@
               "type": {
                 "text": "<length>"
               },
-              "description": "Between the thumb and the `tooltip` bubble above it.",
+              "description": "Between the thumb and the `tooltip` bubble — above the control when the track runs across the page, and to its right when it runs down it.",
               "name": "--slider-elemental-tooltip-gap",
               "default": "0.375rem"
             },
@@ -5715,6 +5737,12 @@
               "kind": "field",
               "name": "rtl",
               "description": "Whether the control runs right to left. Computed style rather than `:dir()`, which\nthrows on the browsers that do not know it instead of quietly not matching.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "writingMode",
+              "description": "The writing mode the control is laid out in, which is what says whether the track runs\nacross the page or down it. Read from this element and not from an input: the track and\nthe fill are drawn on this box in logical properties, so this is the writing mode they\nresolve against, and an input turned on its side by itself would be a thumb running one\nway over a track running the other.",
               "readonly": true
             },
             {
@@ -5795,9 +5823,12 @@
               "parameters": [
                 {
                   "name": "x"
+                },
+                {
+                  "name": "y"
                 }
               ],
-              "description": "Everything a bubble is drawn from, measured in one go: the scale, where each thumb sits\non it, and which one a pointer at `x` is over. `null` where there is nothing to measure."
+              "description": "Everything a bubble is drawn from, measured in one go: the axis the track is on, the\nscale, where each thumb sits on it, and which one a pointer at `x`, `y` is over. `null`\nwhere there is nothing to measure."
             },
             {
               "kind": "method",
@@ -5805,9 +5836,12 @@
               "parameters": [
                 {
                   "name": "x"
+                },
+                {
+                  "name": "y"
                 }
               ],
-              "description": "Draw the bubble for a pointer at `x`, in viewport coordinates, or hide it where the\nattribute did not ask for a bubble at that spot.\n\nA thumb reads out its input's own `value`, which the browser has already put on a step\nand written the way it writes numbers. The track is the only one with a value to work\nout, and it is worked out the way a press on the track is - same travel, same rounding -\nso the number previewed is the number a click there would produce.\n\nA drag in progress overrules the pointer: `dragging` is the thumb the press pinned this\nto, and it holds until the release. Without it the bubble answers where the pointer is,\nwhich during a drag is beside the thumb half the time."
+              "description": "Draw the bubble for a pointer at `x`, `y`, in viewport coordinates, or hide it where the\nattribute did not ask for a bubble at that spot.\n\nA thumb reads out its input's own `value`, which the browser has already put on a step\nand written the way it writes numbers. The track is the only one with a value to work\nout, and it is worked out the way a press on the track is - same travel, same rounding -\nso the number previewed is the number a click there would produce.\n\nA drag in progress overrules the pointer: `dragging` is the thumb the press pinned this\nto, and it holds until the release. Without it the bubble answers where the pointer is,\nwhich during a drag is beside the thumb half the time."
             },
             {
               "kind": "method",
@@ -5855,7 +5889,7 @@
               "type": {
                 "text": "string"
               },
-              "description": "A value bubble that follows the pointer. `thumb` over the thumb it is on, `track` for the value under it elsewhere, `thumb track` for both; a bare `tooltip` is `thumb`. Pointer only, and `aria-hidden` — the input announces its own value. Touch draws it for the length of a press, since a finger has no hover to rest in."
+              "description": "A value bubble that follows the pointer. Follows the track's axis too, so a slider turned on its side gets it beside the thumb rather than above it. `thumb` over the thumb it is on, `track` for the value under it elsewhere, `thumb track` for both; a bare `tooltip` is `thumb`. Pointer only, and `aria-hidden` — the input announces its own value. Touch draws it for the length of a press, since a finger has no hover to rest in."
             }
           ],
           "superclass": {
@@ -5896,6 +5930,14 @@
           "name": "nearerThumb",
           "declaration": {
             "name": "nearerThumb",
+            "module": "src/elementals/slider/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "trackAxis",
+          "declaration": {
+            "name": "trackAxis",
             "module": "src/elementals/slider/index.js"
           }
         },
@@ -7428,8 +7470,48 @@
           }
         },
         {
+          "kind": "function",
+          "name": "barBox",
+          "parameters": [
+            {
+              "name": "strip",
+              "description": "The tablist's rect.",
+              "type": {
+                "text": "DOMRect"
+              }
+            },
+            {
+              "name": "tab",
+              "description": "The selected tab's rect.",
+              "type": {
+                "text": "DOMRect"
+              }
+            },
+            {
+              "name": "vertical",
+              "description": "Whether the tablist runs down the page.",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "rtl",
+              "description": "Whether it is running right to left.",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "Where the sliding bar goes: how far along the strip the selected tab starts, and how much\nof the strip it takes.\n\nTwo rects in, two numbers out, because that is the whole of the geometry - the caller\nfinds the rects, and this stays something a test can pin without a layout. Logical rather\nthan physical: `start` is measured from the edge the strip *starts* at, which is the right\none in RTL, so the bar can be placed with `inset-inline-start` and the stylesheet needs no\nsecond copy of the sum. The block axis runs top to bottom either way, so a vertical\ntablist has one answer and not two.\n\nRect to rect, with no border taken off: the theme puts a border on the strip's block-end\nwhen it is horizontal and on its inline-end when it is vertical, and neither is on the\nedge being measured from. A page that borders the other edges moves the bar by that much.",
+          "return": {
+            "type": {
+              "text": "{start: number, size: number}"
+            }
+          }
+        },
+        {
           "kind": "class",
-          "description": "`<tabs-elemental>` custom element.\n\nA list of tabs and the panels they show, per the\n[APG Tabs pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), in both\norientations.\n\nThe markup it is written on is the markup the page would have had anyway: a list of\nin-page links, and the sections they point at. With no script that is exactly what it\nstill is - every panel on screen, every link jumping to one - which is why the panels\nare not authored `hidden`. The element is what turns the list into a tablist, and it is\nthe only thing that ever hides a panel.\n\nponytail: no `<dialog>`-style platform primitive to build on here, and no sliding\nindicator either. An indicator that follows the selected tab has to be measured every\ntime the strip reflows; a border on the selected tab needs no script at all and says\nthe same thing.\n\nLight DOM, no shadow root. Nothing is moved and nothing is wrapped - the panels stay\nwhere the markup put them, which is what lets a page lay them out with the element's\nown grid or with one of its own.",
+          "description": "`<tabs-elemental>` custom element.\n\nA list of tabs and the panels they show, per the\n[APG Tabs pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), in both\norientations.\n\nThe markup it is written on is the markup the page would have had anyway: a list of\nin-page links, and the sections they point at. With no script that is exactly what it\nstill is - every panel on screen, every link jumping to one - which is why the panels\nare not authored `hidden`. The element is what turns the list into a tablist, and it is\nthe only thing that ever hides a panel.\n\nThe selected tab is marked with a border, which needs no script and cannot disagree with\nwhere the tab is. `sliding` is the other answer, for a page that wants the mark to travel:\nthe element measures the selected tab against the strip and writes the two numbers a bar\ncan be drawn from, re-measuring whenever the strip or any tab in it changes size. That is\na `ResizeObserver` and two rects per change, which is why it is asked for rather than\ngiven - and why the strip is watched *with* every tab in it, since a label that grows\ninside a strip that stays the size it was moves every tab after it without the container\never resizing.\n\nLight DOM, no shadow root. Nothing is moved and nothing is wrapped - the panels stay\nwhere the markup put them, which is what lets a page lay them out with the element's\nown grid or with one of its own.",
           "name": "TabsElemental",
           "cssProperties": [
             {
@@ -7503,6 +7585,22 @@
               "description": "Text of a tab that is not selected.",
               "name": "--tabs-elemental-muted",
               "default": "color-mix(in srgb, currentcolor 65%, transparent)"
+            },
+            {
+              "type": {
+                "text": "<time>"
+              },
+              "description": "How long the `sliding` bar takes to travel. Nothing else in the theme moves.",
+              "name": "--tabs-elemental-duration",
+              "default": "250ms"
+            },
+            {
+              "type": {
+                "text": "ease | ease-in | ease-out | ease-in-out | linear"
+              },
+              "description": "How the `sliding` bar travels.",
+              "name": "--tabs-elemental-easing",
+              "default": "ease-in-out"
             }
           ],
           "slots": [
@@ -7556,6 +7654,11 @@
               "description": "Whether moving focus along the tablist also selects.\n\nAutomatic is the default because it is what the APG recommends wherever showing a\npanel is instant, which it is when the panel is already in the page. `manual` is for\nthe case that is not: a panel whose content arrives over the network, where arrowing\npast four tabs would start four requests nobody asked for."
             },
             {
+              "kind": "field",
+              "name": "sliding",
+              "description": "Whether the selection is marked with a bar that travels to the tab rather than with a\nborder on it. Opt-in because it is the one thing here that has to measure a layout."
+            },
+            {
               "kind": "method",
               "name": "release",
               "parameters": [
@@ -7569,6 +7672,21 @@
               "kind": "method",
               "name": "wire",
               "description": "Read the markup and put the pattern on it - the roles, the pairings, the ids either\nside of them - then push the current state through `apply`.\n\nPublic and idempotent, because the tabs are the page's to change: add one, remove one,\nswap the labels, and this is the one call that says so. Nothing observes the markup on\nthe element's behalf, which would be a `MutationObserver` running on every page that\nnever touches its tabs to save this one line on the pages that do."
+            },
+            {
+              "kind": "method",
+              "name": "observe",
+              "description": "Watch everything whose size can move the bar: the strip, and every tab in it.\n\nThe strip on its own is the observer every measured indicator ships with and the bug\nthat comes with it - a label that grows leaves the container exactly the size it was,\nso nothing fires and the bar stays under where the tab used to be. Watching the tabs\ncatches the webfont landing and the label translated too, which are the same event seen\nfrom the other end.\n\nIdempotent, and safe to call when nothing has asked for a bar: it is how `sliding` going\non and off is served, and how `wire()` picks up a tab the page has added."
+            },
+            {
+              "kind": "method",
+              "name": "unobserve",
+              "description": "Stop watching, and take the measurement back off - state nobody is keeping up to date\nis worse than none."
+            },
+            {
+              "kind": "method",
+              "name": "measure",
+              "description": "Measure the selected tab against the strip and write the two numbers onto this element.\n\n`data-tabs-sliding` is written with them and never before them: CSS cannot ask whether a\ncustom property was set, so the attribute is what tells a stylesheet the numbers are\nthere. `[sliding]` alone is what the page asked for, and a theme that took the border\nmark off on the strength of the asking would leave a tab set with nothing marking the\nselection every time the script did not arrive."
             },
             {
               "kind": "method",
@@ -7649,6 +7767,14 @@
               "default": "false"
             },
             {
+              "name": "sliding",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Mark the selection with a bar that travels to the tab rather than a border on it. Costs a `ResizeObserver`.",
+              "default": "false"
+            },
+            {
               "type": {
                 "text": "boolean"
               },
@@ -7679,6 +7805,14 @@
           "name": "selectedIndex",
           "declaration": {
             "name": "selectedIndex",
+            "module": "src/elementals/tabs/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "barBox",
+          "declaration": {
+            "name": "barBox",
             "module": "src/elementals/tabs/index.js"
           }
         },

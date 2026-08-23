@@ -44,6 +44,10 @@
     if (!(at > 0)) return 0;
     return Math.min(at, Math.max(length - 1, 0));
   }
+  function barBox(strip, tab, vertical, rtl) {
+    if (vertical) return { start: tab.top - strip.top, size: tab.height };
+    return { start: rtl ? strip.right - tab.right : tab.left - strip.left, size: tab.width };
+  }
   var FOCUSABLE = "a[href], button, input, select, textarea, summary, iframe, [tabindex], [contenteditable]";
   function fragment(hash) {
     const raw = hash.slice(1);
@@ -56,7 +60,7 @@
   var tabsCount = 0;
   var TabsElemental = class extends ElementBase {
     static get observedAttributes() {
-      return ["selected", "vertical"];
+      return ["selected", "vertical", "sliding"];
     }
     /** The tablist: the first list in the element. A nested `<tabs-elemental>` keeps its own. */
     get tablist() {
@@ -118,6 +122,16 @@
     set manual(value) {
       this.toggleAttribute("manual", !!value);
     }
+    /**
+     * Whether the selection is marked with a bar that travels to the tab rather than with a
+     * border on it. Opt-in because it is the one thing here that has to measure a layout.
+     */
+    get sliding() {
+      return this.hasAttribute("sliding");
+    }
+    set sliding(value) {
+      this.toggleAttribute("sliding", !!value);
+    }
     connectedCallback() {
       if (this.initialized) return;
       if (!this.tablist || !this.tabs.length) return;
@@ -137,6 +151,7 @@
       this.removeEventListener("click", this.onClick);
       this.removeEventListener("keydown", this.onKeyDown);
       window.removeEventListener("hashchange", this.onHashChange);
+      this.unobserve();
       const list = this.tablist;
       if (list) {
         list.removeAttribute("role");
@@ -200,7 +215,58 @@
       for (const panel of previous) {
         if (!this.wired.includes(panel)) this.release(panel);
       }
+      this.observe();
       this.apply();
+    }
+    /**
+     * Watch everything whose size can move the bar: the strip, and every tab in it.
+     *
+     * The strip on its own is the observer every measured indicator ships with and the bug
+     * that comes with it - a label that grows leaves the container exactly the size it was,
+     * so nothing fires and the bar stays under where the tab used to be. Watching the tabs
+     * catches the webfont landing and the label translated too, which are the same event seen
+     * from the other end.
+     *
+     * Idempotent, and safe to call when nothing has asked for a bar: it is how `sliding` going
+     * on and off is served, and how `wire()` picks up a tab the page has added.
+     */
+    observe() {
+      this.unobserve();
+      if (!this.sliding || typeof ResizeObserver !== "function") return;
+      this.observer = new ResizeObserver(() => this.measure());
+      const list = this.tablist;
+      if (list) this.observer.observe(list);
+      for (const tab of this.tabs) this.observer.observe(tab);
+      this.measure();
+    }
+    /** Stop watching, and take the measurement back off - state nobody is keeping up to date
+     * is worse than none. */
+    unobserve() {
+      if (this.observer) this.observer.disconnect();
+      this.observer = null;
+      this.removeAttribute("data-tabs-sliding");
+      this.style.removeProperty("--tabs-elemental-tab-start");
+      this.style.removeProperty("--tabs-elemental-tab-size");
+    }
+    /**
+     * Measure the selected tab against the strip and write the two numbers onto this element.
+     *
+     * `data-tabs-sliding` is written with them and never before them: CSS cannot ask whether a
+     * custom property was set, so the attribute is what tells a stylesheet the numbers are
+     * there. `[sliding]` alone is what the page asked for, and a theme that took the border
+     * mark off on the strength of the asking would leave a tab set with nothing marking the
+     * selection every time the script did not arrive.
+     */
+    measure() {
+      if (!this.observer) return;
+      const list = this.tablist;
+      const tab = this.tabs[this.selected];
+      if (!list || !tab) return;
+      const rtl = getComputedStyle(list).direction === "rtl";
+      const box = barBox(list.getBoundingClientRect(), tab.getBoundingClientRect(), this.vertical, rtl);
+      this.style.setProperty("--tabs-elemental-tab-start", box.start + "px");
+      this.style.setProperty("--tabs-elemental-tab-size", box.size + "px");
+      this.setAttribute("data-tabs-sliding", "");
     }
     /**
      * Push the selection onto the tabs and their panels.
@@ -226,6 +292,7 @@
         if (panel.querySelector(FOCUSABLE)) panel.removeAttribute("tabindex");
         else panel.tabIndex = 0;
       });
+      this.measure();
     }
     /**
      * `selected` is the single source of truth, so a click, an arrow key, a script and a
@@ -235,6 +302,10 @@
       if (!this.initialized || previous === current) return;
       if (name === "vertical") {
         this.wire();
+        return;
+      }
+      if (name === "sliding") {
+        this.observe();
         return;
       }
       this.apply();

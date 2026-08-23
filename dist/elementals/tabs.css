@@ -25,6 +25,10 @@ tabs-elemental > [data-tabs-panel] {
   grid-area: 2/1;
 }
 
+tabs-elemental[data-tabs-sliding] > [data-tabs-list] {
+  position: relative;
+}
+
 tabs-elemental[vertical] {
   grid-template-columns: auto minmax(0, 1fr);
 }

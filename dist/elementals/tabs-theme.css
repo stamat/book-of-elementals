@@ -9,6 +9,8 @@ tabs-elemental {
   --tabs-elemental-border: color-mix(in srgb, currentcolor 20%, transparent);
   --tabs-elemental-hover: color-mix(in srgb, currentcolor 10%, transparent);
   --tabs-elemental-muted: color-mix(in srgb, currentcolor 65%, transparent);
+  --tabs-elemental-duration: 250ms;
+  --tabs-elemental-easing: ease-in-out;
 }
 
 tabs-elemental > [data-tabs-list] {
@@ -132,5 +134,51 @@ tabs-elemental[vertical] > [data-tabs-list] > li > [aria-selected=true] {
 tabs-elemental[vertical] > [data-tabs-panel] {
   padding-block-start: 0;
   padding-inline-start: var(--tabs-elemental-panel-inset);
+}
+
+tabs-elemental[data-tabs-sliding] > [data-tabs-list]::after {
+  transition: translate var(--tabs-elemental-duration) var(--tabs-elemental-easing), inline-size var(--tabs-elemental-duration) var(--tabs-elemental-easing), block-size var(--tabs-elemental-duration) var(--tabs-elemental-easing);
+  content: "";
+  position: absolute;
+  inset-block-end: calc(-1 * var(--tabs-elemental-indicator-size));
+  inset-inline-start: 0;
+  inline-size: var(--tabs-elemental-tab-size);
+  block-size: var(--tabs-elemental-indicator-size);
+  background: var(--tabs-elemental-indicator);
+  translate: var(--tabs-elemental-tab-start);
+}
+
+tabs-elemental[data-tabs-sliding] > [data-tabs-list] > li > [aria-selected=true] {
+  border-block-end-color: transparent;
+}
+
+tabs-elemental[data-tabs-sliding]:not([vertical]):dir(rtl) > [data-tabs-list]::after {
+  translate: calc(-1 * var(--tabs-elemental-tab-start));
+}
+
+tabs-elemental[vertical][data-tabs-sliding] > [data-tabs-list]::after {
+  inset-block: 0 auto;
+  inset-inline: auto calc(-1 * var(--tabs-elemental-indicator-size));
+  inline-size: var(--tabs-elemental-indicator-size);
+  block-size: var(--tabs-elemental-tab-size);
+  translate: 0 var(--tabs-elemental-tab-start);
+}
+
+tabs-elemental[vertical][data-tabs-sliding] > [data-tabs-list] > li > [aria-selected=true] {
+  border-inline-end-color: transparent;
+}
+
+@media (forced-colors: active) {
+  tabs-elemental[data-tabs-sliding] > [data-tabs-list] > li > [aria-selected=true] {
+    border-block-end-color: Highlight;
+  }
+  tabs-elemental[vertical][data-tabs-sliding] > [data-tabs-list] > li > [aria-selected=true] {
+    border-inline-end-color: Highlight;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  tabs-elemental[data-tabs-sliding] > [data-tabs-list]::after {
+    transition: none;
+  }
 }
 /*# sourceMappingURL=tabs-theme.css.map */
