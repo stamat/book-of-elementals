@@ -2159,7 +2159,7 @@
   var regionCount = 0;
   var DisclosureElemental = class extends ElementBase {
     static get observedAttributes() {
-      return ["open", "media"];
+      return ["open", "open-when", "media"];
     }
     /** The `<button>` that toggles the region. Direct child, so a button inside the
      * region - or inside a nested disclosure - is not mistaken for the trigger. */
@@ -2253,7 +2253,7 @@
      * before. Both halves matter: the attribute can be rewritten at runtime. */
     watchMedia() {
       if (this.query) this.query.removeEventListener("change", this.onMediaChange);
-      const media = this.getAttribute("media");
+      const media = this.getAttribute("open-when") ?? this.getAttribute("media");
       this.query = media && window.matchMedia ? window.matchMedia(media) : null;
       if (this.query) this.query.addEventListener("change", this.onMediaChange);
     }
@@ -2298,7 +2298,7 @@
      */
     attributeChangedCallback(name, previous, current) {
       if (!this.initialized || previous === current) return;
-      if (name === "media") {
+      if (name === "open-when" || name === "media") {
         this.watchMedia();
         this.onMediaChange();
         return;
@@ -2729,7 +2729,7 @@
   }
   var MenuElemental = class extends ElementBase {
     static get observedAttributes() {
-      return ["open", "media"];
+      return ["open", "flyout-when", "media"];
     }
     /**
      * Whether a mouse opens the menu by pointing at it rather than by clicking.
@@ -2875,7 +2875,7 @@
     // ---- wiring ----
     watchMedia() {
       if (this.query) this.query.removeEventListener("change", this.onMediaChange);
-      const media = this.getAttribute("media");
+      const media = this.getAttribute("flyout-when") ?? this.getAttribute("media");
       this.query = media && window.matchMedia ? window.matchMedia(media) : null;
       if (this.query) this.query.addEventListener("change", this.onMediaChange);
     }
@@ -3005,7 +3005,7 @@
      */
     attributeChangedCallback(name, previous, current) {
       if (!this.initialized || previous === current) return;
-      if (name === "media") {
+      if (name === "flyout-when" || name === "media") {
         this.watchMedia();
         this.onMediaChange();
         return;
@@ -3551,7 +3551,7 @@
   var navbarCount = 0;
   var NavbarElemental = class extends ElementBase {
     static get observedAttributes() {
-      return ["media", "min-bar-items", "open"];
+      return ["bar-when", "media", "min-bar-items", "open"];
     }
     /**
      * The row: the first list in the element that no other custom element between them owns. A
@@ -3815,7 +3815,7 @@
     // ---- wiring ----
     watchMedia() {
       if (this.query) this.query.removeEventListener("change", this.onMediaChange);
-      const media = this.getAttribute("media");
+      const media = this.getAttribute("bar-when") ?? this.getAttribute("media");
       this.query = media && window.matchMedia ? window.matchMedia(media) : null;
       if (this.query) this.query.addEventListener("change", this.onMediaChange);
     }
@@ -3938,7 +3938,7 @@
     }
     attributeChangedCallback(name, previous, current) {
       if (!this.initialized || previous === current) return;
-      if (name === "media") {
+      if (name === "bar-when" || name === "media") {
         this.watchMedia();
         this.apply();
         return;
@@ -5245,11 +5245,6 @@
     const ratio2 = clamp(along / track, 0, 1);
     return (!vertical && rtl ? 1 - ratio2 : ratio2) * 100;
   }
-  var BREAKPOINT = /^\d*\.?\d+(px|rem|em|ch)$/i;
-  function stackQuery(value) {
-    const length = typeof value === "string" ? value.trim() : "";
-    return BREAKPOINT.test(length) ? `(width < ${length})` : null;
-  }
   var SplitterElemental = class extends ElementBase {
     constructor() {
       super(...arguments);
@@ -5262,7 +5257,7 @@
       /** The pointer id of the drag in progress, `null` when there is none. Held so a second
        * finger arriving mid-drag is ignored rather than fighting the first. */
       __publicField(this, "pointerId", null);
-      /** The `vertical-below` breakpoint being watched, `null` when there is none. */
+      /** The `vertical-when` query being watched, `null` when there is none. */
       __publicField(this, "mql", null);
       /** Whether the `vertical` attribute on this element is one this element wrote. It is what
        * keeps a page that stacked its own panes stacked: once the breakpoint has flipped the
@@ -5276,7 +5271,7 @@
       __publicField(this, "dragMoved", false);
     }
     static get observedAttributes() {
-      return ["position", "min", "max", "vertical", "vertical-below", "label-text"];
+      return ["position", "min", "max", "vertical", "vertical-when", "label-text"];
     }
     /** The panes: every element child that is not the handle. The handle is written between
      * them, so it has to come out of the count that decides where it goes. */
@@ -5318,17 +5313,13 @@
     set vertical(value) {
       this.toggleAttribute("vertical", !!value);
     }
-    /** The width below which the panes stack themselves, as it was written. `null` where there
-     * is none, and also where what was written is not a length - the query it would have built
-     * is the thing that was refused, and this says so rather than reporting a breakpoint that
-     * nothing is watching. */
-    get verticalBelow() {
-      const raw = this.getAttribute("vertical-below");
-      return stackQuery(raw) === null ? null : raw.trim();
+    /** The media query that stacks the panes, as it was written. `null` where there is none. */
+    get verticalWhen() {
+      return this.getAttribute("vertical-when");
     }
-    set verticalBelow(value) {
-      if (value === null) this.removeAttribute("vertical-below");
-      else this.setAttribute("vertical-below", value);
+    set verticalWhen(value) {
+      if (value === null) this.removeAttribute("vertical-when");
+      else this.setAttribute("vertical-when", value);
     }
     /** The handle's accessible name. */
     get labelText() {
@@ -5367,25 +5358,25 @@
     attributeChangedCallback(name, previous, value) {
       if (!this.initialized || previous === value) return;
       if (name === "label-text") this.handle.setAttribute("aria-label", this.labelText);
-      else if (name === "vertical-below") this.watchViewport();
+      else if (name === "vertical-when") this.watchViewport();
       else this.render();
     }
     /**
-     * Watch the `vertical-below` breakpoint, and stack the panes now if the viewport is already
-     * under it.
+     * Watch the `vertical-when` query, and stack the panes now if it already matches.
      *
-     * The breakpoint is read through `matchMedia` rather than measured: the browser is already
+     * The query is watched through `matchMedia` rather than measured: the browser is already
      * evaluating media queries and will say when this one changes, where a `ResizeObserver` on
      * the element would answer a different question - its own box, which a stacking splitter
-     * changes, and which is not the viewport the author wrote a breakpoint about.
+     * changes, and which is not the viewport the author wrote a query about. A query the browser
+     * cannot parse is one that never matches, which is a splitter left exactly as it was written.
      *
-     * Safe to call again; a `vertical-below` that changed is the old query dropped and a new one
+     * Safe to call again; a `vertical-when` that changed is the old query dropped and a new one
      * taken out.
      */
     watchViewport() {
       this.unwatchViewport();
-      const query = stackQuery(this.getAttribute("vertical-below"));
-      if (query === null) return;
+      const query = this.getAttribute("vertical-when");
+      if (!query) return;
       this.mql = window.matchMedia(query);
       this.mql.addEventListener("change", this.onViewportChange);
       this.onViewportChange(this.mql);
@@ -6844,6 +6835,8 @@
 
   // src/elementals/tree-view/index.js
   var groupCount2 = 0;
+  var GROUP_ID = "tree-view-elemental-group-";
+  var CURRENT = '[aria-current]:not([aria-current="false"])';
   function treeMove(nodes, current, key) {
     const node = nodes[current];
     if (!node) return null;
@@ -6880,8 +6873,12 @@
       __publicField(this, "buffer", "");
       __publicField(this, "bufferTimer", 0);
     }
-    /** The list that becomes the tree. Direct child, so a tree inside a node of this one keeps its
-     * own. */
+    /** The list that becomes the tree: a direct child, so a stray `<ul>` deeper in the markup is
+     * not mistaken for the root of one.
+     *
+     * A `<tree-view-elemental>` nested inside a node of this one is not supported - `build` and
+     * `allNodes` sweep the whole subtree, so the outer tree would claim the inner one's items. A
+     * tree of trees is a tree, written as one list. */
     get list() {
       return this.querySelector(":scope > ul, :scope > ol");
     }
@@ -6922,7 +6919,7 @@
       for (const list of this.querySelectorAll("ul, ol")) {
         list.removeAttribute("role");
         list.removeAttribute("hidden");
-        list.removeAttribute("id");
+        if (list.id.startsWith(GROUP_ID)) list.removeAttribute("id");
       }
       for (const item of this.querySelectorAll("li")) item.removeAttribute("role");
       for (const node of this.allNodes) {
@@ -6952,20 +6949,20 @@
         node.setAttribute("tabindex", "-1");
         if (!branch) continue;
         branch.setAttribute("role", "group");
-        if (!branch.id) branch.id = "tree-view-elemental-group-" + ++groupCount2;
+        if (!branch.id) branch.id = GROUP_ID + ++groupCount2;
         node.setAttribute("aria-owns", branch.id);
-        const open = item.hasAttribute("data-tree-open") || !!item.querySelector("[aria-current]");
+        const open = item.hasAttribute("data-tree-open") || !!item.querySelector(CURRENT);
         this.setOpen(node, open, false);
       }
-      const current = this.allNodes.find((node) => node.hasAttribute("aria-current"));
+      const current = this.allNodes.find((node) => node.matches(CURRENT));
       const first = current || this.nodes[0];
       if (first) first.setAttribute("tabindex", "0");
     }
     /** Open or close one branch. `announce` is false while building, where a page listening for
      * every branch the markup asked for is a page told about state it wrote itself. */
     setOpen(node, open, announce = true) {
-      const branch = node.getAttribute("aria-owns") && document.getElementById(node.getAttribute("aria-owns"));
-      if (!branch) return;
+      const branch = node.parentElement && node.parentElement.querySelector(":scope > ul, :scope > ol");
+      if (!branch || !node.hasAttribute("aria-owns")) return;
       node.setAttribute("aria-expanded", open ? "true" : "false");
       branch.toggleAttribute("hidden", !open);
       if (announce) {
@@ -7011,7 +7008,6 @@
         return;
       }
       if (event.key.length !== 1 || event.key === " ") return;
-      event.preventDefault();
       this.buffer += event.key;
       if (this.bufferTimer) window.clearTimeout(this.bufferTimer);
       this.bufferTimer = window.setTimeout(() => {
@@ -7019,7 +7015,9 @@
       }, 500);
       const labels = nodes.map((each) => (each.textContent || "").trim());
       const to = typeAheadIndex(labels, current, this.buffer);
-      if (to !== null) this.focusNode(nodes[to]);
+      if (to === null) return;
+      event.preventDefault();
+      this.focusNode(nodes[to]);
     }
     /** One node, as `treeMove` reads it: how deep it sits, and whether it is a branch and open.
      * The depth is counted off the DOM rather than written into `aria-level`, so the nesting stays

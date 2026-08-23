@@ -8,8 +8,8 @@
     "updated": "2026-08-17T21:17:11.392Z"
   },
   "docs/elementals/carousel.md": {
-    "hash": "123bdeffa36b731cfb83a4d48e9ebea9fb5f7558",
-    "updated": "2026-08-23T15:27:40.493Z"
+    "hash": "4df01a44f963753d2cbfc5f7bc8837070da286a1",
+    "updated": "2026-08-23T16:59:52.453Z"
   },
   "docs/elementals/checkbox-group.md": {
     "hash": "565004aa51680af84ec5beb46770b1c80afe5f2f",
@@ -24,32 +24,32 @@
     "updated": "2026-08-17T22:49:20.364Z"
   },
   "docs/elementals/disclosure.md": {
-    "hash": "2470d32172d6ea4111fc2b04b300ba6d7c749004",
-    "updated": "2026-08-23T15:27:40.493Z"
+    "hash": "a1ad4b0d4a5b580c50becdda56b3651449dad5dc",
+    "updated": "2026-08-23T17:11:38.122Z"
   },
   "docs/elementals/field.md": {
     "hash": "ce8d02951a9bcac4584873cf003e424db3a6dc05",
     "updated": "2026-08-17T21:17:28.365Z"
   },
   "docs/elementals/index.md": {
-    "hash": "d1f11350ee0f3f3ac6edab1a68abcd2a3a6020d2",
-    "updated": "2026-08-23T14:59:51.725Z"
+    "hash": "2643a82b493c163e4596c5069f8dc9b18ac1c619",
+    "updated": "2026-08-23T16:51:33.053Z"
   },
   "docs/elementals/marquee.md": {
     "hash": "5ac64586fa56b17f2a01ede37781b0f3996b0f21",
     "updated": "2026-08-17T21:17:32.629Z"
   },
   "docs/elementals/menu.md": {
-    "hash": "02f91df2f0e6433abcc7b514baaabd349dc35973",
-    "updated": "2026-08-17T21:17:34.758Z"
+    "hash": "4d2688937285e8fff735d17617d7f505658bc210",
+    "updated": "2026-08-23T17:11:45.762Z"
   },
   "docs/elementals/modal.md": {
-    "hash": "c45e258f6805373f27ad97ad6bf38d0b01b2946f",
-    "updated": "2026-08-23T15:27:40.492Z"
+    "hash": "66b0fd4a3eadaa2474657e7668c9a52c62e40f93",
+    "updated": "2026-08-23T16:59:52.453Z"
   },
   "docs/elementals/navbar.md": {
-    "hash": "17206d6416c36831426f5856633d13c34e69b597",
-    "updated": "2026-08-17T21:17:39.499Z"
+    "hash": "d996e849767c054964c947472b947d65473ff603",
+    "updated": "2026-08-23T17:11:50.143Z"
   },
   "docs/elementals/password.md": {
     "hash": "4371ecbfb449b38694dfe3456a69a790e59f318f",
@@ -68,16 +68,16 @@
     "updated": "2026-08-17T21:17:49.590Z"
   },
   "docs/elementals/slider.md": {
-    "hash": "978b2d5219ce37c5908c0d5923fbe6aa78e824df",
-    "updated": "2026-08-23T15:29:29.854Z"
+    "hash": "4e00b7228de7ed3a5a474b8b933c72cb29890a8c",
+    "updated": "2026-08-23T15:44:58.781Z"
   },
   "docs/elementals/sortable-table.md": {
     "hash": "d5cd1cfdf0a662d285a32bdb7f2eb9cd0cf67ad2",
     "updated": "2026-08-23T16:47:04.128Z"
   },
   "docs/elementals/splitter.md": {
-    "hash": "fdd24bb06a45a3fe4dcb097af1f796259647f824",
-    "updated": "2026-08-23T15:31:36.580Z"
+    "hash": "9cdb8ec65297ab331a2dd72e7717be61f40a8fb4",
+    "updated": "2026-08-23T17:10:18.266Z"
   },
   "docs/elementals/suggest.md": {
     "hash": "fbb5aaceb888f1ac22a5a8913f0b1462829760ac",
@@ -88,8 +88,8 @@
     "updated": "2026-08-17T22:49:49.521Z"
   },
   "docs/elementals/tabs.md": {
-    "hash": "f5560d33afdaa52dcf4cd6d92fe70c8159966c1f",
-    "updated": "2026-08-17T21:25:06.115Z"
+    "hash": "16a9087aaf275095347d31d31169c180561ccdf8",
+    "updated": "2026-08-23T17:09:27.521Z"
   },
   "docs/elementals/tilt.md": {
     "hash": "7b8183d0bb292061dddab4ab1c6a81c0b1f9b075",
@@ -104,8 +104,12 @@
     "updated": "2026-08-23T13:03:58.303Z"
   },
   "docs/elementals/tree-view.md": {
-    "hash": "de606900f5415bd2eabc52c3d9df79ef909b5c1d",
-    "updated": "2026-08-23T13:23:42.697Z"
+    "hash": "675ad29631b96b3fc1bbbab8a35fd9bff7bccffc",
+    "updated": "2026-08-23T17:03:16.275Z"
+  },
+  "docs/examples/before-and-after.md": {
+    "hash": "908a03440c5407cf04dfbe0a6e1178a8a94969fa",
+    "updated": "2026-08-23T17:10:26.124Z"
   },
   "docs/examples/bulk-actions.md": {
     "hash": "ceb29849c633229e7b3950c54244888c74379a89",
@@ -116,28 +120,28 @@
     "updated": "2026-08-06T15:28:10.367Z"
   },
   "docs/examples/lightbox.md": {
-    "hash": "7acd7a9b5e8ddb8e256596427cc8b560ddc00fd0",
-    "updated": "2026-08-23T15:27:40.492Z"
+    "hash": "36d4991b299d80ca1610521c41b63b884f1398e2",
+    "updated": "2026-08-23T16:59:52.451Z"
   },
   "docs/examples/markdown-editor.md": {
     "hash": "68a22c1f97724b1eebb2f67ed1380113058c18b4",
     "updated": "2026-08-17T21:18:15.363Z"
   },
   "docs/examples/media-player.md": {
-    "hash": "ab0583218546b151a306b52404cffce6ede916c0",
-    "updated": "2026-08-23T15:37:01.547Z"
+    "hash": "f2dc8fc24000a774f26515d2517c22ce3e68585c",
+    "updated": "2026-08-23T16:59:52.452Z"
   },
   "docs/examples/sidebar-drawer.md": {
-    "hash": "deb47d89b912e4de813c64a1afe7110c13d99ec7",
-    "updated": "2026-08-17T21:18:17.378Z"
+    "hash": "7ccdc888710e551d58082c64abee028a668e74c8",
+    "updated": "2026-08-23T17:08:54.241Z"
   },
   "docs/examples/site-navigation.md": {
-    "hash": "6c9d407b452220ab7bb655f9f6067b3afa1e6e0d",
-    "updated": "2026-08-17T21:18:19.596Z"
+    "hash": "b2110161b4815a1c7d05005c8173059f6edfb4aa",
+    "updated": "2026-08-23T17:08:54.242Z"
   },
   "docs/examples/video-gallery.md": {
-    "hash": "8812e03d17dd19deb95700a187f7277e5bfb5c22",
-    "updated": "2026-08-18T11:33:29.537Z"
+    "hash": "f4c24b8d0951efd50047336f936cb36430914a7a",
+    "updated": "2026-08-23T16:59:52.451Z"
   },
   "docs/index.md": {
     "hash": "e8b2116aff38ed1ab3e8205ceafa536b51855cd7",
