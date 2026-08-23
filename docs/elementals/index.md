@@ -69,10 +69,12 @@ install to absorb them.
 | [`<compare-images-slider>`](https://github.com/stamat/compare-images-slider) | A before/after reveal: two layers, one clipped over the other, and a handle between them |
 | [`<code-preview>`](https://github.com/stamat/code-preview-element) | A code block that renders itself in an isolated iframe. It is what builds the live previews on these pages |
 
-**`<media-player>` is worth a look even if you never want a player**, because it is
-the only worked example of these elements composing into something bigger: its
+**`<media-player>` is worth a look even if you never want a player**, because its
 control bar is a `<toolbar-elemental>` with a `<slider-elemental>` scrubber inside
-it, wired up from the markup.
+it — these elements composing into something bigger. The
+[media player example](../examples/media-player.html) builds that skeleton by hand
+so you can see what the composition costs; `<media-player>` is what it looks like
+finished.
 
 **`<compare-images-slider>` is worth telling apart from
 [`<splitter-elemental>`](splitter.html)**, because both put `role="separator"` on a

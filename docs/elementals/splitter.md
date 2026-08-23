@@ -251,6 +251,22 @@ The focus ring is left to the browser. It is drawn round the whole handle, which
 clearer target than the line inside it, and a ring drawn here would be one more thing to keep in
 step with your page's own focus styles.
 
+## Not the compare slider
+
+[`<compare-images-slider>`](https://github.com/stamat/compare-images-slider) wears the same
+`role="separator"` on the same kind of handle, and does the opposite thing with it. It is a
+separate package, and worth knowing about before you reach for the wrong one:
+
+| | `<splitter-elemental>` | `<compare-images-slider>` |
+| --- | --- | --- |
+| What moves | both panes: one gets the width the other gives up | nothing. Both layers stay full size |
+| How | three grid tracks, resized | a `clip-path` on the layer in front |
+| What it is for | a sidebar, an editor beside its preview | before and after — a retouch, a renovation, a map at two dates |
+| Where the content is | side by side, and both readable at once | stacked, and you reveal one by hiding the other |
+
+The tell is whether anything changes size. If the two things are the *same* thing in two states,
+you want the compare slider. If they are two different things sharing a width, you want this.
+
 ## What it will not do
 
 Two panes, not *n*: three panes is two splitters, and a splitter that shared its neighbour's

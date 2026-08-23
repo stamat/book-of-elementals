@@ -1316,8 +1316,8 @@ and this one does not break anyone's install to absorb them:
 - [**`<media-player>`**](https://github.com/stamat/media-player) — a player over the `<audio>`
   or `<video>` you already wrote, where *you* write the controls. Worth a look even if you never
   want a player: its control bar is a `<toolbar-elemental>` with a `<slider-elemental>` scrubber
-  inside it, which makes it the one worked example of these elements composing into something
-  bigger. `npm i media-player-element`
+  inside it. The docs' [media player example](https://stamat.github.io/book-of-elementals/examples/media-player.html)
+  builds that skeleton by hand; this is it finished. `npm i media-player-element`
 - [**`<compare-images-slider>`**](https://github.com/stamat/compare-images-slider) — a
   before/after reveal. Not [`<splitter-elemental>`](#splitter-elemental), which wears the same
   `role="separator"` and does the opposite thing with it.

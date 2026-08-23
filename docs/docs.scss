@@ -863,3 +863,86 @@ switch-elemental:not([checked]) + .demo-state .on {
     padding-inline-end: 0;
   }
 }
+
+// Demo-only: the media player example — a control bar over an `<audio>`. The elements do the
+// toolbar and the two track fills; what is left is a row, two icons, and the swap between the
+// browser's player and this one.
+.demo-media {
+  margin: 0 0 1.5rem;
+
+  // Held, not hidden. The `<audio controls>` is what a reader with no script gets, and the
+  // script takes it away by setting `controls = false` — so this element goes from a player to
+  // a zero-height box on its own, and nothing here has to guess which state it is in.
+  > .demo-media-audio {
+    display: block;
+    inline-size: 100%;
+  }
+}
+
+.demo-media-bar {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid color-mix(in srgb, CanvasText 20%, transparent);
+  border-radius: 0.5rem;
+
+  // The scrubber takes what the fixed parts leave; the volume gets a fixed share, so the bar
+  // does not re-lay-out when the time readout goes from `0:00` to `10:00`.
+  > .demo-media-scrubber {
+    flex: 1 1 auto;
+    min-inline-size: 4rem;
+  }
+
+  > .demo-media-volume {
+    flex: 0 0 5rem;
+  }
+
+  > .demo-media-time {
+    margin: 0;
+
+    // Tabular figures, or the seconds ticking over shift every character beside them. The one
+    // thing on this bar that moves once a second and should not look like it.
+    font-size: 0.875rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  > button {
+    display: grid;
+    flex: none;
+    place-items: center;
+    padding: 0.35rem;
+    color: inherit;
+    cursor: pointer;
+    background: none;
+    border: 0;
+    border-radius: 0.35rem;
+
+    &:hover {
+      background: color-mix(in srgb, CanvasText 12%, transparent);
+    }
+
+    > svg {
+      display: block;
+      inline-size: 1.25rem;
+      block-size: 1.25rem;
+      fill: currentcolor;
+    }
+  }
+}
+
+// The icon swap is one attribute and two rules. The glue toggles `data-playing` on the figure
+// and touches no icon, which is what keeps twenty lines of JavaScript about the media rather
+// than about the picture on a button.
+.demo-media:not([data-playing]) .demo-media-icon-pause,
+.demo-media[data-playing] .demo-media-icon-play {
+  display: none;
+}
+
+// Same shape for the mute button: `aria-pressed` is already the state, so the crossed-out
+// speaker is a selector on it rather than a second thing to keep in step.
+.demo-media-mute[aria-pressed="false"] .demo-media-icon-silent,
+.demo-media-mute[aria-pressed="true"] .demo-media-icon-sound {
+  display: none;
+}
