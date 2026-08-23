@@ -15,6 +15,21 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`<accordion-elemental>`: an open panel no longer jumps on load.** The theme's inset sits on
+  the box the element wraps the panel body in, and that box is written by the script — a paint or
+  two after the panel is already on screen. Until then an open panel had no inset at all, so the
+  upgrade added 4px above the first line and reflowed the body into a box 2rem narrower: a
+  visible jump, and a layout shift on every page that ships a panel open.
+
+  **CSS:** `accordion/theme.scss` writes the same inset as margins on the panel body's own blocks
+  for as long as the wrapper is missing, which for a run of blocks is the same geometry to the
+  pixel. The rules stop matching the moment the wrapper exists, so nothing about the upgraded
+  state changes. The wrapper is excluded by class name rather than with `:not(:has())`, which does
+  not parse in WebKit or Chromium. A panel body of bare text with no block around it is still
+  uninset before upgrade — there is no box to put a margin on.
+
 ## [2.0.0] - 2026-08-23
 
 ### Added

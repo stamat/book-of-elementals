@@ -9,6 +9,14 @@
 
 @use "../../styles/svg";
 
+// The panel's inset, in one place because it is written twice: as padding on the
+// box the element wraps the body in, and as margins on the body itself for the
+// paint or two before that box exists. The two have to agree to the pixel or the
+// panel jumps on upgrade. Private to this file, so nothing else can collide.
+$-inset-block-start: 0.25rem;
+$-inset-inline: 1rem;
+$-inset-block-end: 1rem;
+
 accordion-elemental {
   --accordion-elemental-border-color: color-mix(in srgb, currentcolor 15%, transparent);
   --accordion-elemental-radius: 0.5rem;
@@ -65,7 +73,7 @@ accordion-elemental {
   // in one rule, covering whatever the body turns out to hold rather than only
   // the children a theme thought to name.
   > details > .accordion-elemental-content-wrapper > .accordion-elemental-content {
-    padding: 0.25rem 1rem 1rem;
+    padding: $-inset-block-start $-inset-inline $-inset-block-end;
 
     // The page's own rhythm on the outermost blocks would stack on top of that
     // padding - a paragraph's margin under the last line, the summary's padding
@@ -78,6 +86,27 @@ accordion-elemental {
     > :last-child {
       margin-block-end: 0;
     }
+  }
+
+  // That inset lands only once the element has wrapped the body, and the script
+  // runs a paint or two after the panel is already on screen - so an open panel
+  // visibly jumps as the padding arrives under it and the text reflows into the
+  // narrower box. Until the wrapper exists the same inset is written as margins
+  // on the body's own blocks, which for a run of blocks is the same geometry to
+  // the pixel, and the upgrade then changes nothing anybody can see. The wrapper
+  // is excluded by name rather than by a `:not(:has())` around it, which does not
+  // parse in WebKit or Chromium. A body of bare text with no block around it is
+  // the one thing this cannot inset: there is no box to put a margin on.
+  > details > :not(summary, .accordion-elemental-content-wrapper) {
+    margin-inline: $-inset-inline;
+
+    &:last-child {
+      margin-block-end: $-inset-block-end;
+    }
+  }
+
+  > details > summary + :not(.accordion-elemental-content-wrapper) {
+    margin-block-start: $-inset-block-start;
   }
 
   // Opt-in: one card instead of a stack. The rounding moves to the outer corners
