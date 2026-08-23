@@ -8,6 +8,15 @@
     customElements.define(tag, ctor);
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/slider/index.js
   function ratio(value, min, max) {
     if (!(max > min) || !Number.isFinite(value)) return 0;
@@ -415,6 +424,6 @@
       input.dispatchEvent(new Event("change", { bubbles: true }));
     }
   };
-  define("slider-elemental", SliderElemental);
+  define2("slider-elemental", SliderElemental);
 })();
 //# sourceMappingURL=slider.js.map

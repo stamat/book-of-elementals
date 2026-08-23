@@ -12,9 +12,13 @@
 //     <!-- demo tooltip style="--code-preview-height:170px" -->
 //
 // Run it after `script/build`, and re-run it after editing a sample — a pin describes the
-// sample it was measured from, and an edited sample makes its pin stale. The values are
-// this platform's font metrics; elsewhere they miss by a few pixels, which the frame
-// absorbs as internal scroll rather than shift.
+// sample it was measured from, and an edited sample makes its pin stale. **A `tab="options"`
+// pin also goes stale when the element's JSDoc changes**, which is the one nobody sees
+// coming: the options panel is generated from the manifest, so one new `@attr` or `@cssprop`
+// is one more row and about thirty pixels of shift, with nothing in the markdown edited to
+// suggest it. `--tooltip-elemental-viewport-margin` did exactly that and went two commits
+// unnoticed. The values are this platform's font metrics; elsewhere they miss by a few
+// pixels, which the frame absorbs as internal scroll rather than shift.
 //
 // Only previews more than 8px off their reservation are (re)pinned: below that the write
 // is churn on numbers that wobble with font rounding, and the shift is invisible.

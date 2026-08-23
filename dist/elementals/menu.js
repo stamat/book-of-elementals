@@ -61,6 +61,15 @@
     };
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/menu/index.js
   var TYPE_AHEAD_WINDOW = 500;
   var HOVER_CLOSE_DELAY = 250;
@@ -491,6 +500,6 @@
       this.closeAll();
     }
   };
-  define("menu-elemental", MenuElemental);
+  define2("menu-elemental", MenuElemental);
 })();
 //# sourceMappingURL=menu.js.map

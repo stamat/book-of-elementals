@@ -591,7 +591,7 @@ hexes they follow a theme switch with nothing to configure. Under `forced-colors
 and the rim are re-pointed at system keywords, which is the whole fix: everything else here is
 spent through those two properties.
 
-<!-- demo tooltip tab="options" style="--code-preview-options-height:491px" -->
+<!-- demo tooltip tab="options" style="--code-preview-options-height:522px" -->
 
 ```html
 <p>

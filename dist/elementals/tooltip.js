@@ -34,6 +34,15 @@
     };
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/tooltip/index.js
   function titleRole(trigger) {
     const named = trigger.text && trigger.text.trim() || trigger.ariaLabel || trigger.ariaLabelledby;
@@ -287,6 +296,6 @@
       );
     }
   };
-  define("tooltip-elemental", TooltipElemental);
+  define2("tooltip-elemental", TooltipElemental);
 })();
 //# sourceMappingURL=tooltip.js.map

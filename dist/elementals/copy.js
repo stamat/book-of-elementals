@@ -8,6 +8,15 @@
     customElements.define(tag, ctor);
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/copy/index.js
   function sourceText(target, value) {
     if (value != null) return value;
@@ -132,6 +141,6 @@
       );
     }
   };
-  define("copy-elemental", CopyElemental);
+  define2("copy-elemental", CopyElemental);
 })();
 //# sourceMappingURL=copy.js.map

@@ -14,6 +14,15 @@
     return to;
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/navbar/index.js
   function navbarMode(matches, overflowed, total, minimum = 1) {
     if (!matches) return "stack";
@@ -560,6 +569,6 @@
       if (trigger) trigger.setAttribute("aria-expanded", "true");
     }
   };
-  define("navbar-elemental", NavbarElemental);
+  define2("navbar-elemental", NavbarElemental);
 })();
 //# sourceMappingURL=navbar.js.map

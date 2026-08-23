@@ -39,6 +39,34 @@ may already be targeting**, since neither shows up in a function signature.
   Not to be confused with [compare-images-slider](https://github.com/stamat/compare-images-slider),
   which wears the same `role="separator"` and reveals rather than resizes.
 
+### Fixed
+
+- **Every element now upgrades when its bundle is included before its markup.** A custom
+  element is upgraded the moment its opening tag is parsed, which is before a single one of its
+  children exists — and every element in this book reads its children on upgrade. So a
+  `<script src="…accordion.min.js"></script>` in `<head>` without `defer` handed each element an
+  empty box, and it did nothing, silently and for good. Measured across the whole book against
+  each element's own docs sample: **twenty-one of twenty-three did nothing at all**; only
+  `<splitter-elemental>` and `<suggest-elemental>` were unaffected. The README has promised the
+  opposite since the first release — *"including a bundle registers its element and it upgrades
+  itself wherever it appears"*.
+
+  `define` in `src/core.js` now holds registration until `DOMContentLoaded` while the document
+  is still parsing, so nothing is ever upgraded mid-parse and every element meets its markup
+  complete. Timing: a `defer`ed or module script runs at `readyState: "interactive"` and is
+  unaffected; a script at the end of `<body>` upgrades one task later than it used to, after
+  markup the parser had already finished; a bundle in `<head>` goes from broken to working. A
+  page reading `customElements.get()` synchronously after including a bundle in `<head>` now
+  gets `undefined` — `customElements.whenDefined()` is the one that still answers. Not covered,
+  and deliberately: an element appended and then given children later, which is markup arriving
+  in an order nothing can see the end of.
+
+- **`<tooltip-elemental>`'s options panel reserved 31px too little.** The pin was measured
+  before `--tooltip-elemental-viewport-margin` was added, and one more custom property is one
+  more row — a docs-only layout shift, on the one preview that opens on its options tab.
+  `script/pin-heights` says so in its header now, since a JSDoc tag going stale is not the
+  sample edit the rule named.
+
 ## [1.0.0] - 2026-08-21
 
 ### Added

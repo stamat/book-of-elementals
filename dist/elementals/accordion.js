@@ -172,6 +172,15 @@
     }
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/accordion/index.js
   var OPTIONS = { exclusive: "boolean" };
   var WRAPPER_CLASS = "accordion-elemental-content-wrapper";
@@ -377,6 +386,6 @@
       }
     }
   };
-  define("accordion-elemental", AccordionElemental);
+  define2("accordion-elemental", AccordionElemental);
 })();
 //# sourceMappingURL=accordion.js.map

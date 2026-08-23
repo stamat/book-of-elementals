@@ -65,6 +65,15 @@
     }
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/combobox/index.js
   function flipsUp(field, panelHeight, viewportHeight) {
     const below = viewportHeight - field.bottom;
@@ -701,6 +710,6 @@
       this.sync();
     }
   };
-  define("combobox-elemental", ComboboxElemental);
+  define2("combobox-elemental", ComboboxElemental);
 })();
 //# sourceMappingURL=combobox.js.map

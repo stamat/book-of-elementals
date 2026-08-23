@@ -8,6 +8,15 @@
     customElements.define(tag, ctor);
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/segmented/index.js
   function checkedIndex(inputs) {
     for (let i = 0; i < inputs.length; i++) {
@@ -75,6 +84,6 @@
       this.setAttribute("data-index", index);
     }
   };
-  define("segmented-elemental", SegmentedElemental);
+  define2("segmented-elemental", SegmentedElemental);
 })();
 //# sourceMappingURL=segmented.js.map

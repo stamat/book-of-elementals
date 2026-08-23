@@ -8,6 +8,15 @@
     customElements.define(tag, ctor);
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/search/index.js
   var DELAY_MS = 200;
   var MIN_LENGTH = 1;
@@ -245,6 +254,6 @@
       this.timer = setTimeout(() => this.run(field.value.trim()), this.delay);
     }
   };
-  define("search-elemental", SearchElemental);
+  define2("search-elemental", SearchElemental);
 })();
 //# sourceMappingURL=search.js.map

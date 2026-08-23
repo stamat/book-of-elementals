@@ -12,6 +12,15 @@
     customElements.define(tag, ctor);
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/marquee/index.js
   var DEFAULT_SPEED = 50;
   var MAX_CLONES = 20;
@@ -239,6 +248,6 @@
       this.dispatchEvent(new CustomEvent("marquee-toggle", { bubbles: true, detail: { playing: false } }));
     }
   };
-  define("marquee-elemental", MarqueeElemental);
+  define2("marquee-elemental", MarqueeElemental);
 })();
 //# sourceMappingURL=marquee.js.map

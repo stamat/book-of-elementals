@@ -12,6 +12,15 @@
     customElements.define(tag, ctor);
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/tilt/index.js
   var DEFAULT_MAX = 10;
   function clamp01(value) {
@@ -241,6 +250,6 @@
       this.style.removeProperty("--tilt-elemental-y");
     }
   };
-  define("tilt-elemental", TiltElemental);
+  define2("tilt-elemental", TiltElemental);
 })();
 //# sourceMappingURL=tilt.js.map

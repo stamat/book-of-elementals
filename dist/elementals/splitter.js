@@ -12,6 +12,15 @@
     customElements.define(tag, ctor);
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/splitter/index.js
   var DEFAULT_POSITION = 50;
   var STEP = 1;
@@ -116,14 +125,7 @@
     }
     connectedCallback() {
       if (this.initialized) return;
-      if (this.panes.length < 2) {
-        if (document.readyState === "loading") {
-          document.addEventListener("DOMContentLoaded", () => {
-            if (this.isConnected) this.connectedCallback();
-          }, { once: true });
-        }
-        return;
-      }
+      if (this.panes.length < 2) return;
       this.initialized = true;
       this.onKeyDown = this.onKeyDown.bind(this);
       this.onPointerDown = this.onPointerDown.bind(this);
@@ -281,6 +283,6 @@
       });
     }
   };
-  define("splitter-elemental", SplitterElemental);
+  define2("splitter-elemental", SplitterElemental);
 })();
 //# sourceMappingURL=splitter.js.map

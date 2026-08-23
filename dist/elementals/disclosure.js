@@ -133,6 +133,15 @@
     customElements.define(tag, ctor);
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/disclosure/index.js
   function disclosureState(open) {
     return {
@@ -316,6 +325,6 @@
       this.instant = false;
     }
   };
-  define("disclosure-elemental", DisclosureElemental);
+  define2("disclosure-elemental", DisclosureElemental);
 })();
 //# sourceMappingURL=disclosure.js.map

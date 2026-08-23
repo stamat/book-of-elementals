@@ -14,6 +14,15 @@
     return to;
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/toolbar/index.js
   function toolbarKey(key, vertical) {
     if (key === "Home" || key === "End") return key;
@@ -103,6 +112,6 @@
       controls[to].focus();
     }
   };
-  define("toolbar-elemental", ToolbarElemental);
+  define2("toolbar-elemental", ToolbarElemental);
 })();
 //# sourceMappingURL=toolbar.js.map

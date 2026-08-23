@@ -8,6 +8,15 @@
     customElements.define(tag, ctor);
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/field/index.js
   var fieldCount = 0;
   function fieldAction(type, valid, showing, dirty) {
@@ -173,6 +182,6 @@
       }));
     }
   };
-  define("field-elemental", FieldElemental);
+  define2("field-elemental", FieldElemental);
 })();
 //# sourceMappingURL=field.js.map

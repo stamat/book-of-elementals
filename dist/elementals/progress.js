@@ -8,6 +8,15 @@
     customElements.define(tag, ctor);
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/progress/index.js
   function percent(value, max) {
     if (!(max > 0) || !Number.isFinite(value)) return 0;
@@ -117,6 +126,6 @@
       this.style.setProperty("--progress-elemental-buffer", `${percent(buffer, max)}%`);
     }
   };
-  define("progress-elemental", ProgressElemental);
+  define2("progress-elemental", ProgressElemental);
 })();
 //# sourceMappingURL=progress.js.map

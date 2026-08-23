@@ -322,6 +322,15 @@
     };
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/accordion/index.js
   var OPTIONS = { exclusive: "boolean" };
   var WRAPPER_CLASS = "accordion-elemental-content-wrapper";
@@ -527,7 +536,7 @@
       }
     }
   };
-  define("accordion-elemental", AccordionElemental);
+  define2("accordion-elemental", AccordionElemental);
 
   // src/elementals/carousel/index.js
   function rotationInterval(value, fallback = 5e3) {
@@ -1220,7 +1229,7 @@
       if (this.rotating && this.timer) this.tick();
     }
   };
-  define("carousel-elemental", CarouselElemental);
+  define2("carousel-elemental", CarouselElemental);
 
   // src/elementals/checkbox-group/index.js
   function classify(states) {
@@ -1362,7 +1371,7 @@
       });
     }
   };
-  define("checkbox-group-elemental", CheckboxGroupElemental);
+  define2("checkbox-group-elemental", CheckboxGroupElemental);
 
   // src/elementals/combobox/index.js
   function flipsUp(field, panelHeight, viewportHeight) {
@@ -2000,7 +2009,7 @@
       this.sync();
     }
   };
-  define("combobox-elemental", ComboboxElemental);
+  define2("combobox-elemental", ComboboxElemental);
 
   // src/elementals/copy/index.js
   function sourceText(target, value) {
@@ -2126,7 +2135,7 @@
       );
     }
   };
-  define("copy-elemental", CopyElemental);
+  define2("copy-elemental", CopyElemental);
 
   // src/elementals/disclosure/index.js
   function disclosureState(open) {
@@ -2311,7 +2320,7 @@
       this.instant = false;
     }
   };
-  define("disclosure-elemental", DisclosureElemental);
+  define2("disclosure-elemental", DisclosureElemental);
 
   // src/elementals/field/index.js
   var fieldCount = 0;
@@ -2478,7 +2487,7 @@
       }));
     }
   };
-  define("field-elemental", FieldElemental);
+  define2("field-elemental", FieldElemental);
 
   // src/elementals/marquee/index.js
   var DEFAULT_SPEED = 50;
@@ -2707,7 +2716,7 @@
       this.dispatchEvent(new CustomEvent("marquee-toggle", { bubbles: true, detail: { playing: false } }));
     }
   };
-  define("marquee-elemental", MarqueeElemental);
+  define2("marquee-elemental", MarqueeElemental);
 
   // src/elementals/menu/index.js
   var TYPE_AHEAD_WINDOW = 500;
@@ -3139,7 +3148,7 @@
       this.closeAll();
     }
   };
-  define("menu-elemental", MenuElemental);
+  define2("menu-elemental", MenuElemental);
 
   // src/elementals/modal/index.js
   function dismissMode(value) {
@@ -3518,7 +3527,7 @@
       if (dialog) dialog.dataset.depth = index + 1;
     });
   }
-  define("modal-elemental", ModalElemental);
+  define2("modal-elemental", ModalElemental);
 
   // src/elementals/navbar/index.js
   function navbarMode(matches, overflowed, total, minimum = 1) {
@@ -4066,7 +4075,7 @@
       if (trigger) trigger.setAttribute("aria-expanded", "true");
     }
   };
-  define("navbar-elemental", NavbarElemental);
+  define2("navbar-elemental", NavbarElemental);
 
   // src/elementals/password/index.js
   var passwordCount = 0;
@@ -4212,7 +4221,7 @@
       this.update(e.type);
     }
   };
-  define("password-elemental", PasswordElemental);
+  define2("password-elemental", PasswordElemental);
 
   // src/elementals/progress/index.js
   function percent(value, max) {
@@ -4323,7 +4332,7 @@
       this.style.setProperty("--progress-elemental-buffer", `${percent(buffer, max)}%`);
     }
   };
-  define("progress-elemental", ProgressElemental);
+  define2("progress-elemental", ProgressElemental);
 
   // src/elementals/search/index.js
   var DELAY_MS = 200;
@@ -4562,7 +4571,7 @@
       this.timer = setTimeout(() => this.run(field.value.trim()), this.delay);
     }
   };
-  define("search-elemental", SearchElemental);
+  define2("search-elemental", SearchElemental);
 
   // src/elementals/segmented/index.js
   function checkedIndex(inputs) {
@@ -4631,7 +4640,7 @@
       this.setAttribute("data-index", index);
     }
   };
-  define("segmented-elemental", SegmentedElemental);
+  define2("segmented-elemental", SegmentedElemental);
 
   // src/elementals/slider/index.js
   function ratio(value, min, max) {
@@ -5040,7 +5049,7 @@
       input.dispatchEvent(new Event("change", { bubbles: true }));
     }
   };
-  define("slider-elemental", SliderElemental);
+  define2("slider-elemental", SliderElemental);
 
   // src/elementals/splitter/index.js
   var DEFAULT_POSITION = 50;
@@ -5146,14 +5155,7 @@
     }
     connectedCallback() {
       if (this.initialized) return;
-      if (this.panes.length < 2) {
-        if (document.readyState === "loading") {
-          document.addEventListener("DOMContentLoaded", () => {
-            if (this.isConnected) this.connectedCallback();
-          }, { once: true });
-        }
-        return;
-      }
+      if (this.panes.length < 2) return;
       this.initialized = true;
       this.onKeyDown = this.onKeyDown.bind(this);
       this.onPointerDown = this.onPointerDown.bind(this);
@@ -5311,7 +5313,7 @@
       });
     }
   };
-  define("splitter-elemental", SplitterElemental);
+  define2("splitter-elemental", SplitterElemental);
 
   // src/elementals/suggest/index.js
   function suggestAction(key, altKey, open, cursor, tabCompletes) {
@@ -5544,7 +5546,7 @@
       this.open = false;
     }
   };
-  define("suggest-elemental", SuggestElemental);
+  define2("suggest-elemental", SuggestElemental);
 
   // src/elementals/switch/index.js
   function formValue(checked, disabled, value) {
@@ -5762,7 +5764,7 @@
    * has a reason of its own - one line at boot changes every switch on it.
    */
   __publicField(SwitchElemental, "requiredMessage", null);
-  define("switch-elemental", SwitchElemental);
+  define2("switch-elemental", SwitchElemental);
 
   // src/elementals/tabs/index.js
   function tabKey(key, vertical) {
@@ -6028,7 +6030,7 @@
       if (at >= 0) this.selected = at;
     }
   };
-  define("tabs-elemental", TabsElemental);
+  define2("tabs-elemental", TabsElemental);
 
   // src/elementals/tilt/index.js
   var DEFAULT_MAX = 10;
@@ -6259,7 +6261,7 @@
       this.style.removeProperty("--tilt-elemental-y");
     }
   };
-  define("tilt-elemental", TiltElemental);
+  define2("tilt-elemental", TiltElemental);
 
   // src/elementals/toolbar/index.js
   function toolbarKey(key, vertical) {
@@ -6350,7 +6352,7 @@
       controls[to].focus();
     }
   };
-  define("toolbar-elemental", ToolbarElemental);
+  define2("toolbar-elemental", ToolbarElemental);
 
   // src/elementals/tooltip/index.js
   function titleRole(trigger) {
@@ -6605,6 +6607,6 @@
       );
     }
   };
-  define("tooltip-elemental", TooltipElemental);
+  define2("tooltip-elemental", TooltipElemental);
 })();
 //# sourceMappingURL=book-of-elementals.js.map

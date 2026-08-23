@@ -12,6 +12,15 @@
     customElements.define(tag, ctor);
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/switch/index.js
   function formValue(checked, disabled, value) {
     return checked && !disabled ? value : null;
@@ -228,6 +237,6 @@
    * has a reason of its own - one line at boot changes every switch on it.
    */
   __publicField(SwitchElemental, "requiredMessage", null);
-  define("switch-elemental", SwitchElemental);
+  define2("switch-elemental", SwitchElemental);
 })();
 //# sourceMappingURL=switch.js.map

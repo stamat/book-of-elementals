@@ -23,6 +23,15 @@
     }
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/tabs/index.js
   function tabKey(key, vertical) {
     if (key === "Home" || key === "End") return key;
@@ -287,6 +296,6 @@
       if (at >= 0) this.selected = at;
     }
   };
-  define("tabs-elemental", TabsElemental);
+  define2("tabs-elemental", TabsElemental);
 })();
 //# sourceMappingURL=tabs.js.map

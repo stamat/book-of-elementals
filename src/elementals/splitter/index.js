@@ -254,23 +254,13 @@ export class SplitterElemental extends ElementBase {
 
     // One pane is not half a splitter - there is nothing to take the space the other gives
     // up - so an element that has not got two of them is left exactly as it was written.
+    // Before the flag, so an element that gets its second pane later is built when it is next
+    // connected rather than being marked done with nothing in it.
     //
-    // **Not having them yet is the ordinary case, not the broken one.** A custom element is
-    // upgraded the moment its opening tag is parsed, so a bundle included in `<head>` without
-    // `defer` reaches every `<splitter-elemental>` on the page before a single child of it
-    // exists - and bailing there for good is a script tag in the wrong place turning the
-    // whole page's splitters into plain boxes, with nothing to say why. The parser is the
-    // only thing that hands over children late; markup built any other way is complete before
-    // it is ever connected, which is why one listener covers it and a `MutationObserver`
-    // watching for a second child forever would not be earning its keep.
-    if (this.panes.length < 2) {
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-          if (this.isConnected) this.connectedCallback();
-        }, { once: true });
-      }
-      return;
-    }
+    // Not having them *yet* because the parser has not reached them is handled a level up:
+    // `define` in `core.js` holds registration until `DOMContentLoaded`, so nothing here is
+    // ever upgraded mid-parse.
+    if (this.panes.length < 2) return;
 
     this.initialized = true;
 

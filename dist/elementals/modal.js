@@ -8,6 +8,15 @@
     customElements.define(tag, ctor);
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/modal/index.js
   function dismissMode(value) {
     const mode = (value || "").trim().toLowerCase();
@@ -385,6 +394,6 @@
       if (dialog) dialog.dataset.depth = index + 1;
     });
   }
-  define("modal-elemental", ModalElemental);
+  define2("modal-elemental", ModalElemental);
 })();
 //# sourceMappingURL=modal.js.map

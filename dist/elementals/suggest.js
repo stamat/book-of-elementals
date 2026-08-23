@@ -39,6 +39,15 @@
     };
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/suggest/index.js
   function suggestAction(key, altKey, open, cursor, tabCompletes) {
     if (!open) {
@@ -270,6 +279,6 @@
       this.open = false;
     }
   };
-  define("suggest-elemental", SuggestElemental);
+  define2("suggest-elemental", SuggestElemental);
 })();
 //# sourceMappingURL=suggest.js.map

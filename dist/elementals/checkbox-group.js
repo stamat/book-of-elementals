@@ -8,6 +8,15 @@
     customElements.define(tag, ctor);
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/checkbox-group/index.js
   function classify(states) {
     if (states.every((on) => on)) return states.length ? "all" : "none";
@@ -148,6 +157,6 @@
       });
     }
   };
-  define("checkbox-group-elemental", CheckboxGroupElemental);
+  define2("checkbox-group-elemental", CheckboxGroupElemental);
 })();
 //# sourceMappingURL=checkbox-group.js.map

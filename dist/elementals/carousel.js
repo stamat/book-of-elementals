@@ -143,6 +143,15 @@
     customElements.define(tag, ctor);
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/carousel/index.js
   function rotationInterval(value, fallback = 5e3) {
     const ms = Number(value);
@@ -834,6 +843,6 @@
       if (this.rotating && this.timer) this.tick();
     }
   };
-  define("carousel-elemental", CarouselElemental);
+  define2("carousel-elemental", CarouselElemental);
 })();
 //# sourceMappingURL=carousel.js.map

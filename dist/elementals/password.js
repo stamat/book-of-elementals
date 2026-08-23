@@ -8,6 +8,15 @@
     customElements.define(tag, ctor);
   }
 
+  // src/core.js
+  function define2(tag, ctor) {
+    if (typeof document === "undefined" || document.readyState !== "loading") {
+      define(tag, ctor);
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
+  }
+
   // src/elementals/password/index.js
   var passwordCount = 0;
   function revealAfter(event, shown) {
@@ -152,6 +161,6 @@
       this.update(e.type);
     }
   };
-  define("password-elemental", PasswordElemental);
+  define2("password-elemental", PasswordElemental);
 })();
 //# sourceMappingURL=password.js.map
