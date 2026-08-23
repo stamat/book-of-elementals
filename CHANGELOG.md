@@ -15,6 +15,30 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Added
+
+- **`<splitter-elemental>` — two panes and a draggable seam between them.** The
+  [APG Window Splitter pattern](https://www.w3.org/WAI/ARIA/apg/patterns/windowsplitter/), which
+  is the one pattern in the APG with no reference example to copy from
+  ([issue 130](https://github.com/w3c/aria-practices/issues/130)) — so the keyboard is read off
+  its prose: arrows a per cent at a time, <kbd>Home</kbd> and <kbd>End</kbd> to the smallest and
+  largest size the primary pane is allowed, <kbd>Enter</kbd> to collapse it and put it back. The
+  arrows on the other axis are left to the page, so a reader inside a pane can still scroll it.
+  `position`, `min`, `max`, `vertical` and `label-text`; `min` and `max` are `aria-valuemin` and
+  `aria-valuemax` verbatim and bound the pointer and the keys alike.
+
+  DOM: the element writes one `<div data-splitter-handle role="separator" tabindex="0">` between
+  its first two element children, `data-splitter-panes` on itself, gives the first child an `id`
+  if it has none, and writes `--splitter-elemental-position` into its own `style`. CSS: the
+  layout is three grid tracks — primary pane, handle, other pane — gated on
+  `[data-splitter-panes]` rather than on `:defined`, so an element written with a single child is
+  left in normal flow instead of being squeezed into half a grid. The handle is `24px` thick
+  because that is [WCAG 2.2 2.5.8](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)'s
+  minimum target size; the theme's visible line is a `1px` pseudo-element inside it.
+
+  Not to be confused with [compare-images-slider](https://github.com/stamat/compare-images-slider),
+  which wears the same `role="separator"` and reveals rather than resizes.
+
 ## [1.0.0] - 2026-08-21
 
 ### Added

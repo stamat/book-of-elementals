@@ -19,6 +19,7 @@ import './elementals/progress/index.js';
 import './elementals/search/index.js';
 import './elementals/segmented/index.js';
 import './elementals/slider/index.js';
+import './elementals/splitter/index.js';
 import './elementals/suggest/index.js';
 import './elementals/switch/index.js';
 import './elementals/tabs/index.js';

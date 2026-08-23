@@ -17,6 +17,7 @@ export * from './elementals/progress/index.js';
 export * from './elementals/search/index.js';
 export * from './elementals/segmented/index.js';
 export * from './elementals/slider/index.js';
+export * from './elementals/splitter/index.js';
 export * from './elementals/suggest/index.js';
 export * from './elementals/switch/index.js';
 export * from './elementals/tabs/index.js';

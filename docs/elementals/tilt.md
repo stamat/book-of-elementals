@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Tilt
 description: A card that leans under the pointer — layers that rise out of it, a glare that follows, and the reduced-motion switch every other tilt library ignores.
-order: 22
+order: 23
 navGroup: No APG pattern
 ---
 

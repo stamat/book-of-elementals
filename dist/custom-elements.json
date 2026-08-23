@@ -5938,6 +5938,405 @@
     },
     {
       "kind": "javascript-module",
+      "path": "src/elementals/splitter/index.js",
+      "declarations": [
+        {
+          "kind": "variable",
+          "name": "DEFAULT_POSITION",
+          "type": {
+            "text": "number"
+          },
+          "default": "50",
+          "description": "Down the middle, when nothing says otherwise."
+        },
+        {
+          "kind": "variable",
+          "name": "STEP",
+          "type": {
+            "text": "number"
+          },
+          "default": "1",
+          "description": "What one arrow key is worth, as a percentage of the track. Not an attribute: a splitter\nwhose arrow key moved by a configurable amount would be a second number to keep in step\nwith `min` and `max`, and nothing in the pattern asks for one."
+        },
+        {
+          "kind": "function",
+          "name": "splitterKey",
+          "parameters": [
+            {
+              "name": "key",
+              "description": "KeyboardEvent.key value.",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "vertical",
+              "description": "Whether the panes are stacked down the page.",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "rtl",
+              "description": "Whether the layout runs right to left.",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "What a key does to the primary pane, or `null` where the key is not this element's.\n\nThe names are the pane's rather than the screen's - `shrink` and `grow` instead of left and\nup - because which physical arrow shrinks the pane is exactly the part that moves. It\nchanges with the axis, and on the horizontal axis it changes again with the writing\ndirection: in a right-to-left page the primary pane is the one on the right, so\n<kbd>ArrowLeft</kbd> is the key that makes it bigger.\n\nOnly the axis the splitter is on answers. <kbd>ArrowUp</kbd> on a splitter between a left\nand a right pane is not a key with nothing to do - it is the page's key, for scrolling, and\nswallowing it is how a widget takes the document's keyboard away from a reader who is\ninside it.",
+          "return": {
+            "type": {
+              "text": "'shrink'|'grow'|'min'|'max'|'collapse'|null"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "positionFrom",
+          "parameters": [
+            {
+              "name": "rect",
+              "description": "The element's box.",
+              "type": {
+                "text": "DOMRect|{left: number, top: number, width: number, height: number}"
+              }
+            },
+            {
+              "name": "x",
+              "description": "Viewport coordinates, as `PointerEvent.clientX` gives them.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "y",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "options",
+              "default": "{}",
+              "description": "`size` is the handle's\nextent along the axis, in pixels.",
+              "optional": true,
+              "type": {
+                "text": "{vertical?: boolean, rtl?: boolean, size?: number}"
+              }
+            }
+          ],
+          "description": "Where a pointer puts the separator, as a percentage of the track.\n\n**The track is the box minus the handle, not the box.** The handle occupies a column of its\nown, so the primary pane can only ever be as wide as what is left over - and a percentage\nmeasured against the full box would mean `100` is a pane one handle wider than the space\nthere is, which overflows by that much at one end and cannot be reached at the other. The\nstylesheet sizes the first track out of the same subtraction, so the two agree by\nconstruction rather than by a constant written twice.\n\nHalf a handle comes off the pointer's own position for the same reason: the reader grabbed\nthe middle of the handle, and the track starts at its leading edge.",
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<splitter-elemental>` custom element.\n\nTwo panes and a handle between them that resizes both: the\n[APG Window Splitter pattern](https://www.w3.org/WAI/ARIA/apg/patterns/windowsplitter/),\nover the two boxes you were going to write anyway.\n\n**The pattern has no reference example.** The APG page carries the roles, the states and the\nkeys, and where the example would be it says work on one is tracked by\n[issue 130](https://github.com/w3c/aria-practices/issues/130). So the keyboard here is read\noff the pattern's own prose rather than copied from a demo: arrows move the separator,\n<kbd>Home</kbd> and <kbd>End</kbd> take the primary pane to the smallest and largest size it\nis allowed, and <kbd>Enter</kbd> collapses it and puts it back.\n\nThe first element child is the primary pane - the one `aria-valuenow` is about, the one\n`aria-controls` names, and the one <kbd>Enter</kbd> collapses. The second is the other pane.\nThe handle is written between them, and it is the only node this element adds.\n\n**`vertical` is the panes' word, not the separator's, and the two are opposites.** Stacked\npanes are split by a separator lying across the page, so `vertical` writes\n`aria-orientation=\"horizontal\"` - which is also the role's own default, and therefore the\nvalue that is left off. The APG spends the word the other way round and calls the splitter\nbetween a left and a right pane a vertical one; ARIA is describing the separator, this\nelement's attribute is describing the layout, and both are right about different things.\n\n`min` and `max` are the floor and the ceiling for everything - the pointer, the keys, and\n<kbd>Enter</kbd> too. They are `aria-valuemin` and `aria-valuemax` verbatim, which is what\nthe pattern says those two properties are: the positions where the primary pane is at its\nsmallest and its largest. So a `min` above zero is an author saying the pane may not\ndisappear, and <kbd>Enter</kbd> takes it down to that floor rather than through it. The\npattern's collapse is what the default `min=\"0\"` gives you.\n\nPercentages and nothing else. A `min-width` in pixels on a pane is a size this element\ncannot see, and grid honours it while `aria-valuenow` goes on reporting the position that\nwas asked for - two numbers disagreeing about the same pane. The bound belongs on `min`.\n\nLight DOM, no shadow root. With no script it is two boxes in normal flow, in the order you\nwrote them, and no handle - there is nothing to resize when there is nothing listening.\n\nponytail: no persistence, no `localStorage`, no session key. `position` is reflected, so\nsaving it is `splitter.addEventListener('splitter-change', e => store(e.detail.position))`\nand restoring it is an attribute in the markup - an element that owned a storage key would\nbe an element with an opinion about which one.\n\nponytail: two panes, not n. Three panes is two splitters, and a splitter that shared its\nneighbour's space would need a layout model of the whole row rather than of itself.",
+          "name": "SplitterElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "The handle's thickness, and therefore the size of the target a pointer has to hit. `24px` is [WCAG 2.2 2.5.8](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)'s minimum rather than a taste; the theme draws a thinner line inside it.",
+              "name": "--splitter-elemental-size",
+              "default": "24px"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. The line drawn down the middle of the handle.",
+              "name": "--splitter-elemental-color",
+              "default": "currentcolor at 20%"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. Its colour while the pointer is on the handle or the handle has focus.",
+              "name": "--splitter-elemental-active-color",
+              "default": "currentcolor at 45%"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Theme. How thick that line is. Not the target: the handle stays `--splitter-elemental-size` whatever this says.",
+              "name": "--splitter-elemental-line-size",
+              "default": "1px"
+            }
+          ],
+          "slots": [
+            {
+              "description": "Two boxes. The first is the primary pane, the second is the other one; a third lands on a second grid row, under the primary pane and the width of it.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "handle",
+              "type": {
+                "text": "null"
+              },
+              "default": "null",
+              "description": "The handle, `null` until there are two panes to put one between."
+            },
+            {
+              "kind": "field",
+              "name": "restorePosition",
+              "default": "50",
+              "description": "Where the primary pane was before <kbd>Enter</kbd> collapsed it, so the second press has\nsomewhere to go. The middle until something else has been seen, rather than `min` - a\nrestore that put the pane back where it already was would read as a key that did nothing.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "pointerId",
+              "type": {
+                "text": "null"
+              },
+              "default": "null",
+              "description": "The pointer id of the drag in progress, `null` when there is none. Held so a second\nfinger arriving mid-drag is ignored rather than fighting the first."
+            },
+            {
+              "kind": "field",
+              "name": "dragRtl",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "description": "The writing direction as it was when the drag started. Read once per gesture: `direction`\nis inherited, and re-reading it per frame is a style resolution inside a pointer handler."
+            },
+            {
+              "kind": "field",
+              "name": "dragMoved",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "description": "Whether the drag in progress has moved the separator at all. A press that let go where it\nlanded changed nothing, and an event saying it did is one a listener would save to storage."
+            },
+            {
+              "kind": "field",
+              "name": "panes",
+              "description": "The panes: every element child that is not the handle. The handle is written between\nthem, so it has to come out of the count that decides where it goes.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "position",
+              "description": "Where the separator sits, clamped into `min`-`max`. The attribute is the state, so a\ndrag, a key and a page setting `position=\"30\"` all arrive the same way."
+            },
+            {
+              "kind": "field",
+              "name": "min",
+              "description": "How far the primary pane may shrink."
+            },
+            {
+              "kind": "field",
+              "name": "max",
+              "description": "How far it may grow. Floored at `min`, so a pair given the wrong way round is a splitter\nthat will not move rather than one whose clamp inverts."
+            },
+            {
+              "kind": "field",
+              "name": "vertical",
+              "description": "Whether the panes are stacked down the page. Reflected, so `[vertical]` is a styling\nhook and the stylesheet needs nothing written for it."
+            },
+            {
+              "kind": "field",
+              "name": "labelText",
+              "description": "The handle's accessible name."
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "description": "Write the handle between the panes and wire it up.\n\nA `<div>` and not a `<button>`, because `role=\"separator\"` would replace the button role\nand leave a control announcing itself as one thing while behaving as another - and the\nonly thing the button element brings that is wanted here, the tab stop, is one attribute.\n\nThe pattern needs the primary pane to be identifiable, so it is given an id if it has\nnone. Everything written here comes off again in `disconnectedCallback`, except that id:\nsomething else may be pointing at it by then."
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "description": "Put the position where the stylesheet and a screen reader can both read it.\n\nThe custom property is unitless and the stylesheet spends it, which is what keeps the one\nsubtraction that matters - the track is the box minus the handle - in the one place that\ncan do it in the browser's units rather than in measured pixels.\n\n`aria-valuenow` is rounded and `aria-valuetext` says the per cent out loud, because a\nseparator announcing \"37.482\" is a number with no unit attached to it and a pane size is\nnever anything but a proportion.\n\n`aria-orientation` is written only for side-by-side panes: `horizontal` is the separator\nrole's own default, and writing a default is a second place for it to be wrong."
+            },
+            {
+              "kind": "method",
+              "name": "moveTo",
+              "parameters": [
+                {
+                  "name": "position"
+                },
+                {
+                  "name": "commit"
+                }
+              ],
+              "description": "Move the separator, and say so once the gesture that moved it is over."
+            },
+            {
+              "kind": "method",
+              "name": "onKeyDown",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "rtl",
+              "description": "Whether the layout runs right to left. Read per gesture rather than held: `direction` is\ninherited, so an ancestor flipping it is a change no attribute on this element reports."
+            },
+            {
+              "kind": "method",
+              "name": "onPointerDown",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onPointerMove",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onPointerUp",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "endDrag",
+              "description": "Let go of the pointer and stop listening for it. Safe to call twice, which is what a\n`pointercancel` arriving after a `pointerup` needs it to be."
+            },
+            {
+              "kind": "method",
+              "name": "positionFromEvent",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ],
+              "description": "Where the pointer puts the separator. The handle's own extent comes out of the sum, and\nit is measured rather than assumed: `--splitter-elemental-size` is the page's to set."
+            }
+          ],
+          "events": [
+            {
+              "name": "splitter-change",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "The separator has been moved and the gesture is over - a key press, or a pointer released. `detail.position` is where it landed. Deliberately not fired per frame of a drag: a pane that has to keep up with one is a pane with a `ResizeObserver` on it, which is the platform's own answer and does not go stale."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "position",
+              "type": {
+                "text": "number"
+              },
+              "description": "Where the separator sits, as a percentage of the track. Reflected, and written back as the handle is dragged.",
+              "default": "50"
+            },
+            {
+              "name": "min",
+              "type": {
+                "text": "number"
+              },
+              "description": "How far the primary pane may shrink, as a percentage. The floor for the pointer, the arrows and <kbd>Enter</kbd> alike, and `aria-valuemin`.",
+              "default": "0"
+            },
+            {
+              "name": "max",
+              "type": {
+                "text": "number"
+              },
+              "description": "How far it may grow. `aria-valuemax`.",
+              "default": "100"
+            },
+            {
+              "name": "vertical",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "The panes are stacked down the page rather than side by side. Swaps the arrow keys with them.",
+              "default": "false"
+            },
+            {
+              "name": "label-text",
+              "type": {
+                "text": "string"
+              },
+              "description": "The handle's accessible name. The pattern asks for the separator to be named after the primary pane, so a page with a sidebar behind it says `label-text=\"Sidebar\"`. `--splitter-elemental-position` is deliberately not tagged below. The element writes it into its own `style` attribute, where an inline declaration beats any stylesheet - a knob for it would be a control that cannot move anything. It is an output, and `position` is the input.",
+              "default": "Resize"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "splitter-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "DEFAULT_POSITION",
+          "declaration": {
+            "name": "DEFAULT_POSITION",
+            "module": "src/elementals/splitter/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "STEP",
+          "declaration": {
+            "name": "STEP",
+            "module": "src/elementals/splitter/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "splitterKey",
+          "declaration": {
+            "name": "splitterKey",
+            "module": "src/elementals/splitter/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "positionFrom",
+          "declaration": {
+            "name": "positionFrom",
+            "module": "src/elementals/splitter/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "SplitterElemental",
+          "declaration": {
+            "name": "SplitterElemental",
+            "module": "src/elementals/splitter/index.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/elementals/suggest/index.js",
       "declarations": [
         {

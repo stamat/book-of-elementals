@@ -28,6 +28,7 @@ holds the JavaScript helpers, this one holds the elements.
 | `<navbar-elemental>`     | [APG Disclosure Navigation](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/), folding itself away when the links stop fitting |
 | `<segmented-elemental>`  | [APG Radio Group](https://www.w3.org/WAI/ARIA/apg/patterns/radio/) on native radios, drawn as a track with a knob that slides |
 | `<slider-elemental>`     | [APG Slider](https://www.w3.org/WAI/ARIA/apg/patterns/slider/) on native range inputs, and [Multi-Thumb](https://www.w3.org/WAI/ARIA/apg/patterns/slider-multithumb/) when you write two — the thumb count is the markup |
+| `<splitter-elemental>`   | [APG Window Splitter](https://www.w3.org/WAI/ARIA/apg/patterns/windowsplitter/) — two panes and a draggable seam, keyboard included, for the one pattern the APG has never written an example for |
 | `<suggest-elemental>`    | [APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) with a listbox popup — a list of links a text field drives with the arrow keys |
 | `<switch-elemental>`     | [APG Switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/), for a setting that takes effect at once |
 | `<tabs-elemental>`       | [APG Tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), horizontal or vertical, on a list of in-page links |
@@ -811,6 +812,52 @@ short), and a press on the track moves the nearer of them, which the stacking wo
 otherwise cost. `aria-valuemin` and `aria-valuemax` are deliberately not written —
 [HTML-ARIA says authors should not put them on a range input](https://www.w3.org/TR/html-aria/),
 and rescaling one input to clamp it would move every pixel on it.
+
+## `<splitter-elemental>`
+
+Two panes and a handle between them that gives one what it takes from the other — a sidebar you
+can widen, an editor beside its preview. You write the two boxes; it writes the handle.
+
+```html
+<splitter-elemental position="35" min="15" max="70" label-text="Sidebar">
+  <nav>…</nav>
+  <article>…</article>
+</splitter-elemental>
+```
+
+| Attribute    | Type    | Default  | Description                                                                     |
+| ------------ | ------- | -------- | ------------------------------------------------------------------------------- |
+| `position`   | number  | `50`     | Where the separator sits, as a percentage of the track. Reflected, and written back as the handle is dragged. |
+| `min`        | number  | `0`      | How far the primary pane may shrink. `aria-valuemin`, and the floor for `Enter` as well as for the drag. |
+| `max`        | number  | `100`    | How far it may grow. `aria-valuemax`.                                           |
+| `vertical`   | boolean | `false`  | The panes are stacked down the page rather than side by side.                   |
+| `label-text` | string  | `Resize` | The handle's accessible name. The pattern asks for the separator to be named after the primary pane. |
+
+The [Window Splitter pattern](https://www.w3.org/WAI/ARIA/apg/patterns/windowsplitter/) is the
+one in the APG with no example to copy — work on one is tracked by
+[issue 130](https://github.com/w3c/aria-practices/issues/130) — so the keyboard here is read off
+its prose: arrows move the separator a per cent at a time, `Home` and `End` take the primary pane
+to its smallest and largest allowed size, and `Enter` collapses it and puts it back. The arrows
+on the other axis are left to the page, which is how a reader inside a pane still scrolls it.
+
+The first element child is the primary pane: the one `position` measures, the one `aria-controls`
+names, the one `Enter` collapses. `min` and `max` bound the pointer and the keys alike, so a
+`min` above zero is you saying the pane may not disappear.
+
+**`vertical` describes the panes and `aria-orientation` describes the separator, and the two are
+opposites** — stacked panes are split by a line lying across the page, so `vertical` writes
+`aria-orientation="horizontal"`. A stacked splitter also needs a height of its own: percentage
+row tracks in an `auto`-height grid resolve as `auto`.
+
+The handle is `24px` thick because that is
+[WCAG 2.2 2.5.8](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)'s minimum
+target, and the theme draws a `1px` line inside it — the hairline every other splitter makes you
+hit is a pseudo-element here, not the target. `splitter-change` fires when the gesture is over;
+a pane that has to keep up with the drag wants a `ResizeObserver` on itself.
+
+Not [compare-images-slider](https://github.com/stamat/compare-images-slider), which puts the same
+`role="separator"` on a handle and does the other thing with it: that one *reveals* — two
+full-size layers, one clipped over the other, nothing resized.
 
 ## `<suggest-elemental>`
 

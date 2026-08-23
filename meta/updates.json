@@ -32,8 +32,8 @@
     "updated": "2026-08-17T21:17:28.365Z"
   },
   "docs/elementals/index.md": {
-    "hash": "c7fc4fe1e320f805d09e8c2d02e16be0771ca42e",
-    "updated": "2026-08-17T16:12:58.999Z"
+    "hash": "06d0397fe7ffc20c9b4af7269beaec485b1b8d9f",
+    "updated": "2026-08-23T12:38:38.002Z"
   },
   "docs/elementals/marquee.md": {
     "hash": "5ac64586fa56b17f2a01ede37781b0f3996b0f21",
@@ -70,6 +70,10 @@
   "docs/elementals/slider.md": {
     "hash": "8a00803a7b31e58f8facd20378315148499e9797",
     "updated": "2026-08-17T21:17:52.161Z"
+  },
+  "docs/elementals/splitter.md": {
+    "hash": "804d5045ee54ef3ccfd4eacd0f41a3e1af02af3f",
+    "updated": "2026-08-23T12:42:51.749Z"
   },
   "docs/elementals/suggest.md": {
     "hash": "fbb5aaceb888f1ac22a5a8913f0b1462829760ac",

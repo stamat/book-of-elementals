@@ -32,6 +32,7 @@ element's own page.
 | [`<navbar-elemental>`](navbar.html)                            | [APG Disclosure Navigation](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/), that folds itself away when the links stop fitting                                              |
 | [`<segmented-elemental>`](segmented.html)                      | [APG Radio Group](https://www.w3.org/WAI/ARIA/apg/patterns/radio/) on native radios, drawn as a track with a knob that slides                                                                                     |
 | [`<slider-elemental>`](slider.html)                            | [APG Slider](https://www.w3.org/WAI/ARIA/apg/patterns/slider/) on native range inputs, and [Slider (Multi-Thumb)](https://www.w3.org/WAI/ARIA/apg/patterns/slider-multithumb/) when you write two of them — the thumb count is the markup                    |
+| [`<splitter-elemental>`](splitter.html)                        | [APG Window Splitter](https://www.w3.org/WAI/ARIA/apg/patterns/windowsplitter/) — two panes and a draggable seam, keyboard included, for the one pattern the APG has never written an example for |
 | [`<suggest-elemental>`](suggest.html)                          | [APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) with a listbox popup — the results panel, minus any opinion about where the results came from                                                  |
 | [`<switch-elemental>`](switch.html)                            | [APG Switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/), for a setting that takes effect at once                                                                                                           |
 | [`<tabs-elemental>`](tabs.html)                                | [APG Tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), horizontal or vertical, written on a list of in-page links                                                                                            |
@@ -60,3 +61,9 @@ More pages are being written. Elements published separately today —
 [compare-images-slider](https://github.com/stamat/compare-images-slider),
 [youtube-background](https://github.com/stamat/youtube-background) — keep their
 own packages; this book does not break anyone's install to absorb them.
+
+The first of those is worth telling apart from
+[`<splitter-elemental>`](splitter.html), because both put `role="separator"` on a
+handle you drag. A splitter *resizes* two panes that share a width. The compare
+slider *reveals*: its two layers are both full size, one clipped over the other,
+and nothing on the page changes size at all.

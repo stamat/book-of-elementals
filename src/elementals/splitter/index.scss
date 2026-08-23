@@ -1,0 +1,81 @@
+// Structure for `<splitter-elemental>`: the two tracks, the handle's own track between them,
+// and the cursor that says the handle can be dragged. No line, no colour - that is
+// `theme.scss`, which this does not import.
+
+// **The gate is `[data-splitter-panes]`, which the element writes once it has put a handle
+// between two panes - not `:defined`.** `:defined` is true of every `<splitter-elemental>` on
+// the page from the moment the script registers the class, including one written with a single
+// child, which has no handle and no second pane: three grid tracks over that is one box
+// squeezed into half the width for no reason it can see. The attribute says the thing the
+// layout actually depends on.
+
+// `display` is the one declaration that does not wait for it, and the reason is the no-script
+// promise: left `display: inline`, an unupgraded `<splitter-elemental>` round two block panes
+// is an inline box with blocks inside it, a layout nobody wrote.
+
+// **The defaults an author sets go on the bare tag, never behind the gate.** A page overriding
+// one writes `splitter-elemental { --splitter-elemental-size: 32px }`, and a default declared
+// behind an attribute selector is one attribute heavier than the rule that meant to replace
+// it - so it would win, silently.
+splitter-elemental {
+  // The handle's thickness, and therefore the size of the target a pointer has to hit.
+  // `24px` is the minimum in WCAG 2.2 2.5.8 Target Size (Minimum), and the reason this is a
+  // length in pixels rather than the `rem` the rest of the book reaches for: the criterion is
+  // written in CSS pixels, and a `1.5rem` on a page that set a 12px root is 18 of them.
+  // The theme draws a `1px` line down the middle of it, which is the part anybody sees.
+  --splitter-elemental-size: 24px;
+
+  display: block;
+}
+
+splitter-elemental[data-splitter-panes] {
+  display: grid;
+}
+
+// **The track is the box minus the handle.** The handle has a column of its own, so the space
+// the two panes divide between them is what is left after it - and a percentage taken against
+// the full box would put `100` one handle-width past the end, overflowing by that much at one
+// end and unreachable at the other. `positionFrom` in the element subtracts the same width
+// from the pointer's own position, and the two agree because they are the same subtraction and
+// not because a constant was written down twice.
+
+// `--splitter-elemental-position` is unitless and the `/ 100` here is what turns it into a
+// proportion, which is the same trick `<tilt-elemental>` uses to spend one number as a degree
+// in one place and a pixel in another.
+splitter-elemental[data-splitter-panes]:not([vertical]) {
+  grid-template-columns:
+    calc((100% - var(--splitter-elemental-size)) * var(--splitter-elemental-position, 50) / 100)
+    var(--splitter-elemental-size)
+    minmax(0, 1fr);
+}
+
+// The same three tracks down the page. **A percentage row track needs a definite height to
+// resolve against** - a grid whose own height is `auto` treats one as `auto`, which is two
+// panes at their content height and a splitter that appears to ignore `position`. Give a
+// stacked splitter a `block-size`, a `min-block-size`, or a parent that gives it one. Not
+// declared here: a height this file guessed at would be a layout decision taken away from the
+// page, and the horizontal case - which is the common one - needs none.
+splitter-elemental[vertical][data-splitter-panes] {
+  grid-template-rows:
+    calc((100% - var(--splitter-elemental-size)) * var(--splitter-elemental-position, 50) / 100)
+    var(--splitter-elemental-size)
+    minmax(0, 1fr);
+}
+
+splitter-elemental[data-splitter-panes] > [data-splitter-handle] {
+  // A drag on the handle is not the page being scrolled. Without this a touch drag is claimed
+  // by the browser's own scroll gesture before a `pointermove` is ever dispatched, which is a
+  // splitter that works with a mouse and not with a finger.
+  touch-action: none;
+
+  // The pointer press is `preventDefault`ed, so this is belt to that brace: it is what stops a
+  // double-click on the handle from selecting a line out of the pane behind it.
+  user-select: none;
+  cursor: col-resize;
+}
+
+// `row-resize` rather than `col-resize`: the cursor is named after what is being resized, and
+// stacked panes are rows.
+splitter-elemental[vertical][data-splitter-panes] > [data-splitter-handle] {
+  cursor: row-resize;
+}
