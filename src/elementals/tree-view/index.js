@@ -3,6 +3,10 @@ import { ElementBase, define, typeAheadIndex } from '../../core.js';
 /** Ids for the `aria-owns` that ties a branch to the node above it. */
 let groupCount = 0;
 
+/** The prefix on an id this element generated, which is how teardown knows an id of the page's
+ * own from one of ours - and why teardown does not simply strip every `id` it finds. */
+const GROUP_ID = 'tree-view-elemental-group-';
+
 /**
  * The node saying which page the reader is on.
  *
@@ -193,7 +197,10 @@ export class TreeViewElemental extends ElementBase {
     for (const list of this.querySelectorAll('ul, ol')) {
       list.removeAttribute('role');
       list.removeAttribute('hidden');
-      list.removeAttribute('id');
+      // Only the ids this element minted. An `id` the page put on a branch is the target of its
+      // own anchors, its own CSS and possibly an `aria-labelledby` elsewhere on the page, and
+      // taking it away on teardown breaks all three with nothing to show why.
+      if (list.id.startsWith(GROUP_ID)) list.removeAttribute('id');
     }
     for (const item of this.querySelectorAll('li')) item.removeAttribute('role');
     for (const node of this.allNodes) {
@@ -227,7 +234,7 @@ export class TreeViewElemental extends ElementBase {
       if (!branch) continue;
 
       branch.setAttribute('role', 'group');
-      if (!branch.id) branch.id = 'tree-view-elemental-group-' + (++groupCount);
+      if (!branch.id) branch.id = GROUP_ID + (++groupCount);
       node.setAttribute('aria-owns', branch.id);
       // Closed unless the page said otherwise, or unless the page the reader is on is somewhere
       // inside - a sidebar that opened on the reader's own page is the only opening state anyone
