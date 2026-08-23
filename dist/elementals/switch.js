@@ -109,23 +109,26 @@
       this.setAttribute("required-message", value);
     }
     // The rest of the constraint API is the platform's, read straight off the internals so
-    // there is no second copy of the state to disagree with it. Without `attachInternals`
-    // there is no validation either, and a switch that always validates is the honest
-    // answer there - the form it is in has no value from it to check in the first place.
+    // there is no second copy of the state to disagree with it. Guarded per method rather than on
+    // `internals` alone, and for the same reason `apply()` guards `setFormValue`: jsdom hands out
+    // an `ElementInternals` with none of the form-associated half on it, so a truthy `internals`
+    // is not a promise that any of this is there. Without it there is no validation, and a switch
+    // that always validates is the honest answer - the form it is in has no value from it to
+    // check in the first place.
     get validity() {
       return this.internals && this.internals.validity;
     }
     get validationMessage() {
-      return this.internals ? this.internals.validationMessage : "";
+      return this.internals && this.internals.validationMessage || "";
     }
     get willValidate() {
-      return this.internals ? this.internals.willValidate : false;
+      return !!(this.internals && this.internals.willValidate);
     }
     checkValidity() {
-      return this.internals ? this.internals.checkValidity() : true;
+      return this.internals && this.internals.checkValidity ? this.internals.checkValidity() : true;
     }
     reportValidity() {
-      return this.internals ? this.internals.reportValidity() : true;
+      return this.internals && this.internals.reportValidity ? this.internals.reportValidity() : true;
     }
     /** Your own message, for the constraint the browser cannot know about. `''` clears it. */
     setCustomValidity(message) {

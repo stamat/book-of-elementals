@@ -260,7 +260,8 @@
     measure() {
       if (!this.observer) return;
       const list = this.tablist;
-      const tab = this.tabs[this.selected];
+      const tabs = this.tabs;
+      const tab = tabs[selectedIndex(this.getAttribute("selected"), tabs.length)];
       if (!list || !tab) return;
       const rtl = getComputedStyle(list).direction === "rtl";
       const box = barBox(list.getBoundingClientRect(), tab.getBoundingClientRect(), this.vertical, rtl);

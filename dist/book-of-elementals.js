@@ -4125,7 +4125,6 @@
       if (!control || !button) return;
       this.initialized = true;
       if (!button.hasAttribute("type")) button.type = "button";
-      button.setAttribute("aria-pressed", this.shown ? "true" : "false");
       if (!button.hasAttribute("aria-label") && !button.textContent.trim()) button.setAttribute("aria-label", this.label);
       if (!button.hasAttribute("aria-controls")) {
         if (!control.id) control.id = "password-elemental-" + ++passwordCount;
@@ -4140,20 +4139,21 @@
       this.onClick = this.onClick.bind(this);
       this.onForm = this.onForm.bind(this);
       this.addEventListener("click", this.onClick);
-      if (control.form) {
-        control.form.addEventListener("submit", this.onForm);
-        control.form.addEventListener("reset", this.onForm);
+      this.form = control.form;
+      if (this.form) {
+        this.form.addEventListener("submit", this.onForm);
+        this.form.addEventListener("reset", this.onForm);
       }
       this.render();
     }
     disconnectedCallback() {
       if (!this.initialized) return;
       this.removeEventListener("click", this.onClick);
-      const control = this.control;
-      if (control && control.form) {
-        control.form.removeEventListener("submit", this.onForm);
-        control.form.removeEventListener("reset", this.onForm);
+      if (this.form) {
+        this.form.removeEventListener("submit", this.onForm);
+        this.form.removeEventListener("reset", this.onForm);
       }
+      this.form = null;
       clearTimeout(this.announceTimer);
       this.initialized = false;
     }
@@ -4753,18 +4753,31 @@
     set gap(value) {
       this.setAttribute("gap", value);
     }
-    /** Whether the control runs right to left. Computed style rather than `:dir()`, which
-     * throws on the browsers that do not know it instead of quietly not matching. */
+    /**
+     * The two things about this element's own layout that the arithmetic needs: which way the
+     * track runs, and which end of it is the start.
+     *
+     * One read, because everything that measures wants both, and a computed style is the one
+     * thing here that can make the browser recalculate one. Computed style rather than
+     * `:dir()`, which throws on the browsers that do not know it instead of quietly not
+     * matching. Read from this element and not from an input: the track and the fill are drawn
+     * on this box in logical properties, so this is the writing mode they resolve against, and
+     * an input turned on its side by itself would be a thumb running one way over a track
+     * running the other.
+     */
+    get layout() {
+      if (typeof getComputedStyle !== "function") return { rtl: false, writingMode: "" };
+      const style = getComputedStyle(this);
+      return { rtl: style.direction === "rtl", writingMode: style.writingMode };
+    }
+    /** Whether the control runs right to left. */
     get rtl() {
-      return typeof getComputedStyle === "function" && getComputedStyle(this).direction === "rtl";
+      return this.layout.rtl;
     }
     /** The writing mode the control is laid out in, which is what says whether the track runs
-     * across the page or down it. Read from this element and not from an input: the track and
-     * the fill are drawn on this box in logical properties, so this is the writing mode they
-     * resolve against, and an input turned on its side by itself would be a thumb running one
-     * way over a track running the other. */
+     * across the page or down it. */
     get writingMode() {
-      return typeof getComputedStyle === "function" ? getComputedStyle(this).writingMode : "";
+      return this.layout.writingMode;
     }
     connectedCallback() {
       if (this.initialized) return;
@@ -4884,7 +4897,8 @@
       for (let i = 0; i < outputs.length && i < inputs.length; i++) {
         outputs[i].textContent = inputs[i].value;
       }
-      if (this.tooltipX !== null) this.showTooltipAt(this.tooltipX, this.tooltipY);
+      if (this.dragging >= 0) this.showDraggedValue();
+      else if (this.tooltipX !== null) this.showTooltipAt(this.tooltipX, this.tooltipY);
     }
     /**
      * Put the value bubble in, or take it out, to match the `tooltip` attribute.
@@ -4933,7 +4947,31 @@
       if (e.pointerType === "touch" && !this.pressed) return;
       this.tooltipX = e.clientX;
       this.tooltipY = e.clientY;
+      if (this.dragging >= 0) return;
       this.showTooltipAt(e.clientX, e.clientY);
+    }
+    /**
+     * Redraw the bubble for the thumb being dragged, from the value alone.
+     *
+     * Nothing here measures, and that is the point: a pinned bubble sits at `ratio` of the
+     * scale and reads out the input's own text, both of which are on the input already. The
+     * two attributes saying which way it is nudged are not rewritten either - they were read
+     * live when the press drew the bubble, and neither the writing mode nor the direction
+     * changes while a thumb is held.
+     *
+     * Only for a bubble that is already showing: `tooltip="track"` alone hides it on a thumb,
+     * and a drag is not the moment to overrule that.
+     */
+    showDraggedValue() {
+      const bubble = this.tooltipElement;
+      if (!bubble || bubble.hidden) return;
+      const inputs = this.inputs;
+      const input = inputs[this.dragging];
+      if (!input) return;
+      const min = bound(inputs[0].min, 0);
+      const max = bound(inputs[0].max, 100);
+      bubble.textContent = this.formatValue(Number(input.value), input.value);
+      bubble.style.setProperty("--slider-elemental-at", ratio(bound(input.value, min), min, max));
     }
     /** A press pins the bubble to whatever it is about to drag, for as long as it is held. */
     onTooltipDown(e) {
@@ -4942,7 +4980,7 @@
       this.dragging = m ? draggedThumb(m.under, m.inputs.length) : -1;
       this.tooltipX = e.clientX;
       this.tooltipY = e.clientY;
-      this.showTooltipAt(e.clientX, e.clientY);
+      this.showTooltipAt(e.clientX, e.clientY, m);
     }
     /**
      * Let go, and where the pointer is decides again - including that it may have been let go
@@ -4985,8 +5023,8 @@
       const inputs = this.inputs;
       if (!inputs.length) return null;
       const rect = this.getBoundingClientRect();
-      const axis = trackAxis(this.writingMode, rect, inputs[0].getBoundingClientRect(), x, y);
-      const rtl = this.rtl;
+      const { rtl, writingMode } = this.layout;
+      const axis = trackAxis(writingMode, rect, inputs[0].getBoundingClientRect(), x, y);
       const min = bound(inputs[0].min, 0);
       const max = bound(inputs[0].max, 100);
       const ratios = inputs.map((input) => ratio(bound(input.value, min), min, max));
@@ -5005,10 +5043,10 @@
      * to, and it holds until the release. Without it the bubble answers where the pointer is,
      * which during a drag is beside the thumb half the time.
      */
-    showTooltipAt(x, y) {
+    showTooltipAt(x, y, measured) {
       const bubble = this.tooltipElement;
       if (!bubble) return;
-      const m = this.metrics(x, y);
+      const m = measured || this.metrics(x, y);
       if (!m) return;
       const modes = tooltipModes(this.getAttribute("tooltip"));
       const over = this.dragging >= 0 && this.dragging < m.inputs.length ? this.dragging : m.under;
@@ -5057,11 +5095,12 @@
       const inputs = this.inputs;
       if (inputs.length < 2) return;
       const rect = this.getBoundingClientRect();
-      const axis = trackAxis(this.writingMode, rect, inputs[0].getBoundingClientRect(), e.clientX, e.clientY);
+      const { rtl, writingMode } = this.layout;
+      const axis = trackAxis(writingMode, rect, inputs[0].getBoundingClientRect(), e.clientX, e.clientY);
       if (axis.size <= axis.thumb) return;
       const min = bound(inputs[0].min, 0);
       const max = bound(inputs[0].max, 100);
-      const value = min + alongTrack(axis.coord, axis.start, axis.size, axis.thumb, this.rtl) * (max - min);
+      const value = min + alongTrack(axis.coord, axis.start, axis.size, axis.thumb, rtl) * (max - min);
       const input = inputs[nearerThumb(value, bound(inputs[0].value, min), bound(inputs[1].value, max)) === "start" ? 0 : 1];
       input.value = value;
       e.preventDefault();
@@ -5881,23 +5920,26 @@
       this.setAttribute("required-message", value);
     }
     // The rest of the constraint API is the platform's, read straight off the internals so
-    // there is no second copy of the state to disagree with it. Without `attachInternals`
-    // there is no validation either, and a switch that always validates is the honest
-    // answer there - the form it is in has no value from it to check in the first place.
+    // there is no second copy of the state to disagree with it. Guarded per method rather than on
+    // `internals` alone, and for the same reason `apply()` guards `setFormValue`: jsdom hands out
+    // an `ElementInternals` with none of the form-associated half on it, so a truthy `internals`
+    // is not a promise that any of this is there. Without it there is no validation, and a switch
+    // that always validates is the honest answer - the form it is in has no value from it to
+    // check in the first place.
     get validity() {
       return this.internals && this.internals.validity;
     }
     get validationMessage() {
-      return this.internals ? this.internals.validationMessage : "";
+      return this.internals && this.internals.validationMessage || "";
     }
     get willValidate() {
-      return this.internals ? this.internals.willValidate : false;
+      return !!(this.internals && this.internals.willValidate);
     }
     checkValidity() {
-      return this.internals ? this.internals.checkValidity() : true;
+      return this.internals && this.internals.checkValidity ? this.internals.checkValidity() : true;
     }
     reportValidity() {
-      return this.internals ? this.internals.reportValidity() : true;
+      return this.internals && this.internals.reportValidity ? this.internals.reportValidity() : true;
     }
     /** Your own message, for the constraint the browser cannot know about. `''` clears it. */
     setCustomValidity(message) {
@@ -6239,7 +6281,8 @@
     measure() {
       if (!this.observer) return;
       const list = this.tablist;
-      const tab = this.tabs[this.selected];
+      const tabs = this.tabs;
+      const tab = tabs[selectedIndex(this.getAttribute("selected"), tabs.length)];
       if (!list || !tab) return;
       const rtl = getComputedStyle(list).direction === "rtl";
       const box = barBox(list.getBoundingClientRect(), tab.getBoundingClientRect(), this.vertical, rtl);

@@ -358,14 +358,20 @@
             },
             {
               "kind": "field",
+              "name": "layout",
+              "description": "The two things about this element's own layout that the arithmetic needs: which way the\ntrack runs, and which end of it is the start.\n\nOne read, because everything that measures wants both, and a computed style is the one\nthing here that can make the browser recalculate one. Computed style rather than\n`:dir()`, which throws on the browsers that do not know it instead of quietly not\nmatching. Read from this element and not from an input: the track and the fill are drawn\non this box in logical properties, so this is the writing mode they resolve against, and\nan input turned on its side by itself would be a thumb running one way over a track\nrunning the other.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
               "name": "rtl",
-              "description": "Whether the control runs right to left. Computed style rather than `:dir()`, which\nthrows on the browsers that do not know it instead of quietly not matching.",
+              "description": "Whether the control runs right to left.",
               "readonly": true
             },
             {
               "kind": "field",
               "name": "writingMode",
-              "description": "The writing mode the control is laid out in, which is what says whether the track runs\nacross the page or down it. Read from this element and not from an input: the track and\nthe fill are drawn on this box in logical properties, so this is the writing mode they\nresolve against, and an input turned on its side by itself would be a thumb running one\nway over a track running the other.",
+              "description": "The writing mode the control is laid out in, which is what says whether the track runs\nacross the page or down it.",
               "readonly": true
             },
             {
@@ -418,6 +424,11 @@
             },
             {
               "kind": "method",
+              "name": "showDraggedValue",
+              "description": "Redraw the bubble for the thumb being dragged, from the value alone.\n\nNothing here measures, and that is the point: a pinned bubble sits at `ratio` of the\nscale and reads out the input's own text, both of which are on the input already. The\ntwo attributes saying which way it is nudged are not rewritten either - they were read\nlive when the press drew the bubble, and neither the writing mode nor the direction\nchanges while a thumb is held.\n\nOnly for a bubble that is already showing: `tooltip=\"track\"` alone hides it on a thumb,\nand a drag is not the moment to overrule that."
+            },
+            {
+              "kind": "method",
               "name": "onTooltipDown",
               "parameters": [
                 {
@@ -462,6 +473,9 @@
                 },
                 {
                   "name": "y"
+                },
+                {
+                  "name": "measured"
                 }
               ],
               "description": "Draw the bubble for a pointer at `x`, `y`, in viewport coordinates, or hide it where the\nattribute did not ask for a bubble at that spot.\n\nA thumb reads out its input's own `value`, which the browser has already put on a step\nand written the way it writes numbers. The track is the only one with a value to work\nout, and it is worked out the way a press on the track is - same travel, same rounding -\nso the number previewed is the number a click there would produce.\n\nA drag in progress overrules the pointer: `dragging` is the thumb the press pinned this\nto, and it holds until the release. Without it the bubble answers where the pointer is,\nwhich during a drag is beside the thumb half the time."

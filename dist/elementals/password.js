@@ -65,7 +65,6 @@
       if (!control || !button) return;
       this.initialized = true;
       if (!button.hasAttribute("type")) button.type = "button";
-      button.setAttribute("aria-pressed", this.shown ? "true" : "false");
       if (!button.hasAttribute("aria-label") && !button.textContent.trim()) button.setAttribute("aria-label", this.label);
       if (!button.hasAttribute("aria-controls")) {
         if (!control.id) control.id = "password-elemental-" + ++passwordCount;
@@ -80,20 +79,21 @@
       this.onClick = this.onClick.bind(this);
       this.onForm = this.onForm.bind(this);
       this.addEventListener("click", this.onClick);
-      if (control.form) {
-        control.form.addEventListener("submit", this.onForm);
-        control.form.addEventListener("reset", this.onForm);
+      this.form = control.form;
+      if (this.form) {
+        this.form.addEventListener("submit", this.onForm);
+        this.form.addEventListener("reset", this.onForm);
       }
       this.render();
     }
     disconnectedCallback() {
       if (!this.initialized) return;
       this.removeEventListener("click", this.onClick);
-      const control = this.control;
-      if (control && control.form) {
-        control.form.removeEventListener("submit", this.onForm);
-        control.form.removeEventListener("reset", this.onForm);
+      if (this.form) {
+        this.form.removeEventListener("submit", this.onForm);
+        this.form.removeEventListener("reset", this.onForm);
       }
+      this.form = null;
       clearTimeout(this.announceTimer);
       this.initialized = false;
     }
