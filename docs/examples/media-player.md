@@ -35,7 +35,7 @@ point: neither of them knows what media is, and neither needed a line of new cod
   </toolbar-elemental>
 </figure>
 
-<p class="demo-credit">Audio: <a href="https://github.com/mdn/shared-assets">MDN's shared assets</a>, the same source the <a href="video-gallery.html">video gallery</a> plays from.</p>
+<small>Audio: <a href="https://github.com/mdn/shared-assets">MDN's shared assets</a>, the same source the <a href="video-gallery.html">video gallery</a> plays from.</small>
 
 _<kbd>Tab</kbd> through the bar and it is three stops for four controls: the two buttons share
 one, because that is what a toolbar is, and each slider keeps its own. <kbd>→</kbd> on the play
@@ -260,7 +260,7 @@ Same markup, same glue, `<video>` instead of `<audio>`:
   </toolbar-elemental>
 </figure>
 
-<p class="demo-credit">Video: <em>Friday</em>, from <a href="https://github.com/mdn/shared-assets">MDN's shared assets</a> — convenient for docs, wrong for a site you ship: host your own.</p>
+<small>Video: <em>Friday</em>, from <a href="https://github.com/mdn/shared-assets">MDN's shared assets</a> — convenient for docs, wrong for a site you ship: host your own.</small>
 
 ```html
 <figure class="player">

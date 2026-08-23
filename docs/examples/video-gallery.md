@@ -30,7 +30,7 @@ worked — and **nothing reaches a player until the press**: no script, no cooki
   </dialog>
 </modal-elemental>
 
-<p class="demo-credit">Open movies by the <a href="https://studio.blender.org/films/">Blender Foundation</a>, CC BY. The clip and its captions are MDN's, from <a href="https://github.com/mdn/shared-assets">mdn/shared-assets</a>. The posters are the players' own — <a href="#what-it-still-costs">what that costs</a> is below.</p>
+<small>Open movies by the <a href="https://studio.blender.org/films/">Blender Foundation</a>, CC BY. The clip and its captions are MDN's, from <a href="https://github.com/mdn/shared-assets">mdn/shared-assets</a>. The posters are the players' own — <a href="#what-it-still-costs">what that costs</a> is below.</small>
 
 ## The markup
 

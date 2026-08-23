@@ -40,7 +40,7 @@ on.
   </dialog>
 </modal-elemental>
 
-<p class="demo-credit">Photographs by Daniel Genser, Nicholas Swanson, Isaak Dury, May Pamintuan, Dorothy Lin, Gozha Net, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a>.</p>
+<small>Photographs by Daniel Genser, Nicholas Swanson, Isaak Dury, May Pamintuan, Dorothy Lin, Gozha Net, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a>.</small>
 
 ## The markup
 
@@ -222,7 +222,7 @@ at once. That is true of the version above too; at two hundred pictures it stops
 and building only the slides on either side of the one you opened is the next thing this
 example would have to grow.
 
-<p class="demo-credit">Same photographs as above, served through <a href="https://picsum.photos">Lorem Picsum</a>.</p>
+<small>Same photographs as above, served through <a href="https://picsum.photos">Lorem Picsum</a>.</small>
 
 <script src="{{ relativePathPrefix }}dist/elementals/carousel.js"></script>
 <script src="{{ relativePathPrefix }}dist/elementals/modal.js"></script>

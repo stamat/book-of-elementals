@@ -368,7 +368,7 @@ picture is the whole of it. The close button is not in the markup because the el
 it; the CSS above only repaints it, since a cross in the page's own text colour is a cross
 nobody finds against a photograph.
 
-<p class="demo-credit">Photograph by Marcin Czerwinski, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a>.</p>
+<small>Photograph by Marcin Czerwinski, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a>.</small>
 
 ### A video
 
@@ -468,7 +468,7 @@ modal-elemental > dialog#talk { --modal-elemental-max-width: 40rem; padding: 0.5
 #talk iframe { display: block; width: 100%; aspect-ratio: 16 / 9; height: auto; border: 0; }
 ```
 
-<p class="demo-credit"><em>Big Buck Bunny</em> © Blender Foundation, <a href="https://peach.blender.org/">peach.blender.org</a>, CC BY 3.0 — played here from YouTube, which is a third party this page hands nothing to until you press the button.</p>
+<small><em>Big Buck Bunny</em> © Blender Foundation, <a href="https://peach.blender.org/">peach.blender.org</a>, CC BY 3.0 — played here from YouTube, which is a third party this page hands nothing to until you press the button.</small>
 
 Vimeo is the same shape, with the parameter it uses for the same thing:
 

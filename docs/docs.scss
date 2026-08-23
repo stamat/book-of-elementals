@@ -729,12 +729,6 @@ switch-elemental:not([checked]) + .demo-state .on {
   }
 }
 
-// Demo-only: the line crediting the photographers under the gallery.
-.demo-credit {
-  font-size: 0.875rem;
-  color: var(--fg-muted);
-}
-
 // Demo-only: the video gallery example - posters that open one dialog with a player built
 // into it. Sixteen by nine everywhere, since that is what all three sources hand back and a
 // grid of two ratios is a grid nobody lines up.

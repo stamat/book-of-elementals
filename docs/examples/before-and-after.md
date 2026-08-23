@@ -54,8 +54,7 @@ splitter-elemental.reveal { container-type: inline-size; }
 .reveal img { display: block; inline-size: 100%; }
 ```
 
-_Photograph by Daniel Genser, from [Unsplash](https://unsplash.com/license), served through
-[Lorem Picsum](https://picsum.photos)._
+<small>Photograph by Daniel Genser, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a>.</small>
 
 **Nothing is being revealed.** The two panes genuinely resize, exactly as they do on the
 [splitter's own page](../elementals/splitter.html); the illusion is that each one holds a picture

@@ -367,7 +367,7 @@ not, because they are dim there, and a control that looks spent must not still a
   </ul>
 </carousel-elemental>
 
-<p class="demo-credit">Photographs by Caroline Sada, Dorothy Lin, Kenneth Thewissen, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a>.</p>
+<small>Photographs by Caroline Sada, Dorothy Lin, Kenneth Thewissen, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a>.</small>
 
 ```html
 <carousel-elemental aria-label="Rotating places" autoplay interval="4000"
@@ -431,7 +431,7 @@ One custom property, and no attribute:
   </ul>
 </carousel-elemental>
 
-<p class="demo-credit">Photographs by Rick Waalders, Guillaume, Alexander Shustov, Rula Sibai, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a>.</p>
+<small>Photographs by Rick Waalders, Guillaume, Alexander Shustov, Rula Sibai, from <a href="https://unsplash.com/license">Unsplash</a>, served here through <a href="https://picsum.photos">Lorem Picsum</a>.</small>
 
 ```css
 carousel-elemental {
