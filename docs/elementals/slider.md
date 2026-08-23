@@ -127,7 +127,7 @@ scale. It goes again when the attribute does, or when the element leaves the pag
 | `gap`       | number                 | Get/set. Writes the attribute.                                                |
 | `format`    | `?function`            | Get/set. What the `tooltip` bubble says — `(value, element)`, returning what lands in it. [See below](#saying-something-other-than-the-number) |
 | `clamp(moved)` | —                   | Re-apply the gap after moving a value from script. `'start'` or `'end'` says which one gives way. |
-| `apply()`   | —                      | Re-read the inputs. Call it after moving one from script, or swapping one out. |
+| `apply()`   | —                      | Re-read the inputs. Call it after moving a value, `min` or `max` from script, or swapping an input out. |
 
 ### Events
 
@@ -153,6 +153,12 @@ control, not this element's. Call `apply()` after:
 price.inputs[1].value = 600;
 price.apply();
 ```
+
+The same call covers a scale that moved rather than a value: the fill is a ratio against
+`min` and `max`, so a new `max` leaves every one of them stale even though no thumb was
+touched. A media scrubber does both — `max` once the duration is known, then the value on
+every tick — and the [media player example](../examples/media-player.html#a-value-written-from-script-has-to-say-so)
+is that pair written out.
 
 ### Styling hooks
 

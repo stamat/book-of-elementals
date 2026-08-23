@@ -143,7 +143,7 @@
       this.onTooltipUp = this.onTooltipUp.bind(this);
       this.tooltipX = null;
       this.tooltipElement = null;
-      this.format = null;
+      if (!("format" in this)) this.format = null;
       this.dragging = -1;
       this.pressed = false;
       this.addEventListener("input", this.onInput, true);

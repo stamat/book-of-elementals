@@ -380,7 +380,12 @@ export class SliderElemental extends ElementBase {
     // step - and none of that fits in a string a browser parses. A plain field rather than an
     // accessor that redraws on assignment: the bubble is drawn on every pointer move, so the
     // only stale window is a pointer sitting perfectly still across the assignment.
-    this.format = null;
+    //
+    // Defaulted only where the page has not already answered. `define` waits for
+    // `DOMContentLoaded`, so a classic `<script>` assigning `format` runs before this element
+    // upgrades - which is the ordinary order for a page that loads the bundle and then wires
+    // it - and a default written flat over that assignment is a formatter silently lost.
+    if (!('format' in this)) this.format = null;
     // The thumb a press pinned the bubble to, or `-1` for no drag in progress.
     this.dragging = -1;
     // Whether a pointer is currently held down, which is the whole of a touch bubble's life:

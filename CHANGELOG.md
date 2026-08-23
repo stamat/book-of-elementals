@@ -104,6 +104,27 @@ may already be targeting**, since neither shows up in a function signature.
   and deliberately: an element appended and then given children later, which is markup arriving
   in an order nothing can see the end of.
 
+- **The media player example's scrubber never painted its fill.** Its glue wrote
+  `seek.value = media.currentTime` on every `timeupdate` and `seek.max` once the duration was
+  known, and neither fires an event — so the thumb slid, drawn by the browser, over a fill
+  frozen at zero. Both writes now call `apply()`, which is what that method is for and what
+  [`<media-player>`](https://github.com/stamat/media-player) does in its own `paint()`. The
+  page has a section on it, and `apply()`'s row in the slider docs now names a moved `min` or
+  `max` as well as a moved value. The example also gained a `<video>` alongside the `<audio>`
+  — same markup, same glue, one `querySelector("audio, video")` — and `tooltip` bubbles on
+  both sliders: the time under the pointer anywhere on the scrubber's track, and a per cent
+  on the volume.
+
+- **`<slider-elemental>` threw away a `format` the page had already set.** The property is
+  defaulted to `null` on upgrade, and since the fix above holds registration until
+  `DOMContentLoaded`, a classic `<script>` that includes the bundle and then assigns
+  `slider.format = clock` runs *before* the element upgrades — so the default landed on top of
+  the assignment and the bubble read `72` where the page had said `1:12`. It fails silently:
+  nothing throws, and the formatter is simply never called. The default is now written only
+  where the page has not answered already. No DOM or CSS change. Not covered by a unit test —
+  the suite runs under Node with no DOM, which is the boundary `index.test.js` states in its
+  header; verified in Chromium against the [media player example](https://stamat.github.io/book-of-elementals/examples/media-player.html).
+
 - **`<tooltip-elemental>`'s options panel reserved 31px too little.** The pin was measured
   before `--tooltip-elemental-viewport-margin` was added, and one more custom property is one
   more row — a docs-only layout shift, on the one preview that opens on its options tab.

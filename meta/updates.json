@@ -8,8 +8,8 @@
     "updated": "2026-08-17T21:17:11.392Z"
   },
   "docs/elementals/carousel.md": {
-    "hash": "9cbdd88160642602a7a58f47b0d7745f751a6302",
-    "updated": "2026-08-17T21:17:13.863Z"
+    "hash": "123bdeffa36b731cfb83a4d48e9ebea9fb5f7558",
+    "updated": "2026-08-23T15:27:40.493Z"
   },
   "docs/elementals/checkbox-group.md": {
     "hash": "565004aa51680af84ec5beb46770b1c80afe5f2f",
@@ -24,8 +24,8 @@
     "updated": "2026-08-17T22:49:20.364Z"
   },
   "docs/elementals/disclosure.md": {
-    "hash": "ca3bde90565d9ddea1eb3d6d305927cbb239e6d1",
-    "updated": "2026-08-17T21:17:25.899Z"
+    "hash": "2470d32172d6ea4111fc2b04b300ba6d7c749004",
+    "updated": "2026-08-23T15:27:40.493Z"
   },
   "docs/elementals/field.md": {
     "hash": "ce8d02951a9bcac4584873cf003e424db3a6dc05",
@@ -44,8 +44,8 @@
     "updated": "2026-08-17T21:17:34.758Z"
   },
   "docs/elementals/modal.md": {
-    "hash": "dcec99d6b7c8963ad3d8c57d551e5c9185f9bef1",
-    "updated": "2026-08-20T12:02:36.106Z"
+    "hash": "c45e258f6805373f27ad97ad6bf38d0b01b2946f",
+    "updated": "2026-08-23T15:27:40.492Z"
   },
   "docs/elementals/navbar.md": {
     "hash": "17206d6416c36831426f5856633d13c34e69b597",
@@ -68,16 +68,16 @@
     "updated": "2026-08-17T21:17:49.590Z"
   },
   "docs/elementals/slider.md": {
-    "hash": "8a00803a7b31e58f8facd20378315148499e9797",
-    "updated": "2026-08-17T21:17:52.161Z"
+    "hash": "978b2d5219ce37c5908c0d5923fbe6aa78e824df",
+    "updated": "2026-08-23T15:29:29.854Z"
   },
   "docs/elementals/sortable-table.md": {
     "hash": "999398a7f5217f460e4e1c77b232e6cc5b307660",
     "updated": "2026-08-23T13:25:30.311Z"
   },
   "docs/elementals/splitter.md": {
-    "hash": "fc525258a24229d3cd4ecaa3b1e372cb366fc73e",
-    "updated": "2026-08-23T14:57:40.966Z"
+    "hash": "fdd24bb06a45a3fe4dcb097af1f796259647f824",
+    "updated": "2026-08-23T15:31:36.580Z"
   },
   "docs/elementals/suggest.md": {
     "hash": "fbb5aaceb888f1ac22a5a8913f0b1462829760ac",
@@ -116,16 +116,16 @@
     "updated": "2026-08-06T15:28:10.367Z"
   },
   "docs/examples/lightbox.md": {
-    "hash": "dd3c3336350051789d4dab35bc85a2f561d70c3d",
-    "updated": "2026-08-09T22:26:34.584Z"
+    "hash": "7acd7a9b5e8ddb8e256596427cc8b560ddc00fd0",
+    "updated": "2026-08-23T15:27:40.492Z"
   },
   "docs/examples/markdown-editor.md": {
     "hash": "68a22c1f97724b1eebb2f67ed1380113058c18b4",
     "updated": "2026-08-17T21:18:15.363Z"
   },
   "docs/examples/media-player.md": {
-    "hash": "c856f1bfff191e432ccfa02fc295c738e836d118",
-    "updated": "2026-08-23T14:59:02.869Z"
+    "hash": "ab0583218546b151a306b52404cffce6ede916c0",
+    "updated": "2026-08-23T15:37:01.547Z"
   },
   "docs/examples/sidebar-drawer.md": {
     "hash": "deb47d89b912e4de813c64a1afe7110c13d99ec7",

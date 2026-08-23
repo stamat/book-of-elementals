@@ -867,8 +867,11 @@ switch-elemental:not([checked]) + .demo-state .on {
 // Demo-only: the media player example — a control bar over an `<audio>`. The elements do the
 // toolbar and the two track fills; what is left is a row, two icons, and the swap between the
 // browser's player and this one.
+// The block-start margin is the room the scrubber's `tooltip` bubble hangs in: it is placed
+// above the slider and outside its box, which over the audio player is the paragraph before the
+// figure and over the video is the bottom of the picture.
 .demo-media {
-  margin: 0 0 1.5rem;
+  margin: 2.25rem 0 1.5rem;
 
   // Held, not hidden. The `<audio controls>` is what a reader with no script gets, and the
   // script takes it away by setting `controls = false` — so this element goes from a player to
@@ -876,6 +879,15 @@ switch-elemental:not([checked]) + .demo-state .on {
   > .demo-media-audio {
     display: block;
     inline-size: 100%;
+  }
+
+  > .demo-media-video {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    margin-block-end: 0.5rem;
+    background: color-mix(in srgb, CanvasText 12%, Canvas);
+    border-radius: 0.5rem;
   }
 }
 
