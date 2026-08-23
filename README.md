@@ -444,6 +444,60 @@ The element is `display: contents`, so dropping it around existing markup change
 no layout. With scripting off the region is simply visible and the button is not
 offered, which for a long description is the right way round.
 
+## `<field-elemental>`
+
+Wrap a label and a control, and the browser's refusal to submit becomes a sentence under the
+field — tied to it, announced, and yours to style.
+
+```html
+<field-elemental>
+  <label for="email">Email address</label>
+  <input type="email" id="email" name="email" required />
+</field-elemental>
+```
+
+No attributes. The constraints are already on the control — `required`, `type`, `pattern`,
+`minlength` — and none of them is re-implemented here; what the platform leaves undone is the
+half after the refusal. The native bubble cannot be styled, disappears the moment the reader
+clicks the field to fix it, is shown for the first invalid control and no other, and is not
+reliably announced. So every form on the web either lives with it or hand-writes a replacement,
+and the replacement is where the accessibility goes: a red paragraph that no `aria` attribute
+ties to the field trades
+[WCAG 3.3.1 Error Identification](https://www.w3.org/WAI/WCAG22/Understanding/error-identification.html)
+for a colour.
+
+Invalid, the field ends up as this — the control given an `id` if it had none, the message
+taking that `id` plus `-error`:
+
+```html
+<input type="email" id="email" name="email" required
+       aria-invalid="true" aria-describedby="email-error" />
+<p class="field-elemental-error" id="email-error">Please fill out this field.</p>
+```
+
+Valid again, the `<p>` is `hidden` and empty, `aria-invalid` comes off rather than going to
+`false`, and `aria-describedby` goes back to whatever it held — a hint you wrote is never lost
+and never left describing a field with nothing wrong with it.
+
+`aria-describedby` and not `aria-errormessage`, which is the attribute written for exactly this
+and still not the one that works:
+[Adrian Roselli's testing](https://adrianroselli.com/2023/04/exposing-field-errors.html) found
+it "generally not exposed when navigating through fields" against `aria-describedby` being
+"consistently exposed". There is no live region on the message either — `aria-describedby` is
+already announced when focus leaves the field, and `aria-live` on top of it is the same sentence
+twice in NVDA and JAWS and stops VoiceOver reading the description at all.
+
+When it speaks is neither the bubble's one moment nor a validator's every keystroke: a refused
+submit always says why; focus leaving says why only if something was typed in; typing never
+*starts* a complaint but does end one that is answered. Write the `<p class="field-elemental-error">`
+yourself with a server's message in it and the element adopts it — same wiring, no second code
+path, and a working page with no script.
+
+There is no message vocabulary — `setCustomValidity()` is the platform's own, and whatever it
+holds is what appears. It styles no control: `[aria-invalid="true"]` is on the control the whole
+time the message is up, and the rim, the ring and the tint are your CSS. `field-validity` fires
+whenever the message appears, changes or goes.
+
 ## `<marquee-elemental>`
 
 A strip that scrolls forever — a logo wall, a ticker — built out of the list you
@@ -673,6 +727,50 @@ opens by talking you out of itself, and links announced as menu items are links
 no longer. Panels stay on screen through CSS anchor positioning, with no script
 involved. Without JavaScript the whole thing is a nested list of visible links,
 which is what it was underneath all along.
+
+## `<password-elemental>`
+
+A reveal button for a password field: the state in `aria-pressed`, the change announced, and the
+mask back on before the value is submitted.
+
+```html
+<password-elemental>
+  <input type="password" id="pw" name="password" autocomplete="current-password" />
+  <button type="button"><span class="visually-hidden">Show password</span></button>
+</password-elemental>
+```
+
+| Attribute      | Type    | Default                     | Description                                                              |
+| -------------- | ------- | --------------------------- | ------------------------------------------------------------------------ |
+| `shown`        | boolean | `false`                     | Whether the value is visible. Reflected, and settable from script.       |
+| `label`        | string  | `Show password`             | The button's accessible name. Fixed on purpose — `aria-pressed` carries the state. |
+| `shown-text`   | string  | `Your password is visible`  | What the live region says on reveal.                                     |
+| `hidden-text`  | string  | `Your password is hidden`   | What it says when the mask goes back on.                                 |
+
+No APG pattern, because there is no widget: a `<button>` next to an `<input>`, both already
+accessible. What is missing is the state. Most reveal buttons swap an eye for a crossed-out eye,
+which tells a sighted reader which way round it is and nobody else; the single most
+announce-worthy change on the page is announced nowhere.
+
+**The name is fixed and `aria-pressed` carries the state**, which is the one thing the prior art
+disagrees about. [GOV.UK](https://design-system.service.gov.uk/components/password-input/) swaps
+`Show` ⇄ `Hide` and leaves the state implied; [Make Things Accessible](https://www.makethingsaccessible.com/guides/make-an-accessible-password-reveal-input/)
+keeps the name and uses `aria-pressed`; some do both, which says it twice. Of the two that are
+self-consistent this takes the toggle — the state is exposed programmatically rather than
+inferred from a verb, and nothing changes under a reader's focus, where a swapped name is
+re-announced by some screen readers and silently not by others. A `role="status"` region says
+which it now is on every press; `status` and not `alert`, because the reader pressed the button.
+
+**Submitting the form masks it again, always, and that is not configurable.** A revealed field
+posts from an `<input type="text">`, and browsers remember what was typed into text fields — a
+reader who revealed their password would be offered it back in an autofill list on some
+unrelated page later. Nothing is traded for it: `submit` fires only when the form really is
+being submitted, so a refused submit leaves the field exactly as the reader left it.
+
+It nests inside [`<field-elemental>`](#field-elemental) and neither knows about the other. It
+does not measure strength, generate a password, confirm a second field, or style the input.
+Without script it is a field and a button that does nothing — so write the button as
+`type="button"`, which is what keeps it from submitting the form.
 
 ## `<progress-elemental>`
 
@@ -985,6 +1083,53 @@ hidden with `hidden="until-found"`.
 The element is a `grid` with every panel in the same cell, which is the one layout it
 insists on: panels laid out one after another mean a page that jumps by the height of the
 last one every time you change tabs. `vertical` puts the strip beside them instead of above.
+
+## `<tilt-elemental>`
+
+The 3D tilt every product page has: a card that leans away from the pointer, with a highlight
+travelling across it and whichever parts you name standing out of the surface.
+
+```html
+<tilt-elemental glare max="12">
+  <article class="card">
+    <h3 data-tilt-depth="40">Standing out of it</h3>
+    <p data-tilt-depth="10">Not as far</p>
+  </article>
+</tilt-elemental>
+```
+
+| Attribute | Type      | Default | Description                                                                  |
+| --------- | --------- | ------- | ---------------------------------------------------------------------------- |
+| `max`     | number    | `10`    | Degrees at the edge of the box. Anything not a number at or above zero is the default. |
+| `axis`    | `x`, `y`  | both    | Keep one rotation, drop the other. An unrecognised value is both.            |
+| `reverse` | boolean   | `false` | Lean towards the pointer instead of away. The glare does not move.          |
+| `glare`   | boolean   | `false` | Draw a highlight that follows the pointer across the card.                  |
+
+No APG pattern, because there is no widget — nothing is operated, and the content is the same
+content lying flat. What there is instead is an obligation nothing else on this shelf meets:
+[WCAG 2.2 2.3.3 Animation from Interactions](https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html)
+says motion triggered by interaction has to be able to be turned off unless it is essential, and
+a decorative tilt never is. **`prefers-reduced-motion` is read and then followed live**: with it
+on, no pointer handler is attached at all.
+
+Mark any descendant `data-tilt-depth="40"` and it rises 40 pixels out of the surface while the
+card leans, then settles back with it. A layer only rises if every box between it and the card is
+in the same 3D space, so the stylesheet puts `preserve-3d` on every box that contains one — but
+`overflow` other than `visible` or `clip` forces it back to `flat`, and so do `filter`,
+`opacity` below 1, `clip-path`, `mix-blend-mode`, `isolation: isolate` and paint containment.
+The usual reflex for a rounded card is `overflow: hidden`, and that is exactly the one that
+silently costs you the layers; round it with `border-radius` alone, which is what the theme does.
+
+**The tilt is a CSS transition, not a loop.** Every library on this shelf runs a `lerp` inside
+`requestAnimationFrame` for the same trailing feel; a transition on `transform` is the compositor
+doing it, off the main thread, and it stops on its own. The theme's shadow is a blurred fill on a
+pseudo-element that only translates for the same reason: a `box-shadow` whose offset is a custom
+property is repainted on the main thread every frame, and the paint counts are on the docs page.
+
+It does not flicker at its own edge, which is the stutter every tilt card has: the box that
+decides is the box the card has when it is *flat*, read at the first pointer event of a hover and
+kept for the length of it. The pointer is a mouse or it is nothing — no touch, no gyroscope, and
+no keyboard trigger, because motion a reader cannot avoid triggering is what 2.3.3 is about.
 
 ## `<toolbar-elemental>`
 
