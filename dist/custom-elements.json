@@ -5938,6 +5938,223 @@
     },
     {
       "kind": "javascript-module",
+      "path": "src/elementals/sortable-table/index.js",
+      "declarations": [
+        {
+          "kind": "variable",
+          "name": "DEFAULT_NOTE",
+          "type": {
+            "text": "string"
+          },
+          "default": "'Column headers with a button sort the table by that column.'",
+          "description": "What the caption says about the buttons, when the page does not say it itself."
+        },
+        {
+          "kind": "function",
+          "name": "sortKey",
+          "parameters": [
+            {
+              "name": "cell",
+              "type": {
+                "text": "Element|null|undefined"
+              }
+            }
+          ],
+          "description": "The key a cell sorts by: what the author put in `data-sort-value`, or the text in the cell.\n\nThe attribute is the escape hatch and it is the only one, because it is the only one that\ncan be right. A date reads `3 Aug 2026` and sorts by `2026-08-03`; a price reads `$1,200`\nand sorts by `1200` - the collator below is numeric-aware, but `$1,200` against `$900`\ncompares `$1` against `$9` and puts the larger first, which is the bug every home-made\ntable sorter ships.\n\n`??` rather than `||`, so `data-sort-value=\"\"` is an author saying this cell sorts as empty\nrather than a value falsy enough to fall through to the text beside it.",
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "sortOrder",
+          "parameters": [
+            {
+              "name": "keys",
+              "type": {
+                "text": "string[]"
+              }
+            },
+            {
+              "name": "descending",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "collator",
+              "description": "Anything with a `compare(a, b)`; `Intl.Collator` in\nthe browser, and injectable so the ordering can be tested without one.",
+              "optional": true,
+              "type": {
+                "text": "{compare: function}"
+              }
+            }
+          ],
+          "description": "The order a list of keys sorts into, as indices into the list.\n\nIndices rather than the sorted keys, because what is being reordered is rows and the keys\nare only what they are being ordered by.\n\n**Stable, by carrying the original index into the tiebreak.** `Array.prototype.sort` is\nrequired to be stable since ES2019 and every target here is, but the stability that matters\nis across *repeated* sorts: sort by name, then by size, and the rows within one size are\nexpected to still be in name order. That only holds if equal keys never move, which the\ntiebreak is what guarantees rather than what the engine happens to do.",
+          "return": {
+            "type": {
+              "text": "number[]"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<sortable-table-elemental>` custom element.\n\nA `<table>` whose column headers sort it. You write the table; it writes the buttons.\n\nThere is no APG pattern here, because `<table>` already is one - the roles, the row and\ncolumn relationships and the header associations are all the element's own, and nothing here\nreplaces any of them. What this adds is the one thing the markup has no way to say, and it is\nexactly what the APG's\n[sortable table example](https://www.w3.org/WAI/ARIA/apg/patterns/table/examples/sortable-table/)\ndescribes: the header text wrapped in a `<button>`, `aria-sort` on the column that is sorted,\nand a note in the `<caption>` saying what the buttons do - once, rather than repeated into\nevery button's name, which is that example's own reasoning and the reason the buttons here are\nnamed by their header text and nothing else.\n\n**There is no live region, and that is a decision rather than an omission.** The example this\nfollows has none, and the reason it needs none is that the rows reordering *is* the result of\npressing the button, not a message about it -\n[WCAG 2.2 4.1.3](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html) is written\nfor changes that happen without a control being operated. `aria-sort` is where the state\nlives, on the column header, which is where a reader goes to find it.\n\n**The markup's `aria-sort` is believed rather than re-sorted.** A table that arrives already\nordered was ordered by the server, possibly by a key that is not in the DOM at all - so an\nelement that re-sorted it on upgrade would silently reorder correct data. It adopts the state\nand leaves the rows alone; `data-sort-value` is how a page makes the two agree.\n\nLight DOM, no shadow root. With no script it is your table, sorted however it arrived, and no\nbuttons - which is a table, and a working page.\n\nponytail: one comparator, no `type` attribute. `Intl.Collator` with `numeric: true` puts\n`item 2` before `item 10` and `9` before `100` without being told which column is which, and\nan ISO date sorts correctly as text. What it cannot do - a currency symbol, a thousands\nseparator, a date written for humans - is `data-sort-value`, which one attribute covers and a\ncolumn-type vocabulary would cover worse.\n\nponytail: no multi-column sort, no sort-on-load, no persistence, no paging. A second sort key\nis a comparator the markup has nowhere to put, and the rest are a data grid.",
+          "name": "SortableTableElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. The arrow on the sorted column.",
+              "name": "--sortable-table-elemental-indicator-color",
+              "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<opacity>"
+              },
+              "description": "Theme. How visible the arrow is on a column that is only being hovered or focused - the affordance, shown before the column is the sorted one.",
+              "name": "--sortable-table-elemental-hint-opacity",
+              "default": "0.35"
+            }
+          ],
+          "slots": [
+            {
+              "description": "One `<table>`, with a `<thead>`. A `<th>` marked `data-sort=\"none\"` keeps its text and gets no button; a `<td>` or `<th>` in the body marked `data-sort-value` sorts by that instead of by its text.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "noteText",
+              "description": "The sentence appended to the caption."
+            },
+            {
+              "kind": "field",
+              "name": "table",
+              "description": "The table. Direct child, so a table inside a cell of this one is not mistaken for it.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "headers",
+              "description": "The header cells that carry the buttons: the last row of the `<thead>`.\n\nThe last rather than the first, because a table with a grouped header has a top row of\nspanning labels over a bottom row of real columns, and only the bottom row has one column\neach. A single-row header is its own last row, so the common case pays nothing for it.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "body",
+              "description": "The rows that get reordered. The first `<tbody>` only - a table with several is using them\nto group, and moving a row between groups would be sorting away the grouping.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "description": "Put a button in every sortable header, and the note in the caption.\n\nThe button takes the header's existing nodes rather than its text, so an icon, a `<span>`\nor an abbreviation in there survives and keeps whatever the page styled it with."
+            },
+            {
+              "kind": "method",
+              "name": "onClick",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "sort",
+              "parameters": [
+                {
+                  "name": "index",
+                  "description": "Which header, by position in the header row.",
+                  "type": {
+                    "text": "number"
+                  }
+                },
+                {
+                  "name": "descending",
+                  "type": {
+                    "text": "boolean"
+                  }
+                }
+              ],
+              "description": "Reorder the rows by one column, and say so on the header.\n\nThe rows are moved with a `DocumentFragment` rather than appended one at a time: every\n`append` on a live `<tbody>` is a mutation the page can be observing and a layout the\nbrowser may decide to run, and a hundred-row table sorts a hundred times over. Built off\nscreen it is one insertion.\n\nNothing is measured or cached between sorts. The keys are read from the DOM every time,\nbecause the DOM is where the page may have just changed them - a cached key set is a table\nthat sorts by what a cell used to say."
+            },
+            {
+              "kind": "method",
+              "name": "collator",
+              "description": "The comparator. Numeric-aware, so `item 10` sorts after `item 2` and a column of plain\nnumbers sorts as numbers without being told that is what it is.\n\nBuilt per sort rather than held, and pointed at the document's own `lang`: a page that\nswaps its language has swapped how its own words collate, and one built once at upgrade\nwould be sorting the new language by the old one's rules. `undefined` where there is no\n`lang`, which is `Intl`'s own way of saying \"the runtime's\"."
+            }
+          ],
+          "events": [
+            {
+              "name": "sortable-table-sort",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "The table has been re-sorted by a press on a header button. `detail.column` is the header's index in its row, `detail.key` the header's text, and `detail.direction` `ascending` or `descending`."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "note-text",
+              "type": {
+                "text": "string"
+              },
+              "description": "The sentence appended to the `<caption>`, off screen, explaining what the header buttons are. Set it to say it in your language, or to say it differently.",
+              "default": "Column headers with a button sort the table by that column."
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "sortable-table-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "DEFAULT_NOTE",
+          "declaration": {
+            "name": "DEFAULT_NOTE",
+            "module": "src/elementals/sortable-table/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "sortKey",
+          "declaration": {
+            "name": "sortKey",
+            "module": "src/elementals/sortable-table/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "sortOrder",
+          "declaration": {
+            "name": "sortOrder",
+            "module": "src/elementals/sortable-table/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "SortableTableElemental",
+          "declaration": {
+            "name": "SortableTableElemental",
+            "module": "src/elementals/sortable-table/index.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/elementals/splitter/index.js",
       "declarations": [
         {
@@ -8351,6 +8568,239 @@
           "declaration": {
             "name": "TooltipElemental",
             "module": "src/elementals/tooltip/index.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/tree-view/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "treeMove",
+          "parameters": [
+            {
+              "name": "nodes",
+              "description": "Visible nodes, in document order.",
+              "type": {
+                "text": "{level: number, expanded: boolean|null}[]"
+              }
+            },
+            {
+              "name": "current",
+              "description": "Index of the focused node.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "key",
+              "description": "KeyboardEvent.key value.",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "description": "Where a key takes a tree, given the nodes a reader can currently see.\n\nThe list is the *visible* nodes in document order - a collapsed branch is not in it - which is\nwhat lets every one of these be an index step rather than a walk. `level` is how deep a node\nsits, `expanded` is `true`, `false`, or `null` for a node with no branch under it.\n\n**<kbd>→</kbd> and <kbd>←</kbd> each do two different things, and which one is the whole\npattern.** Right opens a closed branch and, on one that is already open, steps into it; left\ncloses an open branch and, on anything else, climbs out of it. So a reader who holds Right\nwalks down and in, and a reader who holds Left walks up and out, without ever needing to know\nwhich of the two a given node is going to do.\n\nStepping into an open branch is the node after it, because an open branch's children are\nvisible and therefore next - unless the branch is empty, which is a node that says it is open\nand has nothing under it, and the level check is what keeps that from stepping onto a sibling.",
+          "return": {
+            "type": {
+              "text": "{move: number}|{expand: number}|{collapse: number}|null"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<tree-view-elemental>` custom element.\n\nA nested list of links, walked with the arrow keys: the\n[APG Tree View pattern](https://www.w3.org/WAI/ARIA/apg/patterns/treeview/), over the nested\n`<ul>` a docs sidebar or a file list is already written as.\n\nThe shape is the APG's own\n[navigation tree example](https://www.w3.org/WAI/ARIA/apg/patterns/treeview/examples/treeview-navigation/):\n`role=\"treeitem\"` on the link rather than on the `<li>`, the `<li>` marked `role=\"none\"` so a\n`listitem` does not sit between the tree and its items, and the branch under a node marked\n`role=\"group\"` and tied to it with `aria-owns`. The owning is not decoration - a branch is a\n*sibling* of the node that opens it, since a `<ul>` inside an `<a>` is not markup HTML allows,\nand without `aria-owns` the branch reads as the node's sibling rather than its children.\n\n**One tab stop for the whole tree.** <kbd>Tab</kbd> enters it and <kbd>Tab</kbd> leaves it; the\narrows do the walking. The stop starts on whatever the page marked `aria-current`, so a docs\nsidebar hands the keyboard the page the reader is on rather than the top of the list.\n\n**A collapsed branch is `hidden`, not styled away.** It leaves the tab order, the accessibility\ntree and find-in-page together, which is the honest reading of collapsed: a page that hid it\nwith CSS alone would have a tree whose reader can still tab into things they cannot see.\n\n**Nothing here is selected.** This is a navigation tree - the nodes are destinations, the way\n[`<suggest-elemental>`](../suggest/index.js)'s options are - so there is no `aria-selected`,\nno selection to keep in step with focus, and no multi-select. `aria-current` is the page you\nare on and it is the page's to write; the element reads it and opens the branches above it.\n\n**Which nodes expand on a click is the markup's decision, not this element's.** A node that is\na link navigates when it is clicked, because that is what a link does, and opens on\n<kbd>→</kbd>. A node that is not a link - a `<span>` - toggles on both. So a branch whose\nheading is also a page is a link, and a branch that is only a heading is a `<span>`; a tree of\nlink branches can be opened with the keyboard but not with a mouse, which is why the recipe for\n\"both\" is a `<span>` branch with an *Overview* link as its first child.\n\nLight DOM, no shadow root. With no script it is a nested list of links, in reading order, with\nevery branch showing - which is a site map, and a working page.\n\nponytail: no `aria-level`, `aria-setsize` or `aria-posinset`. The pattern asks for them only\nwhen the nodes are not all in the DOM, and here they always are - the DOM nesting says the same\nthing, and three attributes per node that have to be rewritten every time a branch opens are\nthree chances to say it differently from the markup.\n\nponytail: no lazy loading, no checkboxes, no drag, no rename, no `*`-expands-all. The first is\nwhat the three attributes above would be for, and the rest are a file manager.",
+          "name": "TreeViewElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Theme. How far a branch sits in from the node above it.",
+              "name": "--tree-view-elemental-indent",
+              "default": "1.25rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Theme. Between one node and the next.",
+              "name": "--tree-view-elemental-gap",
+              "default": "0.15rem"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. The twisty on a node that has a branch under it.",
+              "name": "--tree-view-elemental-marker-color",
+              "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. The bar beside the node marked `aria-current`.",
+              "name": "--tree-view-elemental-current-color",
+              "default": "currentcolor"
+            }
+          ],
+          "slots": [
+            {
+              "description": "A nested `<ul>`. Each `<li>` holds one node - an `<a href>` or a `<span>` - and, where it has children, a nested `<ul>` after it. Mark an `<li>` `data-tree-open` to have that branch start open, and the node `aria-current=\"page\"` to say where the reader is.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "buffer",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "description": "What has been typed inside the type-ahead window, and the timer that ends it."
+            },
+            {
+              "kind": "field",
+              "name": "bufferTimer",
+              "type": {
+                "text": "number"
+              },
+              "default": "0"
+            },
+            {
+              "kind": "field",
+              "name": "list",
+              "description": "The list that becomes the tree. Direct child, so a tree inside a node of this one keeps its\nown.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "allNodes",
+              "description": "Every node in the tree, open or not, in document order.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "nodes",
+              "description": "The nodes a reader can currently see.\n\nRead off `hidden` rather than off a state this element keeps, so the two cannot disagree:\nwhatever is hidden is closed, including a branch the page hid itself.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "description": "Write the roles, and open the branches that should start open.\n\nThe node of an `<li>` is its first element child that is not the branch: an `<a>`, a\n`<span>`, whatever the page wrote. Taking the first rather than looking for a link is what\nlets a branch heading be a plain `<span>` - and what keeps an icon the page put beside the\nlabel from being mistaken for the node."
+            },
+            {
+              "kind": "method",
+              "name": "setOpen",
+              "parameters": [
+                {
+                  "name": "node"
+                },
+                {
+                  "name": "open"
+                },
+                {
+                  "name": "announce",
+                  "default": "true"
+                }
+              ],
+              "description": "Open or close one branch. `announce` is false while building, where a page listening for\nevery branch the markup asked for is a page told about state it wrote itself."
+            },
+            {
+              "kind": "method",
+              "name": "focusNode",
+              "parameters": [
+                {
+                  "name": "node"
+                }
+              ],
+              "description": "Move the single tab stop, and the focus with it."
+            },
+            {
+              "kind": "method",
+              "name": "onFocusIn",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ],
+              "description": "The tab stop follows focus, so a tree left by <kbd>Tab</kbd> and come back to lands where\nthe reader was rather than at the top."
+            },
+            {
+              "kind": "method",
+              "name": "onClick",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onKeyDown",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "describe",
+              "parameters": [
+                {
+                  "name": "node"
+                }
+              ],
+              "description": "One node, as `treeMove` reads it: how deep it sits, and whether it is a branch and open.\nThe depth is counted off the DOM rather than written into `aria-level`, so the nesting stays\nthe one place it is said."
+            }
+          ],
+          "events": [
+            {
+              "name": "tree-view-toggle",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "A branch has been opened or closed. `detail.open` is which, and `detail.node` is the element that owns it."
+            }
+          ],
+          "attributes": [
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "Names the tree, which the pattern requires. `aria-labelledby` does it too; one of them has to be there.",
+              "name": "aria-label"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "tree-view-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "treeMove",
+          "declaration": {
+            "name": "treeMove",
+            "module": "src/elementals/tree-view/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "TreeViewElemental",
+          "declaration": {
+            "name": "TreeViewElemental",
+            "module": "src/elementals/tree-view/index.js"
           }
         }
       ]

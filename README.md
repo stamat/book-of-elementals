@@ -34,12 +34,14 @@ holds the JavaScript helpers, this one holds the elements.
 | `<tabs-elemental>`       | [APG Tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), horizontal or vertical, on a list of in-page links |
 | `<toolbar-elemental>`    | [APG Toolbar](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/) — a row of buttons the arrows walk and Tab passes in one step |
 | `<tooltip-elemental>`    | [APG Tooltip](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/) as far as it has consensus — a description on hover and focus, still on the page without script |
+| `<tree-view-elemental>`  | [APG Tree View](https://www.w3.org/WAI/ARIA/apg/patterns/treeview/) on a nested list of links — one tab stop for the whole sidebar, and the arrows for the rest. The last pattern with no native equivalent at all |
 | `<copy-elemental>`       | No APG pattern — a `<button>`, the clipboard write behind it, and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-changes.html) every copy button forgets |
 | `<field-elemental>`      | No APG pattern — the control is already accessible and the constraints are already enforced, so this is only the half the platform leaves undone: the bubble cancelled, the browser's own message in a paragraph, and the [`aria-describedby`](https://adrianroselli.com/2023/04/exposing-field-errors.html) and `aria-invalid` that tie it to the field |
 | `<marquee-elemental>`    | No APG pattern — a strip that loops, with the copies counted against the container, kept out of the tab order with `inert`, and the [stop button](https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide.html) every other marquee leaves you to write |
 | `<password-elemental>`   | No APG pattern — a reveal button for a password field: `aria-pressed` rather than a swapped name, the change [announced](https://www.w3.org/WAI/WCAG22/Understanding/status-changes.html) rather than left to an icon, and the mask back on before the value is submitted |
 | `<progress-elemental>`   | No APG pattern — `<progress>` already is one, so this adds only what it has never had: where its fill ends as something CSS can draw with, and a second value for the part loaded but not played |
 | `<search-elemental>`     | No APG pattern — the query half of a search field: the debounce, the abort, the loading state and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html) a panel filling itself does not make |
+| `<sortable-table-elemental>` | No APG pattern — `<table>` already is one, so this adds only what the APG's own [sortable table example](https://www.w3.org/WAI/ARIA/apg/patterns/table/examples/sortable-table/) describes: a button in the header, `aria-sort` on the column, and the caption note that explains them once instead of once per column |
 | `<tilt-elemental>`       | No APG pattern — a card that leans under the pointer, with layers that rise out of it and a glare that follows, and the [`prefers-reduced-motion`](https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html) switch every other tilt library animates straight through |
 
 ## Docs
@@ -911,6 +913,50 @@ otherwise cost. `aria-valuemin` and `aria-valuemax` are deliberately not written
 [HTML-ARIA says authors should not put them on a range input](https://www.w3.org/TR/html-aria/),
 and rescaling one input to clamp it would move every pixel on it.
 
+## `<sortable-table-elemental>`
+
+Wrap a `<table>` and its column headers sort it. You write the table; it writes the buttons.
+
+```html
+<sortable-table-elemental>
+  <table>
+    <caption>Peaks</caption>
+    <thead>
+      <tr><th>Name</th><th>Height</th><th>First climbed</th><th data-sort="none">Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr><th scope="row">Midžor</th><td>2169</td><td data-sort-value="1890-07-02">2 Jul 1890</td><td>on the border</td></tr>
+    </tbody>
+  </table>
+</sortable-table-elemental>
+```
+
+| Attribute   | Type   | Default                     | Description                                        |
+| ----------- | ------ | --------------------------- | -------------------------------------------------- |
+| `note-text` | string | a sentence about the buttons | What the caption says about them, off screen.      |
+
+No APG pattern, because `<table>` already is one — the roles, the row and column relationships
+and the header associations are the element's own. This adds only what the
+[APG's sortable table example](https://www.w3.org/WAI/ARIA/apg/patterns/table/examples/sortable-table/)
+describes: the header text wrapped in a `<button>`, `aria-sort` on the sorted column, and a note
+appended to the `<caption>` saying what the buttons are — once, rather than repeated into every
+button's name. No live region: the rows reordering *is* the result of pressing the button, not a
+message about it, so 4.1.3 is not what this is. No keyboard handling either — the only
+interactive things here are `<button>`s.
+
+`data-sort="none"` on a `<th>` leaves that column without one. `data-sort-value` on a cell is what
+it sorts by, which is how `3 Aug 2026` sorts by `2026-08-03` and `$1,200` sorts above `$900`.
+There is no column-type vocabulary: one `Intl.Collator` with `numeric: true`, pointed at the
+document's `lang`, puts `item 2` before `item 10` and collates letters the way the page's language
+says. Sorting is stable, so sorting by name and then by height leaves the names in order inside
+each height.
+
+**An `aria-sort` already in the markup is believed rather than re-sorted** — a table that arrived
+ordered was ordered by the server, possibly by a key that is not in the DOM at all.
+
+No multi-column sort, no persistence, no paging, no filtering, no row selection; those are a data
+grid. Without script it is your table, in the order it arrived.
+
 ## `<splitter-elemental>`
 
 Two panes and a handle between them that gives one what it takes from the other — a sidebar you
@@ -1215,6 +1261,52 @@ caret of our own, fading in and out over `--tooltip-elemental-duration` — a fa
 `@starting-style` and `transition-behavior`, both Baseline 2024, so on Safari 17.0–17.4 it
 appears and disappears instead. Its knobs are declared on `tooltip-elemental` itself, at one
 type selector's worth of specificity, so a page can win by writing the same selector later.
+
+## `<tree-view-elemental>`
+
+A docs sidebar or a file list as a nested `<ul>` of links that <kbd>Tab</kbd> enters once and the
+arrow keys walk.
+
+```html
+<tree-view-elemental aria-label="Documentation">
+  <ul>
+    <li><a href="/">Home</a></li>
+    <li>
+      <span>Guides</span>
+      <ul>
+        <li><a href="/guides/install">Install</a></li>
+      </ul>
+    </li>
+    <li data-tree-open>
+      <span>Reference</span>
+      <ul><li><a href="/ref/api" aria-current="page">API</a></li></ul>
+    </li>
+  </ul>
+</tree-view-elemental>
+```
+
+The last [APG pattern](https://www.w3.org/WAI/ARIA/apg/patterns/treeview/) with no native
+equivalent at all: `<details>` nests and `<nav>` holds links, but neither gives you one tab stop
+for a hundred nodes, which is the whole point. The shape is the APG's own
+[navigation tree example](https://www.w3.org/WAI/ARIA/apg/patterns/treeview/examples/treeview-navigation/) —
+`role="treeitem"` on the link rather than the `<li>`, `role="none"` on the `<li>`, and the branch
+tied to its node with `aria-owns`, which is load-bearing: a branch is a *sibling* of the node that
+opens it, since a `<ul>` inside an `<a>` is not markup HTML allows.
+
+<kbd>↓</kbd><kbd>↑</kbd> walk what you can see; <kbd>→</kbd> opens a closed branch and then steps
+into it; <kbd>←</kbd> closes an open one and then climbs out of it; <kbd>Home</kbd>/<kbd>End</kbd>
+are the ends; a letter jumps. A closed branch is `hidden`, so it leaves the tab order, the
+accessibility tree and find-in-page together. No `aria-level`, `aria-setsize` or `aria-posinset` —
+the pattern wants them only when the nodes are not all in the DOM, and here they always are.
+
+`data-tree-open` on an `<li>` starts a branch open; `aria-current` on a node opens every branch
+above it and starts the tab stop there. **A node that is a link navigates when clicked and opens
+on <kbd>→</kbd>; a node that is a `<span>` toggles on both** — so a branch that is also a page is
+a `<span>` with an overview link as its first leaf.
+
+Nothing is selected: these are destinations, like [`<suggest-elemental>`](#suggest-elemental)'s
+options. No multi-select, no checkboxes, no lazy loading, no drag. Without script it is a nested
+list of links with every branch showing.
 
 ## Live samples in the docs
 

@@ -16,6 +16,8 @@ const browserGlobals = {
   setTimeout: 'readonly',
   clearTimeout: 'readonly',
   getComputedStyle: 'readonly',
+  // ECMA-402 rather than a browser API, and therefore not in eslint's browser set either.
+  Intl: 'readonly',
   setInterval: 'readonly',
   clearInterval: 'readonly'
 };

@@ -1,0 +1,223 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/sortable-table/index.js",
+      "declarations": [
+        {
+          "kind": "variable",
+          "name": "DEFAULT_NOTE",
+          "type": {
+            "text": "string"
+          },
+          "default": "'Column headers with a button sort the table by that column.'",
+          "description": "What the caption says about the buttons, when the page does not say it itself."
+        },
+        {
+          "kind": "function",
+          "name": "sortKey",
+          "parameters": [
+            {
+              "name": "cell",
+              "type": {
+                "text": "Element|null|undefined"
+              }
+            }
+          ],
+          "description": "The key a cell sorts by: what the author put in `data-sort-value`, or the text in the cell.\n\nThe attribute is the escape hatch and it is the only one, because it is the only one that\ncan be right. A date reads `3 Aug 2026` and sorts by `2026-08-03`; a price reads `$1,200`\nand sorts by `1200` - the collator below is numeric-aware, but `$1,200` against `$900`\ncompares `$1` against `$9` and puts the larger first, which is the bug every home-made\ntable sorter ships.\n\n`??` rather than `||`, so `data-sort-value=\"\"` is an author saying this cell sorts as empty\nrather than a value falsy enough to fall through to the text beside it.",
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "sortOrder",
+          "parameters": [
+            {
+              "name": "keys",
+              "type": {
+                "text": "string[]"
+              }
+            },
+            {
+              "name": "descending",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "collator",
+              "description": "Anything with a `compare(a, b)`; `Intl.Collator` in\nthe browser, and injectable so the ordering can be tested without one.",
+              "optional": true,
+              "type": {
+                "text": "{compare: function}"
+              }
+            }
+          ],
+          "description": "The order a list of keys sorts into, as indices into the list.\n\nIndices rather than the sorted keys, because what is being reordered is rows and the keys\nare only what they are being ordered by.\n\n**Stable, by carrying the original index into the tiebreak.** `Array.prototype.sort` is\nrequired to be stable since ES2019 and every target here is, but the stability that matters\nis across *repeated* sorts: sort by name, then by size, and the rows within one size are\nexpected to still be in name order. That only holds if equal keys never move, which the\ntiebreak is what guarantees rather than what the engine happens to do.",
+          "return": {
+            "type": {
+              "text": "number[]"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<sortable-table-elemental>` custom element.\n\nA `<table>` whose column headers sort it. You write the table; it writes the buttons.\n\nThere is no APG pattern here, because `<table>` already is one - the roles, the row and\ncolumn relationships and the header associations are all the element's own, and nothing here\nreplaces any of them. What this adds is the one thing the markup has no way to say, and it is\nexactly what the APG's\n[sortable table example](https://www.w3.org/WAI/ARIA/apg/patterns/table/examples/sortable-table/)\ndescribes: the header text wrapped in a `<button>`, `aria-sort` on the column that is sorted,\nand a note in the `<caption>` saying what the buttons do - once, rather than repeated into\nevery button's name, which is that example's own reasoning and the reason the buttons here are\nnamed by their header text and nothing else.\n\n**There is no live region, and that is a decision rather than an omission.** The example this\nfollows has none, and the reason it needs none is that the rows reordering *is* the result of\npressing the button, not a message about it -\n[WCAG 2.2 4.1.3](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html) is written\nfor changes that happen without a control being operated. `aria-sort` is where the state\nlives, on the column header, which is where a reader goes to find it.\n\n**The markup's `aria-sort` is believed rather than re-sorted.** A table that arrives already\nordered was ordered by the server, possibly by a key that is not in the DOM at all - so an\nelement that re-sorted it on upgrade would silently reorder correct data. It adopts the state\nand leaves the rows alone; `data-sort-value` is how a page makes the two agree.\n\nLight DOM, no shadow root. With no script it is your table, sorted however it arrived, and no\nbuttons - which is a table, and a working page.\n\nponytail: one comparator, no `type` attribute. `Intl.Collator` with `numeric: true` puts\n`item 2` before `item 10` and `9` before `100` without being told which column is which, and\nan ISO date sorts correctly as text. What it cannot do - a currency symbol, a thousands\nseparator, a date written for humans - is `data-sort-value`, which one attribute covers and a\ncolumn-type vocabulary would cover worse.\n\nponytail: no multi-column sort, no sort-on-load, no persistence, no paging. A second sort key\nis a comparator the markup has nowhere to put, and the rest are a data grid.",
+          "name": "SortableTableElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. The arrow on the sorted column.",
+              "name": "--sortable-table-elemental-indicator-color",
+              "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<opacity>"
+              },
+              "description": "Theme. How visible the arrow is on a column that is only being hovered or focused - the affordance, shown before the column is the sorted one.",
+              "name": "--sortable-table-elemental-hint-opacity",
+              "default": "0.35"
+            }
+          ],
+          "slots": [
+            {
+              "description": "One `<table>`, with a `<thead>`. A `<th>` marked `data-sort=\"none\"` keeps its text and gets no button; a `<td>` or `<th>` in the body marked `data-sort-value` sorts by that instead of by its text.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "noteText",
+              "description": "The sentence appended to the caption."
+            },
+            {
+              "kind": "field",
+              "name": "table",
+              "description": "The table. Direct child, so a table inside a cell of this one is not mistaken for it.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "headers",
+              "description": "The header cells that carry the buttons: the last row of the `<thead>`.\n\nThe last rather than the first, because a table with a grouped header has a top row of\nspanning labels over a bottom row of real columns, and only the bottom row has one column\neach. A single-row header is its own last row, so the common case pays nothing for it.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "body",
+              "description": "The rows that get reordered. The first `<tbody>` only - a table with several is using them\nto group, and moving a row between groups would be sorting away the grouping.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "description": "Put a button in every sortable header, and the note in the caption.\n\nThe button takes the header's existing nodes rather than its text, so an icon, a `<span>`\nor an abbreviation in there survives and keeps whatever the page styled it with."
+            },
+            {
+              "kind": "method",
+              "name": "onClick",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "sort",
+              "parameters": [
+                {
+                  "name": "index",
+                  "description": "Which header, by position in the header row.",
+                  "type": {
+                    "text": "number"
+                  }
+                },
+                {
+                  "name": "descending",
+                  "type": {
+                    "text": "boolean"
+                  }
+                }
+              ],
+              "description": "Reorder the rows by one column, and say so on the header.\n\nThe rows are moved with a `DocumentFragment` rather than appended one at a time: every\n`append` on a live `<tbody>` is a mutation the page can be observing and a layout the\nbrowser may decide to run, and a hundred-row table sorts a hundred times over. Built off\nscreen it is one insertion.\n\nNothing is measured or cached between sorts. The keys are read from the DOM every time,\nbecause the DOM is where the page may have just changed them - a cached key set is a table\nthat sorts by what a cell used to say."
+            },
+            {
+              "kind": "method",
+              "name": "collator",
+              "description": "The comparator. Numeric-aware, so `item 10` sorts after `item 2` and a column of plain\nnumbers sorts as numbers without being told that is what it is.\n\nBuilt per sort rather than held, and pointed at the document's own `lang`: a page that\nswaps its language has swapped how its own words collate, and one built once at upgrade\nwould be sorting the new language by the old one's rules. `undefined` where there is no\n`lang`, which is `Intl`'s own way of saying \"the runtime's\"."
+            }
+          ],
+          "events": [
+            {
+              "name": "sortable-table-sort",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "The table has been re-sorted by a press on a header button. `detail.column` is the header's index in its row, `detail.key` the header's text, and `detail.direction` `ascending` or `descending`."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "note-text",
+              "type": {
+                "text": "string"
+              },
+              "description": "The sentence appended to the `<caption>`, off screen, explaining what the header buttons are. Set it to say it in your language, or to say it differently.",
+              "default": "Column headers with a button sort the table by that column."
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "sortable-table-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "DEFAULT_NOTE",
+          "declaration": {
+            "name": "DEFAULT_NOTE",
+            "module": "src/elementals/sortable-table/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "sortKey",
+          "declaration": {
+            "name": "sortKey",
+            "module": "src/elementals/sortable-table/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "sortOrder",
+          "declaration": {
+            "name": "sortOrder",
+            "module": "src/elementals/sortable-table/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "SortableTableElemental",
+          "declaration": {
+            "name": "SortableTableElemental",
+            "module": "src/elementals/sortable-table/index.js"
+          }
+        }
+      ]
+    }
+  ]
+}

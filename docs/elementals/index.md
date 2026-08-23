@@ -38,6 +38,7 @@ element's own page.
 | [`<tabs-elemental>`](tabs.html)                                | [APG Tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), horizontal or vertical, written on a list of in-page links                                                                                            |
 | [`<toolbar-elemental>`](toolbar.html)                          | [APG Toolbar](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/) — a row of buttons the arrows walk and <kbd>Tab</kbd> passes in one step                                                                                  |
 | [`<tooltip-elemental>`](tooltip.html)                          | [APG Tooltip](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/) as far as it has consensus — a description on hover and focus, and a sentence on the page without script                                         |
+| [`<tree-view-elemental>`](tree-view.html)                      | [APG Tree View](https://www.w3.org/WAI/ARIA/apg/patterns/treeview/) on a nested list of links — one tab stop for the whole sidebar, and the arrows for the rest. The last pattern with no native equivalent at all |
 
 ## Where none does
 
@@ -53,6 +54,7 @@ that is fine.
 | [`<password-elemental>`](password.html) | No APG pattern, because there is no widget — a `<button>` beside an `<input>`, and the state neither of them carries: `aria-pressed` rather than a swapped name, a live region rather than a swapped icon, and the field masked again before the form is submitted |
 | [`<progress-elemental>`](progress.html) | No APG pattern, because `<progress>` already is one — this adds the two things it has never had: where its fill ends, as something CSS can draw with, and a second value beside it for the part that is loaded but not played |
 | [`<search-elemental>`](search.html) | No APG pattern, because the widget is next door — the query half of a search field: the debounce, the abort, the loading state, and the [status message](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html) a panel filling itself does not make |
+| [`<sortable-table-elemental>`](sortable-table.html) | No APG pattern, because `<table>` already is one — this adds only what the APG's own [sortable table example](https://www.w3.org/WAI/ARIA/apg/patterns/table/examples/sortable-table/) describes: a button in the header, `aria-sort` on the column, and the caption note that explains them once instead of once per column |
 | [`<tilt-elemental>`](tilt.html) | No APG pattern, because nothing is operated — a card that leans under the pointer, layers that rise out of it, a glare that follows, and the [reduced-motion switch](https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html) every other tilt library animates straight through |
 
 ## Not in the book

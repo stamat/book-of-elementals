@@ -1,0 +1,28 @@
+/* book-of-elementals v1.0.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
+sortable-table-elemental {
+  --sortable-table-elemental-indicator-color: currentcolor;
+  --sortable-table-elemental-hint-opacity: 0.35;
+}
+
+sortable-table-elemental:where(:defined) th > button::after {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-inline-start: 0.4em;
+  vertical-align: middle;
+  content: "";
+  border-right: 0.3em solid transparent;
+  border-bottom: 0.35em solid var(--sortable-table-elemental-indicator-color);
+  border-left: 0.3em solid transparent;
+  opacity: var(--sortable-table-elemental-hint-opacity);
+}
+
+sortable-table-elemental:where(:defined) th[aria-sort] > button::after {
+  opacity: 1;
+}
+
+sortable-table-elemental:where(:defined) th[aria-sort=descending] > button::after {
+  border-top: 0.35em solid var(--sortable-table-elemental-indicator-color);
+  border-bottom: 0;
+}
+/*# sourceMappingURL=sortable-table-theme.css.map */

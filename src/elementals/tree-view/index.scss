@@ -1,0 +1,41 @@
+// Structure for `<tree-view-elemental>`: a box, and the one affordance that is not a look. The
+// indentation, the twisty, the markers and the current-page bar are `theme.scss`, which this
+// does not import.
+
+// There is very little here on purpose. A collapsed branch is `hidden`, which is the platform's
+// own display rule and needs nothing from this file - and it is why there is no
+// `[aria-expanded="false"] + ul { display: none }` anywhere: two places saying "closed" is two
+// places to disagree, and the attribute is the one that also takes the branch out of the tab
+// order and the accessibility tree.
+
+tree-view-elemental {
+  display: block;
+}
+
+// **The markers come off here and not in the theme, because they are semantics rather than a
+// look.** The element re-roles the lists - `role="none"` on the outer one, `role="group"` on the
+// branches - and a `::marker` still drawn beside every node is the `listitem` the roles just took
+// away, showing through: measured in Chromium's accessibility tree, an unstyled tree carries a
+// `StaticText("• ")` next to each node, which is a bullet announced inside a widget that has no
+// list in it. A page that skipped the optional look must not get that.
+
+// The padding is deliberately left alone. It is what indents a branch, and without the theme it
+// is the only thing that does - so removing it here would trade a bullet for a tree with no
+// nesting visible in it at all. The theme replaces it with `--tree-view-elemental-indent`.
+tree-view-elemental[role="tree"] ul,
+tree-view-elemental[role="tree"] ol {
+  list-style: none;
+}
+
+// A node that is not a link still opens a branch when it is clicked, and nothing about a `<span>`
+// says so. The cursor is the whole of that affordance, which puts it here rather than in the
+// theme - a page that skipped the optional look would otherwise have branches that look inert.
+// Links keep the pointer they already have, and a leaf `<span>` - a node with no branch - is not
+// clickable and does not claim to be.
+tree-view-elemental [role="treeitem"][aria-expanded]:not([href]) {
+  cursor: pointer;
+
+  // A branch heading is pressed rather than read, and a double-click on one selecting its label
+  // is the selection nobody wanted. Only on the ones that toggle: a link's text is text.
+  user-select: none;
+}

@@ -5051,6 +5051,163 @@
   };
   define2("slider-elemental", SliderElemental);
 
+  // src/elementals/sortable-table/index.js
+  var DEFAULT_NOTE = "Column headers with a button sort the table by that column.";
+  function sortKey(cell) {
+    if (!cell) return "";
+    const explicit = cell.getAttribute ? cell.getAttribute("data-sort-value") : null;
+    return explicit ?? (cell.textContent || "").trim();
+  }
+  function sortOrder(keys, descending, collator) {
+    const compare = collator ? (a, b) => collator.compare(a, b) : (a, b) => a < b ? -1 : a > b ? 1 : 0;
+    return keys.map((key, index) => ({ key, index })).sort((a, b) => {
+      const by = compare(a.key, b.key);
+      if (by !== 0) return descending ? -by : by;
+      return a.index - b.index;
+    }).map((entry) => entry.index);
+  }
+  var SortableTableElemental = class extends ElementBase {
+    static get observedAttributes() {
+      return ["note-text"];
+    }
+    /** The sentence appended to the caption. */
+    get noteText() {
+      return this.getAttribute("note-text") || DEFAULT_NOTE;
+    }
+    set noteText(value) {
+      this.setAttribute("note-text", value);
+    }
+    /** The table. Direct child, so a table inside a cell of this one is not mistaken for it. */
+    get table() {
+      return this.querySelector(":scope > table");
+    }
+    /**
+     * The header cells that carry the buttons: the last row of the `<thead>`.
+     *
+     * The last rather than the first, because a table with a grouped header has a top row of
+     * spanning labels over a bottom row of real columns, and only the bottom row has one column
+     * each. A single-row header is its own last row, so the common case pays nothing for it.
+     */
+    get headers() {
+      const table = this.table;
+      const row = table && table.querySelector(":scope > thead > tr:last-of-type");
+      return row ? Array.from(row.children) : [];
+    }
+    /** The rows that get reordered. The first `<tbody>` only - a table with several is using them
+     * to group, and moving a row between groups would be sorting away the grouping. */
+    get body() {
+      const table = this.table;
+      return table ? table.querySelector(":scope > tbody") : null;
+    }
+    connectedCallback() {
+      if (this.initialized) return;
+      if (!this.body || this.headers.length === 0) return;
+      this.initialized = true;
+      this.onClick = this.onClick.bind(this);
+      this.build();
+    }
+    disconnectedCallback() {
+      if (!this.initialized) return;
+      this.initialized = false;
+      for (const header of this.headers) {
+        const button = header.querySelector(":scope > button");
+        if (button) {
+          button.removeEventListener("click", this.onClick);
+          button.replaceWith(...button.childNodes);
+        }
+      }
+      if (this.note) {
+        this.note.remove();
+        this.note = null;
+      }
+    }
+    attributeChangedCallback(name, previous, value) {
+      if (!this.initialized || previous === value) return;
+      if (name === "note-text" && this.note) this.note.textContent = this.noteText;
+    }
+    /**
+     * Put a button in every sortable header, and the note in the caption.
+     *
+     * The button takes the header's existing nodes rather than its text, so an icon, a `<span>`
+     * or an abbreviation in there survives and keeps whatever the page styled it with.
+     */
+    build() {
+      for (const header of this.headers) {
+        if (header.getAttribute("data-sort") === "none") continue;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.append(...header.childNodes);
+        button.addEventListener("click", this.onClick);
+        header.append(button);
+      }
+      const table = this.table;
+      let caption = table.querySelector(":scope > caption");
+      if (!caption) {
+        caption = document.createElement("caption");
+        table.prepend(caption);
+      }
+      this.note = document.createElement("span");
+      this.note.className = "sortable-table-elemental-note";
+      this.note.textContent = this.noteText;
+      if (caption.childNodes.length) caption.append(" ");
+      caption.append(this.note);
+    }
+    onClick(event) {
+      const header = event.currentTarget.parentElement;
+      const index = this.headers.indexOf(header);
+      if (index < 0) return;
+      const descending = header.getAttribute("aria-sort") === "ascending";
+      this.sort(index, descending);
+      this.dispatchEvent(new CustomEvent("sortable-table-sort", {
+        bubbles: true,
+        detail: {
+          column: index,
+          key: (this.headers[index].textContent || "").trim(),
+          direction: descending ? "descending" : "ascending"
+        }
+      }));
+    }
+    /**
+     * Reorder the rows by one column, and say so on the header.
+     *
+     * The rows are moved with a `DocumentFragment` rather than appended one at a time: every
+     * `append` on a live `<tbody>` is a mutation the page can be observing and a layout the
+     * browser may decide to run, and a hundred-row table sorts a hundred times over. Built off
+     * screen it is one insertion.
+     *
+     * Nothing is measured or cached between sorts. The keys are read from the DOM every time,
+     * because the DOM is where the page may have just changed them - a cached key set is a table
+     * that sorts by what a cell used to say.
+     *
+     * @param {number} index Which header, by position in the header row.
+     * @param {boolean} descending
+     */
+    sort(index, descending) {
+      const body = this.body;
+      const rows = Array.from(body.rows);
+      const order = sortOrder(rows.map((row) => sortKey(row.children[index])), descending, this.collator());
+      const fragment2 = document.createDocumentFragment();
+      for (const at of order) fragment2.append(rows[at]);
+      body.append(fragment2);
+      for (const header of this.headers) header.removeAttribute("aria-sort");
+      this.headers[index].setAttribute("aria-sort", descending ? "descending" : "ascending");
+    }
+    /**
+     * The comparator. Numeric-aware, so `item 10` sorts after `item 2` and a column of plain
+     * numbers sorts as numbers without being told that is what it is.
+     *
+     * Built per sort rather than held, and pointed at the document's own `lang`: a page that
+     * swaps its language has swapped how its own words collate, and one built once at upgrade
+     * would be sorting the new language by the old one's rules. `undefined` where there is no
+     * `lang`, which is `Intl`'s own way of saying "the runtime's".
+     */
+    collator() {
+      const lang = document.documentElement.getAttribute("lang");
+      return new Intl.Collator(lang || void 0, { numeric: true, sensitivity: "base" });
+    }
+  };
+  define2("sortable-table-elemental", SortableTableElemental);
+
   // src/elementals/splitter/index.js
   var DEFAULT_POSITION = 50;
   var STEP = 1;
@@ -6608,5 +6765,198 @@
     }
   };
   define2("tooltip-elemental", TooltipElemental);
+
+  // src/elementals/tree-view/index.js
+  var groupCount2 = 0;
+  function treeMove(nodes, current, key) {
+    const node = nodes[current];
+    if (!node) return null;
+    switch (key) {
+      case "ArrowDown":
+        return current + 1 < nodes.length ? { move: current + 1 } : null;
+      case "ArrowUp":
+        return current > 0 ? { move: current - 1 } : null;
+      case "Home":
+        return nodes.length ? { move: 0 } : null;
+      case "End":
+        return nodes.length ? { move: nodes.length - 1 } : null;
+      case "ArrowRight": {
+        if (node.expanded === false) return { expand: current };
+        if (node.expanded !== true) return null;
+        const child = current + 1;
+        return child < nodes.length && nodes[child].level > node.level ? { move: child } : null;
+      }
+      case "ArrowLeft": {
+        if (node.expanded === true) return { collapse: current };
+        for (let at = current - 1; at >= 0; at--) {
+          if (nodes[at].level < node.level) return { move: at };
+        }
+        return null;
+      }
+      default:
+        return null;
+    }
+  }
+  var TreeViewElemental = class extends ElementBase {
+    constructor() {
+      super(...arguments);
+      /** What has been typed inside the type-ahead window, and the timer that ends it. */
+      __publicField(this, "buffer", "");
+      __publicField(this, "bufferTimer", 0);
+    }
+    /** The list that becomes the tree. Direct child, so a tree inside a node of this one keeps its
+     * own. */
+    get list() {
+      return this.querySelector(":scope > ul, :scope > ol");
+    }
+    /** Every node in the tree, open or not, in document order. */
+    get allNodes() {
+      return Array.from(this.querySelectorAll('[role="treeitem"]'));
+    }
+    /**
+     * The nodes a reader can currently see.
+     *
+     * Read off `hidden` rather than off a state this element keeps, so the two cannot disagree:
+     * whatever is hidden is closed, including a branch the page hid itself.
+     */
+    get nodes() {
+      return this.allNodes.filter((node) => !node.closest('[role="group"][hidden]'));
+    }
+    connectedCallback() {
+      if (this.initialized) return;
+      if (!this.list) return;
+      this.initialized = true;
+      this.onKeyDown = this.onKeyDown.bind(this);
+      this.onClick = this.onClick.bind(this);
+      this.onFocusIn = this.onFocusIn.bind(this);
+      this.addEventListener("keydown", this.onKeyDown);
+      this.addEventListener("click", this.onClick);
+      this.addEventListener("focusin", this.onFocusIn);
+      this.build();
+    }
+    disconnectedCallback() {
+      if (!this.initialized) return;
+      this.initialized = false;
+      this.removeEventListener("keydown", this.onKeyDown);
+      this.removeEventListener("click", this.onClick);
+      this.removeEventListener("focusin", this.onFocusIn);
+      if (this.bufferTimer) window.clearTimeout(this.bufferTimer);
+      this.bufferTimer = 0;
+      this.removeAttribute("role");
+      for (const list of this.querySelectorAll("ul, ol")) {
+        list.removeAttribute("role");
+        list.removeAttribute("hidden");
+        list.removeAttribute("id");
+      }
+      for (const item of this.querySelectorAll("li")) item.removeAttribute("role");
+      for (const node of this.allNodes) {
+        node.removeAttribute("role");
+        node.removeAttribute("tabindex");
+        node.removeAttribute("aria-expanded");
+        node.removeAttribute("aria-owns");
+      }
+    }
+    /**
+     * Write the roles, and open the branches that should start open.
+     *
+     * The node of an `<li>` is its first element child that is not the branch: an `<a>`, a
+     * `<span>`, whatever the page wrote. Taking the first rather than looking for a link is what
+     * lets a branch heading be a plain `<span>` - and what keeps an icon the page put beside the
+     * label from being mistaken for the node.
+     */
+    build() {
+      this.setAttribute("role", "tree");
+      this.list.setAttribute("role", "none");
+      for (const item of this.querySelectorAll("li")) {
+        item.setAttribute("role", "none");
+        const branch = item.querySelector(":scope > ul, :scope > ol");
+        const node = Array.from(item.children).find((child) => child !== branch);
+        if (!node) continue;
+        node.setAttribute("role", "treeitem");
+        node.setAttribute("tabindex", "-1");
+        if (!branch) continue;
+        branch.setAttribute("role", "group");
+        if (!branch.id) branch.id = "tree-view-elemental-group-" + ++groupCount2;
+        node.setAttribute("aria-owns", branch.id);
+        const open = item.hasAttribute("data-tree-open") || !!item.querySelector("[aria-current]");
+        this.setOpen(node, open, false);
+      }
+      const current = this.allNodes.find((node) => node.hasAttribute("aria-current"));
+      const first = current || this.nodes[0];
+      if (first) first.setAttribute("tabindex", "0");
+    }
+    /** Open or close one branch. `announce` is false while building, where a page listening for
+     * every branch the markup asked for is a page told about state it wrote itself. */
+    setOpen(node, open, announce = true) {
+      const branch = node.getAttribute("aria-owns") && document.getElementById(node.getAttribute("aria-owns"));
+      if (!branch) return;
+      node.setAttribute("aria-expanded", open ? "true" : "false");
+      branch.toggleAttribute("hidden", !open);
+      if (announce) {
+        this.dispatchEvent(new CustomEvent("tree-view-toggle", { bubbles: true, detail: { open, node } }));
+      }
+    }
+    /** Move the single tab stop, and the focus with it. */
+    focusNode(node) {
+      for (const other of this.allNodes) other.setAttribute("tabindex", other === node ? "0" : "-1");
+      node.focus();
+    }
+    /** The tab stop follows focus, so a tree left by <kbd>Tab</kbd> and come back to lands where
+     * the reader was rather than at the top. */
+    onFocusIn(event) {
+      const node = event.target.closest('[role="treeitem"]');
+      if (!node || node.getAttribute("tabindex") === "0") return;
+      for (const other of this.allNodes) other.setAttribute("tabindex", other === node ? "0" : "-1");
+    }
+    onClick(event) {
+      const node = event.target.closest('[role="treeitem"]');
+      if (!node || !node.hasAttribute("aria-expanded")) return;
+      if (node.hasAttribute("href")) return;
+      this.setOpen(node, node.getAttribute("aria-expanded") === "false");
+    }
+    onKeyDown(event) {
+      const node = event.target.closest('[role="treeitem"]');
+      if (!node || event.altKey || event.ctrlKey || event.metaKey) return;
+      const nodes = this.nodes;
+      const current = nodes.indexOf(node);
+      if (event.key === "Enter" || event.key === " ") {
+        if (node.hasAttribute("href")) return;
+        if (!node.hasAttribute("aria-expanded")) return;
+        event.preventDefault();
+        this.setOpen(node, node.getAttribute("aria-expanded") === "false");
+        return;
+      }
+      const step = treeMove(nodes.map((each) => this.describe(each)), current, event.key);
+      if (step) {
+        event.preventDefault();
+        if (step.move !== void 0) this.focusNode(nodes[step.move]);
+        else if (step.expand !== void 0) this.setOpen(nodes[step.expand], true);
+        else this.setOpen(nodes[step.collapse], false);
+        return;
+      }
+      if (event.key.length !== 1 || event.key === " ") return;
+      event.preventDefault();
+      this.buffer += event.key;
+      if (this.bufferTimer) window.clearTimeout(this.bufferTimer);
+      this.bufferTimer = window.setTimeout(() => {
+        this.buffer = "";
+      }, 500);
+      const labels = nodes.map((each) => (each.textContent || "").trim());
+      const to = typeAheadIndex(labels, current, this.buffer);
+      if (to !== null) this.focusNode(nodes[to]);
+    }
+    /** One node, as `treeMove` reads it: how deep it sits, and whether it is a branch and open.
+     * The depth is counted off the DOM rather than written into `aria-level`, so the nesting stays
+     * the one place it is said. */
+    describe(node) {
+      const expanded = node.getAttribute("aria-expanded");
+      let level = 0;
+      for (let at = node.parentElement; at && at !== this; at = at.parentElement) {
+        if (at.getAttribute("role") === "group") level++;
+      }
+      return { level, expanded: expanded === null ? null : expanded === "true" };
+    }
+  };
+  define2("tree-view-elemental", TreeViewElemental);
 })();
 //# sourceMappingURL=book-of-elementals.js.map

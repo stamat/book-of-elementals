@@ -1,0 +1,51 @@
+// Structure for `<sortable-table-elemental>`: making the button the element writes look like
+// the header text it replaced, and keeping the caption note off the screen. No arrow, no
+// colour - that is `theme.scss`, which this does not import.
+
+sortable-table-elemental {
+  // A coordinator, not a box. The table is usually already inside something that lays it out -
+  // a scroller, a grid cell, a card - and an extra box in between is a box that thing lays out
+  // instead of the table. `contents` means dropping this element around a table you already
+  // had changes no layout at all, upgraded or not. Give it `display: block` in your own CSS if
+  // you want something to hang an `overflow-x` on.
+  display: contents;
+}
+
+// **This is the element's whole visual contract: the header must not start looking like a form
+// control because it became one.** A `<button>` inside a `<th>` arrives with the UA's font,
+// colour, background, border and centre alignment, none of which is the header's - so every
+// one of them is put back to what the cell already had. Nothing here is a look; it is the
+// upgrade being invisible, which is why it is in this file and not in the theme.
+sortable-table-elemental th > button {
+  // Full width so the target is the column and not the four words in it, which is
+  // `--splitter-elemental-size`'s argument in a different shape. It stops at the cell's
+  // padding: reaching into that would mean moving the page's own padding onto this button.
+  display: block;
+  inline-size: 100%;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+
+  // `inherit` and not `start`: a `<th>` is centred by default and a page that changed that
+  // meant it for the header, which this now is.
+  text-align: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+// The sentence the caption carries about what the buttons are. Off screen and never off the
+// accessibility tree - the buttons are visible to a reader who can see them, and this is that
+// same fact for the one who cannot. `display: none` would take it out of the tree and say
+// nothing, which is the whole point undone, so it is clipped instead.
+sortable-table-elemental .sortable-table-elemental-note {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

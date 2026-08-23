@@ -39,6 +39,44 @@ may already be targeting**, since neither shows up in a function signature.
   Not to be confused with [compare-images-slider](https://github.com/stamat/compare-images-slider),
   which wears the same `role="separator"` and reveals rather than resizes.
 
+- **`<tree-view-elemental>` — a nested list of links the arrow keys walk.** The
+  [APG Tree View pattern](https://www.w3.org/WAI/ARIA/apg/patterns/treeview/), which is the last
+  one with no native equivalent at all, in the shape of the APG's own
+  [navigation tree example](https://www.w3.org/WAI/ARIA/apg/patterns/treeview/examples/treeview-navigation/):
+  `role="treeitem"` on the link rather than the `<li>`. One tab stop for the whole tree, starting
+  on whatever the page marked `aria-current`; <kbd>→</kbd> opens a branch and then steps into it,
+  <kbd>←</kbd> closes one and then climbs out; <kbd>Home</kbd>, <kbd>End</kbd> and type-ahead.
+  `data-tree-open` on an `<li>` starts a branch open.
+
+  DOM: `role="tree"` on the element, `role="none"` on the outer list and every `<li>`,
+  `role="group"` on each branch with a generated `id`, and `aria-owns` on the node tying the two
+  together — load-bearing, since a branch is a *sibling* of its node and without it every level
+  reads one too shallow. A closed branch carries `hidden`, so it leaves the tab order, the
+  accessibility tree and find-in-page together. No `aria-level`, `aria-setsize` or
+  `aria-posinset`: the pattern asks for those only when the nodes are not all in the DOM. CSS: the
+  list markers come off in the element's own stylesheet rather than the theme, because a
+  `::marker` beside a node is the `listitem` the roles just removed showing through — measured, an
+  unstyled tree carried a `StaticText("• ")` per node in Chromium's accessibility tree.
+
+- **`<sortable-table-elemental>` — a table whose column headers sort it.** No APG pattern, because
+  `<table>` already is one; this adds only what the
+  [APG's sortable table example](https://www.w3.org/WAI/ARIA/apg/patterns/table/examples/sortable-table/)
+  describes. One `Intl.Collator` with `numeric: true` and the document's own `lang` does the
+  comparing, so there is no column-type vocabulary — `data-sort-value` on a cell is the escape
+  hatch, and `data-sort="none"` on a header leaves that column without a button. Sorting is
+  stable across repeated sorts, which the tiebreak guarantees rather than the engine.
+  An `aria-sort` already in the markup is adopted rather than re-sorted.
+
+  DOM: a `<button type="button">` wrapping each sortable header's existing nodes, `aria-sort` on
+  the sorted `<th>`, and a clipped `<span class="sortable-table-elemental-note">` appended to the
+  `<caption>` — a `<caption>` is created if there was none, holding only that note, which measures
+  zero high. The caption is the table's accessible name, so the note is read on the end of it. No
+  live region: the rows reordering is the *result* of pressing the button rather than a message
+  about it, which is not what
+  [WCAG 2.2 4.1.3](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html) covers. CSS:
+  the element is `display: contents`, and its stylesheet puts the header button's font, colour,
+  background, border and alignment back to the cell's so the upgrade is invisible.
+
 ### Fixed
 
 - **Every element now upgrades when its bundle is included before its markup.** A custom

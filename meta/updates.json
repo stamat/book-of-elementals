@@ -32,8 +32,8 @@
     "updated": "2026-08-17T21:17:28.365Z"
   },
   "docs/elementals/index.md": {
-    "hash": "06d0397fe7ffc20c9b4af7269beaec485b1b8d9f",
-    "updated": "2026-08-23T12:38:38.002Z"
+    "hash": "721279b8faa348b4be601213481bd90046351ddc",
+    "updated": "2026-08-23T13:21:49.233Z"
   },
   "docs/elementals/marquee.md": {
     "hash": "5ac64586fa56b17f2a01ede37781b0f3996b0f21",
@@ -71,6 +71,10 @@
     "hash": "8a00803a7b31e58f8facd20378315148499e9797",
     "updated": "2026-08-17T21:17:52.161Z"
   },
+  "docs/elementals/sortable-table.md": {
+    "hash": "999398a7f5217f460e4e1c77b232e6cc5b307660",
+    "updated": "2026-08-23T13:25:30.311Z"
+  },
   "docs/elementals/splitter.md": {
     "hash": "804d5045ee54ef3ccfd4eacd0f41a3e1af02af3f",
     "updated": "2026-08-23T12:42:51.749Z"
@@ -98,6 +102,10 @@
   "docs/elementals/tooltip.md": {
     "hash": "78e0ff4253212bfea943dcf4e0d29da7af1bf993",
     "updated": "2026-08-23T13:03:58.303Z"
+  },
+  "docs/elementals/tree-view.md": {
+    "hash": "de606900f5415bd2eabc52c3d9df79ef909b5c1d",
+    "updated": "2026-08-23T13:23:42.697Z"
   },
   "docs/examples/bulk-actions.md": {
     "hash": "ea377acd761c1844da6da665c61e616795ca98ab",
