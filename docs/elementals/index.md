@@ -80,4 +80,6 @@ finished.
 [`<splitter-elemental>`](splitter.html)**, because both put `role="separator"` on a
 handle you drag and they do opposite things. A splitter *resizes* two panes that
 share a width. The compare slider *reveals*: its two layers are both full size,
-one clipped over the other, and nothing on the page changes size at all.
+one clipped over the other, and nothing on the page changes size at all. The
+[before and after example](../examples/before-and-after.html) fakes the second out
+of the first and says where that stops working.
