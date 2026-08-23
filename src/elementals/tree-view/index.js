@@ -112,10 +112,14 @@ export function treeMove(nodes, current, key) {
  *
  * @slot - A nested `<ul>`. Each `<li>` holds one node - an `<a href>` or a `<span>` - and, where it has children, a nested `<ul>` after it. Mark an `<li>` `data-tree-open` to have that branch start open, and the node `aria-current="page"` to say where the reader is.
  *
- * @cssprop {<length>} [--tree-view-elemental-indent=1.25rem] - Theme. How far a branch sits in from the node above it.
- * @cssprop {<length>} [--tree-view-elemental-gap=0.15rem] - Theme. Between one node and the next.
- * @cssprop {<color>} [--tree-view-elemental-marker-color=currentcolor] - Theme. The twisty on a node that has a branch under it.
- * @cssprop {<color>} [--tree-view-elemental-current-color=currentcolor] - Theme. The bar beside the node marked `aria-current`.
+ * @cssprop {<length>} [--tree-view-elemental-indent=1.4rem] - Theme. How far a branch sits in from the node above it, rail included.
+ * @cssprop {<length>} [--tree-view-elemental-gap=0.05rem] - Theme. Between one node and the next.
+ * @cssprop {<length>} [--tree-view-elemental-radius=0.375rem] - Theme. The corner on a node's row, which the hover fill and the current-page tint are painted into.
+ * @cssprop {<color>} [--tree-view-elemental-marker-color=currentcolor 60%] - Theme. The chevron on a node that has a branch under it.
+ * @cssprop {<color>} [--tree-view-elemental-node-color=currentcolor 70%] - Theme. A node at rest; hovering it restores the tree's own colour.
+ * @cssprop {<color>} [--tree-view-elemental-hover=currentcolor 8%] - Theme. The fill under the node the pointer is on.
+ * @cssprop {<color>} [--tree-view-elemental-rail=currentcolor 20%] - Theme. The hairline down the inside of an open branch.
+ * @cssprop {<color>} [--tree-view-elemental-current-color=currentcolor] - Theme. The node marked `aria-current` - its text, and the tint behind it. The page's accent goes here.
  *
  * @fires tree-view-toggle - A branch has been opened or closed. `detail.open` is which, and `detail.node` is the element that owns it.
  */

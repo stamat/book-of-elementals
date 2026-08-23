@@ -1,6 +1,6 @@
 // Structure for `<tree-view-elemental>`: a box, and the one affordance that is not a look. The
-// indentation, the twisty, the markers and the current-page bar are `theme.scss`, which this
-// does not import.
+// rows, the rail, the chevron and the mark on the current page are `theme.scss`, which this does
+// not import.
 
 // There is very little here on purpose. A collapsed branch is `hidden`, which is the platform's
 // own display rule and needs nothing from this file - and it is why there is no

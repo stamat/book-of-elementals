@@ -21,7 +21,7 @@ whole of what a tree is for: <kbd>Tab</kbd> past a sidebar in one press instead 
 | a nested [`<disclosure-elemental>`](disclosure.html) | a tab stop per branch, which is the thing a tree exists to avoid | one tab stop, and the arrows for the rest |
 | `<details>` inside `<details>` | the same, plus a summary that is a button in every branch | a node that is a link stays a link |
 
-<!-- demo tree-view style="--code-preview-height:232px" -->
+<!-- demo tree-view style="--code-preview-height:267px" -->
 
 ```html
 <tree-view-elemental aria-label="Documentation">
@@ -54,7 +54,7 @@ whole of what a tree is for: <kbd>Tab</kbd> past a sidebar in one press instead 
 ```
 
 ```css demo
-/* the roles, the twisty and the indentation are the element's; the box is yours */
+/* the roles, the rows, the rail and the chevron are the element's; the box is yours */
 tree-view-elemental {
   max-inline-size: 18rem;
   padding: 0.75rem;
@@ -222,24 +222,51 @@ indenting a branch.
 ## Styling
 
 The structure stylesheet takes the markers off and puts the pointer on a branch heading that
-toggles. The theme does the indentation, the twisty, and a bar beside the current page.
+toggles. The theme is a docs sidebar — a padded row per node that fills on hover, a tint and a
+weight on the page the reader is on, a hairline rail down an open branch, and a chevron on the
+nodes that have one. Every colour is mixed out of `currentcolor`, so it lands in the palette the
+page already has, theme switch included, with nothing to configure.
 
 | Custom property | Default | What it does |
 | --- | --- | --- |
-| `--tree-view-elemental-indent` | `1.25rem` | Theme. How far a branch sits in from the node above it |
-| `--tree-view-elemental-gap` | `0.15rem` | Theme. Between one node and the next |
-| `--tree-view-elemental-marker-color` | `currentcolor` | Theme. The twisty |
-| `--tree-view-elemental-current-color` | `currentcolor` | Theme. The bar beside `aria-current` |
+| `--tree-view-elemental-indent` | `1.4rem` | Theme. How far a branch sits in from the node above it, rail included |
+| `--tree-view-elemental-gap` | `0.05rem` | Theme. Between one node and the next |
+| `--tree-view-elemental-radius` | `0.375rem` | Theme. The corner on a node's row |
+| `--tree-view-elemental-marker-color` | `currentcolor` at 60% | Theme. The chevron |
+| `--tree-view-elemental-node-color` | `currentcolor` at 70% | Theme. A node at rest |
+| `--tree-view-elemental-hover` | `currentcolor` at 8% | Theme. The fill under the node the pointer is on |
+| `--tree-view-elemental-rail` | `currentcolor` at 20% | Theme. The hairline down an open branch |
+| `--tree-view-elemental-current-color` | `currentcolor` | Theme. `aria-current`: its text, and the tint behind it |
 
-The twisty is drawn with borders rather than written as `▸`. A character in `content` is text, and
-text in a pseudo-element is read out by some screen readers — so a state already carried, in the
+**Set `--tree-view-elemental-current-color` to your accent and the rest follows.** It is the one
+colour the tree cannot guess — left alone it is a grey that cannot clash with anything, which is
+also a current page that says so quietly.
+
+The chevron is a masked icon rather than a `▸` in `content`. A character there is text, and text
+in a pseudo-element is read out by some screen readers — so a state already carried, in the
 reader's own language, by `aria-expanded` would be announced a second time as an arrow nobody
-asked about. It is also drawn as two separate triangles rather than one rotated: a rotation of a
-zero-height box lands half a pixel off, which is visible as a twitch on every toggle.
+asked about. A mask has nothing to read, is painted in a colour mixed down from the row's own, and is the
+same chevron
+[`<menu-elemental>`](menu.html) draws, so a page using both has one caret rather than two drawings
+of the same idea. It is also on every node, leaf or branch, empty where there is nothing to open:
+the gutter is what keeps a leaf's label level with its siblings' instead of shifting left by a
+chevron.
 
-The indentation is on the branch rather than on the node, so a label that wraps keeps both lines
-against the same edge instead of the second sliding under the twisty. Every state you might want
-to style against is an attribute already there — `[aria-expanded="true"]`, `[aria-current]`,
+The rail is the branch's own `border-inline-start`, which is why the step in is split — the margin
+puts the line under the parent's chevron and half a rem of padding is the air between it and the
+labels. The step is on the branch rather than on each node, so a label that wraps keeps both lines
+against the same edge instead of the second sliding under the chevron.
+
+**The closed chevron points the same way under `dir="rtl"`,** because <kbd>→</kbd> opens a branch
+in both directions. The APG mirrors the arrows only for a tree laid out *horizontally*, and
+[`<tabs-elemental>`](tabs.html) and [`<toolbar-elemental>`](toolbar.html) read them the same way —
+so a chevron turned round by `:dir()` alone would point one way while the key worked the other.
+The rail and the indentation are logical properties and do flip, because those are layout rather
+than a claim about a key.
+
+In forced-colors mode the tint behind the current page goes, along with every other author
+background; the weight stays, and the chevron is repainted in `CanvasText`. Every state you might
+want to style against is an attribute already there — `[aria-expanded="true"]`, `[aria-current]`,
 `[role="group"][hidden]`.
 
 ## What it will not do

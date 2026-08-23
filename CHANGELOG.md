@@ -70,11 +70,9 @@ may already be targeting**, since neither shows up in a function signature.
   `<menu-elemental>` draws — on every node, empty on a leaf, so labels stay level. Eight custom
   properties, `--tree-view-elemental-` prefixed: `indent`, `gap`, `radius`, `marker-color`,
   `node-color`, `hover`, `rail`, `current-color`. Every colour is mixed out of `currentcolor`, so
-  set `current-color` to your accent and the rest follows the page's palette on its own.
-  `aria-current="false"` is read as what it means — *not* the current page — in both the script
-  and the theme, so a router writing it on every inactive link neither opens every branch nor
-  tints the whole sidebar. Teardown puts back only what upgrade wrote: an `id` the page put on a
-  branch list survives, where before every `id` in the tree came off with the roles.
+  set `current-color` to your accent and the rest follows the page's palette on its own. The closed chevron does not turn round under
+  `dir="rtl"`: <kbd>→</kbd> opens in both directions, so a mirrored mark would point away from the
+  key that works it.
 
 - **`<sortable-table-elemental>` — a table whose column headers sort it.** No APG pattern, because
   `<table>` already is one; this adds only what the

@@ -2,89 +2,126 @@
 // its bundle: that one writes the roles and hides the closed branches, and a light-DOM element
 // cannot scope a look away from a page that did not ask for one.
 
-// Four things: the list markers off, the indentation that makes the nesting readable, a twisty
-// on the nodes that have a branch, and a bar beside the page the reader is on. No surface, no
-// hover fill, no rail - a sidebar is something a page has already designed by the time it wants
-// a tree in it.
+// The look is a docs sidebar, because that is what the pattern is for: a padded row per node that
+// fills on hover, a tint and a weight on the page the reader is on, a hairline rail down a branch
+// so the nesting reads at a glance, and a chevron on the nodes that have one. Colours are mixed
+// out of `currentcolor` rather than named, so it lands in whatever palette the page already has -
+// a theme switch included - with nothing to configure.
+
+@use "../../styles/svg";
 
 // On the bare tag and not behind a gate, so a page replacing one writes a plain
 // `tree-view-elemental { … }` rule and wins.
 tree-view-elemental {
-  --tree-view-elemental-indent: 1.25rem;
-  --tree-view-elemental-gap: 0.15rem;
-  --tree-view-elemental-marker-color: currentcolor;
+  --tree-view-elemental-indent: 1.4rem;
+  --tree-view-elemental-gap: 0.05rem;
+  --tree-view-elemental-radius: 0.375rem;
+  --tree-view-elemental-marker-color: color-mix(in srgb, currentcolor 60%, transparent);
+  --tree-view-elemental-node-color: color-mix(in srgb, currentcolor 70%, transparent);
+  --tree-view-elemental-hover: color-mix(in srgb, currentcolor 8%, transparent);
+  --tree-view-elemental-rail: color-mix(in srgb, currentcolor 20%, transparent);
   --tree-view-elemental-current-color: currentcolor;
 }
 
 // `:where(:defined)` costs nothing on specificity: a guard against painting a look on a tree the
 // script has not reached, not a claim on the cascade. A rule of yours at
 // `tree-view-elemental li { … }` is level with these and wins by coming later.
-tree-view-elemental:where(:defined) ul {
+tree-view-elemental:where(:defined) ul,
+tree-view-elemental:where(:defined) ol {
   padding: 0;
   margin: 0;
   list-style: none;
 }
 
 // The indentation is on the branch and not on the node, so a node whose label wraps to two lines
-// keeps both lines against the same edge instead of the second one sliding under the twisty.
+// keeps both lines against the same edge instead of the second one sliding under the chevron.
+
+// The rail is the branch's own border, which is why the step is split in two: the margin puts the
+// line under the chevron of the node that opened the branch, and the 0.5rem of padding is the air
+// between that line and the labels beside it. Anything left over is `--tree-view-elemental-indent`,
+// so the property still means the whole step in.
 tree-view-elemental:where(:defined) [role="group"] {
-  padding-inline-start: var(--tree-view-elemental-indent);
+  margin-inline-start: calc(var(--tree-view-elemental-indent) - 0.5rem);
+  padding-inline-start: 0.5rem;
+  border-inline-start: 1px solid var(--tree-view-elemental-rail);
 }
 
+// A row rather than a run of text: the padding and the radius are what the hover fill and the
+// current-page tint are painted on, and `flex` is what makes a link fill the row it sits in.
 tree-view-elemental:where(:defined) [role="treeitem"] {
   display: flex;
   gap: 0.4em;
-  align-items: baseline;
-  padding-block: var(--tree-view-elemental-gap);
+  align-items: center;
+  padding: 0.3rem 0.5rem;
+  margin-block: var(--tree-view-elemental-gap);
+  color: var(--tree-view-elemental-node-color);
   text-decoration: none;
+  border-radius: var(--tree-view-elemental-radius);
 }
 
-// **The twisty is drawn with borders rather than written as a character.** Text in a
-// pseudo-element is read out by some screen readers, and the open/closed state is already
-// carried - correctly, and in the reader's own language - by `aria-expanded`. A triangle made of
-// borders has nothing to read.
+// Hovering restores the tree's own colour, which is the whole point of the nodes being mixed down
+// from it: the row the pointer is on is the one at full strength.
+tree-view-elemental:where(:defined) [role="treeitem"]:hover {
+  color: inherit;
+  background: var(--tree-view-elemental-hover);
+}
+
+// **The chevron is a masked icon rather than a character.** Text in a pseudo-element is read out
+// by some screen readers, and the open/closed state is already carried - correctly, and in the
+// reader's own language - by `aria-expanded`. A mask has nothing to read, and it is painted
+// rather than drawn, so it follows a theme switch for free where an image would not.
 
 // On every node, branch or not, so a leaf's label starts at the same place as its siblings'
-// instead of shifting left by a twisty. Transparent on a leaf: the space is the alignment.
+// instead of shifting left by a chevron. Empty on a leaf: the space is the alignment.
 tree-view-elemental:where(:defined) [role="treeitem"]::before {
   flex: none;
-  width: 0;
-  height: 0;
+  width: 1em;
+  height: 1em;
   content: "";
-  border-top: 0.3em solid transparent;
-  border-bottom: 0.3em solid transparent;
-  border-inline-start: 0.4em solid transparent;
-
-  // Baseline-aligned text and a zero-height box do not meet, so the triangle is nudged onto the
-  // line rather than sitting on it. `align-self` rather than a margin, so it stays centred on a
-  // label that wraps.
-  align-self: center;
 }
 
-// Closed: pointing along the reading direction, which `border-inline-start` makes true in both.
+// The same chevron `<menu-elemental>` draws, so a page using both has one caret rather than two
+// drawings of the same idea. Closed it points at its own label, open at the branch it revealed.
+tree-view-elemental:where(:defined) [aria-expanded]::before {
+  background: var(--tree-view-elemental-marker-color);
+  mask: svg.icon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/></svg>") center / contain no-repeat;
+  transition: rotate 200ms ease;
+}
+
+// **The closed chevron does not turn round under `dir="rtl"`, and that is deliberate.** It points
+// the way the key that opens the branch does, and <kbd>→</kbd> opens in both directions - the APG
+// mirrors the arrows only for a tree laid out horizontally, and `<tabs-elemental>` and
+// `<toolbar-elemental>` read the arrows the same way. A chevron flipped by `:dir()` alone would be
+// a mark pointing one way and a key working the other.
 tree-view-elemental:where(:defined) [aria-expanded="false"]::before {
-  border-inline-start-color: var(--tree-view-elemental-marker-color);
+  rotate: -90deg;
 }
 
-// Open: pointing down. Drawn as its own triangle rather than rotated, because a rotation is a
-// transform on a box with no height and the result is a shape that lands half a pixel off the
-// closed one - visible as a twitch on every toggle.
 tree-view-elemental:where(:defined) [aria-expanded="true"]::before {
-  border-top: 0.4em solid var(--tree-view-elemental-marker-color);
-  border-right: 0.3em solid transparent;
-  border-bottom: 0;
-  border-left: 0.3em solid transparent;
+  rotate: 0deg;
 }
 
-// The page the reader is on. A bar rather than a colour, so it survives a page that restyles the
-// text - and drawn as a border on the node itself rather than a pseudo-element, since both of
-// this element's pseudo budgets are one twisty and nothing.
-tree-view-elemental:where(:defined) [aria-current] {
-  border-inline-start: 2px solid var(--tree-view-elemental-current-color);
+// A masked icon is a painted background, and forced-colors mode drops author backgrounds - the
+// only thing marking a node as a branch would go with it. System colour keywords survive.
+@media (forced-colors: active) {
+  tree-view-elemental:where(:defined) [aria-expanded]::before {
+    background: CanvasText;
+  }
+}
 
-  // The bar is inside the indentation rather than outside it, so it lines up down a branch
-  // instead of stepping in with each level. The padding puts the label back where it was.
-  margin-inline-start: -0.6rem;
-  padding-inline-start: calc(0.6rem - 2px);
+@media (prefers-reduced-motion: reduce) {
+  tree-view-elemental:where(:defined) [aria-expanded]::before {
+    transition: none;
+  }
+}
+
+// The page the reader is on. A tint and a weight rather than a bar: the row is already a shape
+// here, so filling it says "you are here" without a second mark beside it - and the weight is the
+// half that survives forced-colors, where the tint is dropped along with every other author
+// background. `--tree-view-elemental-current-color` is the page's accent to set; left at
+// `currentcolor` it is a grey the palette cannot clash with.
+tree-view-elemental:where(:defined) [aria-current] {
   font-weight: 600;
+  color: var(--tree-view-elemental-current-color);
+  background: color-mix(in srgb, var(--tree-view-elemental-current-color) 15%, transparent);
 }
