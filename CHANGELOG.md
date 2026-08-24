@@ -15,6 +15,21 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Changed
+
+- **`<splitter-elemental>`: the theme's seam is now three dots rather than a hairline.** A line
+  down the middle of the handle reads as a border — a thing that separates — and the handle is a
+  control you are meant to take hold of. Three dots are the grip every editor's splitter wears,
+  and they say "drag me" without a tooltip.
+
+  **CSS:** `splitter/theme.scss` only; the structure stylesheet, the DOM and the 24px target are
+  unchanged. `--splitter-elemental-line-size` is gone and `--splitter-elemental-dot-size` (`3px`)
+  replaces it — one dot across, and the gap between two of them. A page that set the old property
+  now sets nothing; `--splitter-elemental-dot-size: 0` is a handle with no mark on it and the
+  target intact. `--splitter-elemental-color` and `--splitter-elemental-active-color` keep their
+  names and now colour the dots, and the handle carries them as its own `color` so the gradient
+  is written once rather than once per state.
+
 ## [2.0.1] - 2026-08-23
 
 ### Fixed

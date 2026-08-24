@@ -158,10 +158,10 @@ export function positionFrom(rect, x, y, options = {}) {
  * its own `style` attribute, where an inline declaration beats any stylesheet - a knob for it
  * would be a control that cannot move anything. It is an output, and `position` is the input.
  *
- * @cssprop {<length>} [--splitter-elemental-size=24px] - The handle's thickness, and therefore the size of the target a pointer has to hit. `24px` is [WCAG 2.2 2.5.8](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)'s minimum rather than a taste; the theme draws a thinner line inside it.
- * @cssprop {<color>} [--splitter-elemental-color=currentcolor at 20%] - Theme. The line drawn down the middle of the handle.
- * @cssprop {<color>} [--splitter-elemental-active-color=currentcolor at 45%] - Theme. Its colour while the pointer is on the handle or the handle has focus.
- * @cssprop {<length>} [--splitter-elemental-line-size=1px] - Theme. How thick that line is. Not the target: the handle stays `--splitter-elemental-size` whatever this says.
+ * @cssprop {<length>} [--splitter-elemental-size=24px] - The handle's thickness, and therefore the size of the target a pointer has to hit. `24px` is [WCAG 2.2 2.5.8](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)'s minimum rather than a taste; the theme draws three dots inside it.
+ * @cssprop {<color>} [--splitter-elemental-color=currentcolor at 20%] - Theme. The three dots drawn in the middle of the handle.
+ * @cssprop {<color>} [--splitter-elemental-active-color=currentcolor at 45%] - Theme. Their colour while the pointer is on the handle or the handle has focus.
+ * @cssprop {<length>} [--splitter-elemental-dot-size=3px] - Theme. One dot across, and the gap between two of them. Not the target: the handle stays `--splitter-elemental-size` whatever this says.
  *
  * @slot - Two boxes. The first is the primary pane, the second is the other one; a third lands on a second grid row, under the primary pane and the width of it.
  *

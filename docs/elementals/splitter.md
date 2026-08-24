@@ -43,8 +43,8 @@ part company.
 
 ```css demo
 /* the tracks and the seam are the element's; the panes are yours */
-splitter-elemental { block-size: 200px; border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); }
-splitter-elemental .pane { padding: 1rem; overflow: auto; }
+splitter-elemental { block-size: 200px; }
+splitter-elemental .pane { padding: 1rem; overflow: auto; border-radius: 0.5rem; background: color-mix(in srgb, CanvasText 6%, transparent); }
 splitter-elemental p { margin: 0 0 0.5rem; }
 splitter-elemental p:last-child { margin: 0; font-size: 0.875rem; opacity: 0.8; }
 ```
@@ -152,7 +152,7 @@ to give it to one pane matters most.
 
 While the query matches, the element writes `vertical` on itself, and takes it off again when it
 stops — so everything already keyed to that attribute follows with it: the grid turns its columns
-into rows, the cursor becomes `row-resize`, the theme's line turns with the seam, the arrows
+into rows, the cursor becomes `row-resize`, the theme's dots turn with the seam, the arrows
 become <kbd>Up</kbd> and <kbd>Down</kbd>, and `aria-orientation` flips. `position` is a
 percentage, so 30% of the width becomes 30% of the height and the split you had is the split you
 keep.
@@ -264,21 +264,27 @@ not a number at all is the floor rather than `NaN` travelling on into a `grid-te
 ## Styling
 
 The structure stylesheet sizes three grid tracks — the primary pane, the handle, the other pane
-— and puts the resize cursor on the handle. The theme draws a line down the middle of it.
+— and puts the resize cursor on the handle. The theme draws three dots in the middle of it — a
+grip, so the seam reads as something to take hold of rather than as a border.
 
 | Custom property | Default | What it does |
 | --- | --- | --- |
 | `--splitter-elemental-size` | `24px` | The handle's thickness, and therefore the size of the target a pointer has to hit |
-| `--splitter-elemental-color` | `currentcolor` at 20% | Theme. The line down the middle of the handle |
-| `--splitter-elemental-active-color` | `currentcolor` at 45% | Theme. Its colour under the pointer, or while the handle has focus |
-| `--splitter-elemental-line-size` | `1px` | Theme. How thick that line is |
+| `--splitter-elemental-color` | `currentcolor` at 20% | Theme. The three dots in the middle of the handle |
+| `--splitter-elemental-active-color` | `currentcolor` at 45% | Theme. Their colour under the pointer, or while the handle has focus |
+| `--splitter-elemental-dot-size` | `3px` | Theme. One dot across, and the gap between two of them |
 
 **`24px` is [WCAG 2.2 2.5.8 Target Size (Minimum)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html),
-not a taste** — and it is why the line and the target are two different sizes. Every splitter on
-the shelf is a hairline you have to hit; here the hairline is a pseudo-element inside a target
-you cannot miss, so `--splitter-elemental-line-size: 1px` and a 24-pixel handle are both true at
-once. It is a length in pixels rather than the `rem` the rest of the book reaches for because the
-criterion is written in CSS pixels: `1.5rem` on a page that set a 12-pixel root is 18 of them.
+not a taste** — and it is why the grip and the target are two different sizes. Every splitter on
+the shelf is a hairline you have to hit; here the mark is a pseudo-element inside a target you
+cannot miss, so a 3-pixel dot and a 24-pixel handle are both true at once. It is a length in
+pixels rather than the `rem` the rest of the book reaches for because the criterion is written in
+CSS pixels: `1.5rem` on a page that set a 12-pixel root is 18 of them.
+
+The dots are one tiled gradient rather than three boxes: the strip is five dots long and each
+tile is a third of it, so the dot and the gap after it are the same length and the run sits
+centred with half a gap at each end. `--splitter-elemental-dot-size: 0` is how you turn the grip
+off and keep the target.
 
 One custom property is written by the element and is there to read, not to set:
 
@@ -300,7 +306,7 @@ the answer, and it is yours rather than this element's because a pane that clips
 about your content.
 
 The focus ring is left to the browser. It is drawn round the whole handle, which is a bigger and
-clearer target than the line inside it, and a ring drawn here would be one more thing to keep in
+clearer target than the dots inside it, and a ring drawn here would be one more thing to keep in
 step with your page's own focus styles.
 
 ## Not the compare slider
@@ -311,9 +317,10 @@ step with your page's own focus styles.
 full size and one is clipped over the other. If the two things are the same thing in two states,
 that one is what you want.
 
-You can fake it out of this element anyway, with four rules of your own CSS and a picture in each
-pane. [Before and after](../examples/before-and-after.html) is that example, and it is where the
-two are compared properly.
+You can fake it out of this element anyway, with a picture in each pane, four rules of your own
+CSS and a few more to put a knob over a one-pixel seam.
+[Before and after](../examples/before-and-after.html) is that example, and it is where the two are
+compared properly.
 
 ## What it will not do
 

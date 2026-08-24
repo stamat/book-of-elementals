@@ -11,8 +11,9 @@ Drag the seam and the picture changes from the graded version to the original. O
 screen it is the same thing turned on its side — a top and a bottom rather than a left and a
 right.
 
-It is [`<splitter-elemental>`](../elementals/splitter.html) and four rules of your own CSS, and
-it is worth knowing why it works, because what it is doing is not what it looks like.
+It is [`<splitter-elemental>`](../elementals/splitter.html), four rules of your own CSS for the
+illusion and seven more for the knob over the seam — and it is worth knowing why it works,
+because what it is doing is not what it looks like.
 
 <!-- demo splitter style="--code-preview-height:501px" -->
 
@@ -31,7 +32,7 @@ it is worth knowing why it works, because what it is doing is not what it looks 
    against, which is a splitter 0 tall before the script arrives */
 splitter-elemental.reveal { container-type: inline-size; }
 .reveal[data-splitter-panes] { container-type: size; aspect-ratio: 3 / 2; }
-.reveal[data-splitter-panes] > div { position: relative; overflow: hidden; }
+.reveal[data-splitter-panes] > div:not([data-splitter-handle]) { position: relative; overflow: hidden; }
 
 /* each pane holds a picture the size of the whole splitter, pinned to the corner its pane
    never leaves — so the two halves are the same frame and line up across the seam. Both
@@ -49,6 +50,56 @@ splitter-elemental.reveal { container-type: inline-size; }
 
 /* the "after". A filter here so the sample needs one photograph rather than two */
 .reveal .graded { filter: grayscale(1) contrast(1.15); }
+
+/* a one-pixel seam, and the target moved off it into a knob. The handle's column is 1px
+   wide, so the band of missing picture is a hairline; its `::before` is a 40px circle that
+   overflows that box, and a pseudo element hit-tests as part of the element it belongs to,
+   so the circle is what a pointer has to hit. Which is why the pane rule above says
+   `:not([data-splitter-handle])` — the handle is a `<div>` as well, and an `overflow:
+   hidden` meant for a pane would clip the knob back to one pixel */
+.reveal[data-splitter-panes] { --splitter-elemental-size: 1px; }
+
+.reveal[data-splitter-panes] > [data-splitter-handle]::before,
+.reveal[data-splitter-panes] > [data-splitter-handle]::after {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  translate: -50% -50%;
+  content: "";
+}
+
+/* the theme's three dots are this same `::before`, so this replaces them rather than
+   landing beside them. `Canvas` and `CanvasText` are the page's own pair and follow a theme
+   switch; the ring and the shadow are what keep a white knob off a pale sky */
+.reveal[data-splitter-panes] > [data-splitter-handle]::before {
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: 50%;
+  background: Canvas;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, CanvasText 20%, transparent),
+    0 1px 3px rgb(0 0 0 / 0.3);
+}
+
+/* Octicon `arrow-both`, drawn as a mask rather than as a picture, so the ink is a colour
+   this page sets and not one baked into the data URI */
+.reveal[data-splitter-panes] > [data-splitter-handle]::after {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  background: CanvasText;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.72 3.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L2.56 7h10.88l-2.22-2.22a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l3.5 3.5a.75.75 0 0 1 0 1.06l-3.5 3.5a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734l2.22-2.22H2.56l2.22 2.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215l-3.5-3.5a.75.75 0 0 1 0-1.06Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* stacked, the arrows point the way the panes now move */
+.reveal[vertical][data-splitter-panes] > [data-splitter-handle]::after { rotate: 90deg; }
+
+/* the browser's ring would otherwise be drawn round the 1px handle, which is a hairline
+   nobody can see. On the knob it is the size of the control it marks */
+.reveal[data-splitter-panes] > [data-splitter-handle]:focus-visible { outline: none; }
+.reveal[data-splitter-panes] > [data-splitter-handle]:focus-visible::before {
+  outline: 3px solid Highlight;
+  outline-offset: 2px;
+}
 
 /* ungated, so the picture is still a picture before the script arrives */
 .reveal img { display: block; inline-size: 100%; }
@@ -74,11 +125,25 @@ change with the flip because `aspect-ratio` is what sets it — which is also th
 [stacked splitter needs](../elementals/splitter.html#which-way-round-vertical-is) and would
 otherwise have to be given.
 
-**The handle is a band of missing picture.** It has a column of its own here, as it does wherever
-this element is used, so the two halves are `--splitter-elemental-size` apart rather than edge to
-edge — where a real reveal has a hairline over a continuous image. You can narrow it, and what you
-are spending is the [24px target](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)
-that made it a control anyone can hit.
+**The handle is a band of missing picture, so here it is one pixel of one.** It has a column of
+its own wherever this element is used, and the two halves are `--splitter-elemental-size` apart
+rather than edge to edge — where a real reveal has a hairline over a continuous image.
+`--splitter-elemental-size: 1px` is as close to that hairline as this can get.
+
+**What the band was carrying was the target, and the knob takes it back.** Narrowing the handle
+to a pixel spends the
+[24px target](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html) that made it
+a control anyone can hit — so the CSS puts a 40px circle on the handle's `::before`, overflowing
+its 1px box, and a pseudo element hit-tests as part of the element it belongs to. The circle is
+what a pointer has to hit; the pixel is only what it looks like. The browser's focus ring is
+moved onto the knob for the same reason: drawn round a 1px handle it is a hairline nobody can
+see.
+
+That arrangement is [`<compare-images-slider>`](https://github.com/stamat/compare-images-slider)'s
+own — a 2px handle under a 42px knob — and the arrows in the middle are the same
+[Octicon `arrow-both`](https://primer.style/octicons/arrow-both-16), masked rather than embedded
+so the ink is a colour this page sets. `Canvas` and `CanvasText` are that colour pair, so the
+knob turns with the theme; the ring and the shadow are what keep a white circle off a pale sky.
 
 **It is images only.** A pane holding text would reflow as it narrows, because it is genuinely
 narrowing — there is nothing to pin. That is the difference from a real reveal, where the layer in

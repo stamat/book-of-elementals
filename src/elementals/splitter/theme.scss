@@ -2,25 +2,25 @@
 // in its bundle: that one sizes the tracks and nothing else. Import this when you want the
 // look, skip it when you do not.
 
-// One thing only: a line down the middle of the handle, and a second colour for it while the
-// pointer is on the handle or the keyboard is. Nothing here has an opinion about the panes - a
-// theme that put a background and a padding on them would be a design system's answer written
-// into a book of elements.
+// One thing only: three dots in the middle of the handle, and a second colour for them while
+// the pointer is on the handle or the keyboard is. Nothing here has an opinion about the
+// panes - a theme that put a background and a padding on them would be a design system's
+// answer written into a book of elements.
 
 // On the bare tag and not behind the upgrade gate, for the reason `index.scss` gives at the
 // top: a page replacing one of these writes a plain `splitter-elemental { … }` rule, and a
 // default hidden behind an attribute selector outweighs it.
 splitter-elemental {
-  // `currentcolor` rather than a hex, so the line is drawn out of the text colour it sits
-  // among and follows a theme switch with nothing to configure. Faint at rest, because a
+  // `currentcolor` rather than a hex, so the dots are drawn out of the text colour they sit
+  // among and follow a theme switch with nothing to configure. Faint at rest, because a
   // splitter is a seam and not a border.
   --splitter-elemental-color: color-mix(in srgb, currentcolor 20%, transparent);
   --splitter-elemental-active-color: color-mix(in srgb, currentcolor 45%, transparent);
 
-  // The line, not the target. The handle stays `--splitter-elemental-size` wide whatever this
-  // says, which is the whole point of drawing the line on a pseudo element rather than
-  // narrowing the thing a pointer has to hit.
-  --splitter-elemental-line-size: 1px;
+  // One dot across, and the gap between two of them. The grip, not the target: the handle
+  // stays `--splitter-elemental-size` whatever this says, which is the whole point of drawing
+  // the grip on a pseudo element rather than narrowing the thing a pointer has to hit.
+  --splitter-elemental-dot-size: 3px;
 }
 
 // The upgrade gate inside `:where()` so it costs nothing on specificity: it is a guard against
@@ -30,31 +30,45 @@ splitter-elemental {
 splitter-elemental:where([data-splitter-panes]) > [data-splitter-handle] {
   display: grid;
   place-items: center;
-}
 
-splitter-elemental:where([data-splitter-panes]) > [data-splitter-handle]::before {
-  background: var(--splitter-elemental-color);
-  content: "";
-
-  // The line runs the length of the seam and is `--splitter-elemental-line-size` across it, so
-  // the two sizes swap with the axis. Logical properties do the swapping in the horizontal
-  // case for free; the stacked case is the one that needs saying.
-  inline-size: var(--splitter-elemental-line-size);
-  block-size: 100%;
-}
-
-splitter-elemental[vertical]:where([data-splitter-panes]) > [data-splitter-handle]::before {
-  inline-size: 100%;
-  block-size: var(--splitter-elemental-line-size);
+  // The gradient below paints `currentcolor`, so the two states are one declaration each and
+  // the gradient is written once. Spelt out as a colour in both places instead, the hover rule
+  // would be a second copy of the geometry to keep in step with this one.
+  color: var(--splitter-elemental-color);
 }
 
 // `:focus-visible` rather than `:focus`, so a handle that was just dragged does not stand lit
 // up afterwards - the focus is put there by the element on purpose, so that the arrow keys
 // work on the handle you have your hand on, and a mouse user has not asked to see it.
 // The focus ring itself is left to the browser: it is drawn round the whole 24px handle, which
-// is a bigger and clearer target than the line, and a ring this file drew would be one more
+// is a bigger and clearer target than the dots, and a ring this file drew would be one more
 // thing to keep in step with a page's own focus styles.
-splitter-elemental:where([data-splitter-panes]) > [data-splitter-handle]:hover::before,
-splitter-elemental:where([data-splitter-panes]) > [data-splitter-handle]:focus-visible::before {
-  background: var(--splitter-elemental-active-color);
+splitter-elemental:where([data-splitter-panes]) > [data-splitter-handle]:hover,
+splitter-elemental:where([data-splitter-panes]) > [data-splitter-handle]:focus-visible {
+  color: var(--splitter-elemental-active-color);
+}
+
+// **Three dots out of one tiled gradient**, rather than three boxes: the strip is five dots
+// long and the tile is a third of it, so a dot and the gap after it are the same length and
+// the run is centred on the handle with half a gap at each end - geometry the author changes
+// with one number instead of four. `closest-side` is what ties the circle to `--splitter-elemental-dot-size`: the tile is
+// wider than it is tall on one axis and taller than it is wide on the other, and the closest
+// side is the strip's own thickness in both. A percentage stop would be a radius measured
+// against the tile, which changes with the axis.
+splitter-elemental:where([data-splitter-panes]) > [data-splitter-handle]::before {
+  background-image: radial-gradient(circle closest-side, currentcolor 100%, transparent);
+  content: "";
+
+  // The dots run the length of the seam and are one dot across it, so the two sizes swap with
+  // the axis. Logical properties do the swapping in the horizontal case for free; the stacked
+  // case is the one that needs saying.
+  inline-size: var(--splitter-elemental-dot-size);
+  block-size: calc(var(--splitter-elemental-dot-size) * 5);
+  background-size: 100% calc(100% / 3);
+}
+
+splitter-elemental[vertical]:where([data-splitter-panes]) > [data-splitter-handle]::before {
+  inline-size: calc(var(--splitter-elemental-dot-size) * 5);
+  block-size: var(--splitter-elemental-dot-size);
+  background-size: calc(100% / 3) 100%;
 }
