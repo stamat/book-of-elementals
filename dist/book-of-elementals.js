@@ -4607,6 +4607,20 @@
   var DEFAULT_UP_TEXT = "Move {label} up";
   var DEFAULT_DOWN_TEXT = "Move {label} down";
   var DEFAULT_MOVED_TEXT = "{label} moved to position {position} of {total}";
+  var DEFAULT_TO_TEXT = "Move {label} to {container}";
+  var DEFAULT_MOVED_TO_TEXT = "{label} moved to {container}, position {position} of {total}";
+  var SHORTCUTS = { up: "Alt+ArrowUp", down: "Alt+ArrowDown" };
+  var KEYS = { ArrowUp: "up", ArrowDown: "down" };
+  function crossDirection(key, rtl) {
+    if (key === "ArrowLeft") return rtl ? "next" : "prev";
+    if (key === "ArrowRight") return rtl ? "prev" : "next";
+    return null;
+  }
+  function shortcutFor(direction, rtl) {
+    if (direction !== "prev" && direction !== "next") return SHORTCUTS[direction];
+    const left = crossDirection("ArrowLeft", rtl) === direction;
+    return left ? "Alt+Shift+ArrowLeft" : "Alt+Shift+ArrowRight";
+  }
   var LABEL_MAX = 80;
   var ANNOUNCE_MS = 100;
   function namingCell(row) {
@@ -4625,11 +4639,27 @@
   function itemLabel(item, max = LABEL_MAX) {
     if (!item) return "";
     const explicit = item.getAttribute ? item.getAttribute("data-label") : null;
-    const text = (explicit ?? ownText(item)).replace(/\s+/g, " ").trim();
+    return shorten((explicit ?? ownText(item)).replace(/\s+/g, " ").trim(), max);
+  }
+  function shorten(text, max) {
     if (text.length <= max) return text;
     const cut = text.slice(0, max);
     const space = cut.lastIndexOf(" ");
     return `${(space > max / 2 ? cut.slice(0, space) : cut).trimEnd()}\u2026`;
+  }
+  function containerLabel(container, max = LABEL_MAX) {
+    if (!container) return "";
+    const ids = container.getAttribute("aria-labelledby");
+    const document2 = container.ownerDocument;
+    let text = "";
+    if (ids && document2) {
+      text = ids.trim().split(/\s+/).map((id) => {
+        const element = document2.getElementById(id);
+        return element ? element.textContent : "";
+      }).join(" ");
+    }
+    if (!text.trim()) text = container.getAttribute("aria-label") || "";
+    return shorten(text.replace(/\s+/g, " ").trim(), max);
   }
   function format(template, values) {
     return String(template).replace(/\{(\w+)\}/g, (whole, key) => Object.prototype.hasOwnProperty.call(values, key) ? String(values[key]) : whole);
@@ -4639,9 +4669,16 @@
     while (index < boxes.length && y >= boxes[index].top + boxes[index].height / 2) index++;
     return index;
   }
+  function dropContainer(x, y, boxes, current) {
+    for (let index = 0; index < boxes.length; index++) {
+      const box = boxes[index];
+      if (x >= box.left && x <= box.right && y >= box.top && y <= box.bottom) return index;
+    }
+    return current;
+  }
   var RearrangeElemental = class extends ElementBase {
     static get observedAttributes() {
-      return ["drag", "up-text", "down-text", "moved-text"];
+      return ["drag", "up-text", "down-text", "moved-text", "to-text", "moved-to-text"];
     }
     /** Whether a pointer can drag as well as press. The buttons do not depend on it. */
     get drag() {
@@ -4669,20 +4706,78 @@
     set movedText(value) {
       this.setAttribute("moved-text", value);
     }
-    /**
-     * What holds the items: the list, or a table's first `<tbody>`.
-     *
-     * A direct child either way, so a list inside one of the items is not mistaken for this one's.
-     * The first `<tbody>` only - a table with several is using them to group, and moving a row
-     * between groups would be rearranging the grouping away.
-     */
-    get container() {
-      return this.querySelector(":scope > ol, :scope > ul, :scope > menu, :scope > table > tbody");
+    get toText() {
+      return this.getAttribute("to-text") || DEFAULT_TO_TEXT;
     }
-    /** The items that move: the container's own children, never a nested list's. */
-    get items() {
-      const container = this.container;
+    set toText(value) {
+      this.setAttribute("to-text", value);
+    }
+    get movedToText() {
+      return this.getAttribute("moved-to-text") || DEFAULT_MOVED_TO_TEXT;
+    }
+    set movedToText(value) {
+      this.setAttribute("moved-to-text", value);
+    }
+    /**
+     * What holds the items: the lists, or the first `<tbody>` of each table.
+     *
+     * Direct children either way, so a list inside one of the items is not mistaken for one of
+     * these. The first `<tbody>` of a table only - a table with several is using them to group,
+     * and moving a row between groups would be rearranging the grouping away.
+     *
+     * **More than one is a board**, and there is nothing to switch on: two lists side by side is
+     * what a board is, and an attribute saying so again would be a second place for the answer to
+     * live.
+     */
+    get containers() {
+      const found = Array.from(this.querySelectorAll(":scope > ol, :scope > ul, :scope > menu, :scope > table > tbody"));
+      return found.filter((container) => container.tagName !== "TBODY" || container === container.parentElement.tBodies[0]);
+    }
+    /** The first container. What a one-list element has always had, and where a drag starts. */
+    get container() {
+      return this.containers[0] || null;
+    }
+    /** The items of one container: its own children, never a nested list's. */
+    itemsIn(container) {
       return container ? Array.from(container.querySelectorAll(":scope > li, :scope > tr")) : [];
+    }
+    /** Every item this element rearranges, in the order the page has them. One container's worth
+     * unless it is a board. */
+    get items() {
+      return this.containers.flatMap((container) => this.itemsIn(container));
+    }
+    /** Which container an item is in, or `null` for one this element does not hold. */
+    containerOf(item) {
+      const parent = item && item.parentElement;
+      return this.containers.indexOf(parent) < 0 ? null : parent;
+    }
+    /**
+     * The columns a cross move can reach, each with the name its buttons will carry.
+     *
+     * Empty for a single list, and **empty for a board with an unnamed column** - the whole board,
+     * not just that one. Half a row of named destinations and half of "Move Bananas to " is worse
+     * than no crossing at all, because it reads as working; without it the page is still every
+     * column tidying itself, which is a working page.
+     *
+     * The error is thrown a task later rather than logged, the way this book raises anything an
+     * author has to fix: the browser's own uncaught-error report carries the stack, the file and
+     * the line, where a `console.warn` would be a string that says less. Once per element, because
+     * `refresh` runs on every move and a board is not something the reader can fix mid-drag.
+     */
+    get columns() {
+      const containers = this.containers;
+      if (containers.length < 2) return [];
+      const labels = containers.map((container) => containerLabel(container));
+      if (labels.some((label) => !label)) {
+        if (!this.reportedUnnamed) {
+          this.reportedUnnamed = true;
+          setTimeout(() => {
+            throw new Error("<rearrange-elemental>: a board needs a name on every list - aria-labelledby pointing at its heading, or aria-label. One without a name leaves nothing to write in the buttons that move an item to it, so none are written.");
+          });
+        }
+        return [];
+      }
+      return containers.map((container, index) => ({ container, label: labels[index] }));
     }
     /**
      * Where an item's controls go: the item itself, and for a table row one of its cells.
@@ -4785,7 +4880,7 @@
       button.type = "button";
       button.className = "rearrange-elemental-move";
       button.setAttribute("data-move", direction);
-      button.setAttribute("aria-keyshortcuts", direction === "up" ? "Alt+ArrowUp" : "Alt+ArrowDown");
+      if (SHORTCUTS[direction]) button.setAttribute("aria-keyshortcuts", SHORTCUTS[direction]);
       const label = document.createElement("span");
       label.className = "rearrange-elemental-label";
       button.append(label);
@@ -4801,32 +4896,70 @@
      * on every move: the labels are read from the DOM each time, because the DOM is where the
      * page may have just changed them. */
     refresh() {
-      const items = this.items;
-      const total = items.length;
-      items.forEach((item, index) => {
-        const controls = this.controlsHost(item).querySelector(":scope > [data-rearrange-controls]");
-        if (!controls) return;
-        const label = itemLabel(item);
-        for (const button of controls.querySelectorAll(":scope > [data-move]")) {
-          const up = button.getAttribute("data-move") === "up";
-          button.querySelector(".rearrange-elemental-label").textContent = format(up ? this.upText : this.downText, { label });
-          if (up ? index === 0 : index === total - 1) button.setAttribute("aria-disabled", "true");
-          else button.removeAttribute("aria-disabled");
-        }
-        let handle = this.handleFor(item);
-        if (!this.drag) {
-          if (handle && handle.hasAttribute("data-rearrange-own")) handle.remove();
-          return;
-        }
-        if (!handle) {
-          handle = document.createElement("span");
-          handle.className = "rearrange-elemental-handle";
-          handle.setAttribute("data-rearrange-handle", "");
-          handle.setAttribute("data-rearrange-own", "");
-          handle.setAttribute("aria-hidden", "true");
-          controls.prepend(handle);
-        }
+      const columns = this.columns;
+      const rtl = columns.length > 0 && getComputedStyle(this).direction === "rtl";
+      this.containers.forEach((container, column) => {
+        const items = this.itemsIn(container);
+        const total = items.length;
+        items.forEach((item, index) => this.refreshItem(item, {
+          index,
+          total,
+          rtl,
+          // Undefined at either end of the board, which is how the cross buttons there come off:
+          // there is no destination to name, and a button whose name cannot be written is not one.
+          prev: columns[column - 1],
+          next: columns[column + 1]
+        }));
       });
+    }
+    /** One item's controls brought up to date: the names, the ends of travel, the way across, and
+     * the handle. */
+    refreshItem(item, { index, total, rtl, prev, next }) {
+      const controls = this.controlsHost(item).querySelector(":scope > [data-rearrange-controls]");
+      if (!controls) return;
+      const label = itemLabel(item);
+      for (const button of controls.querySelectorAll(':scope > [data-move="up"], :scope > [data-move="down"]')) {
+        const up = button.getAttribute("data-move") === "up";
+        button.querySelector(".rearrange-elemental-label").textContent = format(up ? this.upText : this.downText, { label });
+        if (up ? index === 0 : index === total - 1) button.setAttribute("aria-disabled", "true");
+        else button.removeAttribute("aria-disabled");
+      }
+      this.crossFor(controls, label, prev, "prev", rtl);
+      this.crossFor(controls, label, next, "next", rtl);
+      let handle = this.handleFor(item);
+      if (!this.drag) {
+        if (handle && handle.hasAttribute("data-rearrange-own")) handle.remove();
+        return;
+      }
+      if (!handle) {
+        handle = document.createElement("span");
+        handle.className = "rearrange-elemental-handle";
+        handle.setAttribute("data-rearrange-handle", "");
+        handle.setAttribute("data-rearrange-own", "");
+        handle.setAttribute("aria-hidden", "true");
+        controls.prepend(handle);
+      }
+    }
+    /**
+     * The button that takes an item to the column beside it, made, named or taken away.
+     *
+     * Placed against the up button rather than prepended, so the row reads the way the board looks
+     * - grip, back, up, down, on - however many passes it takes to get there and whether or not
+     * there is a handle in front of it yet.
+     */
+    crossFor(controls, label, column, direction, rtl) {
+      let button = controls.querySelector(`:scope > [data-move="${direction}"]`);
+      if (!column) {
+        if (button) button.remove();
+        return;
+      }
+      if (!button) {
+        button = this.moveButton(direction);
+        if (direction === "prev") controls.insertBefore(button, controls.querySelector(':scope > [data-move="up"]'));
+        else controls.append(button);
+      }
+      button.setAttribute("aria-keyshortcuts", shortcutFor(direction, rtl));
+      button.querySelector(".rearrange-elemental-label").textContent = format(this.toText, { label, container: column.label });
     }
     /**
      * Move an item to a position, and say so.
@@ -4837,9 +4970,48 @@
      * @returns {boolean} Whether anything moved.
      */
     move(item, to) {
+      const container = this.containerOf(item);
       const from = this.place(item, to);
       if (from < 0) return false;
-      this.report(item, from, this.items.indexOf(item));
+      this.report(item, from, this.itemsIn(container).indexOf(item), container, container);
+      return true;
+    }
+    /**
+     * Take an item to another column, at the place it already held.
+     *
+     * **The position is kept and clamped, not reset to the end.** A press does one thing: the
+     * reader who moves a card sideways asked for a column, not for a column and a trip to the
+     * bottom of it - and a column shorter than the place they held is the only reason to land
+     * anywhere else, which is its end.
+     *
+     * The focus is the other half. The button pressed at the far end of the board is a button that
+     * no longer has a column to point at, so it goes - and focus with it, down to `<body>`, at the
+     * one moment the reader is mid-sequence. The mirror button always exists (a board has at least
+     * two columns, so leaving one always arrives somewhere with a way back) and it is the press
+     * that undoes this one, which makes it the honest place to land.
+     *
+     * @param {Element} item
+     * @param {Element} container One of this element's, and not the one the item is in.
+     * @returns {boolean} Whether anything moved.
+     */
+    moveTo(item, container) {
+      const from = this.containerOf(item);
+      if (!from || !container || from === container) return false;
+      const index = this.itemsIn(from).indexOf(item);
+      if (index < 0) return false;
+      const landing = this.itemsIn(container);
+      const to = Math.min(index, landing.length);
+      const focused = item.contains(document.activeElement) ? document.activeElement : null;
+      const pressed = focused ? focused.getAttribute("data-move") : null;
+      this.insert(container, item, landing[to] || null);
+      this.refresh();
+      if (focused && !focused.isConnected) {
+        const back = this.controlsHost(item).querySelector(`:scope > [data-rearrange-controls] > [data-move="${pressed === "next" ? "prev" : "next"}"]`);
+        if (back) back.focus();
+      } else if (focused && document.activeElement !== focused) {
+        focused.focus();
+      }
+      this.report(item, index, to, from, container);
       return true;
     }
     /**
@@ -4852,36 +5024,51 @@
      * @returns {number} Where the item was, or `-1` if it did not move.
      */
     place(item, to) {
-      const items = this.items;
+      const container = this.containerOf(item);
+      const items = this.itemsIn(container);
       const from = items.indexOf(item);
       if (from < 0 || to < 0 || to >= items.length || to === from) return -1;
       const before = to > from ? items[to].nextSibling : items[to];
       const focused = item.contains(document.activeElement) ? document.activeElement : null;
-      const container = this.container;
-      if (container.moveBefore) {
-        try {
-          container.moveBefore(item, before);
-        } catch {
-          container.insertBefore(item, before);
-        }
-      } else {
-        container.insertBefore(item, before);
-      }
+      this.insert(container, item, before);
       if (focused && document.activeElement !== focused) focused.focus();
       this.refresh();
       return from;
     }
+    /**
+     * Put a node somewhere, by the best means the browser has.
+     *
+     * `moveBefore` moves the node instead of removing and re-inserting it, which is what keeps
+     * focus, `:active`, a running animation and any iframe or media inside the item alive across
+     * the move. Not Baseline yet - Chrome 133, and an Interop 2026 focus area - so the fallback is
+     * the old pair, plus the one piece of that state this element can put back.
+     *
+     * One place for both moves: a crossing is the same node question as a re-order, and a second
+     * copy of this is a second place for the fallback to be forgotten.
+     */
+    insert(container, item, before) {
+      if (container.moveBefore) {
+        try {
+          container.moveBefore(item, before || null);
+          return;
+        } catch {
+        }
+      }
+      container.insertBefore(item, before || null);
+    }
     /** Tell the reader and tell the page. Both halves in one place, so a drag can never announce
      * something a press would not. */
-    report(item, from, to) {
-      this.announce(format(this.movedText, {
+    report(item, from, to, fromContainer, toContainer) {
+      const across = fromContainer !== toContainer;
+      this.announce(format(across ? this.movedToText : this.movedText, {
         label: itemLabel(item),
+        container: containerLabel(toContainer),
         position: to + 1,
-        total: this.items.length
+        total: this.itemsIn(toContainer).length
       }));
       this.dispatchEvent(new CustomEvent("rearrange-move", {
         bubbles: true,
-        detail: { item, from, to }
+        detail: { item, from, to, fromContainer, toContainer, sameContainer: !across }
       }));
     }
     /**
@@ -4904,10 +5091,24 @@
       const button = event.target.closest && event.target.closest("[data-move]");
       if (!button || button.closest("rearrange-elemental") !== this) return;
       if (button.getAttribute("aria-disabled") === "true") return;
-      const item = button.closest("li, tr");
-      const index = this.items.indexOf(item);
-      if (index < 0) return;
-      this.move(item, index + (button.getAttribute("data-move") === "up" ? -1 : 1));
+      this.press(button.closest("li, tr"), button.getAttribute("data-move"));
+    }
+    /** One press, whichever control it arrived from. The buttons and the shortcuts are the same
+     * four moves, and a second copy of this is where the two would drift apart. */
+    press(item, direction) {
+      const container = this.containerOf(item);
+      if (!container) return;
+      if (direction === "up" || direction === "down") {
+        const index2 = this.itemsIn(container).indexOf(item);
+        if (index2 < 0) return;
+        this.move(item, index2 + (direction === "up" ? -1 : 1));
+        return;
+      }
+      const columns = this.columns;
+      const index = columns.findIndex((column) => column.container === container);
+      const landing = columns[index + (direction === "prev" ? -1 : 1)];
+      if (index < 0 || !landing) return;
+      this.moveTo(item, landing.container);
     }
     /**
      * Alt+Arrow, from anywhere in the item.
@@ -4918,12 +5119,13 @@
      * `aria-keyshortcuts`, which is how a reader finds out it exists.
      */
     onKeyDown(event) {
-      if (!event.altKey || event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+      if (!event.altKey) return;
+      const direction = KEYS[event.key] || (event.shiftKey ? crossDirection(event.key, getComputedStyle(this).direction === "rtl") : null);
+      if (!direction) return;
       const item = event.target.closest && event.target.closest("li, tr");
-      const index = item && item.closest("rearrange-elemental") === this ? this.items.indexOf(item) : -1;
-      if (index < 0) return;
+      if (!item || item.closest("rearrange-elemental") !== this || !this.containerOf(item)) return;
       event.preventDefault();
-      this.move(item, index + (event.key === "ArrowUp" ? -1 : 1));
+      this.press(item, direction);
     }
     /**
      * Take hold of an item.
@@ -4944,10 +5146,22 @@
       const handle = event.target.closest && event.target.closest("[data-rearrange-handle]");
       if (!handle || handle.closest("rearrange-elemental") !== this) return;
       const item = handle.closest("li, tr");
-      const from = this.items.indexOf(item);
+      const container = this.containerOf(item);
+      const from = this.itemsIn(container).indexOf(item);
       if (from < 0) return;
       event.preventDefault();
-      this.dragging = { item, handle, from, index: from, translate: 0, base: event.clientY };
+      this.dragging = {
+        item,
+        handle,
+        container,
+        column: this.containers.indexOf(container),
+        from,
+        index: from,
+        translate: 0,
+        translateX: 0,
+        base: event.clientY,
+        baseX: event.clientX
+      };
       this.dataset.dragging = "";
       item.dataset.dragging = "";
       this.measure();
@@ -4955,7 +5169,7 @@
       handle.addEventListener("dragcancel", this.onDragEnd);
       document.addEventListener("keydown", this.onDragKey, true);
       document.addEventListener("scroll", this.onDragScroll, true);
-      this.dragging.gesture = drag(event, { target: handle, callback: (d) => this.follow(d.clientY) });
+      this.dragging.gesture = drag(event, { target: handle, callback: (d) => this.follow(d.clientX, d.clientY) });
     }
     /**
      * Where every item is, once, for the drag in progress.
@@ -4969,7 +5183,18 @@
     measure() {
       const drag2 = this.dragging;
       if (!drag2) return;
-      drag2.boxes = this.items.filter((element) => element !== drag2.item).map((element) => {
+      drag2.boxes = this.boxesIn(this.containers[drag2.column]);
+      drag2.columnBoxes = this.containers.map((container) => {
+        const rect = container.getBoundingClientRect();
+        return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom };
+      });
+    }
+    /** Where the items of one column are, minus the one in hand. The dragged item is not in the map:
+     * `dropIndex` counts the items it is not, and why is written there. Which is also why nothing
+     * here undoes its transform. */
+    boxesIn(container) {
+      const item = this.dragging ? this.dragging.item : null;
+      return this.itemsIn(container).filter((element) => element !== item).map((element) => {
         const rect = element.getBoundingClientRect();
         return { top: rect.top, height: rect.height };
       });
@@ -4988,20 +5213,46 @@
      * layout puts it, so the same translate would jump it by a row. The two rects either side of
      * the move differ by exactly that layout shift, and adding it to the origin cancels it out.
      */
-    follow(clientY) {
+    follow(clientX, clientY) {
       const drag2 = this.dragging;
       if (!drag2) return;
-      const to = dropIndex(clientY, drag2.boxes);
-      if (to !== drag2.index) {
-        const was = drag2.item.getBoundingClientRect().top;
-        this.place(drag2.item, to);
-        drag2.base += drag2.item.getBoundingClientRect().top - was;
+      const column = dropContainer(clientX, clientY, drag2.columnBoxes, drag2.column);
+      if (column !== drag2.column) {
+        const container = this.containers[column];
+        const to = dropIndex(clientY, this.boxesIn(container));
+        this.rebase(drag2, () => {
+          this.insert(container, drag2.item, this.itemsIn(container)[to] || null);
+          this.refresh();
+        });
+        drag2.column = column;
         drag2.index = to;
-        drag2.translate = clientY - drag2.base;
         this.measure();
+      } else {
+        const to = dropIndex(clientY, drag2.boxes);
+        if (to !== drag2.index) {
+          this.rebase(drag2, () => this.place(drag2.item, to));
+          drag2.index = to;
+          this.measure();
+        }
       }
       drag2.translate = clientY - drag2.base;
-      drag2.item.style.transform = `translateY(${drag2.translate}px)`;
+      drag2.translateX = clientX - drag2.baseX;
+      drag2.item.style.transform = `translate(${drag2.translateX}px, ${drag2.translate}px)`;
+    }
+    /**
+     * Move the item in the DOM without the pointer feeling it.
+     *
+     * Moving the item changes where layout puts it, so the same translate would jump it by a row -
+     * or, across columns, by a column. The two rects either side of the move differ by exactly that
+     * layout shift, and adding it to the origin cancels it out. Both axes, because a crossing moves
+     * it sideways as well.
+     */
+    rebase(drag2, move) {
+      const was = drag2.item.getBoundingClientRect();
+      move();
+      const now = drag2.item.getBoundingClientRect();
+      drag2.base += now.top - was.top;
+      drag2.baseX += now.left - was.left;
     }
     /**
      * The end of the gesture, either way it ended.
@@ -5042,11 +5293,16 @@
       delete drag2.item.dataset.dragging;
       delete this.dataset.dragging;
       if (cancel) {
-        this.place(drag2.item, drag2.from);
+        const others = this.itemsIn(drag2.container).filter((element) => element !== drag2.item);
+        this.insert(drag2.container, drag2.item, others[drag2.from] || null);
+        this.refresh();
         return;
       }
-      const to = this.items.indexOf(drag2.item);
-      if (to !== drag2.from) this.report(drag2.item, drag2.from, to);
+      const container = this.containerOf(drag2.item);
+      const to = this.itemsIn(container).indexOf(drag2.item);
+      if (to !== drag2.from || container !== drag2.container) {
+        this.report(drag2.item, drag2.from, to, drag2.container, container);
+      }
     }
   };
   define2("rearrange-elemental", RearrangeElemental);

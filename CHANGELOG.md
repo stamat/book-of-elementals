@@ -34,12 +34,32 @@ may already be targeting**, since neither shows up in a function signature.
   API: that one has no touch support at all, and its `aria-grabbed`/`aria-dropeffect` half was
   deprecated in ARIA 1.1 with nothing put in its place.
 
+  **Several named lists in one element is a board**, and there is no attribute for it: two lists
+  side by side have already said so. Each item then also gets a button for the column on either
+  side of it, named by where it lands — `Move Bananas to Done`, never a direction, because "move
+  right" is a sentence a reader off the screen cannot use. Crossing keeps the position the item
+  held, clamped to what the destination holds; the fast path is <kbd>Alt</kbd> + <kbd>Shift</kbd>
+  and a sideways arrow, which asks for <kbd>Shift</kbd> because <kbd>Alt</kbd> and a sideways
+  arrow is the browser's Back and Forward, and both the keys and the arrows flip in a
+  right-to-left layout. **A list in a board with no `aria-labelledby` or `aria-label` takes the
+  crossing buttons off the whole board** and throws an error naming the missing attribute — half
+  a row of named destinations and half of "Move Bananas to " reads as working. A drag crosses columns as
+  well, the empty ones included — the column under the pointer wins, the gutter between two keeps
+  the one the drag is in, and <kbd>Esc</kbd> puts the card back in the column it was picked up
+  from. That the buttons came first is what makes the gesture safe to add:
+  [WCAG 2.5.7](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html) asks for a
+  non-drag way to do what a drag does and not the reverse, so it is satisfied before the first
+  drag event. No auto-scroll: a board wider than its viewport is scrolled by hand mid-drag. [Atlassian's guidance](https://atlassian.design/components/pragmatic-drag-and-drop/accessibility-guidelines)
+  arrives at the same answer from the other end, as an action menu of movement outcomes per card.
+
   **DOM:** one `<span class="rearrange-elemental-controls" data-rearrange-controls>` appended to
   each item — to the `<li>` itself, and for a `<tr>` into the cell marked `data-rearrange-cell` or
   its last cell, because a `<span>` between two `<td>`s is fostered out of the table by the
   parser. It holds two `<button class="rearrange-elemental-move" data-move="up|down">`
   — each with its name as visible text in a `<span class="rearrange-elemental-label">`,
-  never an `aria-label` over an icon — and, when `drag` is set, a
+  never an `aria-label` over an icon — plus `data-move="prev"` before them and `data-move="next"`
+  after them on a board, absent at the two ends where there is no column to name; and, when
+  `drag` is set, a
   `<span class="rearrange-elemental-handle" data-rearrange-handle aria-hidden="true">` before
   them. One `<p class="rearrange-elemental-status" role="status">` at the end of the
   element. The ends of travel are marked `aria-disabled`, never `disabled`, which would drop the
@@ -48,7 +68,13 @@ may already be targeting**, since neither shows up in a function signature.
 
   **CSS:** `rearrange/index.scss` places the controls and makes the handle draggable;
   `theme.scss` draws the arrows, the grip and the lift, behind
-  `--rearrange-elemental-control-size|gap|radius|color|hover|disabled-opacity|grip|lift|surface`.
+  `--rearrange-elemental-control-size|gap|radius|color|hover|disabled-opacity|idle-opacity|grip|lift|surface`.
+  `--rearrange-elemental-idle-opacity: 0` fades the controls out until a pointer or a focus
+  arrives — a board's worth of them on every card is furniture — and brings the parts that are
+  easy to get wrong by hand with it: `:focus-within` reveals them for the keyboard, a coarse
+  pointer always sees them, the fade is `opacity` so nothing leaves the accessibility tree or the
+  tab order, and there is no transition under `prefers-reduced-motion: reduce`. The default is `1`,
+  because a control nobody can see is a capability nobody knows is there.
   The structure stylesheet deliberately has no opinion about where in the item the controls sit —
   `[data-rearrange-controls] { margin-inline-start: auto }` on a flex `<li>` is yours to write.
 
@@ -62,12 +88,15 @@ may already be targeting**, since neither shows up in a function signature.
   `dragstart`, `drag`, `dragend` and `dragcancel` as the gesture runs; none of them bubbles, and
   `rearrange-move` is still the event to read.
 
-  Attributes: `drag`, `up-text`, `down-text`, `moved-text`, plus `data-label`,
+  Attributes: `drag`, `up-text`, `down-text`, `moved-text`, `to-text`, `moved-to-text`, plus `data-label`,
   `data-rearrange-handle` and `data-rearrange-cell` on the items. A row with no `data-label` is named
   by its `<th scope="row">` or its first cell, never by every cell run together. Do not put this
   on a table that is also a `<sortable-table-elemental>`: that one derives the order from a key
   in the cells and this one is a hand order nothing derives. One bubbling `rearrange-move` per landing, with
-  `item`, `from` and `to` — not one per row a drag crosses. Nothing is persisted; items that
+  `item`, `from`, `to`, `fromContainer`, `toContainer` and `sameContainer` — `false` when the item
+  crossed a column, which is the flag to branch on, since `from` and `to` count inside their own
+  column and a card that keeps its place while changing column reports `0` to `0` — not one per
+  row a drag crosses. Nothing is persisted; items that
   arrive after the upgrade are picked up by `.update()`.
 
 ### Removed

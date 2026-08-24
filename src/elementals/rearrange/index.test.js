@@ -1,5 +1,10 @@
-// The three sums this element does: what one item is called, how a template is filled in, and
-// which position a drag is over.
+// The sums this element does: what one item is called, what a column of a board is called, which
+// column a sideways arrow means, how a template is filled in, and which position and which column
+// a drag is over.
+//
+// The sideways ones are here rather than in `dom.test.js` because right-to-left is a computed
+// style and jsdom has none: `prev` and `next` are the markup's order, the arrow keys are the
+// screen's, and the two run opposite ways in Arabic and Hebrew.
 //
 // The label is the part worth pinning. It goes into two button names and every announcement,
 // so its edges are the ones a reader hits: `data-label=""` is an author saying this item has no
@@ -19,7 +24,7 @@
 // themselves, which are `dom.test.js`; and the pointer drag, which needs layout, pointer capture
 // and a real `touch-action` — that is `script/a11y` and a browser.
 
-import { itemLabel, format, dropIndex, LABEL_MAX } from './index.js';
+import { itemLabel, containerLabel, crossDirection, shortcutFor, format, dropIndex, dropContainer, LABEL_MAX } from './index.js';
 
 /** The smallest thing `itemLabel` reads: an attribute and some child nodes. */
 function item(text, { label, controls, handle } = {}) {
@@ -87,6 +92,50 @@ test('a long item whose first space comes too early is cut hard rather than down
   expect(itemLabel(item(text))).toBe(`${text.slice(0, LABEL_MAX)}…`);
 });
 
+/** The smallest thing `containerLabel` reads: two ARIA attributes and a document to resolve
+ * ids against. */
+function column ({ label, labelledby, headings = {} } = {}) {
+  return {
+    getAttribute: (name) => {
+      if (name === 'aria-label') return label === undefined ? null : label;
+      if (name === 'aria-labelledby') return labelledby === undefined ? null : labelledby;
+      return null;
+    },
+    ownerDocument: {
+      getElementById: (id) => (Object.prototype.hasOwnProperty.call(headings, id) ? { textContent: headings[id] } : null)
+    }
+  };
+}
+
+test('a column is called by the heading it points at, because the button says where the item lands', () => {
+  expect(containerLabel(column({ labelledby: 'done', headings: { done: 'Done' } }))).toBe('Done');
+});
+
+test('aria-labelledby wins over aria-label, the order ARIA itself resolves them in', () => {
+  expect(containerLabel(column({ label: 'Ignored', labelledby: 'done', headings: { done: 'Done' } }))).toBe('Done');
+});
+
+test('a column named by several headings is called by all of them, in the order it named them', () => {
+  expect(containerLabel(column({ labelledby: 'board done', headings: { board: 'Sprint', done: 'Done' } })))
+    .toBe('Sprint Done');
+});
+
+test('aria-labelledby pointing at nothing is a name that does not exist rather than an empty one', () => {
+  // The typo case. Empty is what the element checks for before it writes a single cross button,
+  // so a pointer at a heading that was renamed takes the board down loudly instead of naming
+  // three buttons "Move Bananas to ".
+  expect(containerLabel(column({ labelledby: 'gone' }))).toBe('');
+});
+
+test('a column with neither attribute has no name, and it is the element that decides what that costs', () => {
+  expect(containerLabel(column())).toBe('');
+});
+
+test('a long column name is cut like an item\'s, because it lands in a button name on every card', () => {
+  const words = Array(20).fill('word').join(' ');
+  expect(containerLabel(column({ label: words }))).toBe(`${Array(16).fill('word').join(' ')}…`);
+});
+
 test('a template is filled in from the values it names', () => {
   expect(format('Move {label} up', { label: 'Bananas' })).toBe('Move Bananas up');
   expect(format('{label} moved to position {position} of {total}', { label: 'Kiwi', position: 2, total: 3 }))
@@ -100,6 +149,29 @@ test('a placeholder nothing answers to is left exactly as written, so the typo i
 
 test('a placeholder cannot reach past the values into the prototype', () => {
   expect(format('{constructor} and {toString}', { label: 'Kiwi' })).toBe('{constructor} and {toString}');
+});
+
+test('right to left, a sideways arrow means the column the reader sees rather than the one after it', () => {
+  // `prev` and `next` are the markup's order; the screen's order is the other way round here,
+  // and a card that jumped the wrong way on every press would be the board fighting the reader.
+  expect(crossDirection('ArrowLeft', false)).toBe('prev');
+  expect(crossDirection('ArrowRight', false)).toBe('next');
+  expect(crossDirection('ArrowLeft', true)).toBe('next');
+  expect(crossDirection('ArrowRight', true)).toBe('prev');
+});
+
+test('an arrow that is not sideways is not a crossing', () => {
+  expect(crossDirection('ArrowUp', false)).toBe(null);
+  expect(crossDirection('Home', false)).toBe(null);
+});
+
+test('the shortcut a button advertises is the key that answers it, whichever way the page runs', () => {
+  // A shortcut named on a button and answered by nothing is worse than no shortcut: the reader
+  // spends the press and hears silence.
+  expect(shortcutFor('prev', false)).toBe('Alt+Shift+ArrowLeft');
+  expect(shortcutFor('prev', true)).toBe('Alt+Shift+ArrowRight');
+  expect(shortcutFor('next', true)).toBe('Alt+Shift+ArrowLeft');
+  expect(shortcutFor('up', false)).toBe('Alt+ArrowUp');
 });
 
 test('a drag is over the item whose middle it has passed, in either direction', () => {
@@ -123,6 +195,33 @@ test('past the last middle the drag is at the end, and a list of one is position
   expect(dropIndex(999, [{ top: 0, height: 20 }, { top: 20, height: 20 }])).toBe(2);
   // No others at all: the only item there is the one in hand, and it is already home.
   expect(dropIndex(10, [])).toBe(0);
+});
+
+test('a drag is in the column whose box the pointer is inside', () => {
+  const columns = [
+    { left: 0, right: 100, top: 0, bottom: 200 },
+    { left: 120, right: 220, top: 0, bottom: 200 }
+  ];
+  expect(dropContainer(50, 100, columns, 0)).toBe(0);
+  expect(dropContainer(150, 100, columns, 0)).toBe(1);
+});
+
+test('a pointer in the gutter keeps the column it came from, rather than dropping the card home', () => {
+  // The gap between two columns is 20px of nothing, and so is the margin under the last card.
+  // Answered any other way, a drag loses its column every time the pointer clips one.
+  const columns = [
+    { left: 0, right: 100, top: 0, bottom: 200 },
+    { left: 120, right: 220, top: 0, bottom: 200 }
+  ];
+  expect(dropContainer(110, 100, columns, 1)).toBe(1);
+  expect(dropContainer(50, 900, columns, 0)).toBe(0);
+  expect(dropContainer(-40, 100, columns, 1)).toBe(1);
+});
+
+test('an empty column is a column like any other, because it is its box that is being asked about', () => {
+  // The case a boxes-of-items hit test cannot answer at all: nothing in the column to be near.
+  const columns = [{ left: 0, right: 100, top: 0, bottom: 200 }, { left: 120, right: 220, top: 0, bottom: 60 }];
+  expect(dropContainer(150, 30, columns, 0)).toBe(1);
 });
 
 test('a pointer holding still between two rows does not trade them back and forth', () => {

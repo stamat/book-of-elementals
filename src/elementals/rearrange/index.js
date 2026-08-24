@@ -7,6 +7,61 @@ import { ElementBase, define } from '../../core.js';
 export const DEFAULT_UP_TEXT = 'Move {label} up';
 export const DEFAULT_DOWN_TEXT = 'Move {label} down';
 export const DEFAULT_MOVED_TEXT = '{label} moved to position {position} of {total}';
+/** A board's two extra buttons, and what a crossing says. `{container}` is the column the item
+ * lands in - never a direction, which is a word that means nothing to a reader who cannot see
+ * the board. */
+export const DEFAULT_TO_TEXT = 'Move {label} to {container}';
+export const DEFAULT_MOVED_TO_TEXT = '{label} moved to {container}, position {position} of {total}';
+
+/**
+ * The fast keyboard path for each button, as `aria-keyshortcuts` says it.
+ *
+ * **Crossing asks for Shift, and that is not a preference.** `Alt+ArrowLeft` and
+ * `Alt+ArrowRight` are Back and Forward in Chrome, Firefox and Edge, so a board advertising
+ * them would be advertising a shortcut that leaves the page. Whether `preventDefault()` takes
+ * them back is not the question - a shortcut a reader has to trust cannot be one the browser
+ * spends elsewhere.
+ */
+export const SHORTCUTS = { up: 'Alt+ArrowUp', down: 'Alt+ArrowDown' };
+
+/** Which move a vertical arrow is, once Alt is already held. */
+const KEYS = { ArrowUp: 'up', ArrowDown: 'down' };
+
+/**
+ * Which column a sideways arrow means, which is not the one it points at.
+ *
+ * `prev` and `next` are the columns' order in the markup, and right to left that order runs the
+ * other way across the screen - so the arrow the reader presses is the direction they see, and
+ * this is where the two are reconciled. Same shape as `splitterKey`, for the same reason.
+ *
+ * @param {string} key
+ * @param {boolean} rtl Whether the layout runs right to left.
+ * @returns {'prev'|'next'|null}
+ * @example
+ * crossDirection('ArrowLeft', false) // => 'prev'
+ * crossDirection('ArrowLeft', true) // => 'next'
+ */
+export function crossDirection(key, rtl) {
+  if (key === 'ArrowLeft') return rtl ? 'next' : 'prev';
+  if (key === 'ArrowRight') return rtl ? 'prev' : 'next';
+  return null;
+}
+
+/**
+ * What `aria-keyshortcuts` says on one button.
+ *
+ * The name of the key the reader would press, which right to left is the other arrow - a
+ * shortcut advertised on a button and answered by nothing is worse than no shortcut at all.
+ *
+ * @param {'up'|'down'|'prev'|'next'} direction
+ * @param {boolean} rtl
+ * @returns {string}
+ */
+export function shortcutFor(direction, rtl) {
+  if (direction !== 'prev' && direction !== 'next') return SHORTCUTS[direction];
+  const left = crossDirection('ArrowLeft', rtl) === direction;
+  return left ? 'Alt+Shift+ArrowLeft' : 'Alt+Shift+ArrowRight';
+}
 
 /**
  * Longest label the buttons and the announcement will carry.
@@ -79,11 +134,51 @@ export function itemLabel(item, max = LABEL_MAX) {
   const explicit = item.getAttribute ? item.getAttribute('data-label') : null;
   // `??` rather than `||`, so `data-label=""` is an author saying this item has no name worth
   // announcing rather than a value falsy enough to fall through to the text beside it.
-  const text = (explicit ?? ownText(item)).replace(/\s+/g, ' ').trim();
+  return shorten((explicit ?? ownText(item)).replace(/\s+/g, ' ').trim(), max);
+}
+
+/** Collapsed, trimmed and cut to the cap - at a word boundary when that boundary is not so early
+ * that the name becomes a syllable, and a 90-character item whose first space is at 3 is
+ * announced as "The…". */
+function shorten(text, max) {
   if (text.length <= max) return text;
   const cut = text.slice(0, max);
   const space = cut.lastIndexOf(' ');
   return `${(space > max / 2 ? cut.slice(0, space) : cut).trimEnd()}…`;
+}
+
+/**
+ * What one column is called: the heading it points at, or the name it carries.
+ *
+ * **A board's buttons are named by their destination, so this name is load-bearing.** "Move
+ * right" is what every board on the web says and what no reader off the screen can use; the
+ * column's own words are the only thing that says where the item is going. Which is also why an
+ * unnamed column takes the cross buttons off the whole board rather than writing "Move Bananas
+ * to " down one side of it.
+ *
+ * `aria-labelledby` before `aria-label`, and an `aria-labelledby` that resolves to nothing falls
+ * through to `aria-label` - the order the accessible name is computed in, so the name in the
+ * button is the name the reader hears on the list itself.
+ *
+ * @param {Element|null|undefined} container
+ * @param {number} [max=LABEL_MAX]
+ * @returns {string} Empty when the column has no name, which is the caller's problem to raise.
+ * @example
+ * containerLabel(list) // => 'Done' for <ul aria-labelledby="done"> under <h3 id="done">Done</h3>
+ */
+export function containerLabel(container, max = LABEL_MAX) {
+  if (!container) return '';
+  const ids = container.getAttribute('aria-labelledby');
+  const document = container.ownerDocument;
+  let text = '';
+  if (ids && document) {
+    text = ids.trim().split(/\s+/).map((id) => {
+      const element = document.getElementById(id);
+      return element ? element.textContent : '';
+    }).join(' ');
+  }
+  if (!text.trim()) text = container.getAttribute('aria-label') || '';
+  return shorten(text.replace(/\s+/g, ' ').trim(), max);
 }
 
 /**
@@ -140,10 +235,38 @@ export function dropIndex(y, boxes) {
 }
 
 /**
+ * Which column a pointer is over, from its position and the columns' boxes.
+ *
+ * **Sticky when it is over none of them**, which is what the gutter between two columns, the
+ * heading above one and the whole page around the board all are. The alternative is a drag that
+ * loses its column the moment the pointer clips a margin, and an item that jumps home from a gap
+ * two pixels wide.
+ *
+ * Boxes are passed in rather than measured here, for `dropIndex`'s reason: jsdom has no layout,
+ * so a sum that read `getBoundingClientRect` could only ever be tested in a browser.
+ *
+ * @param {number} x Pointer position, in client coordinates.
+ * @param {number} y
+ * @param {Array<{left: number, right: number, top: number, bottom: number}>} boxes One per column, in order.
+ * @param {number} current The column the drag is in now, and the answer when the point is in none.
+ * @returns {number}
+ * @example
+ * dropContainer(50, 10, [{ left: 0, right: 100, top: 0, bottom: 200 }], 0) // => 0
+ */
+export function dropContainer(x, y, boxes, current) {
+  for (let index = 0; index < boxes.length; index++) {
+    const box = boxes[index];
+    if (x >= box.left && x <= box.right && y >= box.top && y <= box.bottom) return index;
+  }
+  return current;
+}
+
+/**
  * `<rearrange-elemental>` custom element.
  *
  * An `<ol>`, a `<ul>` or a `<table>` whose items the reader can rearrange by hand. You write the
- * markup; it writes the buttons.
+ * markup; it writes the buttons. **Several named lists in one element is a board**, and every
+ * item grows a button for the column on each side of it.
  *
  * There is no APG pattern for rearranging. The closest thing the APG has is its
  * [rearrangeable listbox example](https://www.w3.org/WAI/ARIA/apg/patterns/listbox/examples/listbox-rearrangeable/),
@@ -178,20 +301,39 @@ export function dropIndex(y, boxes) {
  * to take the arrow keys off the screen reader's own navigation, and a mode is a state both
  * the author and the reader have to hold. Alt+Arrow is the fast keyboard path without one.
  *
- * ponytail: one axis, one container. No dragging between two of them, no columns, no nesting - a
- * second container is a second element's worth of drop-target semantics, and a kanban board is
- * not a smallest functional whole. Not to be put on a table that is also a
- * `<sortable-table-elemental>`: that one derives the order from a key in the cells and this one
- * is a hand order nothing derives, so a table wearing both has two answers to what order its
- * rows are in.
+ * **A board crosses by button, and only by button.** Every drag library gets this backwards:
+ * pointer first, keyboard bolted on, and the sideways move is the half that never arrives.
+ * Written this way round, the destination is a named button on every card -
+ * [Atlassian's own guidance](https://atlassian.design/components/pragmatic-drag-and-drop/accessibility-guidelines)
+ * lands on the same answer from the other end, an action menu of movement outcomes, having
+ * shipped the arrow-key version first. The buttons are named by the column they land in and
+ * never by a direction: "move right" is a sentence that means nothing to a reader who cannot see
+ * the board, which is why a column with no name takes the crossing off rather than writing one.
+ *
+ * A pointer crosses columns too, and it is the buttons that make that safe to add rather than
+ * the other way round:
+ * [WCAG 2.5.7](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html) is satisfied
+ * before the first drag event, so the gesture is an extra rather than the path.
+ *
+ * ponytail: no auto-scroll. A board wider than its viewport has to be scrolled by hand mid-drag,
+ * which is the pointer's problem alone - both keyboard paths reach a column that is off screen
+ * without one. A column with `overflow` other than `visible` clips a card dragged out of it, and
+ * that is the page's own CSS to answer for. No nesting either: a column inside a column is a
+ * second board's worth of questions.
+ *
+ * Not to be put on a table that is also a `<sortable-table-elemental>`: that one derives the
+ * order from a key in the cells and this one is a hand order nothing derives, so a table wearing
+ * both has two answers to what order its rows are in.
  *
  * @tag rearrange-elemental
  * @attr {boolean} drag - Also let a pointer drag the items, by a grip the element adds to each one. The buttons stay either way; this only adds to them.
  * @attr {string} [up-text=Move {label} up] - The first button's name. `{label}` is the item's.
  * @attr {string} [down-text=Move {label} down] - The second button's name.
- * @attr {string} [moved-text={label} moved to position {position} of {total}] - What the live region says after a move. `{label}`, `{position}` and `{total}`.
+ * @attr {string} [moved-text={label} moved to position {position} of {total}] - What the live region says after a move inside one list. `{label}`, `{position}` and `{total}`.
+ * @attr {string} [to-text=Move {label} to {container}] - A board's cross-column buttons. `{label}` is the item's and `{container}` the column it would land in.
+ * @attr {string} [moved-to-text={label} moved to {container}, position {position} of {total}] - What the live region says after a crossing. `{label}`, `{container}`, `{position}` and `{total}`.
  *
- * @slot - One `<ol>`, `<ul>`, `<menu>` or `<table>` - a table's first `<tbody>` holds the items and its `<tr>`s are them. Each item gets the buttons; one marked `data-label` is announced by that instead of by its text, and one containing `data-rearrange-handle` is dragged by that instead of by a grip the element writes. A row's controls go in the cell marked `data-rearrange-cell`, or in its last cell.
+ * @slot - One `<ol>`, `<ul>`, `<menu>` or `<table>` - a table's first `<tbody>` holds the items and its `<tr>`s are them. Several of them, each named with `aria-labelledby` or `aria-label`, is a board whose columns are in the order they are written. Each item gets the buttons; one marked `data-label` is announced by that instead of by its text, and one containing `data-rearrange-handle` is dragged by that instead of by a grip the element writes. A row's controls go in the cell marked `data-rearrange-cell`, or in its last cell.
  *
  * @cssprop {<length>} [--rearrange-elemental-control-size=1.75em] - Theme. Both axes of one button.
  * @cssprop {<length>} [--rearrange-elemental-gap=0.15em] - Theme. Between the grip and the buttons, and between the buttons.
@@ -199,14 +341,16 @@ export function dropIndex(y, boxes) {
  * @cssprop {<color>} [--rearrange-elemental-color=currentcolor] - Theme. The arrows.
  * @cssprop {<color>} [--rearrange-elemental-hover=currentcolor at 8%] - Theme. Fill under the pointer.
  * @cssprop {<opacity>} [--rearrange-elemental-disabled-opacity=0.3] - Theme. The button at the end of its travel - the first item's up, the last item's down.
+ * @cssprop {<opacity>} [--rearrange-elemental-idle-opacity=1] - Theme. The controls when nothing points at the item or is focused inside it. `0` fades them in on hover and focus - and never on a touch screen, which has neither.
  * @cssprop {<color>} [--rearrange-elemental-grip=currentcolor at 45%] - Theme. The dots on the drag handle.
  * @cssprop {<shadow>} [--rearrange-elemental-lift=0 0.5rem 1rem currentcolor at 15%] - Theme. Under the item while it is being dragged.
+ * @cssprop {<color>} [--rearrange-elemental-surface=Canvas] - Theme. What the dragged item is painted on, because it is passing over the ones it sat between. Re-point it on a card.
  *
- * @fires rearrange-move - An item has landed somewhere new. `detail.item` is the `<li>`, `detail.from` where it was and `detail.to` where it is, both zero-based. One per drag, not one per item crossed.
+ * @fires rearrange-move - An item has landed somewhere new. `detail.item` is the `<li>`, `detail.from` where it was and `detail.to` where it is, both zero-based and both counted in their own list; `detail.fromContainer` and `detail.toContainer` are the lists themselves, and `detail.sameContainer` is `false` when the item crossed a column. One per drag, not one per item crossed.
  */
 export class RearrangeElemental extends ElementBase {
   static get observedAttributes() {
-    return ['drag', 'up-text', 'down-text', 'moved-text'];
+    return ['drag', 'up-text', 'down-text', 'moved-text', 'to-text', 'moved-to-text'];
   }
 
   /** Whether a pointer can drag as well as press. The buttons do not depend on it. */
@@ -243,21 +387,87 @@ export class RearrangeElemental extends ElementBase {
     this.setAttribute('moved-text', value);
   }
 
-  /**
-   * What holds the items: the list, or a table's first `<tbody>`.
-   *
-   * A direct child either way, so a list inside one of the items is not mistaken for this one's.
-   * The first `<tbody>` only - a table with several is using them to group, and moving a row
-   * between groups would be rearranging the grouping away.
-   */
-  get container() {
-    return this.querySelector(':scope > ol, :scope > ul, :scope > menu, :scope > table > tbody');
+  get toText() {
+    return this.getAttribute('to-text') || DEFAULT_TO_TEXT;
   }
 
-  /** The items that move: the container's own children, never a nested list's. */
-  get items() {
-    const container = this.container;
+  set toText(value) {
+    this.setAttribute('to-text', value);
+  }
+
+  get movedToText() {
+    return this.getAttribute('moved-to-text') || DEFAULT_MOVED_TO_TEXT;
+  }
+
+  set movedToText(value) {
+    this.setAttribute('moved-to-text', value);
+  }
+
+  /**
+   * What holds the items: the lists, or the first `<tbody>` of each table.
+   *
+   * Direct children either way, so a list inside one of the items is not mistaken for one of
+   * these. The first `<tbody>` of a table only - a table with several is using them to group,
+   * and moving a row between groups would be rearranging the grouping away.
+   *
+   * **More than one is a board**, and there is nothing to switch on: two lists side by side is
+   * what a board is, and an attribute saying so again would be a second place for the answer to
+   * live.
+   */
+  get containers() {
+    const found = Array.from(this.querySelectorAll(':scope > ol, :scope > ul, :scope > menu, :scope > table > tbody'));
+    return found.filter((container) => container.tagName !== 'TBODY' || container === container.parentElement.tBodies[0]);
+  }
+
+  /** The first container. What a one-list element has always had, and where a drag starts. */
+  get container() {
+    return this.containers[0] || null;
+  }
+
+  /** The items of one container: its own children, never a nested list's. */
+  itemsIn(container) {
     return container ? Array.from(container.querySelectorAll(':scope > li, :scope > tr')) : [];
+  }
+
+  /** Every item this element rearranges, in the order the page has them. One container's worth
+   * unless it is a board. */
+  get items() {
+    return this.containers.flatMap((container) => this.itemsIn(container));
+  }
+
+  /** Which container an item is in, or `null` for one this element does not hold. */
+  containerOf(item) {
+    const parent = item && item.parentElement;
+    return this.containers.indexOf(parent) < 0 ? null : parent;
+  }
+
+  /**
+   * The columns a cross move can reach, each with the name its buttons will carry.
+   *
+   * Empty for a single list, and **empty for a board with an unnamed column** - the whole board,
+   * not just that one. Half a row of named destinations and half of "Move Bananas to " is worse
+   * than no crossing at all, because it reads as working; without it the page is still every
+   * column tidying itself, which is a working page.
+   *
+   * The error is thrown a task later rather than logged, the way this book raises anything an
+   * author has to fix: the browser's own uncaught-error report carries the stack, the file and
+   * the line, where a `console.warn` would be a string that says less. Once per element, because
+   * `refresh` runs on every move and a board is not something the reader can fix mid-drag.
+   */
+  get columns() {
+    const containers = this.containers;
+    if (containers.length < 2) return [];
+    const labels = containers.map((container) => containerLabel(container));
+    if (labels.some((label) => !label)) {
+      if (!this.reportedUnnamed) {
+        this.reportedUnnamed = true;
+        setTimeout(() => {
+          throw new Error('<rearrange-elemental>: a board needs a name on every list - aria-labelledby pointing at its heading, or aria-label. One without a name leaves nothing to write in the buttons that move an item to it, so none are written.');
+        });
+      }
+      return [];
+    }
+    return containers.map((container, index) => ({ container, label: labels[index] }));
   }
 
   /**
@@ -386,7 +596,7 @@ export class RearrangeElemental extends ElementBase {
     button.type = 'button';
     button.className = 'rearrange-elemental-move';
     button.setAttribute('data-move', direction);
-    button.setAttribute('aria-keyshortcuts', direction === 'up' ? 'Alt+ArrowUp' : 'Alt+ArrowDown');
+    if (SHORTCUTS[direction]) button.setAttribute('aria-keyshortcuts', SHORTCUTS[direction]);
     const label = document.createElement('span');
     label.className = 'rearrange-elemental-label';
     button.append(label);
@@ -404,45 +614,91 @@ export class RearrangeElemental extends ElementBase {
    * on every move: the labels are read from the DOM each time, because the DOM is where the
    * page may have just changed them. */
   refresh() {
-    const items = this.items;
-    const total = items.length;
-    items.forEach((item, index) => {
-      const controls = this.controlsHost(item).querySelector(':scope > [data-rearrange-controls]');
-      if (!controls) return;
-      const label = itemLabel(item);
-
-      for (const button of controls.querySelectorAll(':scope > [data-move]')) {
-        const up = button.getAttribute('data-move') === 'up';
-        button.querySelector('.rearrange-elemental-label').textContent =
-          format(up ? this.upText : this.downText, { label });
-        // **`aria-disabled`, never `disabled`.** A button that becomes disabled under the
-        // focus that is on it drops that focus to `<body>`, so a reader walking an item to the
-        // top of the list arrives there and is nowhere - which is the one moment they most
-        // need to be told where they are. Left focusable, left named, and the press does
-        // nothing.
-        if (up ? index === 0 : index === total - 1) button.setAttribute('aria-disabled', 'true');
-        else button.removeAttribute('aria-disabled');
-      }
-
-      let handle = this.handleFor(item);
-      if (!this.drag) {
-        // Only ours goes. An author's handle is markup they wrote, and an element that deleted
-        // it would be taking away a thing the page may have styled and laid out around.
-        if (handle && handle.hasAttribute('data-rearrange-own')) handle.remove();
-        return;
-      }
-      if (!handle) {
-        handle = document.createElement('span');
-        handle.className = 'rearrange-elemental-handle';
-        handle.setAttribute('data-rearrange-handle', '');
-        handle.setAttribute('data-rearrange-own', '');
-        // Nothing to announce and nothing to focus: it is the pointer's way in, and the
-        // keyboard's way in is the two buttons beside it. A focusable control that does
-        // nothing when you press it is worse than no control at all.
-        handle.setAttribute('aria-hidden', 'true');
-        controls.prepend(handle);
-      }
+    const columns = this.columns;
+    // Read once for the whole pass rather than per button: it is a style resolution, and the
+    // answer cannot differ between two items of the same element.
+    const rtl = columns.length > 0 && getComputedStyle(this).direction === 'rtl';
+    this.containers.forEach((container, column) => {
+      const items = this.itemsIn(container);
+      const total = items.length;
+      items.forEach((item, index) => this.refreshItem(item, {
+        index,
+        total,
+        rtl,
+        // Undefined at either end of the board, which is how the cross buttons there come off:
+        // there is no destination to name, and a button whose name cannot be written is not one.
+        prev: columns[column - 1],
+        next: columns[column + 1]
+      }));
     });
+  }
+
+  /** One item's controls brought up to date: the names, the ends of travel, the way across, and
+   * the handle. */
+  refreshItem(item, { index, total, rtl, prev, next }) {
+    const controls = this.controlsHost(item).querySelector(':scope > [data-rearrange-controls]');
+    if (!controls) return;
+    const label = itemLabel(item);
+
+    for (const button of controls.querySelectorAll(':scope > [data-move="up"], :scope > [data-move="down"]')) {
+      const up = button.getAttribute('data-move') === 'up';
+      button.querySelector('.rearrange-elemental-label').textContent =
+        format(up ? this.upText : this.downText, { label });
+      // **`aria-disabled`, never `disabled`.** A button that becomes disabled under the
+      // focus that is on it drops that focus to `<body>`, so a reader walking an item to the
+      // top of the list arrives there and is nowhere - which is the one moment they most
+      // need to be told where they are. Left focusable, left named, and the press does
+      // nothing.
+      if (up ? index === 0 : index === total - 1) button.setAttribute('aria-disabled', 'true');
+      else button.removeAttribute('aria-disabled');
+    }
+
+    this.crossFor(controls, label, prev, 'prev', rtl);
+    this.crossFor(controls, label, next, 'next', rtl);
+
+    let handle = this.handleFor(item);
+    if (!this.drag) {
+      // Only ours goes. An author's handle is markup they wrote, and an element that deleted
+      // it would be taking away a thing the page may have styled and laid out around.
+      if (handle && handle.hasAttribute('data-rearrange-own')) handle.remove();
+      return;
+    }
+    if (!handle) {
+      handle = document.createElement('span');
+      handle.className = 'rearrange-elemental-handle';
+      handle.setAttribute('data-rearrange-handle', '');
+      handle.setAttribute('data-rearrange-own', '');
+      // Nothing to announce and nothing to focus: it is the pointer's way in, and the
+      // keyboard's way in is the two buttons beside it. A focusable control that does
+      // nothing when you press it is worse than no control at all.
+      handle.setAttribute('aria-hidden', 'true');
+      controls.prepend(handle);
+    }
+  }
+
+  /**
+   * The button that takes an item to the column beside it, made, named or taken away.
+   *
+   * Placed against the up button rather than prepended, so the row reads the way the board looks
+   * - grip, back, up, down, on - however many passes it takes to get there and whether or not
+   * there is a handle in front of it yet.
+   */
+  crossFor(controls, label, column, direction, rtl) {
+    let button = controls.querySelector(`:scope > [data-move="${direction}"]`);
+    if (!column) {
+      if (button) button.remove();
+      return;
+    }
+    if (!button) {
+      button = this.moveButton(direction);
+      if (direction === 'prev') controls.insertBefore(button, controls.querySelector(':scope > [data-move="up"]'));
+      else controls.append(button);
+    }
+    // Named here rather than at creation, because both the column beside this one and the way
+    // the page runs can change under an element that is already upgraded.
+    button.setAttribute('aria-keyshortcuts', shortcutFor(direction, rtl));
+    button.querySelector('.rearrange-elemental-label').textContent =
+      format(this.toText, { label, container: column.label });
   }
 
   /**
@@ -454,9 +710,54 @@ export class RearrangeElemental extends ElementBase {
    * @returns {boolean} Whether anything moved.
    */
   move(item, to) {
+    const container = this.containerOf(item);
     const from = this.place(item, to);
     if (from < 0) return false;
-    this.report(item, from, this.items.indexOf(item));
+    this.report(item, from, this.itemsIn(container).indexOf(item), container, container);
+    return true;
+  }
+
+  /**
+   * Take an item to another column, at the place it already held.
+   *
+   * **The position is kept and clamped, not reset to the end.** A press does one thing: the
+   * reader who moves a card sideways asked for a column, not for a column and a trip to the
+   * bottom of it - and a column shorter than the place they held is the only reason to land
+   * anywhere else, which is its end.
+   *
+   * The focus is the other half. The button pressed at the far end of the board is a button that
+   * no longer has a column to point at, so it goes - and focus with it, down to `<body>`, at the
+   * one moment the reader is mid-sequence. The mirror button always exists (a board has at least
+   * two columns, so leaving one always arrives somewhere with a way back) and it is the press
+   * that undoes this one, which makes it the honest place to land.
+   *
+   * @param {Element} item
+   * @param {Element} container One of this element's, and not the one the item is in.
+   * @returns {boolean} Whether anything moved.
+   */
+  moveTo(item, container) {
+    const from = this.containerOf(item);
+    if (!from || !container || from === container) return false;
+    const index = this.itemsIn(from).indexOf(item);
+    if (index < 0) return false;
+
+    const landing = this.itemsIn(container);
+    const to = Math.min(index, landing.length);
+    const focused = item.contains(document.activeElement) ? document.activeElement : null;
+    const pressed = focused ? focused.getAttribute('data-move') : null;
+
+    this.insert(container, item, landing[to] || null);
+    this.refresh();
+
+    if (focused && !focused.isConnected) {
+      const back = this.controlsHost(item)
+        .querySelector(`:scope > [data-rearrange-controls] > [data-move="${pressed === 'next' ? 'prev' : 'next'}"]`);
+      if (back) back.focus();
+    } else if (focused && document.activeElement !== focused) {
+      focused.focus();
+    }
+
+    this.report(item, index, to, from, container);
     return true;
   }
 
@@ -470,26 +771,14 @@ export class RearrangeElemental extends ElementBase {
    * @returns {number} Where the item was, or `-1` if it did not move.
    */
   place(item, to) {
-    const items = this.items;
+    const container = this.containerOf(item);
+    const items = this.itemsIn(container);
     const from = items.indexOf(item);
     if (from < 0 || to < 0 || to >= items.length || to === from) return -1;
 
     const before = to > from ? items[to].nextSibling : items[to];
     const focused = item.contains(document.activeElement) ? document.activeElement : null;
-    // `moveBefore` moves the node instead of removing and re-inserting it, which is what keeps
-    // focus, `:active`, a running animation and any iframe or media inside the item alive
-    // across the move. Not Baseline yet - Chrome 133, and an Interop 2026 focus area - so the
-    // fallback is the old pair, plus the one piece of that state this element can put back.
-    const container = this.container;
-    if (container.moveBefore) {
-      try {
-        container.moveBefore(item, before);
-      } catch {
-        container.insertBefore(item, before);
-      }
-    } else {
-      container.insertBefore(item, before);
-    }
+    this.insert(container, item, before);
     // The press that moved the item was on a button inside it, and the reader is still
     // pressing: focus goes back so the next press is the same press.
     if (focused && document.activeElement !== focused) focused.focus();
@@ -498,17 +787,48 @@ export class RearrangeElemental extends ElementBase {
     return from;
   }
 
+  /**
+   * Put a node somewhere, by the best means the browser has.
+   *
+   * `moveBefore` moves the node instead of removing and re-inserting it, which is what keeps
+   * focus, `:active`, a running animation and any iframe or media inside the item alive across
+   * the move. Not Baseline yet - Chrome 133, and an Interop 2026 focus area - so the fallback is
+   * the old pair, plus the one piece of that state this element can put back.
+   *
+   * One place for both moves: a crossing is the same node question as a re-order, and a second
+   * copy of this is a second place for the fallback to be forgotten.
+   */
+  insert(container, item, before) {
+    if (container.moveBefore) {
+      try {
+        container.moveBefore(item, before || null);
+        return;
+      } catch {
+        // Falls through: `moveBefore` throws where the old pair still works.
+      }
+    }
+    container.insertBefore(item, before || null);
+  }
+
   /** Tell the reader and tell the page. Both halves in one place, so a drag can never announce
    * something a press would not. */
-  report(item, from, to) {
-    this.announce(format(this.movedText, {
+  report(item, from, to, fromContainer, toContainer) {
+    // A crossing and a re-order are different sentences, not one sentence with a column bolted
+    // on: "moved to position 2 of 3" is the whole truth for a list, and a board that said it
+    // would have moved an item to a column without naming it.
+    const across = fromContainer !== toContainer;
+    this.announce(format(across ? this.movedToText : this.movedText, {
       label: itemLabel(item),
+      container: containerLabel(toContainer),
       position: to + 1,
-      total: this.items.length
+      total: this.itemsIn(toContainer).length
     }));
+    // Derived rather than left to the page: comparing two nodes is the one line of this every
+    // listener would otherwise write, and `from` and `to` mean nothing on their own once a board
+    // can move an item to position 1 of a different column.
     this.dispatchEvent(new CustomEvent('rearrange-move', {
       bubbles: true,
-      detail: { item, from, to }
+      detail: { item, from, to, fromContainer, toContainer, sameContainer: !across }
     }));
   }
 
@@ -531,10 +851,27 @@ export class RearrangeElemental extends ElementBase {
     const button = event.target.closest && event.target.closest('[data-move]');
     if (!button || button.closest('rearrange-elemental') !== this) return;
     if (button.getAttribute('aria-disabled') === 'true') return;
-    const item = button.closest('li, tr');
-    const index = this.items.indexOf(item);
-    if (index < 0) return;
-    this.move(item, index + (button.getAttribute('data-move') === 'up' ? -1 : 1));
+    this.press(button.closest('li, tr'), button.getAttribute('data-move'));
+  }
+
+  /** One press, whichever control it arrived from. The buttons and the shortcuts are the same
+   * four moves, and a second copy of this is where the two would drift apart. */
+  press(item, direction) {
+    const container = this.containerOf(item);
+    if (!container) return;
+    if (direction === 'up' || direction === 'down') {
+      const index = this.itemsIn(container).indexOf(item);
+      if (index < 0) return;
+      this.move(item, index + (direction === 'up' ? -1 : 1));
+      return;
+    }
+    // Through `columns` rather than straight to the neighbour, so the shortcut is off wherever
+    // the buttons are: a board with an unnamed column has no crossing, by either route.
+    const columns = this.columns;
+    const index = columns.findIndex((column) => column.container === container);
+    const landing = columns[index + (direction === 'prev' ? -1 : 1)];
+    if (index < 0 || !landing) return;
+    this.moveTo(item, landing.container);
   }
 
   /**
@@ -546,12 +883,16 @@ export class RearrangeElemental extends ElementBase {
    * `aria-keyshortcuts`, which is how a reader finds out it exists.
    */
   onKeyDown(event) {
-    if (!event.altKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
+    if (!event.altKey) return;
+    // Sideways asks for Shift as well, because Alt and a sideways arrow is the browser's Back
+    // and Forward - see `SHORTCUTS`.
+    const direction = KEYS[event.key] ||
+      (event.shiftKey ? crossDirection(event.key, getComputedStyle(this).direction === 'rtl') : null);
+    if (!direction) return;
     const item = event.target.closest && event.target.closest('li, tr');
-    const index = item && item.closest('rearrange-elemental') === this ? this.items.indexOf(item) : -1;
-    if (index < 0) return;
+    if (!item || item.closest('rearrange-elemental') !== this || !this.containerOf(item)) return;
     event.preventDefault();
-    this.move(item, index + (event.key === 'ArrowUp' ? -1 : 1));
+    this.press(item, direction);
   }
 
   /**
@@ -573,14 +914,28 @@ export class RearrangeElemental extends ElementBase {
     const handle = event.target.closest && event.target.closest('[data-rearrange-handle]');
     if (!handle || handle.closest('rearrange-elemental') !== this) return;
     const item = handle.closest('li, tr');
-    const from = this.items.indexOf(item);
+    const container = this.containerOf(item);
+    const from = this.itemsIn(container).indexOf(item);
     if (from < 0) return;
 
     // Stops the compatibility mouse events, and with them the text selection a press on a grip
     // starts. Not what stops a touch scrolling: that is decided before this event exists, and it
     // is `touch-action: none` on the handle in index.scss.
     event.preventDefault();
-    this.dragging = { item, handle, from, index: from, translate: 0, base: event.clientY };
+    // `container` is where the drag *started*, which is what Escape puts the item back into and
+    // what the event reports as `fromContainer`; `column` is where it is now.
+    this.dragging = {
+      item,
+      handle,
+      container,
+      column: this.containers.indexOf(container),
+      from,
+      index: from,
+      translate: 0,
+      translateX: 0,
+      base: event.clientY,
+      baseX: event.clientX
+    };
     this.dataset.dragging = '';
     item.dataset.dragging = '';
     this.measure();
@@ -601,7 +956,7 @@ export class RearrangeElemental extends ElementBase {
     // Last, because it dispatches `dragstart` before it returns: everything above is the state
     // that a listener on that event would find, and a gesture handed a half-built drag is one
     // that reports a move against a box map nobody measured.
-    this.dragging.gesture = startDrag(event, { target: handle, callback: (d) => this.follow(d.clientY) });
+    this.dragging.gesture = startDrag(event, { target: handle, callback: (d) => this.follow(d.clientX, d.clientY) });
   }
 
   /**
@@ -616,9 +971,21 @@ export class RearrangeElemental extends ElementBase {
   measure() {
     const drag = this.dragging;
     if (!drag) return;
-    // The dragged item is not in the map: `dropIndex` counts the items it is not, and why is
-    // written there. Which is also why nothing here undoes its transform.
-    drag.boxes = this.items.filter((element) => element !== drag.item).map((element) => {
+    drag.boxes = this.boxesIn(this.containers[drag.column]);
+    // The columns themselves, so the crossing is a hit test rather than a second pass over every
+    // item on the board. Re-measured with the items, because a scroll moves both.
+    drag.columnBoxes = this.containers.map((container) => {
+      const rect = container.getBoundingClientRect();
+      return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom };
+    });
+  }
+
+  /** Where the items of one column are, minus the one in hand. The dragged item is not in the map:
+   * `dropIndex` counts the items it is not, and why is written there. Which is also why nothing
+   * here undoes its transform. */
+  boxesIn(container) {
+    const item = this.dragging ? this.dragging.item : null;
+    return this.itemsIn(container).filter((element) => element !== item).map((element) => {
       const rect = element.getBoundingClientRect();
       return { top: rect.top, height: rect.height };
     });
@@ -639,21 +1006,54 @@ export class RearrangeElemental extends ElementBase {
    * layout puts it, so the same translate would jump it by a row. The two rects either side of
    * the move differ by exactly that layout shift, and adding it to the origin cancels it out.
    */
-  follow(clientY) {
+  follow(clientX, clientY) {
     const drag = this.dragging;
     if (!drag) return;
 
-    const to = dropIndex(clientY, drag.boxes);
-    if (to !== drag.index) {
-      const was = drag.item.getBoundingClientRect().top;
-      this.place(drag.item, to);
-      drag.base += drag.item.getBoundingClientRect().top - was;
+    const column = dropContainer(clientX, clientY, drag.columnBoxes, drag.column);
+    if (column !== drag.column) {
+      // Measured against the column being entered rather than the one being left, so the item
+      // lands where the pointer is among the items already there - an empty column has no boxes
+      // and no midpoints, which is `dropIndex`'s zero and the only place a first card can go.
+      const container = this.containers[column];
+      const to = dropIndex(clientY, this.boxesIn(container));
+      this.rebase(drag, () => {
+        this.insert(container, drag.item, this.itemsIn(container)[to] || null);
+        // The buttons are named by the column they would go to next, and this item is in a new
+        // one - at the end of a board that is a button appearing or going away.
+        this.refresh();
+      });
+      drag.column = column;
       drag.index = to;
-      drag.translate = clientY - drag.base;
       this.measure();
+    } else {
+      const to = dropIndex(clientY, drag.boxes);
+      if (to !== drag.index) {
+        this.rebase(drag, () => this.place(drag.item, to));
+        drag.index = to;
+        this.measure();
+      }
     }
+
     drag.translate = clientY - drag.base;
-    drag.item.style.transform = `translateY(${drag.translate}px)`;
+    drag.translateX = clientX - drag.baseX;
+    drag.item.style.transform = `translate(${drag.translateX}px, ${drag.translate}px)`;
+  }
+
+  /**
+   * Move the item in the DOM without the pointer feeling it.
+   *
+   * Moving the item changes where layout puts it, so the same translate would jump it by a row -
+   * or, across columns, by a column. The two rects either side of the move differ by exactly that
+   * layout shift, and adding it to the origin cancels it out. Both axes, because a crossing moves
+   * it sideways as well.
+   */
+  rebase(drag, move) {
+    const was = drag.item.getBoundingClientRect();
+    move();
+    const now = drag.item.getBoundingClientRect();
+    drag.base += now.top - was.top;
+    drag.baseX += now.left - was.left;
   }
 
   /**
@@ -702,11 +1102,18 @@ export class RearrangeElemental extends ElementBase {
     delete this.dataset.dragging;
 
     if (cancel) {
-      this.place(drag.item, drag.from);
+      // Back into the column it was picked up from, at the place it held there - not `place`,
+      // which counts inside whatever column the drag has wandered into by now.
+      const others = this.itemsIn(drag.container).filter((element) => element !== drag.item);
+      this.insert(drag.container, drag.item, others[drag.from] || null);
+      this.refresh();
       return;
     }
-    const to = this.items.indexOf(drag.item);
-    if (to !== drag.from) this.report(drag.item, drag.from, to);
+    const container = this.containerOf(drag.item);
+    const to = this.itemsIn(container).indexOf(drag.item);
+    if (to !== drag.from || container !== drag.container) {
+      this.report(drag.item, drag.from, to, drag.container, container);
+    }
   }
 }
 

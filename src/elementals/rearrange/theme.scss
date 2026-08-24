@@ -26,6 +26,12 @@ rearrange-elemental {
   // button on the row sideways on every press.
   --rearrange-elemental-disabled-opacity: 0.3;
 
+  // **What the controls look like when nothing is pointing at them or focused inside them.** `1`,
+  // because a control nobody can see is a capability nobody knows is there - the whole of this
+  // element is visible affordance. Set it to `0` on a board, where a grip and four buttons on
+  // every card is furniture, and the parts that keep that honest come with it.
+  --rearrange-elemental-idle-opacity: 1;
+
   // What the item is painted on while it is lifted. The page's own background, so re-point it
   // on a card - a transparent item over the ones it is passing is unreadable.
   --rearrange-elemental-surface: Canvas;
@@ -33,6 +39,28 @@ rearrange-elemental {
 
 rearrange-elemental:where(:defined) [data-rearrange-controls] {
   gap: var(--rearrange-elemental-gap);
+  opacity: var(--rearrange-elemental-idle-opacity);
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: opacity 0.15s;
+  }
+}
+
+// **`:focus-within` is the half of this that must not be forgotten**, and the reason it is the
+// theme's job rather than a snippet to copy: faded out, the buttons are still focusable and still
+// in the accessibility tree, so the first Tab brings them back. `display: none` or
+// `visibility: hidden` would take them out of both - and then nothing inside could take focus to
+// undo it, which is the keyboard path gone to save some space.
+rearrange-elemental:where(:defined) :is(li, tr):is(:hover, :focus-within) [data-rearrange-controls] {
+  opacity: 1;
+}
+
+// A finger has no hover and lands on nothing before it lands on the thing itself, so a coarse
+// pointer sees them whatever the page asked for.
+@media (hover: none) {
+  rearrange-elemental:where(:defined) [data-rearrange-controls] {
+    opacity: 1;
+  }
 }
 
 // Space between the item's own content and the controls. **The whole selector is inside
@@ -104,7 +132,16 @@ rearrange-elemental:where(:defined) .rearrange-elemental-move {
     content: "";
     inline-size: 0;
     block-size: 0;
+  }
+
+  // The two transparent sides are the ones the point sits between, so which pair they are is
+  // what makes an arrow vertical or sideways.
+  &:is([data-move="up"], [data-move="down"])::after {
     border-inline: 0.3em solid transparent;
+  }
+
+  &:is([data-move="prev"], [data-move="next"])::after {
+    border-block: 0.3em solid transparent;
   }
 
   &[data-move="up"]::after {
@@ -113,6 +150,16 @@ rearrange-elemental:where(:defined) .rearrange-elemental-move {
 
   &[data-move="down"]::after {
     border-block-start: 0.35em solid var(--rearrange-elemental-color);
+  }
+
+  // Logical, so a board written right to left points its arrows the way that board runs - which
+  // is the same flip the keys make, and they have to agree.
+  &[data-move="prev"]::after {
+    border-inline-end: 0.35em solid var(--rearrange-elemental-color);
+  }
+
+  &[data-move="next"]::after {
+    border-inline-start: 0.35em solid var(--rearrange-elemental-color);
   }
 }
 

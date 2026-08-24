@@ -4851,6 +4851,81 @@
         },
         {
           "kind": "variable",
+          "name": "DEFAULT_TO_TEXT",
+          "type": {
+            "text": "string"
+          },
+          "default": "'Move {label} to {container}'",
+          "description": "A board's two extra buttons, and what a crossing says. `{container}` is the column the item\nlands in - never a direction, which is a word that means nothing to a reader who cannot see\nthe board."
+        },
+        {
+          "kind": "variable",
+          "name": "DEFAULT_MOVED_TO_TEXT",
+          "type": {
+            "text": "string"
+          },
+          "default": "'{label} moved to {container}, position {position} of {total}'"
+        },
+        {
+          "kind": "variable",
+          "name": "SHORTCUTS",
+          "type": {
+            "text": "object"
+          },
+          "default": "{ up: 'Alt+ArrowUp', down: 'Alt+ArrowDown' }",
+          "description": "The fast keyboard path for each button, as `aria-keyshortcuts` says it.\n\n**Crossing asks for Shift, and that is not a preference.** `Alt+ArrowLeft` and\n`Alt+ArrowRight` are Back and Forward in Chrome, Firefox and Edge, so a board advertising\nthem would be advertising a shortcut that leaves the page. Whether `preventDefault()` takes\nthem back is not the question - a shortcut a reader has to trust cannot be one the browser\nspends elsewhere."
+        },
+        {
+          "kind": "function",
+          "name": "crossDirection",
+          "parameters": [
+            {
+              "name": "key",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "rtl",
+              "description": "Whether the layout runs right to left.",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "Which column a sideways arrow means, which is not the one it points at.\n\n`prev` and `next` are the columns' order in the markup, and right to left that order runs the\nother way across the screen - so the arrow the reader presses is the direction they see, and\nthis is where the two are reconciled. Same shape as `splitterKey`, for the same reason.",
+          "return": {
+            "type": {
+              "text": "'prev'|'next'|null"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "shortcutFor",
+          "parameters": [
+            {
+              "name": "direction",
+              "type": {
+                "text": "'up'|'down'|'prev'|'next'"
+              }
+            },
+            {
+              "name": "rtl",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "What `aria-keyshortcuts` says on one button.\n\nThe name of the key the reader would press, which right to left is the other arrow - a\nshortcut advertised on a button and answered by nothing is worse than no shortcut at all.",
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          }
+        },
+        {
+          "kind": "variable",
           "name": "LABEL_MAX",
           "type": {
             "text": "number"
@@ -4887,6 +4962,32 @@
             }
           ],
           "description": "What one item is called: `data-label` when the author said, otherwise its own text.\n\nThis name lands in two buttons and every announcement, which is why the fallback is the\nitem's text rather than its position. \"Move up\" repeated down a list is a rotor full of\nidentical buttons and a reader with no way to tell which is which\n([WCAG 2.2 2.4.6](https://www.w3.org/WAI/WCAG22/Understanding/headings-and-labels.html));\nthe item's own words are the only thing on the page that tells them apart.\n\nCut at a word boundary when it is over the cap, and only when that boundary is not so early\nthat the label becomes a syllable - a 90-character item whose first space is at 3 would\notherwise be announced as \"The…\".",
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "containerLabel",
+          "parameters": [
+            {
+              "name": "container",
+              "type": {
+                "text": "Element|null|undefined"
+              }
+            },
+            {
+              "name": "max",
+              "default": "LABEL_MAX",
+              "optional": true,
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "description": "What one column is called: the heading it points at, or the name it carries.\n\n**A board's buttons are named by their destination, so this name is load-bearing.** \"Move\nright\" is what every board on the web says and what no reader off the screen can use; the\ncolumn's own words are the only thing that says where the item is going. Which is also why an\nunnamed column takes the cross buttons off the whole board rather than writing \"Move Bananas\nto \" down one side of it.\n\n`aria-labelledby` before `aria-label`, and an `aria-labelledby` that resolves to nothing falls\nthrough to `aria-label` - the order the accessible name is computed in, so the name in the\nbutton is the name the reader hears on the list itself.",
           "return": {
             "type": {
               "text": "string"
@@ -4944,8 +5045,47 @@
           }
         },
         {
+          "kind": "function",
+          "name": "dropContainer",
+          "parameters": [
+            {
+              "name": "x",
+              "description": "Pointer position, in client coordinates.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "y",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "boxes",
+              "description": "One per column, in order.",
+              "type": {
+                "text": "Array<{left: number, right: number, top: number, bottom: number}>"
+              }
+            },
+            {
+              "name": "current",
+              "description": "The column the drag is in now, and the answer when the point is in none.",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "description": "Which column a pointer is over, from its position and the columns' boxes.\n\n**Sticky when it is over none of them**, which is what the gutter between two columns, the\nheading above one and the whole page around the board all are. The alternative is a drag that\nloses its column the moment the pointer clips a margin, and an item that jumps home from a gap\ntwo pixels wide.\n\nBoxes are passed in rather than measured here, for `dropIndex`'s reason: jsdom has no layout,\nso a sum that read `getBoundingClientRect` could only ever be tested in a browser.",
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          }
+        },
+        {
           "kind": "class",
-          "description": "`<rearrange-elemental>` custom element.\n\nAn `<ol>`, a `<ul>` or a `<table>` whose items the reader can rearrange by hand. You write the\nmarkup; it writes the buttons.\n\nThere is no APG pattern for rearranging. The closest thing the APG has is its\n[rearrangeable listbox example](https://www.w3.org/WAI/ARIA/apg/patterns/listbox/examples/listbox-rearrangeable/),\nand what is borrowed from it is the part that is not the listbox: buttons that move an\noption, `aria-keyshortcuts` naming the fast way to press them, focus staying on the button\nthat moved so the next press is the same press, and a live region confirming where the\nthing landed. The listbox roles are deliberately not borrowed - a list of things you are\nrearranging is a list, not a set of options you are choosing between, and `role=\"listbox\"`\nwould tell the reader they are picking one.\n\n**The buttons are the element and dragging is the option, which is the whole design.** Every\npointer-drag library gets this backwards and then bolts a keyboard mode on the side;\n[WCAG 2.2 2.5.7 Dragging Movements](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html)\n(AA) names this exact case and asks for the opposite - *\"a sortable list of elements may,\nafter tapping or clicking on a list element, provide adjacent controls for moving the\nelement up or down\"*. Written this way round the criterion is met by construction: the\nbutton path cannot be switched off, because `drag` only ever adds a second way to do what\nthe buttons already do.\n\n**Not the HTML drag and drop API.** It has no touch support at all, which is why every\nlibrary that uses it ships a fallback mode, and its ARIA half - `aria-grabbed`,\n`aria-dropeffect` - was deprecated in ARIA 1.1 with nothing put in its place. Pointer\nevents, a captured pointer and a handle that says `touch-action: none` are what is left, and\nthey are the same three lines on a mouse, a pen and a finger.\n\nLight DOM, no shadow root. With no script it is your list, in the order it arrived, and no\nbuttons - which is a list, and a working page. Nothing is persisted: where the order is\nkept is the page's business, and `rearrange-move` is where it hears about it.\n\nponytail: no keyboard grab mode - no Space to pick up, arrows to move, Escape to drop. It is\na second way to do what the buttons do, it needs `role=\"application\"` on the grabbed element\nto take the arrow keys off the screen reader's own navigation, and a mode is a state both\nthe author and the reader have to hold. Alt+Arrow is the fast keyboard path without one.\n\nponytail: one axis, one container. No dragging between two of them, no columns, no nesting - a\nsecond container is a second element's worth of drop-target semantics, and a kanban board is\nnot a smallest functional whole. Not to be put on a table that is also a\n`<sortable-table-elemental>`: that one derives the order from a key in the cells and this one\nis a hand order nothing derives, so a table wearing both has two answers to what order its\nrows are in.",
+          "description": "`<rearrange-elemental>` custom element.\n\nAn `<ol>`, a `<ul>` or a `<table>` whose items the reader can rearrange by hand. You write the\nmarkup; it writes the buttons. **Several named lists in one element is a board**, and every\nitem grows a button for the column on each side of it.\n\nThere is no APG pattern for rearranging. The closest thing the APG has is its\n[rearrangeable listbox example](https://www.w3.org/WAI/ARIA/apg/patterns/listbox/examples/listbox-rearrangeable/),\nand what is borrowed from it is the part that is not the listbox: buttons that move an\noption, `aria-keyshortcuts` naming the fast way to press them, focus staying on the button\nthat moved so the next press is the same press, and a live region confirming where the\nthing landed. The listbox roles are deliberately not borrowed - a list of things you are\nrearranging is a list, not a set of options you are choosing between, and `role=\"listbox\"`\nwould tell the reader they are picking one.\n\n**The buttons are the element and dragging is the option, which is the whole design.** Every\npointer-drag library gets this backwards and then bolts a keyboard mode on the side;\n[WCAG 2.2 2.5.7 Dragging Movements](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html)\n(AA) names this exact case and asks for the opposite - *\"a sortable list of elements may,\nafter tapping or clicking on a list element, provide adjacent controls for moving the\nelement up or down\"*. Written this way round the criterion is met by construction: the\nbutton path cannot be switched off, because `drag` only ever adds a second way to do what\nthe buttons already do.\n\n**Not the HTML drag and drop API.** It has no touch support at all, which is why every\nlibrary that uses it ships a fallback mode, and its ARIA half - `aria-grabbed`,\n`aria-dropeffect` - was deprecated in ARIA 1.1 with nothing put in its place. Pointer\nevents, a captured pointer and a handle that says `touch-action: none` are what is left, and\nthey are the same three lines on a mouse, a pen and a finger.\n\nLight DOM, no shadow root. With no script it is your list, in the order it arrived, and no\nbuttons - which is a list, and a working page. Nothing is persisted: where the order is\nkept is the page's business, and `rearrange-move` is where it hears about it.\n\nponytail: no keyboard grab mode - no Space to pick up, arrows to move, Escape to drop. It is\na second way to do what the buttons do, it needs `role=\"application\"` on the grabbed element\nto take the arrow keys off the screen reader's own navigation, and a mode is a state both\nthe author and the reader have to hold. Alt+Arrow is the fast keyboard path without one.\n\n**A board crosses by button, and only by button.** Every drag library gets this backwards:\npointer first, keyboard bolted on, and the sideways move is the half that never arrives.\nWritten this way round, the destination is a named button on every card -\n[Atlassian's own guidance](https://atlassian.design/components/pragmatic-drag-and-drop/accessibility-guidelines)\nlands on the same answer from the other end, an action menu of movement outcomes, having\nshipped the arrow-key version first. The buttons are named by the column they land in and\nnever by a direction: \"move right\" is a sentence that means nothing to a reader who cannot see\nthe board, which is why a column with no name takes the crossing off rather than writing one.\n\nA pointer crosses columns too, and it is the buttons that make that safe to add rather than\nthe other way round:\n[WCAG 2.5.7](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html) is satisfied\nbefore the first drag event, so the gesture is an extra rather than the path.\n\nponytail: no auto-scroll. A board wider than its viewport has to be scrolled by hand mid-drag,\nwhich is the pointer's problem alone - both keyboard paths reach a column that is off screen\nwithout one. A column with `overflow` other than `visible` clips a card dragged out of it, and\nthat is the page's own CSS to answer for. No nesting either: a column inside a column is a\nsecond board's worth of questions.\n\nNot to be put on a table that is also a `<sortable-table-elemental>`: that one derives the\norder from a key in the cells and this one is a hand order nothing derives, so a table wearing\nboth has two answers to what order its rows are in.",
           "name": "RearrangeElemental",
           "cssProperties": [
             {
@@ -4998,6 +5138,14 @@
             },
             {
               "type": {
+                "text": "<opacity>"
+              },
+              "description": "Theme. The controls when nothing points at the item or is focused inside it. `0` fades them in on hover and focus - and never on a touch screen, which has neither.",
+              "name": "--rearrange-elemental-idle-opacity",
+              "default": "1"
+            },
+            {
+              "type": {
                 "text": "<color>"
               },
               "description": "Theme. The dots on the drag handle.",
@@ -5011,11 +5159,19 @@
               "description": "Theme. Under the item while it is being dragged.",
               "name": "--rearrange-elemental-lift",
               "default": "0 0.5rem 1rem currentcolor at 15%"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. What the dragged item is painted on, because it is passing over the ones it sat between. Re-point it on a card.",
+              "name": "--rearrange-elemental-surface",
+              "default": "Canvas"
             }
           ],
           "slots": [
             {
-              "description": "One `<ol>`, `<ul>`, `<menu>` or `<table>` - a table's first `<tbody>` holds the items and its `<tr>`s are them. Each item gets the buttons; one marked `data-label` is announced by that instead of by its text, and one containing `data-rearrange-handle` is dragged by that instead of by a grip the element writes. A row's controls go in the cell marked `data-rearrange-cell`, or in its last cell.",
+              "description": "One `<ol>`, `<ul>`, `<menu>` or `<table>` - a table's first `<tbody>` holds the items and its `<tr>`s are them. Several of them, each named with `aria-labelledby` or `aria-label`, is a board whose columns are in the order they are written. Each item gets the buttons; one marked `data-label` is announced by that instead of by its text, and one containing `data-rearrange-handle` is dragged by that instead of by a grip the element writes. A row's controls go in the cell marked `data-rearrange-cell`, or in its last cell.",
               "name": ""
             }
           ],
@@ -5039,14 +5195,54 @@
             },
             {
               "kind": "field",
-              "name": "container",
-              "description": "What holds the items: the list, or a table's first `<tbody>`.\n\nA direct child either way, so a list inside one of the items is not mistaken for this one's.\nThe first `<tbody>` only - a table with several is using them to group, and moving a row\nbetween groups would be rearranging the grouping away.",
+              "name": "toText"
+            },
+            {
+              "kind": "field",
+              "name": "movedToText"
+            },
+            {
+              "kind": "field",
+              "name": "containers",
+              "description": "What holds the items: the lists, or the first `<tbody>` of each table.\n\nDirect children either way, so a list inside one of the items is not mistaken for one of\nthese. The first `<tbody>` of a table only - a table with several is using them to group,\nand moving a row between groups would be rearranging the grouping away.\n\n**More than one is a board**, and there is nothing to switch on: two lists side by side is\nwhat a board is, and an attribute saying so again would be a second place for the answer to\nlive.",
               "readonly": true
             },
             {
               "kind": "field",
+              "name": "container",
+              "description": "The first container. What a one-list element has always had, and where a drag starts.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "itemsIn",
+              "parameters": [
+                {
+                  "name": "container"
+                }
+              ],
+              "description": "The items of one container: its own children, never a nested list's."
+            },
+            {
+              "kind": "field",
               "name": "items",
-              "description": "The items that move: the container's own children, never a nested list's.",
+              "description": "Every item this element rearranges, in the order the page has them. One container's worth\nunless it is a board.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "containerOf",
+              "parameters": [
+                {
+                  "name": "item"
+                }
+              ],
+              "description": "Which container an item is in, or `null` for one this element does not hold."
+            },
+            {
+              "kind": "field",
+              "name": "columns",
+              "description": "The columns a cross move can reach, each with the name its buttons will carry.\n\nEmpty for a single list, and **empty for a board with an unnamed column** - the whole board,\nnot just that one. Half a row of named destinations and half of \"Move Bananas to \" is worse\nthan no crossing at all, because it reads as working; without it the page is still every\ncolumn tidying itself, which is a working page.\n\nThe error is thrown a task later rather than logged, the way this book raises anything an\nauthor has to fix: the browser's own uncaught-error report carries the stack, the file and\nthe line, where a `console.warn` would be a string that says less. Once per element, because\n`refresh` runs on every move and a board is not something the reader can fix mid-drag.",
               "readonly": true
             },
             {
@@ -5107,6 +5303,41 @@
             },
             {
               "kind": "method",
+              "name": "refreshItem",
+              "parameters": [
+                {
+                  "name": "item"
+                },
+                {
+                  "name": "{ index, total, rtl, prev, next }"
+                }
+              ],
+              "description": "One item's controls brought up to date: the names, the ends of travel, the way across, and\nthe handle."
+            },
+            {
+              "kind": "method",
+              "name": "crossFor",
+              "parameters": [
+                {
+                  "name": "controls"
+                },
+                {
+                  "name": "label"
+                },
+                {
+                  "name": "column"
+                },
+                {
+                  "name": "direction"
+                },
+                {
+                  "name": "rtl"
+                }
+              ],
+              "description": "The button that takes an item to the column beside it, made, named or taken away.\n\nPlaced against the up button rather than prepended, so the row reads the way the board looks\n- grip, back, up, down, on - however many passes it takes to get there and whether or not\nthere is a handle in front of it yet."
+            },
+            {
+              "kind": "method",
               "name": "move",
               "parameters": [
                 {
@@ -5124,6 +5355,31 @@
                 }
               ],
               "description": "Move an item to a position, and say so.",
+              "return": {
+                "type": {
+                  "text": "boolean"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "moveTo",
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "text": "Element"
+                  }
+                },
+                {
+                  "name": "container",
+                  "description": "One of this element's, and not the one the item is in.",
+                  "type": {
+                    "text": "Element"
+                  }
+                }
+              ],
+              "description": "Take an item to another column, at the place it already held.\n\n**The position is kept and clamped, not reset to the end.** A press does one thing: the\nreader who moves a card sideways asked for a column, not for a column and a trip to the\nbottom of it - and a column shorter than the place they held is the only reason to land\nanywhere else, which is its end.\n\nThe focus is the other half. The button pressed at the far end of the board is a button that\nno longer has a column to point at, so it goes - and focus with it, down to `<body>`, at the\none moment the reader is mid-sequence. The mirror button always exists (a board has at least\ntwo columns, so leaving one always arrives somewhere with a way back) and it is the press\nthat undoes this one, which makes it the honest place to land.",
               "return": {
                 "type": {
                   "text": "boolean"
@@ -5150,6 +5406,22 @@
             },
             {
               "kind": "method",
+              "name": "insert",
+              "parameters": [
+                {
+                  "name": "container"
+                },
+                {
+                  "name": "item"
+                },
+                {
+                  "name": "before"
+                }
+              ],
+              "description": "Put a node somewhere, by the best means the browser has.\n\n`moveBefore` moves the node instead of removing and re-inserting it, which is what keeps\nfocus, `:active`, a running animation and any iframe or media inside the item alive across\nthe move. Not Baseline yet - Chrome 133, and an Interop 2026 focus area - so the fallback is\nthe old pair, plus the one piece of that state this element can put back.\n\nOne place for both moves: a crossing is the same node question as a re-order, and a second\ncopy of this is a second place for the fallback to be forgotten."
+            },
+            {
+              "kind": "method",
               "name": "report",
               "parameters": [
                 {
@@ -5160,6 +5432,12 @@
                 },
                 {
                   "name": "to"
+                },
+                {
+                  "name": "fromContainer"
+                },
+                {
+                  "name": "toContainer"
                 }
               ],
               "description": "Tell the reader and tell the page. Both halves in one place, so a drag can never announce\nsomething a press would not."
@@ -5182,6 +5460,19 @@
                   "name": "event"
                 }
               ]
+            },
+            {
+              "kind": "method",
+              "name": "press",
+              "parameters": [
+                {
+                  "name": "item"
+                },
+                {
+                  "name": "direction"
+                }
+              ],
+              "description": "One press, whichever control it arrived from. The buttons and the shortcuts are the same\nfour moves, and a second copy of this is where the two would drift apart."
             },
             {
               "kind": "method",
@@ -5210,6 +5501,16 @@
             },
             {
               "kind": "method",
+              "name": "boxesIn",
+              "parameters": [
+                {
+                  "name": "container"
+                }
+              ],
+              "description": "Where the items of one column are, minus the one in hand. The dragged item is not in the map:\n`dropIndex` counts the items it is not, and why is written there. Which is also why nothing\nhere undoes its transform."
+            },
+            {
+              "kind": "method",
               "name": "onDragScroll"
             },
             {
@@ -5217,10 +5518,26 @@
               "name": "follow",
               "parameters": [
                 {
+                  "name": "clientX"
+                },
+                {
                   "name": "clientY"
                 }
               ],
               "description": "Follow the pointer, and change places on the way.\n\nThe item is translated to stay under the finger *and* moved in the DOM as it passes its\nneighbours - so what the reader is dragging is the real item in its real position, and\nletting go is not a separate animation that has to land somewhere.\n\nThe re-basing is the part that is easy to miss: moving the item in the DOM changes where\nlayout puts it, so the same translate would jump it by a row. The two rects either side of\nthe move differ by exactly that layout shift, and adding it to the origin cancels it out."
+            },
+            {
+              "kind": "method",
+              "name": "rebase",
+              "parameters": [
+                {
+                  "name": "drag"
+                },
+                {
+                  "name": "move"
+                }
+              ],
+              "description": "Move the item in the DOM without the pointer feeling it.\n\nMoving the item changes where layout puts it, so the same translate would jump it by a row -\nor, across columns, by a column. The two rects either side of the move differ by exactly that\nlayout shift, and adding it to the origin cancels it out. Both axes, because a crossing moves\nit sideways as well."
             },
             {
               "kind": "method",
@@ -5262,7 +5579,7 @@
               "type": {
                 "text": "CustomEvent"
               },
-              "description": "An item has landed somewhere new. `detail.item` is the `<li>`, `detail.from` where it was and `detail.to` where it is, both zero-based. One per drag, not one per item crossed."
+              "description": "An item has landed somewhere new. `detail.item` is the `<li>`, `detail.from` where it was and `detail.to` where it is, both zero-based and both counted in their own list; `detail.fromContainer` and `detail.toContainer` are the lists themselves, and `detail.sameContainer` is `false` when the item crossed a column. One per drag, not one per item crossed."
             }
           ],
           "attributes": [
@@ -5294,8 +5611,24 @@
               "type": {
                 "text": "string"
               },
-              "description": "What the live region says after a move. `{label}`, `{position}` and `{total}`.",
+              "description": "What the live region says after a move inside one list. `{label}`, `{position}` and `{total}`.",
               "default": "{label} moved to position {position} of {total}"
+            },
+            {
+              "name": "to-text",
+              "type": {
+                "text": "string"
+              },
+              "description": "A board's cross-column buttons. `{label}` is the item's and `{container}` the column it would land in.",
+              "default": "Move {label} to {container}"
+            },
+            {
+              "name": "moved-to-text",
+              "type": {
+                "text": "string"
+              },
+              "description": "What the live region says after a crossing. `{label}`, `{container}`, `{position}` and `{total}`.",
+              "default": "{label} moved to {container}, position {position} of {total}"
             }
           ],
           "superclass": {
@@ -5333,6 +5666,46 @@
         },
         {
           "kind": "js",
+          "name": "DEFAULT_TO_TEXT",
+          "declaration": {
+            "name": "DEFAULT_TO_TEXT",
+            "module": "src/elementals/rearrange/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DEFAULT_MOVED_TO_TEXT",
+          "declaration": {
+            "name": "DEFAULT_MOVED_TO_TEXT",
+            "module": "src/elementals/rearrange/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "SHORTCUTS",
+          "declaration": {
+            "name": "SHORTCUTS",
+            "module": "src/elementals/rearrange/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "crossDirection",
+          "declaration": {
+            "name": "crossDirection",
+            "module": "src/elementals/rearrange/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "shortcutFor",
+          "declaration": {
+            "name": "shortcutFor",
+            "module": "src/elementals/rearrange/index.js"
+          }
+        },
+        {
+          "kind": "js",
           "name": "LABEL_MAX",
           "declaration": {
             "name": "LABEL_MAX",
@@ -5357,6 +5730,14 @@
         },
         {
           "kind": "js",
+          "name": "containerLabel",
+          "declaration": {
+            "name": "containerLabel",
+            "module": "src/elementals/rearrange/index.js"
+          }
+        },
+        {
+          "kind": "js",
           "name": "format",
           "declaration": {
             "name": "format",
@@ -5368,6 +5749,14 @@
           "name": "dropIndex",
           "declaration": {
             "name": "dropIndex",
+            "module": "src/elementals/rearrange/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "dropContainer",
+          "declaration": {
+            "name": "dropContainer",
             "module": "src/elementals/rearrange/index.js"
           }
         },

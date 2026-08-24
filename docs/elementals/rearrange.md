@@ -1,7 +1,7 @@
 ---
 layout: poops-docs-theme/docs
 title: Rearrange
-description: A list or a table body the reader can rearrange — the buttons first, the drag second, and the announcement every drag library forgets.
+description: A list, a table body or a board of columns the reader can rearrange — the buttons first, the drag second, and the announcement every drag library forgets.
 order: 26
 navGroup: No APG pattern
 ---
@@ -9,7 +9,8 @@ navGroup: No APG pattern
 # `<rearrange-elemental>`
 
 Wrap an `<ol>`, a `<ul>` or a `<table>` and its items can be rearranged by hand. You write the
-markup; it writes the buttons.
+markup; it writes the buttons. Wrap several named lists and it is a board: the same buttons, plus
+one for the column on each side.
 
 There is no APG pattern for rearranging. The closest thing the APG has is its
 [rearrangeable listbox example](https://www.w3.org/WAI/ARIA/apg/patterns/listbox/examples/listbox-rearrangeable/),
@@ -72,11 +73,12 @@ A list. That is the whole of it:
 </rearrange-elemental>
 ```
 
-- **One container, as a direct child:** an `<ol>`, a `<ul>`, a `<menu>`, or a `<table>` — whose
+- **The container is a direct child:** an `<ol>`, a `<ul>`, a `<menu>`, or a `<table>` — whose
   first `<tbody>` is the container and whose `<tr>`s are the items. The items are the container's
   own children, so a nested list inside an item is not part of this one. The first `<tbody>` only:
   a table with several is using them to group, and moving a row between groups would be
-  rearranging the grouping away.
+  rearranging the grouping away. **More than one container is a [board](#boards)**, and each of
+  them then needs a name.
 - **`data-label` on an item** is what the buttons and the announcement call it. Without one the
   item's own text is used, collapsed and cut at 80 characters on a word boundary — which is fine
   for `Bananas` and not for a paragraph. A **row** is named by its `<th scope="row">`, or by its
@@ -113,8 +115,17 @@ and once, at the end of the element:
 <p class="rearrange-elemental-status" role="status"></p>
 ```
 
-The handle is only there when `drag` is set. Nothing else is added, nothing is wrapped, and no
-role is written onto your list or your items.
+On a board, the same box also carries the buttons that cross — `prev` before the up button and
+`next` after the down one, so the row reads the way the board looks:
+
+```html
+<button type="button" class="rearrange-elemental-move" data-move="prev" aria-keyshortcuts="Alt+Shift+ArrowLeft">
+  <span class="rearrange-elemental-label">Move Bananas to To do</span>
+</button>
+```
+
+The handle is only there when `drag` is set, and the crossing buttons only on a board. Nothing
+else is added, nothing is wrapped, and no role is written onto your lists or your items.
 
 **The button's name is its own visible text.** An icon with an `aria-label` over it would be a
 name written nowhere on the screen, which fails
@@ -144,13 +155,19 @@ region says nothing, because nothing happened.
 | Key | What it does |
 | --- | --- |
 | <kbd>Tab</kbd> | Into the buttons, and on. They are ordinary `<button>`s, so <kbd>Enter</kbd> and <kbd>Space</kbd> are the browser's |
-| <kbd>Alt</kbd> + <kbd>↑</kbd> / <kbd>↓</kbd> | Move the item, from anywhere inside it |
+| <kbd>Alt</kbd> + <kbd>↑</kbd> / <kbd>↓</kbd> | Move the item in its own list, from anywhere inside it |
+| <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>←</kbd> / <kbd>→</kbd> | On a [board](#boards), take the item to the column beside it |
 | <kbd>Esc</kbd> | Cancels a pointer drag in flight, putting the item back where it started |
 
 **Focus stays on the button that moved**, which is what makes the second press the same press:
 an item three places from where it belongs is three presses of one key, not three round trips
 through the tab order. That is the rearrangeable listbox example's own reasoning, and
 `aria-keyshortcuts` on the buttons is how a reader finds the shortcut exists.
+
+**Sideways asks for <kbd>Shift</kbd> as well, and that is not a preference.** <kbd>Alt</kbd> and
+a sideways arrow is Back and Forward in Chrome, Firefox and Edge — a board advertising it on a
+button would be advertising a shortcut that leaves the page. Right to left, both the keys and the
+arrows on the buttons flip with the layout, so the arrow a reader presses is the column they see.
 
 There is no grab mode — no <kbd>Space</kbd> to pick up, arrows to move, <kbd>Space</kbd> to drop.
 It would be a second way to do what the buttons do, it needs `role="application"` on the grabbed
@@ -173,9 +190,14 @@ nothing put in its place.
   neighbour is measured with the dragged item lifted out of the way, so undoing a swap costs the
   dragged item's own height in travel instead of the two rows trading places under a still finger.
 - **The item moves in the DOM as it goes**, rather than a ghost being animated into place at the
-  end — so what you are dragging is the real item in its real position.
+  end — so what you are dragging is the real item in its real position. On a [board](#boards) that
+  includes the column: crossing one moves the item into that list, and its buttons are re-named
+  for where it now is before the pointer is let go.
 - **One event per landing**, not one per row crossed. A page persisting the order to a server
   should not spend six requests on one drag.
+- **<kbd>Esc</kbd> puts the item back where the drag started**, on a board including the column it
+  started in. A gesture the platform takes away — a scroll it decided was one, a call arriving —
+  is put back the same way, because a gesture that never finished is not a move.
 - **The handle is `aria-hidden` and not focusable.** The keyboard's way in is the two buttons
   beside it, and a focusable control that does nothing when you press it is worse than none.
 
@@ -192,6 +214,10 @@ One `role="status"` region, polite, clipped out of sight, saying where the item 
 
 > Bananas moved to position 2 of 4
 
+and, when the item crossed a column, which column it is now in:
+
+> Bananas moved to Doing, position 1 of 3
+
 Polite rather than assertive: the reader pressed the button, so the answer waits for a gap in
 what is already being read instead of cutting into it. The announcement is held back by 100ms —
 [Primer's tested value](https://primer.style/accessibility/patterns/drag-and-drop/) for the same
@@ -206,10 +232,22 @@ once as the button, once as the news.
 
 | Event | When | `detail` |
 | --- | --- | --- |
-| `rearrange-move` | an item landed somewhere new | `item` — the `<li>`, `from` and `to` — zero-based positions |
+| `rearrange-move` | an item landed somewhere new | `item` — the `<li>`, `from` and `to` — zero-based positions in their own list, `fromContainer` and `toContainer` — the lists themselves, `sameContainer` — `false` when the item crossed a column |
 
 Bubbles. Not fired for a press at the end of the travel, or for a drag that ended where it
 started, or for one cancelled with <kbd>Esc</kbd>.
+
+**`sameContainer` is the one to branch on.** On a board `from` and `to` are positions *in their
+own columns*, so a card that leaves position 1 of To do for position 1 of Done reports `from: 0,
+to: 0` — a move that reads as nothing happening until you look at the containers. The flag is
+derived from exactly those two nodes, so it cannot disagree with them:
+
+```javascript
+element.addEventListener('rearrange-move', ({ detail }) => {
+  if (detail.sameContainer) return reorder(detail.item, detail.to);
+  move(detail.item, detail.toContainer, detail.to);
+});
+```
 
 `move` rather than `rearrange`, because what happened is that **one item moved** — the list is
 the thing that is rearrangeable, and the event is about the item.
@@ -231,7 +269,9 @@ element.addEventListener('rearrange-move', (event) => {
 | `drag` | boolean | absent | Also let a pointer drag the items, by a grip the element adds. The buttons stay either way |
 | `up-text` | string | `Move {label} up` | The first button's name |
 | `down-text` | string | `Move {label} down` | The second button's name |
-| `moved-text` | string | `{label} moved to position {position} of {total}` | What the live region says |
+| `moved-text` | string | `{label} moved to position {position} of {total}` | What the live region says after a move inside one list |
+| `to-text` | string | `Move {label} to {container}` | A board's crossing buttons. `{container}` is the column the item would land in |
+| `moved-to-text` | string | `{label} moved to {container}, position {position} of {total}` | What the live region says after a crossing |
 
 On the items, not on the element:
 
@@ -293,10 +333,88 @@ order that nothing derives. A table wearing both has two answers to "what order 
 in", and the last thing pressed wins — which is a table whose order silently depends on what the
 reader did last.
 
+## Boards
+
+**Several named lists in one element is a board.** There is no attribute for it: two lists side by
+side have already said so, and a switch saying it again is a second place for the answer to live.
+Every item grows a button for the column on each side of it, named by where it would land.
+
+<!-- demo rearrange style="--code-preview-height:201px" -->
+
+```html
+<rearrange-elemental drag>
+  <h3 id="board-todo">To do</h3>
+  <ul aria-labelledby="board-todo">
+    <li><span class="rearrange-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Measure the leaves</li>
+    <li><span class="rearrange-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Warm the pot</li>
+  </ul>
+  <h3 id="board-doing">Doing</h3>
+  <ul aria-labelledby="board-doing">
+    <li><span class="rearrange-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Boil the kettle</li>
+  </ul>
+  <h3 id="board-done">Done</h3>
+  <ul aria-labelledby="board-done"></ul>
+</rearrange-elemental>
+```
+
+```css demo
+/* the element is display: contents, so whatever is around it lays the columns out — a board is
+   the one place worth overriding that, and this is the whole of it */
+rearrange-elemental { display: grid; grid-template-rows: auto 1fr; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0.4rem 0.75rem; }
+h3 { margin: 0; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+ul { margin: 0; padding: 0.35rem; min-block-size: 3.5rem; list-style: none; background: color-mix(in srgb, CanvasText 5%, transparent); border-radius: 0.4rem; }
+li { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.5rem; background: Canvas; border: 1px solid color-mix(in srgb, CanvasText 15%, transparent); border-radius: 0.35rem; }
+li + li { margin-block-start: 0.35rem; }
+[data-rearrange-controls] { margin-inline-start: auto; }
+```
+
+_Press the arrows, or hold <kbd>Alt</kbd> and <kbd>Shift</kbd> and use <kbd>←</kbd> <kbd>→</kbd>
+from anywhere in the card. The end columns have three buttons rather than four, because there is
+no fourth column to name. The grip drags a card anywhere on the board, the empty column included,
+and <kbd>Esc</kbd> mid-drag puts it back in the column it was picked up from._
+
+- **Every list needs a name of its own:** `aria-labelledby` pointing at the heading above it, or
+  `aria-label`. This is the load-bearing part — the buttons are named by their destination, so a
+  list with no name leaves nothing to write in them. A board with one unnamed column writes **no**
+  crossing buttons at all and throws an error saying which attribute is missing: half a row of
+  named destinations and half of "Move Bananas to " reads as working, and what is left without
+  them is still every column tidying itself, which is a working page.
+- **Never a direction.** "Move right" is what every board on the web says and what no reader off
+  the screen can use. The column's own words are the only thing that says where the item is going,
+  which is also why the announcement names the column it landed in.
+- **The columns are in the order they are written**, and the buttons at the two ends of the board
+  are simply absent — unlike up and down at the ends of a list, there is no destination to name,
+  and a button whose name cannot be written is not a button. Pressing the last one you have takes
+  the focus to the button that undoes it, which is the one control that is certainly there.
+- **An item keeps the position it held**, clamped to what the destination already holds — so a
+  press does one thing rather than two, and a card sent to an empty column arrives at the top of
+  it rather than at the bottom of nowhere.
+- **A drag crosses columns too**, and it is the buttons that make that safe to add rather than
+  the other way round:
+  [WCAG 2.2 SC 2.5.7](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html) is
+  satisfied before the first drag event, so the gesture is an extra and never the path. The column
+  under the pointer wins; **the gutter between two columns, and the space around the board, keep
+  the column the drag is already in** rather than dropping the card home from a gap two pixels
+  wide. An empty column is a target like any other, because what is hit-tested is the list's own
+  box — give it a `min-block-size`, or there is nothing there to aim at.
+- **No auto-scroll, and `overflow` is yours.** A board wider than its viewport has to be scrolled
+  by hand mid-drag; both keyboard paths reach an off-screen column without one. A column with
+  `overflow` other than `visible` clips a card dragged out of it — that is your CSS, not the
+  element's.
+
+**Why buttons rather than a sideways drag with a keyboard mode behind it.** Atlassian shipped the
+arrow-key version first — space to lift, arrows to cross — and their
+[current guidance](https://atlassian.design/components/pragmatic-drag-and-drop/accessibility-guidelines)
+is the opposite: *"Not all people can successfully complete pointer based drag operations. Provide
+other ways for people using assistive technologies to achieve the same outcomes"*, spelled as an
+action menu of movement outcomes on every card. Buttons are that answer with one press instead of
+two. Primer's drag-and-drop pattern does not cover this at all — it says outright that it
+*"focuses on one-dimensional sorting for re-ordering items in a list"*.
+
 ## Items that arrive later
 
-The controls are written at upgrade. A list that grows afterwards — a row appended by a render,
-a page of results fetched in — gets its buttons from `.update()`:
+The controls are written at upgrade. A list that grows afterwards — a row appended by a render, a
+page of results fetched in, a column added to a board — gets its buttons from `.update()`:
 
 ```javascript
 element.querySelector('ol').append(row);
@@ -308,8 +426,8 @@ case rather than the rare one.
 
 ## Without script
 
-Your list or your table, in the order it arrived, and no buttons — which is a list, and a working
-page. The element is `display: contents`, so wrapping markup you already had changes no layout at
+Your list, your table or your columns, in the order they arrived, and no buttons — which is a
+list, and a working page. The element is `display: contents`, so wrapping markup you already had changes no layout at
 all, upgraded or not.
 
 ## Styling
@@ -333,6 +451,26 @@ The grip is placed the same way, by being somewhere else in the markup: `data-re
 on a `<span>` at the front of the item leaves the element writing only the two buttons, which stay
 in the box the rule above pushes to the end.
 
+### The controls, only when they are wanted
+
+A grip and four buttons on every card is a lot of furniture for a reader using a pointer. One
+declaration fades them out until the pointer or the focus arrives:
+
+```css
+rearrange-elemental { --rearrange-elemental-idle-opacity: 0; }
+```
+
+The default is `1`, and deliberately: a control nobody can see is a capability nobody knows is
+there, which is cognitive load added rather than removed. On a board it is worth paying, and what
+comes with the property is the part that is easy to get wrong by hand —
+
+- **`:focus-within` brings them back**, so the keyboard reaches what the pointer reveals.
+- **A coarse pointer always sees them.** A finger has no hover and lands on nothing first.
+- **The fade is `opacity`, never `display: none` or `visibility: hidden`.** Those take the buttons
+  out of the accessibility tree *and* out of the tab order — the whole keyboard path gone to save
+  some space, and then `:focus-within` can never fire, because nothing inside can take focus.
+- **No transition under `prefers-reduced-motion: reduce`.**
+
 | Custom property | Default | What it does |
 | --- | --- | --- |
 | `--rearrange-elemental-control-size` | `1.75em` | Theme. Both axes of one button, and of the grip |
@@ -341,6 +479,7 @@ in the box the rule above pushes to the end.
 | `--rearrange-elemental-color` | `currentcolor` | Theme. The arrows |
 | `--rearrange-elemental-hover` | `currentcolor` at 8% | Theme. Fill under the pointer |
 | `--rearrange-elemental-disabled-opacity` | `0.3` | Theme. The button at the end of its travel |
+| `--rearrange-elemental-idle-opacity` | `1` | Theme. The controls when nothing points at the item or is focused inside it — `0` fades them in on hover and focus |
 | `--rearrange-elemental-grip` | `currentcolor` at 45% | Theme. The dots on the handle |
 | `--rearrange-elemental-lift` | `0 0.1rem 0.3rem currentcolor` at 10% | Theme. Under the item while it is dragged |
 | `--rearrange-elemental-surface` | `Canvas` | Theme. What the dragged item is painted on — re-point it on a card |
@@ -356,9 +495,9 @@ are the primary controls.
 
 ## What it will not do
 
-- **Two containers.** Dragging between them is a second element's worth of drop-target semantics,
-  and a kanban board is not a smallest functional whole.
-- **Columns, grids or nesting.** One axis, one container — rows move, columns do not.
+- **Auto-scroll under a drag.** A board wider than its viewport is scrolled by hand; the keyboard
+  paths need no scrolling at all, so this is the pointer's own convenience and not a way in.
+- **Grids or nesting.** A column inside a column is a second board's worth of questions.
 - **Persistence.** The event is the whole of the integration.
 - **A grab mode.** Covered above: it is a second way to do what the buttons do, and it costs
   `role="application"`.

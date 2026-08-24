@@ -8,13 +8,29 @@ rearrange-elemental {
   --rearrange-elemental-grip: color-mix(in srgb, currentcolor 45%, transparent);
   --rearrange-elemental-lift: 0 0.1rem 0.3rem color-mix(in srgb, currentcolor 10%, transparent);
   --rearrange-elemental-disabled-opacity: 0.3;
+  --rearrange-elemental-idle-opacity: 1;
   --rearrange-elemental-surface: Canvas;
 }
 
 rearrange-elemental:where(:defined) [data-rearrange-controls] {
   gap: var(--rearrange-elemental-gap);
+  opacity: var(--rearrange-elemental-idle-opacity);
+}
+@media (prefers-reduced-motion: no-preference) {
+  rearrange-elemental:where(:defined) [data-rearrange-controls] {
+    transition: opacity 0.15s;
+  }
 }
 
+rearrange-elemental:where(:defined) :is(li, tr):is(:hover, :focus-within) [data-rearrange-controls] {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  rearrange-elemental:where(:defined) [data-rearrange-controls] {
+    opacity: 1;
+  }
+}
 :where(rearrange-elemental:defined [data-rearrange-controls]) {
   margin-inline-start: var(--rearrange-elemental-gap);
 }
@@ -60,13 +76,24 @@ rearrange-elemental:where(:defined) .rearrange-elemental-move::after {
   content: "";
   inline-size: 0;
   block-size: 0;
+}
+rearrange-elemental:where(:defined) .rearrange-elemental-move:is([data-move=up], [data-move=down])::after {
   border-inline: 0.3em solid transparent;
+}
+rearrange-elemental:where(:defined) .rearrange-elemental-move:is([data-move=prev], [data-move=next])::after {
+  border-block: 0.3em solid transparent;
 }
 rearrange-elemental:where(:defined) .rearrange-elemental-move[data-move=up]::after {
   border-block-end: 0.35em solid var(--rearrange-elemental-color);
 }
 rearrange-elemental:where(:defined) .rearrange-elemental-move[data-move=down]::after {
   border-block-start: 0.35em solid var(--rearrange-elemental-color);
+}
+rearrange-elemental:where(:defined) .rearrange-elemental-move[data-move=prev]::after {
+  border-inline-end: 0.35em solid var(--rearrange-elemental-color);
+}
+rearrange-elemental:where(:defined) .rearrange-elemental-move[data-move=next]::after {
+  border-inline-start: 0.35em solid var(--rearrange-elemental-color);
 }
 
 rearrange-elemental:where(:defined) .rearrange-elemental-handle {

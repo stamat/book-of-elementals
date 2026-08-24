@@ -8,11 +8,19 @@
  * rearranges for the sighted reader and lies to everyone else, and a button that goes `disabled`
  * at the end of its travel takes the focus of the reader who pressed it down to `<body>`.
  *
+ * The board half is here too: several named lists in one element, the buttons that cross
+ * between them, and where an item lands when it does. The column names are the part worth
+ * pinning — a button named by a direction is a button a reader who cannot see the board learns
+ * nothing from, which is why an unnamed column takes the cross buttons off rather than writing
+ * one.
+ *
  * Deliberately not covered: the pointer drag. It needs layout for the midpoints, pointer
  * capture, and a `touch-action` the browser actually honours, none of which jsdom has — so what
  * is checked here is that `drag` writes and removes the handle, and the dragging itself belongs
- * to `script/a11y` and a browser. The arrows, the grip and the lift are CSS and belong to the
- * docs page.
+ * to `script/a11y` and a browser - including a drag that crosses a column, which is a hit test
+ * against boxes that jsdom does not have. The two sums under it are pinned in `index.test.js`
+ * instead, and the gesture itself was driven by hand in Chromium. The arrows, the grip and the
+ * lift are CSS and belong to the docs page.
  *
  * @jest-environment jsdom
  */
@@ -350,4 +358,204 @@ test('an element with no list writes nothing and waits, rather than marking itse
   element.remove();
   document.body.append(element);
   expect(buttons(element.items[0])).toHaveLength(2);
+});
+
+const BOARD = `
+  <rearrange-elemental>
+    <h3 id="todo">To do</h3>
+    <ul aria-labelledby="todo">
+      <li>Bananas</li>
+      <li>Kiwi</li>
+    </ul>
+    <h3 id="doing">Doing</h3>
+    <ul aria-labelledby="doing">
+      <li>Mango</li>
+    </ul>
+    <h3 id="done">Done</h3>
+    <ul aria-labelledby="done"></ul>
+  </rearrange-elemental>`;
+
+/** One column, as the reader would hear it. */
+function column (element, index) {
+  return element.itemsIn(element.containers[index]).map((item) => item.textContent.replace(/Move .*/, '').trim());
+}
+
+/** Only the buttons that cross, in the order the item carries them. */
+function crossing (item) {
+  return buttons(item).filter((button) => button.getAttribute('data-move') !== 'up' && button.getAttribute('data-move') !== 'down');
+}
+
+test('one list is one list, and nothing anywhere offers to move an item off it', () => {
+  const element = mount();
+  expect(element.querySelectorAll('[data-move="prev"], [data-move="next"]')).toHaveLength(0);
+});
+
+test('a second named list is a board, and every item gains the way across to it', () => {
+  const element = mount(BOARD);
+  expect(element.containers).toHaveLength(3);
+  expect(crossing(element.itemsIn(element.containers[1])[0]).map((button) => button.getAttribute('data-move')))
+    .toEqual(['prev', 'next']);
+});
+
+test('a cross button is named by the column it lands in, never by a direction nobody can see', () => {
+  // "Move right" is what every board says and what no reader off the screen can use. The
+  // destination is the only thing that means anything here.
+  const element = mount(BOARD);
+  const mango = element.itemsIn(element.containers[1])[0];
+  expect(crossing(mango).map((button) => button.textContent))
+    .toEqual(['Move Mango to To do', 'Move Mango to Done']);
+});
+
+test('the column at the end of the board has no button for a column that is not there', () => {
+  // Unlike up and down, there is no destination to name here — and a button whose name cannot
+  // be written is not a button. One of the two always exists, which is what the focus below
+  // stands on.
+  const element = mount(BOARD);
+  expect(crossing(element.itemsIn(element.containers[0])[0]).map((button) => button.getAttribute('data-move')))
+    .toEqual(['next']);
+  expect(crossing(element.itemsIn(element.containers[2])[0] || document.createElement('li'))).toEqual([]);
+});
+
+test('the fast path across is announced on the button, and it is not the one the browser took', () => {
+  // Alt+ArrowLeft is Back in Chrome, Firefox and Edge. Advertising it would be advertising a
+  // shortcut that leaves the page.
+  const element = mount(BOARD);
+  const mango = element.itemsIn(element.containers[1])[0];
+  expect(crossing(mango).map((button) => button.getAttribute('aria-keyshortcuts')))
+    .toEqual(['Alt+Shift+ArrowLeft', 'Alt+Shift+ArrowRight']);
+});
+
+test('Alt and a sideways arrow without Shift is the browsers Back, and moves nothing', () => {
+  const element = mount(BOARD);
+  const mango = element.itemsIn(element.containers[1])[0];
+  mango.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', altKey: true, bubbles: true, cancelable: true }));
+  expect(column(element, 1)).toEqual(['Mango']);
+});
+
+test('Alt+Shift and a sideways arrow crosses from anywhere inside the item', () => {
+  const element = mount(BOARD);
+  const mango = element.itemsIn(element.containers[1])[0];
+  mango.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', altKey: true, shiftKey: true, bubbles: true, cancelable: true }));
+  expect(column(element, 1)).toEqual([]);
+  expect(column(element, 2)).toEqual(['Mango']);
+});
+
+test('an item crossing keeps the position it held, so a press does one thing and not two', () => {
+  const element = mount(BOARD);
+  const kiwi = element.itemsIn(element.containers[0])[1];
+  crossing(kiwi)[0].click();
+  expect(column(element, 0)).toEqual(['Bananas']);
+  expect(column(element, 1)).toEqual(['Mango', 'Kiwi']);
+});
+
+test('a position the destination does not have is clamped to its end, including an empty column', () => {
+  const element = mount(BOARD);
+  const kiwi = element.itemsIn(element.containers[0])[1];
+  // Second in a column of two, landing in a column of none.
+  crossing(kiwi)[0].click();
+  crossing(element.itemsIn(element.containers[1])[1])[1].click();
+  expect(column(element, 2)).toEqual(['Kiwi']);
+});
+
+test('a crossing is announced by the column it landed in, and by where in it', () => {
+  const element = mount(BOARD);
+  crossing(element.itemsIn(element.containers[0])[0])[0].click();
+  expect(announced(element)).toBe('Bananas moved to Doing, position 1 of 2');
+});
+
+test('a move inside a column is announced the way it always was', () => {
+  // The board changes nothing for the reader who is only tidying one column.
+  const element = mount(BOARD);
+  buttons(element.itemsIn(element.containers[0])[0])[1].click();
+  expect(announced(element)).toBe('Bananas moved to position 2 of 2');
+});
+
+test('the ends of travel are the columns ends, not the boards', () => {
+  const element = mount(BOARD);
+  const mango = element.itemsIn(element.containers[1])[0];
+  const [up, down] = buttons(mango).filter((button) => ['up', 'down'].includes(button.getAttribute('data-move')));
+  expect([up.getAttribute('aria-disabled'), down.getAttribute('aria-disabled')]).toEqual(['true', 'true']);
+});
+
+test('the page hears which column the item left and which it joined', () => {
+  const element = mount(BOARD);
+  const heard = [];
+  element.addEventListener('rearrange-move', (event) => heard.push(event.detail));
+  crossing(element.itemsIn(element.containers[0])[0])[0].click();
+  expect(heard).toHaveLength(1);
+  expect(heard[0].fromContainer).toBe(element.containers[0]);
+  expect(heard[0].toContainer).toBe(element.containers[1]);
+  expect(heard[0].from).toBe(0);
+  expect(heard[0].to).toBe(0);
+  // The one line every listener would write for itself, and the one that makes `from` and `to`
+  // readable: position 1 to position 1 is a move only because the column changed.
+  expect(heard[0].sameContainer).toBe(false);
+});
+
+test('a move inside one column says so, so a page can tell 0 to 1 from a crossing that kept its place', () => {
+  const element = mount(BOARD);
+  const heard = [];
+  element.addEventListener('rearrange-move', (event) => heard.push(event.detail));
+  buttons(element.itemsIn(element.containers[0])[0])[1].click();
+  expect(heard[0].sameContainer).toBe(true);
+  expect(heard[0].fromContainer).toBe(heard[0].toContainer);
+});
+
+test('focus lands on the way back when the button that was pressed is gone', () => {
+  // Pressing into the last column takes that button away with it. Dropped focus at exactly the
+  // moment the reader is mid-sequence is the failure the ends of travel exist to avoid, so the
+  // mirror button — the one that undoes the press — takes the focus.
+  const element = mount(BOARD);
+  const mango = element.itemsIn(element.containers[1])[0];
+  const next = crossing(mango)[1];
+  next.focus();
+  next.click();
+  expect(column(element, 2)).toEqual(['Mango']);
+  expect(document.activeElement).toBe(crossing(mango)[0]);
+  expect(document.activeElement.textContent).toBe('Move Mango to Doing');
+});
+
+test('focus stays put when the button survives the crossing', () => {
+  const element = mount(BOARD);
+  const bananas = element.itemsIn(element.containers[0])[0];
+  const next = crossing(bananas)[0];
+  next.focus();
+  next.click();
+  expect(document.activeElement).toBe(next);
+  // And the name has followed the item to where it now is.
+  expect(next.textContent).toBe('Move Bananas to Done');
+});
+
+test('a column with no name at all takes the cross buttons off the whole board and says why', () => {
+  // Half a board of named destinations and half of "Move Bananas to " is worse than no board:
+  // it reads as working. Nothing is written, and the page gets an uncaught error naming the fix.
+  const element = mount(`
+    <rearrange-elemental>
+      <h3 id="todo">To do</h3>
+      <ul aria-labelledby="todo"><li>Bananas</li></ul>
+      <ul><li>Mango</li></ul>
+    </rearrange-elemental>`);
+  expect(() => jest.advanceTimersByTime(0)).toThrow(/aria-label/);
+  expect(element.querySelectorAll('[data-move="prev"], [data-move="next"]')).toHaveLength(0);
+  // Still a working pair of columns, each of which tidies itself.
+  expect(buttons(element.itemsIn(element.containers[0])[0])).toHaveLength(2);
+});
+
+test('the crossing templates are the translation surface, the same as the others', () => {
+  const element = mount(BOARD);
+  element.toText = 'Prebaci {label} u {container}';
+  element.movedToText = '{label} je u koloni {container}, na mestu {position} od {total}';
+  expect(crossing(element.itemsIn(element.containers[0])[0])[0].textContent).toBe('Prebaci Bananas u Doing');
+  crossing(element.itemsIn(element.containers[0])[0])[0].click();
+  expect(announced(element)).toBe('Bananas je u koloni Doing, na mestu 1 od 2');
+});
+
+test('a column added after the upgrade turns the list into a board on the next update()', () => {
+  const element = mount();
+  element.container.setAttribute('aria-label', 'To do');
+  const column = document.createElement('ul');
+  column.setAttribute('aria-label', 'Done');
+  element.append(column);
+  element.update();
+  expect(crossing(element.items[0]).map((button) => button.textContent)).toEqual(['Move Bananas to Done']);
 });
