@@ -23,17 +23,17 @@ import './index.js';
 import { ANNOUNCE_MS } from './index.js';
 
 const MARKUP = `
-  <rearrangeable-elemental>
+  <rearrange-elemental>
     <ol>
       <li>Bananas</li>
       <li>Kiwi</li>
       <li>Mango</li>
     </ol>
-  </rearrangeable-elemental>`;
+  </rearrange-elemental>`;
 
 function mount (markup = MARKUP) {
   document.body.innerHTML = markup;
-  return document.querySelector('rearrangeable-elemental');
+  return document.querySelector('rearrange-elemental');
 }
 
 /** The list as the reader would hear it, top to bottom. `data-label` where the markup set one,
@@ -69,7 +69,7 @@ afterEach(() => {
 test('the element upgrades over the list the author wrote and gives every item two buttons', () => {
   // Every assertion below stands on this one: an element that never upgraded writes nothing.
   const element = mount();
-  expect(element.constructor.name).toBe('RearrangeableElemental');
+  expect(element.constructor.name).toBe('RearrangeElemental');
   expect(element.items.map((item) => buttons(item).length)).toEqual([2, 2, 2]);
 });
 
@@ -174,7 +174,7 @@ test('the same move twice running is still announced the second time', () => {
 test('the page hears one event per landing, saying where the item was and where it is', () => {
   const element = mount();
   const heard = [];
-  element.addEventListener('rearrangeable-move', (event) => heard.push(event.detail));
+  element.addEventListener('rearrange-move', (event) => heard.push(event.detail));
   buttons(element.items[0])[1].click();
   expect(heard).toHaveLength(1);
   expect(heard[0].from).toBe(0);
@@ -198,12 +198,12 @@ test('an arrow without Alt is the reader scrolling, and moves nothing', () => {
 
 test('data-label is what the buttons and the announcement call the item', () => {
   const element = mount(`
-    <rearrangeable-elemental>
+    <rearrange-elemental>
       <ol>
         <li data-label="Bananas">🍌 Bananas, a box of twelve</li>
         <li data-label="Kiwi">🥝 Kiwi, six</li>
       </ol>
-    </rearrangeable-elemental>`);
+    </rearrange-elemental>`);
   expect(names(element)[0]).toBe('Move Bananas up');
   buttons(element.items[0])[1].click();
   expect(announced(element)).toBe('Bananas moved to position 2 of 2');
@@ -239,12 +239,12 @@ test('drag adds a handle to every item, and taking it away takes the handles wit
 
 test('an authors own handle is used as it is, and is still theirs when dragging is switched off', () => {
   const element = mount(`
-    <rearrangeable-elemental drag>
+    <rearrange-elemental drag>
       <ol>
         <li data-label="Bananas"><span class="grip" data-rearrange-handle aria-hidden="true">≡</span>Bananas</li>
         <li data-label="Kiwi"><span class="grip" data-rearrange-handle aria-hidden="true">≡</span>Kiwi</li>
       </ol>
-    </rearrangeable-elemental>`);
+    </rearrange-elemental>`);
   expect(element.querySelectorAll('[data-rearrange-handle]')).toHaveLength(2);
   expect(element.querySelectorAll('.grip')).toHaveLength(2);
   element.drag = false;
@@ -272,13 +272,13 @@ test('taking the element out of the document takes everything it wrote out with 
   element.remove();
   expect(element.querySelectorAll('[data-rearrange-controls]')).toHaveLength(0);
   expect(element.querySelectorAll('[data-move]')).toHaveLength(0);
-  expect(element.querySelector('.rearrangeable-elemental-status')).toBe(null);
+  expect(element.querySelector('.rearrange-elemental-status')).toBe(null);
   document.body.append(element);
   expect(element.items.map((item) => buttons(item).length)).toEqual([2, 2, 2]);
 });
 
 const TABLE = `
-  <rearrangeable-elemental>
+  <rearrange-elemental>
     <table>
       <thead><tr><th>Name</th><th>Height</th><th>Order</th></tr></thead>
       <tbody>
@@ -287,7 +287,7 @@ const TABLE = `
         <tr><th scope="row">Rtanj</th><td>1560</td><td></td></tr>
       </tbody>
     </table>
-  </rearrangeable-elemental>`;
+  </rearrange-elemental>`;
 
 test('a table body is a list of rows, and the rows rearrange the same way the items do', () => {
   const element = mount(TABLE);
@@ -307,14 +307,14 @@ test('a rows controls go inside a cell, because a span between two cells is not 
 
 test('data-rearrange-cell is how a table says which column the controls belong in', () => {
   const element = mount(`
-    <rearrangeable-elemental>
+    <rearrange-elemental>
       <table>
         <tbody>
           <tr><td data-rearrange-cell></td><th scope="row">Midžor</th><td>2169</td></tr>
           <tr><td data-rearrange-cell></td><th scope="row">Rtanj</th><td>1560</td></tr>
         </tbody>
       </table>
-    </rearrangeable-elemental>`);
+    </rearrange-elemental>`);
   expect(element.items[0].querySelector('[data-rearrange-controls]').parentElement)
     .toBe(element.items[0].cells[0]);
 });
@@ -330,19 +330,19 @@ test('a row is named by its row header rather than by every cell run together', 
 
 test('a table with no row header is named by its first cell', () => {
   const element = mount(`
-    <rearrangeable-elemental>
+    <rearrange-elemental>
       <table>
         <tbody>
           <tr><td>Midžor</td><td>2169</td></tr>
           <tr><td>Rtanj</td><td>1560</td></tr>
         </tbody>
       </table>
-    </rearrangeable-elemental>`);
+    </rearrange-elemental>`);
   expect(names(element)[0]).toBe('Move Midžor up');
 });
 
 test('an element with no list writes nothing and waits, rather than marking itself done', () => {
-  const element = mount('<rearrangeable-elemental></rearrangeable-elemental>');
+  const element = mount('<rearrange-elemental></rearrange-elemental>');
   expect(element.initialized).toBeFalsy();
   const list = document.createElement('ol');
   list.innerHTML = '<li>Bananas</li>';

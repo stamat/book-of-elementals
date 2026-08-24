@@ -165,7 +165,7 @@ Elements published so far:
   clipboard API, or nothing named to copy, and the button is not offered at all —
   `data-unavailable` says which.
 
-- `<rearrangeable-elemental>` — a list, or a table's first `<tbody>`, whose items the reader can
+- `<rearrange-elemental>` — a list, or a table's first `<tbody>`, whose items the reader can
   rearrange by hand. No APG
   pattern; the closest is the APG's rearrangeable listbox example, and what is taken from it
   is the part that is not the listbox — move buttons on every item, `aria-keyshortcuts`
@@ -184,7 +184,7 @@ Elements published so far:
   `<span>` between two `<td>`s is fostered out of the table, and a row with no `data-label` is
   named by its `<th scope="row">` or first cell. Not for a table that is also a
   `<sortable-table-elemental>`: that order is derived from a key, this one is not derived at all. One bubbling
-  `rearrangeable-move` per landing with `item`, `from` and `to` — not one per row
+  `rearrange-move` per landing with `item`, `from` and `to` — not one per row
   crossed. Nothing is persisted, and items arriving later are picked up by `.update()`.
 
 One stylesheet here is not an element's, and it is the only one that ever will be — a

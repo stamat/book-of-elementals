@@ -4,7 +4,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/elementals/rearrangeable/index.js",
+      "path": "src/elementals/rearrange/index.js",
       "declarations": [
         {
           "kind": "variable",
@@ -127,15 +127,15 @@
         },
         {
           "kind": "class",
-          "description": "`<rearrangeable-elemental>` custom element.\n\nAn `<ol>`, a `<ul>` or a `<table>` whose items the reader can rearrange by hand. You write the\nmarkup; it writes the buttons.\n\nThere is no APG pattern for rearranging. The closest thing the APG has is its\n[rearrangeable listbox example](https://www.w3.org/WAI/ARIA/apg/patterns/listbox/examples/listbox-rearrangeable/),\nand what is borrowed from it is the part that is not the listbox: buttons that move an\noption, `aria-keyshortcuts` naming the fast way to press them, focus staying on the button\nthat moved so the next press is the same press, and a live region confirming where the\nthing landed. The listbox roles are deliberately not borrowed - a list of things you are\nrearranging is a list, not a set of options you are choosing between, and `role=\"listbox\"`\nwould tell the reader they are picking one.\n\n**The buttons are the element and dragging is the option, which is the whole design.** Every\npointer-drag library gets this backwards and then bolts a keyboard mode on the side;\n[WCAG 2.2 2.5.7 Dragging Movements](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html)\n(AA) names this exact case and asks for the opposite - *\"a sortable list of elements may,\nafter tapping or clicking on a list element, provide adjacent controls for moving the\nelement up or down\"*. Written this way round the criterion is met by construction: the\nbutton path cannot be switched off, because `drag` only ever adds a second way to do what\nthe buttons already do.\n\n**Not the HTML drag and drop API.** It has no touch support at all, which is why every\nlibrary that uses it ships a fallback mode, and its ARIA half - `aria-grabbed`,\n`aria-dropeffect` - was deprecated in ARIA 1.1 with nothing put in its place. Pointer\nevents, a captured pointer and a handle that says `touch-action: none` are what is left, and\nthey are the same three lines on a mouse, a pen and a finger.\n\nLight DOM, no shadow root. With no script it is your list, in the order it arrived, and no\nbuttons - which is a list, and a working page. Nothing is persisted: where the order is\nkept is the page's business, and `rearrangeable-move` is where it hears about it.\n\nponytail: no keyboard grab mode - no Space to pick up, arrows to move, Escape to drop. It is\na second way to do what the buttons do, it needs `role=\"application\"` on the grabbed element\nto take the arrow keys off the screen reader's own navigation, and a mode is a state both\nthe author and the reader have to hold. Alt+Arrow is the fast keyboard path without one.\n\nponytail: one axis, one container. No dragging between two of them, no columns, no nesting - a\nsecond container is a second element's worth of drop-target semantics, and a kanban board is\nnot a smallest functional whole. Not to be put on a table that is also a\n`<sortable-table-elemental>`: that one derives the order from a key in the cells and this one\nis a hand order nothing derives, so a table wearing both has two answers to what order its\nrows are in.",
-          "name": "RearrangeableElemental",
+          "description": "`<rearrange-elemental>` custom element.\n\nAn `<ol>`, a `<ul>` or a `<table>` whose items the reader can rearrange by hand. You write the\nmarkup; it writes the buttons.\n\nThere is no APG pattern for rearranging. The closest thing the APG has is its\n[rearrangeable listbox example](https://www.w3.org/WAI/ARIA/apg/patterns/listbox/examples/listbox-rearrangeable/),\nand what is borrowed from it is the part that is not the listbox: buttons that move an\noption, `aria-keyshortcuts` naming the fast way to press them, focus staying on the button\nthat moved so the next press is the same press, and a live region confirming where the\nthing landed. The listbox roles are deliberately not borrowed - a list of things you are\nrearranging is a list, not a set of options you are choosing between, and `role=\"listbox\"`\nwould tell the reader they are picking one.\n\n**The buttons are the element and dragging is the option, which is the whole design.** Every\npointer-drag library gets this backwards and then bolts a keyboard mode on the side;\n[WCAG 2.2 2.5.7 Dragging Movements](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html)\n(AA) names this exact case and asks for the opposite - *\"a sortable list of elements may,\nafter tapping or clicking on a list element, provide adjacent controls for moving the\nelement up or down\"*. Written this way round the criterion is met by construction: the\nbutton path cannot be switched off, because `drag` only ever adds a second way to do what\nthe buttons already do.\n\n**Not the HTML drag and drop API.** It has no touch support at all, which is why every\nlibrary that uses it ships a fallback mode, and its ARIA half - `aria-grabbed`,\n`aria-dropeffect` - was deprecated in ARIA 1.1 with nothing put in its place. Pointer\nevents, a captured pointer and a handle that says `touch-action: none` are what is left, and\nthey are the same three lines on a mouse, a pen and a finger.\n\nLight DOM, no shadow root. With no script it is your list, in the order it arrived, and no\nbuttons - which is a list, and a working page. Nothing is persisted: where the order is\nkept is the page's business, and `rearrange-move` is where it hears about it.\n\nponytail: no keyboard grab mode - no Space to pick up, arrows to move, Escape to drop. It is\na second way to do what the buttons do, it needs `role=\"application\"` on the grabbed element\nto take the arrow keys off the screen reader's own navigation, and a mode is a state both\nthe author and the reader have to hold. Alt+Arrow is the fast keyboard path without one.\n\nponytail: one axis, one container. No dragging between two of them, no columns, no nesting - a\nsecond container is a second element's worth of drop-target semantics, and a kanban board is\nnot a smallest functional whole. Not to be put on a table that is also a\n`<sortable-table-elemental>`: that one derives the order from a key in the cells and this one\nis a hand order nothing derives, so a table wearing both has two answers to what order its\nrows are in.",
+          "name": "RearrangeElemental",
           "cssProperties": [
             {
               "type": {
                 "text": "<length>"
               },
               "description": "Theme. Both axes of one button.",
-              "name": "--rearrangeable-elemental-control-size",
+              "name": "--rearrange-elemental-control-size",
               "default": "1.75em"
             },
             {
@@ -143,7 +143,7 @@
                 "text": "<length>"
               },
               "description": "Theme. Between the grip and the buttons, and between the buttons.",
-              "name": "--rearrangeable-elemental-gap",
+              "name": "--rearrange-elemental-gap",
               "default": "0.15em"
             },
             {
@@ -151,7 +151,7 @@
                 "text": "<length>"
               },
               "description": "Theme. Button corners.",
-              "name": "--rearrangeable-elemental-radius",
+              "name": "--rearrange-elemental-radius",
               "default": "0.3rem"
             },
             {
@@ -159,7 +159,7 @@
                 "text": "<color>"
               },
               "description": "Theme. The arrows.",
-              "name": "--rearrangeable-elemental-color",
+              "name": "--rearrange-elemental-color",
               "default": "currentcolor"
             },
             {
@@ -167,7 +167,7 @@
                 "text": "<color>"
               },
               "description": "Theme. Fill under the pointer.",
-              "name": "--rearrangeable-elemental-hover",
+              "name": "--rearrange-elemental-hover",
               "default": "currentcolor at 8%"
             },
             {
@@ -175,7 +175,7 @@
                 "text": "<opacity>"
               },
               "description": "Theme. The button at the end of its travel - the first item's up, the last item's down.",
-              "name": "--rearrangeable-elemental-disabled-opacity",
+              "name": "--rearrange-elemental-disabled-opacity",
               "default": "0.3"
             },
             {
@@ -183,7 +183,7 @@
                 "text": "<color>"
               },
               "description": "Theme. The dots on the drag handle.",
-              "name": "--rearrangeable-elemental-grip",
+              "name": "--rearrange-elemental-grip",
               "default": "currentcolor at 45%"
             },
             {
@@ -191,7 +191,7 @@
                 "text": "<shadow>"
               },
               "description": "Theme. Under the item while it is being dragged.",
-              "name": "--rearrangeable-elemental-lift",
+              "name": "--rearrange-elemental-lift",
               "default": "0 0.5rem 1rem currentcolor at 15%"
             }
           ],
@@ -440,7 +440,7 @@
           ],
           "events": [
             {
-              "name": "rearrangeable-move",
+              "name": "rearrange-move",
               "type": {
                 "text": "CustomEvent"
               },
@@ -484,7 +484,7 @@
             "name": "ElementBase",
             "module": "/src/core.js"
           },
-          "tagName": "rearrangeable-elemental",
+          "tagName": "rearrange-elemental",
           "customElement": true
         }
       ],
@@ -494,7 +494,7 @@
           "name": "DEFAULT_UP_TEXT",
           "declaration": {
             "name": "DEFAULT_UP_TEXT",
-            "module": "src/elementals/rearrangeable/index.js"
+            "module": "src/elementals/rearrange/index.js"
           }
         },
         {
@@ -502,7 +502,7 @@
           "name": "DEFAULT_DOWN_TEXT",
           "declaration": {
             "name": "DEFAULT_DOWN_TEXT",
-            "module": "src/elementals/rearrangeable/index.js"
+            "module": "src/elementals/rearrange/index.js"
           }
         },
         {
@@ -510,7 +510,7 @@
           "name": "DEFAULT_MOVED_TEXT",
           "declaration": {
             "name": "DEFAULT_MOVED_TEXT",
-            "module": "src/elementals/rearrangeable/index.js"
+            "module": "src/elementals/rearrange/index.js"
           }
         },
         {
@@ -518,7 +518,7 @@
           "name": "LABEL_MAX",
           "declaration": {
             "name": "LABEL_MAX",
-            "module": "src/elementals/rearrangeable/index.js"
+            "module": "src/elementals/rearrange/index.js"
           }
         },
         {
@@ -526,7 +526,7 @@
           "name": "ANNOUNCE_MS",
           "declaration": {
             "name": "ANNOUNCE_MS",
-            "module": "src/elementals/rearrangeable/index.js"
+            "module": "src/elementals/rearrange/index.js"
           }
         },
         {
@@ -534,7 +534,7 @@
           "name": "itemLabel",
           "declaration": {
             "name": "itemLabel",
-            "module": "src/elementals/rearrangeable/index.js"
+            "module": "src/elementals/rearrange/index.js"
           }
         },
         {
@@ -542,7 +542,7 @@
           "name": "format",
           "declaration": {
             "name": "format",
-            "module": "src/elementals/rearrangeable/index.js"
+            "module": "src/elementals/rearrange/index.js"
           }
         },
         {
@@ -550,15 +550,15 @@
           "name": "dropIndex",
           "declaration": {
             "name": "dropIndex",
-            "module": "src/elementals/rearrangeable/index.js"
+            "module": "src/elementals/rearrange/index.js"
           }
         },
         {
           "kind": "js",
-          "name": "RearrangeableElemental",
+          "name": "RearrangeElemental",
           "declaration": {
-            "name": "RearrangeableElemental",
-            "module": "src/elementals/rearrangeable/index.js"
+            "name": "RearrangeElemental",
+            "module": "src/elementals/rearrange/index.js"
           }
         }
       ]

@@ -140,7 +140,7 @@ export function dropIndex(y, boxes) {
 }
 
 /**
- * `<rearrangeable-elemental>` custom element.
+ * `<rearrange-elemental>` custom element.
  *
  * An `<ol>`, a `<ul>` or a `<table>` whose items the reader can rearrange by hand. You write the
  * markup; it writes the buttons.
@@ -171,7 +171,7 @@ export function dropIndex(y, boxes) {
  *
  * Light DOM, no shadow root. With no script it is your list, in the order it arrived, and no
  * buttons - which is a list, and a working page. Nothing is persisted: where the order is
- * kept is the page's business, and `rearrangeable-move` is where it hears about it.
+ * kept is the page's business, and `rearrange-move` is where it hears about it.
  *
  * ponytail: no keyboard grab mode - no Space to pick up, arrows to move, Escape to drop. It is
  * a second way to do what the buttons do, it needs `role="application"` on the grabbed element
@@ -185,7 +185,7 @@ export function dropIndex(y, boxes) {
  * is a hand order nothing derives, so a table wearing both has two answers to what order its
  * rows are in.
  *
- * @tag rearrangeable-elemental
+ * @tag rearrange-elemental
  * @attr {boolean} drag - Also let a pointer drag the items, by a grip the element adds to each one. The buttons stay either way; this only adds to them.
  * @attr {string} [up-text=Move {label} up] - The first button's name. `{label}` is the item's.
  * @attr {string} [down-text=Move {label} down] - The second button's name.
@@ -193,18 +193,18 @@ export function dropIndex(y, boxes) {
  *
  * @slot - One `<ol>`, `<ul>`, `<menu>` or `<table>` - a table's first `<tbody>` holds the items and its `<tr>`s are them. Each item gets the buttons; one marked `data-label` is announced by that instead of by its text, and one containing `data-rearrange-handle` is dragged by that instead of by a grip the element writes. A row's controls go in the cell marked `data-rearrange-cell`, or in its last cell.
  *
- * @cssprop {<length>} [--rearrangeable-elemental-control-size=1.75em] - Theme. Both axes of one button.
- * @cssprop {<length>} [--rearrangeable-elemental-gap=0.15em] - Theme. Between the grip and the buttons, and between the buttons.
- * @cssprop {<length>} [--rearrangeable-elemental-radius=0.3rem] - Theme. Button corners.
- * @cssprop {<color>} [--rearrangeable-elemental-color=currentcolor] - Theme. The arrows.
- * @cssprop {<color>} [--rearrangeable-elemental-hover=currentcolor at 8%] - Theme. Fill under the pointer.
- * @cssprop {<opacity>} [--rearrangeable-elemental-disabled-opacity=0.3] - Theme. The button at the end of its travel - the first item's up, the last item's down.
- * @cssprop {<color>} [--rearrangeable-elemental-grip=currentcolor at 45%] - Theme. The dots on the drag handle.
- * @cssprop {<shadow>} [--rearrangeable-elemental-lift=0 0.5rem 1rem currentcolor at 15%] - Theme. Under the item while it is being dragged.
+ * @cssprop {<length>} [--rearrange-elemental-control-size=1.75em] - Theme. Both axes of one button.
+ * @cssprop {<length>} [--rearrange-elemental-gap=0.15em] - Theme. Between the grip and the buttons, and between the buttons.
+ * @cssprop {<length>} [--rearrange-elemental-radius=0.3rem] - Theme. Button corners.
+ * @cssprop {<color>} [--rearrange-elemental-color=currentcolor] - Theme. The arrows.
+ * @cssprop {<color>} [--rearrange-elemental-hover=currentcolor at 8%] - Theme. Fill under the pointer.
+ * @cssprop {<opacity>} [--rearrange-elemental-disabled-opacity=0.3] - Theme. The button at the end of its travel - the first item's up, the last item's down.
+ * @cssprop {<color>} [--rearrange-elemental-grip=currentcolor at 45%] - Theme. The dots on the drag handle.
+ * @cssprop {<shadow>} [--rearrange-elemental-lift=0 0.5rem 1rem currentcolor at 15%] - Theme. Under the item while it is being dragged.
  *
- * @fires rearrangeable-move - An item has landed somewhere new. `detail.item` is the `<li>`, `detail.from` where it was and `detail.to` where it is, both zero-based. One per drag, not one per item crossed.
+ * @fires rearrange-move - An item has landed somewhere new. `detail.item` is the `<li>`, `detail.from` where it was and `detail.to` where it is, both zero-based. One per drag, not one per item crossed.
  */
-export class RearrangeableElemental extends ElementBase {
+export class RearrangeElemental extends ElementBase {
   static get observedAttributes() {
     return ['drag', 'up-text', 'down-text', 'moved-text'];
   }
@@ -280,7 +280,7 @@ export class RearrangeableElemental extends ElementBase {
   /** The live region. Added at upgrade, because a live region only announces text that lands
    * in one already in the document. */
   get status() {
-    return this.querySelector(':scope > .rearrangeable-elemental-status');
+    return this.querySelector(':scope > .rearrange-elemental-status');
   }
 
   connectedCallback() {
@@ -319,7 +319,7 @@ export class RearrangeableElemental extends ElementBase {
     // connect, so controls left behind here would be a second set appended on the way back in.
     // The author's own handle is not ours to remove and is left where it was.
     for (const controls of this.querySelectorAll('[data-rearrange-controls]')) {
-      if (controls.closest('rearrangeable-elemental') === this) controls.remove();
+      if (controls.closest('rearrange-elemental') === this) controls.remove();
     }
     const status = this.status;
     if (status) status.remove();
@@ -344,7 +344,7 @@ export class RearrangeableElemental extends ElementBase {
     if (!this.initialized) return;
     if (!this.status) {
       const status = document.createElement('p');
-      status.className = 'rearrangeable-elemental-status';
+      status.className = 'rearrange-elemental-status';
       // `status` rather than `alert`: the reader pressed the button and is not being
       // interrupted with the result, so it waits for a gap in what is already being read.
       status.setAttribute('role', 'status');
@@ -361,7 +361,7 @@ export class RearrangeableElemental extends ElementBase {
     if (controls) return controls;
 
     controls = document.createElement('span');
-    controls.className = 'rearrangeable-elemental-controls';
+    controls.className = 'rearrange-elemental-controls';
     controls.setAttribute('data-rearrange-controls', '');
     controls.append(this.moveButton('up'), this.moveButton('down'));
     host.append(controls);
@@ -384,11 +384,11 @@ export class RearrangeableElemental extends ElementBase {
     // A button in a form submits it unless told otherwise, and a list that posts the page away
     // when you tidy it is not a list you tidy twice.
     button.type = 'button';
-    button.className = 'rearrangeable-elemental-move';
+    button.className = 'rearrange-elemental-move';
     button.setAttribute('data-move', direction);
     button.setAttribute('aria-keyshortcuts', direction === 'up' ? 'Alt+ArrowUp' : 'Alt+ArrowDown');
     const label = document.createElement('span');
-    label.className = 'rearrangeable-elemental-label';
+    label.className = 'rearrange-elemental-label';
     button.append(label);
     return button;
   }
@@ -397,7 +397,7 @@ export class RearrangeableElemental extends ElementBase {
    * lists have their own element, so a handle belonging to one is not taken for this one's. */
   handleFor(item) {
     const found = item.querySelector('[data-rearrange-handle]');
-    return found && found.closest('rearrangeable-elemental') === this ? found : null;
+    return found && found.closest('rearrange-elemental') === this ? found : null;
   }
 
   /** Names on the buttons, ends of travel marked, handles present or gone. Cheap enough to run
@@ -413,7 +413,7 @@ export class RearrangeableElemental extends ElementBase {
 
       for (const button of controls.querySelectorAll(':scope > [data-move]')) {
         const up = button.getAttribute('data-move') === 'up';
-        button.querySelector('.rearrangeable-elemental-label').textContent =
+        button.querySelector('.rearrange-elemental-label').textContent =
           format(up ? this.upText : this.downText, { label });
         // **`aria-disabled`, never `disabled`.** A button that becomes disabled under the
         // focus that is on it drops that focus to `<body>`, so a reader walking an item to the
@@ -433,7 +433,7 @@ export class RearrangeableElemental extends ElementBase {
       }
       if (!handle) {
         handle = document.createElement('span');
-        handle.className = 'rearrangeable-elemental-handle';
+        handle.className = 'rearrange-elemental-handle';
         handle.setAttribute('data-rearrange-handle', '');
         handle.setAttribute('data-rearrange-own', '');
         // Nothing to announce and nothing to focus: it is the pointer's way in, and the
@@ -506,7 +506,7 @@ export class RearrangeableElemental extends ElementBase {
       position: to + 1,
       total: this.items.length
     }));
-    this.dispatchEvent(new CustomEvent('rearrangeable-move', {
+    this.dispatchEvent(new CustomEvent('rearrange-move', {
       bubbles: true,
       detail: { item, from, to }
     }));
@@ -529,7 +529,7 @@ export class RearrangeableElemental extends ElementBase {
 
   onClick(event) {
     const button = event.target.closest && event.target.closest('[data-move]');
-    if (!button || button.closest('rearrangeable-elemental') !== this) return;
+    if (!button || button.closest('rearrange-elemental') !== this) return;
     if (button.getAttribute('aria-disabled') === 'true') return;
     const item = button.closest('li, tr');
     const index = this.items.indexOf(item);
@@ -548,7 +548,7 @@ export class RearrangeableElemental extends ElementBase {
   onKeyDown(event) {
     if (!event.altKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
     const item = event.target.closest && event.target.closest('li, tr');
-    const index = item && item.closest('rearrangeable-elemental') === this ? this.items.indexOf(item) : -1;
+    const index = item && item.closest('rearrange-elemental') === this ? this.items.indexOf(item) : -1;
     if (index < 0) return;
     event.preventDefault();
     this.move(item, index + (event.key === 'ArrowUp' ? -1 : 1));
@@ -571,7 +571,7 @@ export class RearrangeableElemental extends ElementBase {
   onPointerDown(event) {
     if (!this.drag || this.dragging || event.button !== 0) return;
     const handle = event.target.closest && event.target.closest('[data-rearrange-handle]');
-    if (!handle || handle.closest('rearrangeable-elemental') !== this) return;
+    if (!handle || handle.closest('rearrange-elemental') !== this) return;
     const item = handle.closest('li, tr');
     const from = this.items.indexOf(item);
     if (from < 0) return;
@@ -710,4 +710,4 @@ export class RearrangeableElemental extends ElementBase {
   }
 }
 
-define('rearrangeable-elemental', RearrangeableElemental);
+define('rearrange-elemental', RearrangeElemental);

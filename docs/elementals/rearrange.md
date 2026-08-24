@@ -1,12 +1,12 @@
 ---
 layout: poops-docs-theme/docs
-title: Rearrangeable
+title: Rearrange
 description: A list or a table body the reader can rearrange — the buttons first, the drag second, and the announcement every drag library forgets.
 order: 26
 navGroup: No APG pattern
 ---
 
-# `<rearrangeable-elemental>`
+# `<rearrange-elemental>`
 
 Wrap an `<ol>`, a `<ul>` or a `<table>` and its items can be rearranged by hand. You write the
 markup; it writes the buttons.
@@ -19,17 +19,17 @@ and a live region confirming where the thing landed. The listbox roles are delib
 behind — a list of things you are rearranging is a list, not a set of options you are choosing
 between, and `role="listbox"` would tell the reader they are picking one.
 
-<!-- demo rearrangeable style="--code-preview-height:234px" -->
+<!-- demo rearrange style="--code-preview-height:234px" -->
 
 ```html
-<rearrangeable-elemental drag>
+<rearrange-elemental drag>
   <ol>
-    <li><span class="rearrangeable-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Boil the kettle</li>
-    <li><span class="rearrangeable-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Warm the pot</li>
-    <li><span class="rearrangeable-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Measure the leaves</li>
-    <li><span class="rearrangeable-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Pour, and wait</li>
+    <li><span class="rearrange-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Boil the kettle</li>
+    <li><span class="rearrange-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Warm the pot</li>
+    <li><span class="rearrange-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Measure the leaves</li>
+    <li><span class="rearrange-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Pour, and wait</li>
   </ol>
-</rearrangeable-elemental>
+</rearrange-elemental>
 ```
 
 ```css demo
@@ -64,12 +64,12 @@ that works on a switch, a head pointer and a screen reader's touch gestures.
 A list. That is the whole of it:
 
 ```html
-<rearrangeable-elemental>
+<rearrange-elemental>
   <ul>
     <li>Bananas</li>
     <li>Kiwi</li>
   </ul>
-</rearrangeable-elemental>
+</rearrange-elemental>
 ```
 
 - **One container, as a direct child:** an `<ol>`, a `<ul>`, a `<menu>`, or a `<table>` — whose
@@ -88,7 +88,7 @@ A list. That is the whole of it:
   would write. It is your markup: give it `aria-hidden="true"` if it is a glyph, and the element
   leaves it alone when `drag` goes away. It is also the only way to a grip somewhere the controls
   are not — the front of the item, rather than beside the buttons at the end of it. The samples on
-  this page borrow `class="rearrangeable-elemental-handle"` so the theme paints their grip; a page
+  this page borrow `class="rearrange-elemental-handle"` so the theme paints their grip; a page
   with a look of its own writes one.
 
 ## What it writes
@@ -96,13 +96,13 @@ A list. That is the whole of it:
 Into every item, after whatever was already there:
 
 ```html
-<span class="rearrangeable-elemental-controls" data-rearrange-controls>
-  <span class="rearrangeable-elemental-handle" data-rearrange-handle data-rearrange-own aria-hidden="true"></span>
-  <button type="button" class="rearrangeable-elemental-move" data-move="up" aria-keyshortcuts="Alt+ArrowUp" aria-disabled="true">
-    <span class="rearrangeable-elemental-label">Move Bananas up</span>
+<span class="rearrange-elemental-controls" data-rearrange-controls>
+  <span class="rearrange-elemental-handle" data-rearrange-handle data-rearrange-own aria-hidden="true"></span>
+  <button type="button" class="rearrange-elemental-move" data-move="up" aria-keyshortcuts="Alt+ArrowUp" aria-disabled="true">
+    <span class="rearrange-elemental-label">Move Bananas up</span>
   </button>
-  <button type="button" class="rearrangeable-elemental-move" data-move="down" aria-keyshortcuts="Alt+ArrowDown">
-    <span class="rearrangeable-elemental-label">Move Bananas down</span>
+  <button type="button" class="rearrange-elemental-move" data-move="down" aria-keyshortcuts="Alt+ArrowDown">
+    <span class="rearrange-elemental-label">Move Bananas down</span>
   </button>
 </span>
 ```
@@ -110,7 +110,7 @@ Into every item, after whatever was already there:
 and once, at the end of the element:
 
 ```html
-<p class="rearrangeable-elemental-status" role="status"></p>
+<p class="rearrange-elemental-status" role="status"></p>
 ```
 
 The handle is only there when `drag` is set. Nothing else is added, nothing is wrapped, and no
@@ -124,9 +124,10 @@ draws an arrow over it, which moves nothing out of the accessibility tree; with 
 the buttons read what they do.
 
 **The name carries the item, not just the direction.** `Move up` repeated down a list is a rotor
-full of identical buttons and no way to tell which is which. Set `up-text` and `down-text` to say
-it in your language — `{label}` is filled in, and anything else in the string is left as written,
-so a typo comes back visible instead of blanking half the sentence.
+full of identical buttons and no way to tell which is which. Set `up-text`, `down-text` and
+`moved-text` to say it in your language — `{label}`, and `{position}` and `{total}` in the last of
+them, are filled in, and anything else in the string is left as written, so a typo comes back
+visible instead of blanking half the sentence.
 
 ## `aria-disabled`, never `disabled`
 
@@ -205,7 +206,7 @@ once as the button, once as the news.
 
 | Event | When | `detail` |
 | --- | --- | --- |
-| `rearrangeable-move` | an item landed somewhere new | `item` — the `<li>`, `from` and `to` — zero-based positions |
+| `rearrange-move` | an item landed somewhere new | `item` — the `<li>`, `from` and `to` — zero-based positions |
 
 Bubbles. Not fired for a press at the end of the travel, or for a drag that ended where it
 started, or for one cancelled with <kbd>Esc</kbd>.
@@ -217,7 +218,7 @@ Nothing is persisted — where the order is kept is your business, and this is w
 it:
 
 ```javascript
-element.addEventListener('rearrangeable-move', (event) => {
+element.addEventListener('rearrange-move', (event) => {
   const order = [...event.currentTarget.items].map((item) => item.dataset.id);
   fetch('/order', { method: 'POST', body: JSON.stringify(order) });
 });
@@ -244,22 +245,22 @@ On the items, not on the element:
 
 A `<table>` works the same way, with two differences the markup forces:
 
-<!-- demo rearrangeable style="--code-preview-height:229px" -->
+<!-- demo rearrange style="--code-preview-height:229px" -->
 
 ```html
-<rearrangeable-elemental drag>
+<rearrange-elemental drag>
   <table>
     <caption>Peaks, in the order you would climb them</caption>
     <thead>
       <tr><th>Peak</th><th>Height</th><th><span class="sr">Order</span></th></tr>
     </thead>
     <tbody>
-      <tr><th scope="row"><span class="rearrangeable-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Midžor</th><td>2169</td><td data-rearrange-cell></td></tr>
-      <tr><th scope="row"><span class="rearrangeable-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Đeravica</th><td>2656</td><td data-rearrange-cell></td></tr>
-      <tr><th scope="row"><span class="rearrangeable-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Rtanj</th><td>1560</td><td data-rearrange-cell></td></tr>
+      <tr><th scope="row"><span class="rearrange-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Midžor</th><td>2169</td><td data-rearrange-cell></td></tr>
+      <tr><th scope="row"><span class="rearrange-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Đeravica</th><td>2656</td><td data-rearrange-cell></td></tr>
+      <tr><th scope="row"><span class="rearrange-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Rtanj</th><td>1560</td><td data-rearrange-cell></td></tr>
     </tbody>
   </table>
-</rearrangeable-elemental>
+</rearrange-elemental>
 ```
 
 ```css demo
@@ -269,7 +270,7 @@ caption { margin-block-end: 0.5rem; font-weight: 600; text-align: start; }
 th, td { padding: 0.4rem 0.6rem; text-align: start; border-block-end: 1px solid color-mix(in srgb, CanvasText 20%, transparent); }
 tbody th { font-weight: 400; }
 /* the grip sits in the row's name cell, on the text's own line */
-.rearrangeable-elemental-handle { margin-inline-end: 0.35em; vertical-align: middle; }
+.rearrange-elemental-handle { margin-inline-end: 0.35em; vertical-align: middle; }
 /* the column the controls live in, kept as narrow as they are */
 td[data-rearrange-cell] { inline-size: 1%; white-space: nowrap; }
 /* the header cell over it has a name for screen readers and nothing to show */
@@ -334,15 +335,15 @@ in the box the rule above pushes to the end.
 
 | Custom property | Default | What it does |
 | --- | --- | --- |
-| `--rearrangeable-elemental-control-size` | `1.75em` | Theme. Both axes of one button, and of the grip |
-| `--rearrangeable-elemental-gap` | `0.15em` | Theme. Between the grip and the buttons, and between the buttons |
-| `--rearrangeable-elemental-radius` | `0.3rem` | Theme. Button corners |
-| `--rearrangeable-elemental-color` | `currentcolor` | Theme. The arrows |
-| `--rearrangeable-elemental-hover` | `currentcolor` at 8% | Theme. Fill under the pointer |
-| `--rearrangeable-elemental-disabled-opacity` | `0.3` | Theme. The button at the end of its travel |
-| `--rearrangeable-elemental-grip` | `currentcolor` at 45% | Theme. The dots on the handle |
-| `--rearrangeable-elemental-lift` | `0 0.1rem 0.3rem currentcolor` at 10% | Theme. Under the item while it is dragged |
-| `--rearrangeable-elemental-surface` | `Canvas` | Theme. What the dragged item is painted on — re-point it on a card |
+| `--rearrange-elemental-control-size` | `1.75em` | Theme. Both axes of one button, and of the grip |
+| `--rearrange-elemental-gap` | `0.15em` | Theme. Between the grip and the buttons, and between the buttons |
+| `--rearrange-elemental-radius` | `0.3rem` | Theme. Button corners |
+| `--rearrange-elemental-color` | `currentcolor` | Theme. The arrows |
+| `--rearrange-elemental-hover` | `currentcolor` at 8% | Theme. Fill under the pointer |
+| `--rearrange-elemental-disabled-opacity` | `0.3` | Theme. The button at the end of its travel |
+| `--rearrange-elemental-grip` | `currentcolor` at 45% | Theme. The dots on the handle |
+| `--rearrange-elemental-lift` | `0 0.1rem 0.3rem currentcolor` at 10% | Theme. Under the item while it is dragged |
+| `--rearrange-elemental-surface` | `Canvas` | Theme. What the dragged item is painted on — re-point it on a card |
 
 The arrows are drawn with borders rather than written as `▲`, for the reason
 [`<sortable-table-elemental>`](sortable-table.html)'s arrow is: text in a pseudo-element is read

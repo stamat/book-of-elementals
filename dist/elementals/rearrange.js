@@ -329,7 +329,7 @@
     document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
   }
 
-  // src/elementals/rearrangeable/index.js
+  // src/elementals/rearrange/index.js
   var DEFAULT_UP_TEXT = "Move {label} up";
   var DEFAULT_DOWN_TEXT = "Move {label} down";
   var DEFAULT_MOVED_TEXT = "{label} moved to position {position} of {total}";
@@ -365,7 +365,7 @@
     while (index < boxes.length && y >= boxes[index].top + boxes[index].height / 2) index++;
     return index;
   }
-  var RearrangeableElemental = class extends ElementBase {
+  var RearrangeElemental = class extends ElementBase {
     static get observedAttributes() {
       return ["drag", "up-text", "down-text", "moved-text"];
     }
@@ -429,7 +429,7 @@
     /** The live region. Added at upgrade, because a live region only announces text that lands
      * in one already in the document. */
     get status() {
-      return this.querySelector(":scope > .rearrangeable-elemental-status");
+      return this.querySelector(":scope > .rearrange-elemental-status");
     }
     connectedCallback() {
       if (this.initialized) return;
@@ -455,7 +455,7 @@
       this.removeEventListener("pointerdown", this.onPointerDown);
       clearTimeout(this.announceTimer);
       for (const controls of this.querySelectorAll("[data-rearrange-controls]")) {
-        if (controls.closest("rearrangeable-elemental") === this) controls.remove();
+        if (controls.closest("rearrange-elemental") === this) controls.remove();
       }
       const status = this.status;
       if (status) status.remove();
@@ -476,7 +476,7 @@
       if (!this.initialized) return;
       if (!this.status) {
         const status = document.createElement("p");
-        status.className = "rearrangeable-elemental-status";
+        status.className = "rearrange-elemental-status";
         status.setAttribute("role", "status");
         this.append(status);
       }
@@ -489,7 +489,7 @@
       let controls = host.querySelector(":scope > [data-rearrange-controls]");
       if (controls) return controls;
       controls = document.createElement("span");
-      controls.className = "rearrangeable-elemental-controls";
+      controls.className = "rearrange-elemental-controls";
       controls.setAttribute("data-rearrange-controls", "");
       controls.append(this.moveButton("up"), this.moveButton("down"));
       host.append(controls);
@@ -509,11 +509,11 @@
     moveButton(direction) {
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "rearrangeable-elemental-move";
+      button.className = "rearrange-elemental-move";
       button.setAttribute("data-move", direction);
       button.setAttribute("aria-keyshortcuts", direction === "up" ? "Alt+ArrowUp" : "Alt+ArrowDown");
       const label = document.createElement("span");
-      label.className = "rearrangeable-elemental-label";
+      label.className = "rearrange-elemental-label";
       button.append(label);
       return button;
     }
@@ -521,7 +521,7 @@
      * lists have their own element, so a handle belonging to one is not taken for this one's. */
     handleFor(item) {
       const found = item.querySelector("[data-rearrange-handle]");
-      return found && found.closest("rearrangeable-elemental") === this ? found : null;
+      return found && found.closest("rearrange-elemental") === this ? found : null;
     }
     /** Names on the buttons, ends of travel marked, handles present or gone. Cheap enough to run
      * on every move: the labels are read from the DOM each time, because the DOM is where the
@@ -535,7 +535,7 @@
         const label = itemLabel(item);
         for (const button of controls.querySelectorAll(":scope > [data-move]")) {
           const up = button.getAttribute("data-move") === "up";
-          button.querySelector(".rearrangeable-elemental-label").textContent = format(up ? this.upText : this.downText, { label });
+          button.querySelector(".rearrange-elemental-label").textContent = format(up ? this.upText : this.downText, { label });
           if (up ? index === 0 : index === total - 1) button.setAttribute("aria-disabled", "true");
           else button.removeAttribute("aria-disabled");
         }
@@ -546,7 +546,7 @@
         }
         if (!handle) {
           handle = document.createElement("span");
-          handle.className = "rearrangeable-elemental-handle";
+          handle.className = "rearrange-elemental-handle";
           handle.setAttribute("data-rearrange-handle", "");
           handle.setAttribute("data-rearrange-own", "");
           handle.setAttribute("aria-hidden", "true");
@@ -605,7 +605,7 @@
         position: to + 1,
         total: this.items.length
       }));
-      this.dispatchEvent(new CustomEvent("rearrangeable-move", {
+      this.dispatchEvent(new CustomEvent("rearrange-move", {
         bubbles: true,
         detail: { item, from, to }
       }));
@@ -628,7 +628,7 @@
     }
     onClick(event) {
       const button = event.target.closest && event.target.closest("[data-move]");
-      if (!button || button.closest("rearrangeable-elemental") !== this) return;
+      if (!button || button.closest("rearrange-elemental") !== this) return;
       if (button.getAttribute("aria-disabled") === "true") return;
       const item = button.closest("li, tr");
       const index = this.items.indexOf(item);
@@ -646,7 +646,7 @@
     onKeyDown(event) {
       if (!event.altKey || event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
       const item = event.target.closest && event.target.closest("li, tr");
-      const index = item && item.closest("rearrangeable-elemental") === this ? this.items.indexOf(item) : -1;
+      const index = item && item.closest("rearrange-elemental") === this ? this.items.indexOf(item) : -1;
       if (index < 0) return;
       event.preventDefault();
       this.move(item, index + (event.key === "ArrowUp" ? -1 : 1));
@@ -668,7 +668,7 @@
     onPointerDown(event) {
       if (!this.drag || this.dragging || event.button !== 0) return;
       const handle = event.target.closest && event.target.closest("[data-rearrange-handle]");
-      if (!handle || handle.closest("rearrangeable-elemental") !== this) return;
+      if (!handle || handle.closest("rearrange-elemental") !== this) return;
       const item = handle.closest("li, tr");
       const from = this.items.indexOf(item);
       if (from < 0) return;
@@ -775,6 +775,6 @@
       if (to !== drag2.from) this.report(drag2.item, drag2.from, to);
     }
   };
-  define2("rearrangeable-elemental", RearrangeableElemental);
+  define2("rearrange-elemental", RearrangeElemental);
 })();
-//# sourceMappingURL=rearrangeable.js.map
+//# sourceMappingURL=rearrange.js.map

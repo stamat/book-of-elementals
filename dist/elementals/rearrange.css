@@ -1,32 +1,32 @@
 /* book-of-elementals v2.0.1 | https://stamat.github.io/book-of-elementals/ | MIT License */
-rearrangeable-elemental {
+rearrange-elemental {
   display: contents;
 }
 
-rearrangeable-elemental [data-rearrange-controls] {
+rearrange-elemental [data-rearrange-controls] {
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
 }
 
-rearrangeable-elemental [data-rearrange-handle] {
+rearrange-elemental [data-rearrange-handle] {
   cursor: grab;
   touch-action: none;
 }
 
-rearrangeable-elemental[data-dragging] {
+rearrange-elemental[data-dragging] {
   user-select: none;
 }
-rearrangeable-elemental[data-dragging] [data-rearrange-handle] {
+rearrange-elemental[data-dragging] [data-rearrange-handle] {
   cursor: grabbing;
 }
 
-rearrangeable-elemental :is(li, tr)[data-dragging] {
+rearrange-elemental :is(li, tr)[data-dragging] {
   position: relative;
   z-index: 1;
 }
 
-rearrangeable-elemental > .rearrangeable-elemental-status {
+rearrange-elemental > .rearrange-elemental-status {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -37,4 +37,4 @@ rearrangeable-elemental > .rearrangeable-elemental-status {
   white-space: nowrap;
   border: 0;
 }
-/*# sourceMappingURL=rearrangeable.css.map */
+/*# sourceMappingURL=rearrange.css.map */

@@ -1,9 +1,9 @@
-// Structure for `<rearrangeable-elemental>`: where the controls sit in the item, what a
+// Structure for `<rearrange-elemental>`: where the controls sit in the item, what a
 // handle has to be for a finger to drag it, and keeping the live region off the screen without
 // taking it out of the accessibility tree. No arrows, no grip, no shadow - that is `theme.scss`,
 // which this does not import.
 
-rearrangeable-elemental {
+rearrange-elemental {
   // A coordinator, not a box. The list is usually already inside something that lays it out -
   // a card, a grid cell, a column - and an extra box in between is a box that thing lays out
   // instead of the list. `contents` means dropping this element around a list you already had
@@ -18,9 +18,9 @@ rearrangeable-elemental {
 // wants them pushed to the far end writes that rule itself.
 // Matched by the marker rather than by a chain down from the container, because a table row
 // keeps its controls inside a cell and a list item keeps them in the item. The marker is written
-// by this element and by nothing else, and a nested rearrangeable's controls want these same three
-// declarations anyway.
-rearrangeable-elemental [data-rearrange-controls] {
+// by this element and by nothing else, and a nested `<rearrange-elemental>`'s controls want
+// these same three declarations anyway.
+rearrange-elemental [data-rearrange-controls] {
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
@@ -29,12 +29,12 @@ rearrangeable-elemental [data-rearrange-controls] {
 // **`touch-action: none` is what makes a finger drag rather than scroll**, and it is on the
 // handle alone: on the item it would take the page's scrolling away everywhere the reader
 // happens to touch a list, which is most of a phone screen.
-rearrangeable-elemental [data-rearrange-handle] {
+rearrange-elemental [data-rearrange-handle] {
   cursor: grab;
   touch-action: none;
 }
 
-rearrangeable-elemental[data-dragging] {
+rearrange-elemental[data-dragging] {
   // A drag that selects the text it passes over leaves the reader holding a highlighted list.
   user-select: none;
 
@@ -45,7 +45,7 @@ rearrangeable-elemental[data-dragging] {
 
 // The item being dragged is translated over its neighbours, and a transformed element with no
 // stacking of its own paints under the ones that come after it in the markup.
-rearrangeable-elemental :is(li, tr)[data-dragging] {
+rearrange-elemental :is(li, tr)[data-dragging] {
   position: relative;
   z-index: 1;
 }
@@ -54,7 +54,7 @@ rearrangeable-elemental :is(li, tr)[data-dragging] {
 // can see the list watched the item move, and this is that same fact for the one who cannot.
 // `display: none` would take it out of the tree and say nothing, which is the whole point
 // undone, so it is clipped instead.
-rearrangeable-elemental > .rearrangeable-elemental-status {
+rearrange-elemental > .rearrange-elemental-status {
   position: absolute;
   width: 1px;
   height: 1px;
