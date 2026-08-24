@@ -81,7 +81,7 @@
   }
   var MenuElemental = class extends ElementBase {
     static get observedAttributes() {
-      return ["open", "flyout-when", "media"];
+      return ["open", "flyout-when"];
     }
     /**
      * Whether a mouse opens the menu by pointing at it rather than by clicking.
@@ -120,7 +120,7 @@
     }
     /**
      * Whether this is currently the stack-of-disclosures rather than the flyout: a
-     * `media` that is not matching right now. No `media` at all means a menu that is
+     * `flyout-when` that is not matching right now. No `flyout-when` at all means a menu that is
      * a menu at every width, which is what a menu button is when nothing says otherwise.
      */
     get inline() {
@@ -227,7 +227,7 @@
     // ---- wiring ----
     watchMedia() {
       if (this.query) this.query.removeEventListener("change", this.onMediaChange);
-      const media = this.getAttribute("flyout-when") ?? this.getAttribute("media");
+      const media = this.getAttribute("flyout-when");
       this.query = media && window.matchMedia ? window.matchMedia(media) : null;
       if (this.query) this.query.addEventListener("change", this.onMediaChange);
     }
@@ -357,7 +357,7 @@
      */
     attributeChangedCallback(name, previous, current) {
       if (!this.initialized || previous === current) return;
-      if (name === "flyout-when" || name === "media") {
+      if (name === "flyout-when") {
         this.watchMedia();
         this.onMediaChange();
         return;

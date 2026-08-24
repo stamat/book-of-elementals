@@ -8,7 +8,7 @@
       "declarations": [
         {
           "kind": "class",
-          "description": "`<menu-elemental>` custom element.\n\nA button and the nested lists it opens, per the\n[APG Menu Button pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/) -\nwith one addition the APG has no opinion on, because it is a layout question:\nbelow a breakpoint the whole thing stops being a menu.\n\nThat is the `media` attribute, and it is the point of the element. A flyout is a\ndesktop object: it floats over the page, only one branch of it is open at a time,\narrows move between items because the items are not in the tab order. On a phone\nthe same markup wants to be a stack of nested disclosures inside a drawer - links\nyou tab through, submenus that stay open where you left them, no `role=\"menu\"` at\nall. Two widgets, one set of markup, and the viewport decides which one is on.\n\nWhich also means the ARIA changes with the mode, not just the CSS. `role=\"menu\"`\nis a promise that the arrow keys work and Tab does not, so making it while the\nitems are a plain tabbable list would be a lie told to exactly the readers who\ncannot see the layout that makes it obvious.\n\nponytail: not built on the Popover API. For a dropdown holding *links* it would be\nthe whole answer - Escape, light dismiss, focus return, tab order, all native, no\nscript - and `<disclosure-elemental>` plus `popover` is the better thing to reach\nfor there. A menu has to own focus anyway for the roving tabindex and the\ntype-ahead, so popover would save the small half of the work and cost the inline\nmode, which cannot be in the top layer.\n\nLight DOM, no shadow root, and nothing is moved or wrapped.",
+          "description": "`<menu-elemental>` custom element.\n\nA button and the nested lists it opens, per the\n[APG Menu Button pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/) -\nwith one addition the APG has no opinion on, because it is a layout question:\nbelow a breakpoint the whole thing stops being a menu.\n\nThat is the `flyout-when` attribute, and it is the point of the element. A flyout is a\ndesktop object: it floats over the page, only one branch of it is open at a time,\narrows move between items because the items are not in the tab order. On a phone\nthe same markup wants to be a stack of nested disclosures inside a drawer - links\nyou tab through, submenus that stay open where you left them, no `role=\"menu\"` at\nall. Two widgets, one set of markup, and the viewport decides which one is on.\n\nWhich also means the ARIA changes with the mode, not just the CSS. `role=\"menu\"`\nis a promise that the arrow keys work and Tab does not, so making it while the\nitems are a plain tabbable list would be a lie told to exactly the readers who\ncannot see the layout that makes it obvious.\n\nponytail: not built on the Popover API. For a dropdown holding *links* it would be\nthe whole answer - Escape, light dismiss, focus return, tab order, all native, no\nscript - and `<disclosure-elemental>` plus `popover` is the better thing to reach\nfor there. A menu has to own focus anyway for the roving tabindex and the\ntype-ahead, so popover would save the small half of the work and cost the inline\nmode, which cannot be in the top layer.\n\nLight DOM, no shadow root, and nothing is moved or wrapped.",
           "name": "MenuElemental",
           "cssProperties": [
             {
@@ -106,7 +106,7 @@
             {
               "kind": "field",
               "name": "inline",
-              "description": "Whether this is currently the stack-of-disclosures rather than the flyout: a\n`media` that is not matching right now. No `media` at all means a menu that is\na menu at every width, which is what a menu button is when nothing says otherwise.",
+              "description": "Whether this is currently the stack-of-disclosures rather than the flyout: a\n`flyout-when` that is not matching right now. No `flyout-when` at all means a menu that is\na menu at every width, which is what a menu button is when nothing says otherwise.",
               "readonly": true
             },
             {
@@ -352,13 +352,6 @@
                 "text": "string"
               },
               "description": "The media query the flyout exists in. Outside it, nested disclosures. Unset means a menu at every width."
-            },
-            {
-              "name": "media",
-              "type": {
-                "text": "string"
-              },
-              "description": "Deprecated spelling of `flyout-when`, still honoured. `flyout-when` wins where both are written."
             },
             {
               "type": {

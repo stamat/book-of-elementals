@@ -2,28 +2,31 @@
 splitter-elemental {
   --splitter-elemental-color: color-mix(in srgb, currentcolor 20%, transparent);
   --splitter-elemental-active-color: color-mix(in srgb, currentcolor 45%, transparent);
-  --splitter-elemental-line-size: 1px;
+  --splitter-elemental-dot-size: 3px;
 }
 
 splitter-elemental:where([data-splitter-panes]) > [data-splitter-handle] {
   display: grid;
   place-items: center;
+  color: var(--splitter-elemental-color);
+}
+
+splitter-elemental:where([data-splitter-panes]) > [data-splitter-handle]:hover,
+splitter-elemental:where([data-splitter-panes]) > [data-splitter-handle]:focus-visible {
+  color: var(--splitter-elemental-active-color);
 }
 
 splitter-elemental:where([data-splitter-panes]) > [data-splitter-handle]::before {
-  background: var(--splitter-elemental-color);
+  background-image: radial-gradient(circle closest-side, currentcolor 100%, transparent);
   content: "";
-  inline-size: var(--splitter-elemental-line-size);
-  block-size: 100%;
+  inline-size: var(--splitter-elemental-dot-size);
+  block-size: calc(var(--splitter-elemental-dot-size) * 5);
+  background-size: 100% 33.3333333333%;
 }
 
 splitter-elemental[vertical]:where([data-splitter-panes]) > [data-splitter-handle]::before {
-  inline-size: 100%;
-  block-size: var(--splitter-elemental-line-size);
-}
-
-splitter-elemental:where([data-splitter-panes]) > [data-splitter-handle]:hover::before,
-splitter-elemental:where([data-splitter-panes]) > [data-splitter-handle]:focus-visible::before {
-  background: var(--splitter-elemental-active-color);
+  inline-size: calc(var(--splitter-elemental-dot-size) * 5);
+  block-size: var(--splitter-elemental-dot-size);
+  background-size: 33.3333333333% 100%;
 }
 /*# sourceMappingURL=splitter-theme.css.map */

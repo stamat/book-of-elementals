@@ -164,7 +164,7 @@
   var regionCount = 0;
   var DisclosureElemental = class extends ElementBase {
     static get observedAttributes() {
-      return ["open", "open-when", "media"];
+      return ["open", "open-when"];
     }
     /** The `<button>` that toggles the region. Direct child, so a button inside the
      * region - or inside a nested disclosure - is not mistaken for the trigger. */
@@ -254,11 +254,11 @@
         if (this.initialized && !this.open) region.setAttribute("hidden", hidden);
       });
     }
-    /** Start watching whatever `media` names now, and stop watching whatever it named
+    /** Start watching whatever `open-when` names now, and stop watching whatever it named
      * before. Both halves matter: the attribute can be rewritten at runtime. */
     watchMedia() {
       if (this.query) this.query.removeEventListener("change", this.onMediaChange);
-      const media = this.getAttribute("open-when") ?? this.getAttribute("media");
+      const media = this.getAttribute("open-when");
       this.query = media && window.matchMedia ? window.matchMedia(media) : null;
       if (this.query) this.query.addEventListener("change", this.onMediaChange);
     }
@@ -303,7 +303,7 @@
      */
     attributeChangedCallback(name, previous, current) {
       if (!this.initialized || previous === current) return;
-      if (name === "open-when" || name === "media") {
+      if (name === "open-when") {
         this.watchMedia();
         this.onMediaChange();
         return;

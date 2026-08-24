@@ -2197,7 +2197,7 @@
               }
             }
           ],
-          "description": "The open state a `media` query dictates, or `null` when it dictates nothing.\n\nThe null is the load-bearing case rather than a tidy default: every disclosure on a\npage runs this, and one without a `media` attribute has no opinion about its own\nstate at all. Returning `false` for \"no query\" would read as \"closed\", and every\nplain disclosure in the document would slam shut on a breakpoint it never asked\nabout.",
+          "description": "The open state a media query dictates, or `null` when it dictates nothing.\n\nThe null is the load-bearing case rather than a tidy default: every disclosure on a\npage runs this, and one without an `open-when` attribute has no opinion about its own\nstate at all. Returning `false` for \"no query\" would read as \"closed\", and every\nplain disclosure in the document would slam shut on a breakpoint it never asked\nabout.",
           "return": {
             "type": {
               "text": "boolean|null"
@@ -2216,7 +2216,7 @@
               }
             }
           ],
-          "description": "The name for which side of a `media` query the element is on, for CSS to hold on to.\n\nWhich exists so a stylesheet does not have to repeat the breakpoint. A drawer's layout\nis a media query in every page that writes one by hand, and that query has to agree\nwith the one in the attribute for the panel and its state to describe the same thing -\ntwo declarations of one number, in two languages, that nothing checks. Reflected, the\nelement is the only thing that knows the breakpoint and the CSS keys off the answer,\nwhich is also what lets that CSS be shipped to a project whose breakpoint is different.\n\n`pinned` is the query holding the region open; `free` is the button having it back.\nNull for an element with no query, so nothing is written and nothing can match.",
+          "description": "The name for which side of a media query the element is on, for CSS to hold on to.\n\nWhich exists so a stylesheet does not have to repeat the breakpoint. A drawer's layout\nis a media query in every page that writes one by hand, and that query has to agree\nwith the one in the attribute for the panel and its state to describe the same thing -\ntwo declarations of one number, in two languages, that nothing checks. Reflected, the\nelement is the only thing that knows the breakpoint and the CSS keys off the answer,\nwhich is also what lets that CSS be shipped to a project whose breakpoint is different.\n\n`pinned` is the query holding the region open; `free` is the button having it back.\nNull for an element with no query, so nothing is written and nothing can match.",
           "return": {
             "type": {
               "text": "\"pinned\"|\"free\"|null"
@@ -2295,7 +2295,7 @@
             {
               "kind": "method",
               "name": "watchMedia",
-              "description": "Start watching whatever `media` names now, and stop watching whatever it named\nbefore. Both halves matter: the attribute can be rewritten at runtime."
+              "description": "Start watching whatever `open-when` names now, and stop watching whatever it named\nbefore. Both halves matter: the attribute can be rewritten at runtime."
             },
             {
               "kind": "method",
@@ -2345,13 +2345,6 @@
                 "text": "string"
               },
               "description": "A media query that owns `open`: held open while it matches, closed when it stops. Unset means the button is the only thing that opens it."
-            },
-            {
-              "name": "media",
-              "type": {
-                "text": "string"
-              },
-              "description": "Deprecated spelling of `open-when`, still honoured. `open-when` wins where both are written."
             },
             {
               "type": {
@@ -2915,7 +2908,7 @@
       "declarations": [
         {
           "kind": "class",
-          "description": "`<menu-elemental>` custom element.\n\nA button and the nested lists it opens, per the\n[APG Menu Button pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/) -\nwith one addition the APG has no opinion on, because it is a layout question:\nbelow a breakpoint the whole thing stops being a menu.\n\nThat is the `media` attribute, and it is the point of the element. A flyout is a\ndesktop object: it floats over the page, only one branch of it is open at a time,\narrows move between items because the items are not in the tab order. On a phone\nthe same markup wants to be a stack of nested disclosures inside a drawer - links\nyou tab through, submenus that stay open where you left them, no `role=\"menu\"` at\nall. Two widgets, one set of markup, and the viewport decides which one is on.\n\nWhich also means the ARIA changes with the mode, not just the CSS. `role=\"menu\"`\nis a promise that the arrow keys work and Tab does not, so making it while the\nitems are a plain tabbable list would be a lie told to exactly the readers who\ncannot see the layout that makes it obvious.\n\nponytail: not built on the Popover API. For a dropdown holding *links* it would be\nthe whole answer - Escape, light dismiss, focus return, tab order, all native, no\nscript - and `<disclosure-elemental>` plus `popover` is the better thing to reach\nfor there. A menu has to own focus anyway for the roving tabindex and the\ntype-ahead, so popover would save the small half of the work and cost the inline\nmode, which cannot be in the top layer.\n\nLight DOM, no shadow root, and nothing is moved or wrapped.",
+          "description": "`<menu-elemental>` custom element.\n\nA button and the nested lists it opens, per the\n[APG Menu Button pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/) -\nwith one addition the APG has no opinion on, because it is a layout question:\nbelow a breakpoint the whole thing stops being a menu.\n\nThat is the `flyout-when` attribute, and it is the point of the element. A flyout is a\ndesktop object: it floats over the page, only one branch of it is open at a time,\narrows move between items because the items are not in the tab order. On a phone\nthe same markup wants to be a stack of nested disclosures inside a drawer - links\nyou tab through, submenus that stay open where you left them, no `role=\"menu\"` at\nall. Two widgets, one set of markup, and the viewport decides which one is on.\n\nWhich also means the ARIA changes with the mode, not just the CSS. `role=\"menu\"`\nis a promise that the arrow keys work and Tab does not, so making it while the\nitems are a plain tabbable list would be a lie told to exactly the readers who\ncannot see the layout that makes it obvious.\n\nponytail: not built on the Popover API. For a dropdown holding *links* it would be\nthe whole answer - Escape, light dismiss, focus return, tab order, all native, no\nscript - and `<disclosure-elemental>` plus `popover` is the better thing to reach\nfor there. A menu has to own focus anyway for the roving tabindex and the\ntype-ahead, so popover would save the small half of the work and cost the inline\nmode, which cannot be in the top layer.\n\nLight DOM, no shadow root, and nothing is moved or wrapped.",
           "name": "MenuElemental",
           "cssProperties": [
             {
@@ -3013,7 +3006,7 @@
             {
               "kind": "field",
               "name": "inline",
-              "description": "Whether this is currently the stack-of-disclosures rather than the flyout: a\n`media` that is not matching right now. No `media` at all means a menu that is\na menu at every width, which is what a menu button is when nothing says otherwise.",
+              "description": "Whether this is currently the stack-of-disclosures rather than the flyout: a\n`flyout-when` that is not matching right now. No `flyout-when` at all means a menu that is\na menu at every width, which is what a menu button is when nothing says otherwise.",
               "readonly": true
             },
             {
@@ -3259,13 +3252,6 @@
                 "text": "string"
               },
               "description": "The media query the flyout exists in. Outside it, nested disclosures. Unset means a menu at every width."
-            },
-            {
-              "name": "media",
-              "type": {
-                "text": "string"
-              },
-              "description": "Deprecated spelling of `flyout-when`, still honoured. `flyout-when` wins where both are written."
             },
             {
               "type": {
@@ -3828,7 +3814,7 @@
           "parameters": [
             {
               "name": "matches",
-              "description": "Whether the `media` query matches, or there is no query.",
+              "description": "Whether the `bar-when` query matches, or there is no query.",
               "type": {
                 "text": "boolean"
               }
@@ -3857,7 +3843,7 @@
               }
             }
           ],
-          "description": "Which of the two widgets the bar is right now.\n\nTwo inputs, because there are two ways to run out of room and only one of them is a\nwidth. `media` not matching is the author saying \"this is a phone\"; too few items still\nfitting is the bar saying \"there is nothing left on me\" - at which point the overflow\nbutton is not an overflow any more, it is the whole navigation, and a drawer is the\nhonest name for that.\n\n`minimum` is where \"too few\" is. One is the default and the old behaviour: a bar stops\nbeing one when nothing at all is left on it. Two says a single link beside an overflow\nbutton is not a navigation bar either.",
+          "description": "Which of the two widgets the bar is right now.\n\nTwo inputs, because there are two ways to run out of room and only one of them is a\nwidth. `bar-when` not matching is the author saying \"this is a phone\"; too few items still\nfitting is the bar saying \"there is nothing left on me\" - at which point the overflow\nbutton is not an overflow any more, it is the whole navigation, and a drawer is the\nhonest name for that.\n\n`minimum` is where \"too few\" is. One is the default and the old behaviour: a bar stops\nbeing one when nothing at all is left on it. Two says a single link beside an overflow\nbutton is not a navigation bar either.",
           "return": {
             "type": {
               "text": "\"bar\"|\"stack\""
@@ -4369,13 +4355,6 @@
                 "text": "string"
               },
               "description": "The media query the bar exists in. Outside it, the drawer. Unset means a bar at every width, until the links stop fitting."
-            },
-            {
-              "name": "media",
-              "type": {
-                "text": "string"
-              },
-              "description": "Deprecated spelling of `bar-when`, still honoured. `bar-when` wins where both are written."
             },
             {
               "name": "min-bar-items",
@@ -6351,7 +6330,7 @@
               "type": {
                 "text": "<length>"
               },
-              "description": "The handle's thickness, and therefore the size of the target a pointer has to hit. `24px` is [WCAG 2.2 2.5.8](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)'s minimum rather than a taste; the theme draws a thinner line inside it.",
+              "description": "The handle's thickness, and therefore the size of the target a pointer has to hit. `24px` is [WCAG 2.2 2.5.8](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)'s minimum rather than a taste; the theme draws three dots inside it.",
               "name": "--splitter-elemental-size",
               "default": "24px"
             },
@@ -6359,7 +6338,7 @@
               "type": {
                 "text": "<color>"
               },
-              "description": "Theme. The line drawn down the middle of the handle.",
+              "description": "Theme. The three dots drawn in the middle of the handle.",
               "name": "--splitter-elemental-color",
               "default": "currentcolor at 20%"
             },
@@ -6367,7 +6346,7 @@
               "type": {
                 "text": "<color>"
               },
-              "description": "Theme. Its colour while the pointer is on the handle or the handle has focus.",
+              "description": "Theme. Their colour while the pointer is on the handle or the handle has focus.",
               "name": "--splitter-elemental-active-color",
               "default": "currentcolor at 45%"
             },
@@ -6375,9 +6354,9 @@
               "type": {
                 "text": "<length>"
               },
-              "description": "Theme. How thick that line is. Not the target: the handle stays `--splitter-elemental-size` whatever this says.",
-              "name": "--splitter-elemental-line-size",
-              "default": "1px"
+              "description": "Theme. One dot across, and the gap between two of them. Not the target: the handle stays `--splitter-elemental-size` whatever this says.",
+              "name": "--splitter-elemental-dot-size",
+              "default": "3px"
             }
           ],
           "slots": [

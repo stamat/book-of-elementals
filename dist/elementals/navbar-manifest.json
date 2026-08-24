@@ -12,7 +12,7 @@
           "parameters": [
             {
               "name": "matches",
-              "description": "Whether the `media` query matches, or there is no query.",
+              "description": "Whether the `bar-when` query matches, or there is no query.",
               "type": {
                 "text": "boolean"
               }
@@ -41,7 +41,7 @@
               }
             }
           ],
-          "description": "Which of the two widgets the bar is right now.\n\nTwo inputs, because there are two ways to run out of room and only one of them is a\nwidth. `media` not matching is the author saying \"this is a phone\"; too few items still\nfitting is the bar saying \"there is nothing left on me\" - at which point the overflow\nbutton is not an overflow any more, it is the whole navigation, and a drawer is the\nhonest name for that.\n\n`minimum` is where \"too few\" is. One is the default and the old behaviour: a bar stops\nbeing one when nothing at all is left on it. Two says a single link beside an overflow\nbutton is not a navigation bar either.",
+          "description": "Which of the two widgets the bar is right now.\n\nTwo inputs, because there are two ways to run out of room and only one of them is a\nwidth. `bar-when` not matching is the author saying \"this is a phone\"; too few items still\nfitting is the bar saying \"there is nothing left on me\" - at which point the overflow\nbutton is not an overflow any more, it is the whole navigation, and a drawer is the\nhonest name for that.\n\n`minimum` is where \"too few\" is. One is the default and the old behaviour: a bar stops\nbeing one when nothing at all is left on it. Two says a single link beside an overflow\nbutton is not a navigation bar either.",
           "return": {
             "type": {
               "text": "\"bar\"|\"stack\""
@@ -553,13 +553,6 @@
                 "text": "string"
               },
               "description": "The media query the bar exists in. Outside it, the drawer. Unset means a bar at every width, until the links stop fitting."
-            },
-            {
-              "name": "media",
-              "type": {
-                "text": "string"
-              },
-              "description": "Deprecated spelling of `bar-when`, still honoured. `bar-when` wins where both are written."
             },
             {
               "name": "min-bar-items",

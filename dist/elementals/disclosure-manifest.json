@@ -69,7 +69,7 @@
               }
             }
           ],
-          "description": "The open state a `media` query dictates, or `null` when it dictates nothing.\n\nThe null is the load-bearing case rather than a tidy default: every disclosure on a\npage runs this, and one without a `media` attribute has no opinion about its own\nstate at all. Returning `false` for \"no query\" would read as \"closed\", and every\nplain disclosure in the document would slam shut on a breakpoint it never asked\nabout.",
+          "description": "The open state a media query dictates, or `null` when it dictates nothing.\n\nThe null is the load-bearing case rather than a tidy default: every disclosure on a\npage runs this, and one without an `open-when` attribute has no opinion about its own\nstate at all. Returning `false` for \"no query\" would read as \"closed\", and every\nplain disclosure in the document would slam shut on a breakpoint it never asked\nabout.",
           "return": {
             "type": {
               "text": "boolean|null"
@@ -88,7 +88,7 @@
               }
             }
           ],
-          "description": "The name for which side of a `media` query the element is on, for CSS to hold on to.\n\nWhich exists so a stylesheet does not have to repeat the breakpoint. A drawer's layout\nis a media query in every page that writes one by hand, and that query has to agree\nwith the one in the attribute for the panel and its state to describe the same thing -\ntwo declarations of one number, in two languages, that nothing checks. Reflected, the\nelement is the only thing that knows the breakpoint and the CSS keys off the answer,\nwhich is also what lets that CSS be shipped to a project whose breakpoint is different.\n\n`pinned` is the query holding the region open; `free` is the button having it back.\nNull for an element with no query, so nothing is written and nothing can match.",
+          "description": "The name for which side of a media query the element is on, for CSS to hold on to.\n\nWhich exists so a stylesheet does not have to repeat the breakpoint. A drawer's layout\nis a media query in every page that writes one by hand, and that query has to agree\nwith the one in the attribute for the panel and its state to describe the same thing -\ntwo declarations of one number, in two languages, that nothing checks. Reflected, the\nelement is the only thing that knows the breakpoint and the CSS keys off the answer,\nwhich is also what lets that CSS be shipped to a project whose breakpoint is different.\n\n`pinned` is the query holding the region open; `free` is the button having it back.\nNull for an element with no query, so nothing is written and nothing can match.",
           "return": {
             "type": {
               "text": "\"pinned\"|\"free\"|null"
@@ -167,7 +167,7 @@
             {
               "kind": "method",
               "name": "watchMedia",
-              "description": "Start watching whatever `media` names now, and stop watching whatever it named\nbefore. Both halves matter: the attribute can be rewritten at runtime."
+              "description": "Start watching whatever `open-when` names now, and stop watching whatever it named\nbefore. Both halves matter: the attribute can be rewritten at runtime."
             },
             {
               "kind": "method",
@@ -217,13 +217,6 @@
                 "text": "string"
               },
               "description": "A media query that owns `open`: held open while it matches, closed when it stops. Unset means the button is the only thing that opens it."
-            },
-            {
-              "name": "media",
-              "type": {
-                "text": "string"
-              },
-              "description": "Deprecated spelling of `open-when`, still honoured. `open-when` wins where both are written."
             },
             {
               "type": {

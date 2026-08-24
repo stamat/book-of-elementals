@@ -2159,7 +2159,7 @@
   var regionCount = 0;
   var DisclosureElemental = class extends ElementBase {
     static get observedAttributes() {
-      return ["open", "open-when", "media"];
+      return ["open", "open-when"];
     }
     /** The `<button>` that toggles the region. Direct child, so a button inside the
      * region - or inside a nested disclosure - is not mistaken for the trigger. */
@@ -2249,11 +2249,11 @@
         if (this.initialized && !this.open) region.setAttribute("hidden", hidden);
       });
     }
-    /** Start watching whatever `media` names now, and stop watching whatever it named
+    /** Start watching whatever `open-when` names now, and stop watching whatever it named
      * before. Both halves matter: the attribute can be rewritten at runtime. */
     watchMedia() {
       if (this.query) this.query.removeEventListener("change", this.onMediaChange);
-      const media = this.getAttribute("open-when") ?? this.getAttribute("media");
+      const media = this.getAttribute("open-when");
       this.query = media && window.matchMedia ? window.matchMedia(media) : null;
       if (this.query) this.query.addEventListener("change", this.onMediaChange);
     }
@@ -2298,7 +2298,7 @@
      */
     attributeChangedCallback(name, previous, current) {
       if (!this.initialized || previous === current) return;
-      if (name === "open-when" || name === "media") {
+      if (name === "open-when") {
         this.watchMedia();
         this.onMediaChange();
         return;
@@ -2729,7 +2729,7 @@
   }
   var MenuElemental = class extends ElementBase {
     static get observedAttributes() {
-      return ["open", "flyout-when", "media"];
+      return ["open", "flyout-when"];
     }
     /**
      * Whether a mouse opens the menu by pointing at it rather than by clicking.
@@ -2768,7 +2768,7 @@
     }
     /**
      * Whether this is currently the stack-of-disclosures rather than the flyout: a
-     * `media` that is not matching right now. No `media` at all means a menu that is
+     * `flyout-when` that is not matching right now. No `flyout-when` at all means a menu that is
      * a menu at every width, which is what a menu button is when nothing says otherwise.
      */
     get inline() {
@@ -2875,7 +2875,7 @@
     // ---- wiring ----
     watchMedia() {
       if (this.query) this.query.removeEventListener("change", this.onMediaChange);
-      const media = this.getAttribute("flyout-when") ?? this.getAttribute("media");
+      const media = this.getAttribute("flyout-when");
       this.query = media && window.matchMedia ? window.matchMedia(media) : null;
       if (this.query) this.query.addEventListener("change", this.onMediaChange);
     }
@@ -3005,7 +3005,7 @@
      */
     attributeChangedCallback(name, previous, current) {
       if (!this.initialized || previous === current) return;
-      if (name === "flyout-when" || name === "media") {
+      if (name === "flyout-when") {
         this.watchMedia();
         this.onMediaChange();
         return;
@@ -3551,7 +3551,7 @@
   var navbarCount = 0;
   var NavbarElemental = class extends ElementBase {
     static get observedAttributes() {
-      return ["bar-when", "media", "min-bar-items", "open"];
+      return ["bar-when", "min-bar-items", "open"];
     }
     /**
      * The row: the first list in the element that no other custom element between them owns. A
@@ -3815,7 +3815,7 @@
     // ---- wiring ----
     watchMedia() {
       if (this.query) this.query.removeEventListener("change", this.onMediaChange);
-      const media = this.getAttribute("bar-when") ?? this.getAttribute("media");
+      const media = this.getAttribute("bar-when");
       this.query = media && window.matchMedia ? window.matchMedia(media) : null;
       if (this.query) this.query.addEventListener("change", this.onMediaChange);
     }
@@ -3938,7 +3938,7 @@
     }
     attributeChangedCallback(name, previous, current) {
       if (!this.initialized || previous === current) return;
-      if (name === "bar-when" || name === "media") {
+      if (name === "bar-when") {
         this.watchMedia();
         this.apply();
         return;
