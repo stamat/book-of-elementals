@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Slider
 description: One native range input is a slider, two are a range — the fill CSS cannot place on its own, and the clamping a second thumb needs.
-order: 10
+order: 11
 ---
 
 # `<slider-elemental>`

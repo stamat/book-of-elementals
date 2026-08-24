@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Marquee
 description: A strip that scrolls forever — the copies counted against the container, the copies kept out of the keyboard's way, and the stop button every other marquee leaves you to write.
-order: 21
+order: 22
 navGroup: No APG pattern
 ---
 

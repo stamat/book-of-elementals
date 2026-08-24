@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Menu
 description: A button and the nested lists it opens — the APG Menu Button pattern, and a flyout that stops being a menu below a breakpoint.
-order: 6
+order: 7
 ---
 
 # `<menu-elemental>`

@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Rearrange
 description: A list, a table body or a board of columns the reader can rearrange — the buttons first, the drag second, and the announcement every drag library forgets.
-order: 26
+order: 27
 navGroup: No APG pattern
 ---
 

@@ -2407,6 +2407,260 @@
     },
     {
       "kind": "javascript-module",
+      "path": "src/elementals/feed/index.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "feedKey",
+          "parameters": [
+            {
+              "name": "key",
+              "description": "`KeyboardEvent.key`",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "ctrlKey",
+              "description": "Whether Control was down with it",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "Whose key a press is.\n\nPage Up and Page Down are the feed's while the reader is inside it, which is what the\npattern trades for the scroll they would otherwise do - the articles are the pages now.\nControl with an end key is the other half and the more important one: an endless feed a\nkeyboard cannot get past is the bug the pattern exists to answer.\n\nThe bare `Home` and `End` are not taken. They are the page's, and inside a text field\nthey are the field's - a comment box in a feed is the ordinary case, and a reader typing\nin one would be thrown out of it mid-word. `Control` with `PageUp` or `PageDown` is not\ntaken either: that is the browser changing tabs.",
+          "return": {
+            "type": {
+              "text": "\"next\"|\"previous\"|\"after\"|\"before\"|null"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "feedSetSize",
+          "parameters": [
+            {
+              "name": "raw",
+              "description": "The `total` attribute, if the page set one",
+              "type": {
+                "text": "string|null"
+              }
+            },
+            {
+              "name": "loaded",
+              "description": "How many articles are in the DOM now",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "description": "What each article claims the set's size is.\n\n`-1` is the pattern's own word for \"undetermined\", and a feed still loading is exactly\nthat - so a feed nobody told a total says -1 rather than counting what happens to be in\nthe DOM. Announcing \"article 10 of 10\" to a reader one scroll away from the eleventh is\nthe failure this avoids, and it is a worse one than admitting the size is not known.\n\nA total the DOM has already overtaken is a stale number from the page, and it loses to\nwhat is actually there for the same reason.",
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<feed-elemental>` custom element.\n\nA stream of articles that keeps growing, per the\n[APG Feed pattern](https://www.w3.org/WAI/ARIA/apg/patterns/feed/).\n\nA feed is the one pattern that is a contract rather than a widget: the page promises that\neach article says where it sits in the set, that the keyboard can walk them and get past\nthem, and that a reader is not read a half-written DOM - and in return a screen reader can\nkeep its browse-mode cursor going through content that arrives as it reads. `role=\"feed\"`\nalone is not that contract. It is the announcement of one, and\n[the standing criticism of it](https://www.deque.com/blog/infinite-scrolling-rolefeed-accessibility-issues/)\nis that pages ship the announcement and none of the rest - so the keyboard is left with\ncontent it cannot reach and a footer it can never get to.\n\nSo this element is the rest, and it refuses the part that earns the criticism:\n\n- **It does not fetch.** The page does, the way it does for\n  [`<search-elemental>`](../search/): `feed-load` hands over a `wait()` and a `signal`,\n  and whatever the page appends is what the feed indexes. Owning a wire format is owning\n  an escaping boundary and someone else's API.\n- **It does not scroll forever.** `auto-load` is a budget, not a switch: how many times\n  the feed may ask on its own before it stops for good and leaves the reader whatever\n  button the page put after it. With no `auto-load` there is no sentinel at all, and the\n  button is the only way on - which is what every critique of infinite scroll asks for.\n\n`Control` + `End` is the escape hatch, and it lands on the first focusable thing after the\nfeed. Put the \"Load more\" button there and the pattern's way out and the way on are the\nsame key.\n\nLight DOM, no shadow root. Degrades to what it is: with no script the articles are\narticles, in order, each readable - a feed that never grows rather than a broken one.",
+          "name": "FeedElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "How far a focused article is kept off the edge of the viewport when the browser scrolls it into view.",
+              "name": "--feed-elemental-scroll-margin",
+              "default": "1rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Between one article and the next.",
+              "name": "--feed-elemental-gap",
+              "default": "1rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Padding inside an article.",
+              "name": "--feed-elemental-inset",
+              "default": "1rem"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Corners of an article.",
+              "name": "--feed-elemental-radius",
+              "default": "0.375rem"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "An article's outline.",
+              "name": "--feed-elemental-border",
+              "default": "color-mix(in srgb, currentcolor 20%, transparent)"
+            }
+          ],
+          "slots": [
+            {
+              "description": "The articles: `<article>` elements, in reading order. Nothing else - a feed owns articles, and a button between two of them is not one.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "articles",
+              "description": "The articles, in reading order.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "autoLoad",
+              "description": "How many times the feed may still ask on its own.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "wire",
+              "description": "Say where every article sits, name it, and point the sentinel at the last one.\n\nRuns on every change to the feed's children, so it is written to be idempotent: the same\nDOM in gives the same attributes out, and an article that already has them keeps them."
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "parameters": [
+                {
+                  "name": "item"
+                }
+              ],
+              "description": "Tie an article to its own heading.\n\nAn article announced as \"article 2 of 40\" and nothing else is a row of numbers to read\npast. The heading is already the name the page wrote; this only points at it, and where\nthere is no heading the article is left unnamed rather than named something invented -\na name taken off the first sentence of the body would be a summary this element is in\nno position to write.\n\n`aria-describedby` is the pattern's other recommendation and is not written here: which\nnode is the article's primary content is the page's to say, and guessing it wrong reads\nthe wrong paragraph to every reader."
+            },
+            {
+              "kind": "method",
+              "name": "watch",
+              "parameters": [
+                {
+                  "name": "last"
+                }
+              ],
+              "description": "Watch the last article, while there is budget left to answer with.\n\nThe observer is torn down the moment the budget runs out rather than left running with\nnothing to do, which is also what makes \"it has stopped asking\" observable from the\noutside instead of a counter nobody can see."
+            },
+            {
+              "kind": "method",
+              "name": "onIntersect",
+              "parameters": [
+                {
+                  "name": "entries"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "load",
+              "description": "Ask the page for more.\n\nPublic, because the button after the feed and the sentinel are asking the same question\nand there is no reason for the page to answer it in two places. The budget is the\nsentinel's alone: a press is a reader asking, and a reader asking is never the thing\nthat needed bounding."
+            },
+            {
+              "kind": "method",
+              "name": "settle",
+              "description": "The load is over, however it went: index whatever arrived and stop claiming to be busy."
+            },
+            {
+              "kind": "method",
+              "name": "onKeyDown",
+              "parameters": [
+                {
+                  "name": "e"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "escape",
+              "parameters": [
+                {
+                  "name": "after",
+                  "description": "Whether to look after the feed rather than before it",
+                  "type": {
+                    "text": "boolean"
+                  }
+                }
+              ],
+              "description": "Put focus outside the feed, on the nearest thing that will take it.\n\nTried in document order until focus actually lands, because \"focusable\" is the\nplatform's answer and not this selector's: a control inside a `hidden` subtree or one\nCSS moved off the page matches every selector going and refuses focus when asked. Where\nnothing takes it the key is handed back to the browser, which still has its own meaning\nfor it, rather than swallowed into nothing happening.",
+              "return": {
+                "type": {
+                  "text": "boolean"
+                }
+              }
+            }
+          ],
+          "events": [
+            {
+              "name": "feed-load",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "The last article came into view, or `load()` was called. `detail.count` is how many articles are loaded now, `detail.signal` an `AbortSignal` that fires if the feed leaves the document, and `detail.wait(promise)` hands the element the work so `aria-busy` covers it."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "auto-load",
+              "type": {
+                "text": "number"
+              },
+              "description": "How many times the feed may ask for more on its own as the last article comes into view. Absent, or `0`, and it never does: the page's own button is the only way on."
+            },
+            {
+              "name": "total",
+              "type": {
+                "text": "number"
+              },
+              "description": "How many articles there are in all, for `aria-setsize`. Absent and each article says `-1`, which is the pattern's word for a set whose size is not known yet."
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "feed-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "feedKey",
+          "declaration": {
+            "name": "feedKey",
+            "module": "src/elementals/feed/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "feedSetSize",
+          "declaration": {
+            "name": "feedSetSize",
+            "module": "src/elementals/feed/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "FeedElemental",
+          "declaration": {
+            "name": "FeedElemental",
+            "module": "src/elementals/feed/index.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/elementals/field/index.js",
       "declarations": [
         {

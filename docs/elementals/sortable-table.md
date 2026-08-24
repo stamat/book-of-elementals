@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Sortable table
 description: A table whose column headers sort it — the button, the aria-sort and the caption note, over the table you already wrote.
-order: 25
+order: 26
 navGroup: No APG pattern
 ---
 

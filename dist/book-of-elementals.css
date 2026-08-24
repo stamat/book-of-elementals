@@ -258,6 +258,15 @@ disclosure-elemental {
     transition: none;
   }
 }
+feed-elemental {
+  display: block;
+}
+
+feed-elemental > article,
+feed-elemental > [role=article] {
+  scroll-margin-block: var(--feed-elemental-scroll-margin, 1rem);
+}
+
 field-elemental {
   display: block;
 }

@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Search
 description: The query half of a search field — the debounce, the abort, the loading state and the announcement nobody writes.
-order: 20
+order: 21
 navGroup: No APG pattern
 ---
 

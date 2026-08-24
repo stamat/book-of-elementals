@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Tree view
 description: A nested list of links walked with the arrow keys — the APG Tree View pattern, over the sidebar markup you already wrote.
-order: 17
+order: 18
 ---
 
 # `<tree-view-elemental>`

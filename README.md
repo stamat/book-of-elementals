@@ -23,6 +23,7 @@ holds the JavaScript helpers, this one holds the elements.
 | `<checkbox-group-elemental>` | [APG Checkbox (Mixed-State)](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/), a select-all that shows the dash when it is some of them |
 | `<combobox-elemental>`   | [APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/), a `<select>` you can type your way down, one value or many |
 | `<disclosure-elemental>` | [APG Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), where `<details>` cannot go |
+| `<feed-elemental>`       | [APG Feed](https://www.w3.org/WAI/ARIA/apg/patterns/feed/) — a stream of articles that keeps growing: the indices, the keys and the way out, with the fetching left to you and the scrolling bounded by a budget |
 | `<menu-elemental>`       | [APG Menu Button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/), nested, and not a menu below a breakpoint |
 | `<modal-elemental>`      | [APG Modal Dialog](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) on native `<dialog>` — nested, animated out, and dismissed the way the platform says |
 | `<navbar-elemental>`     | [APG Disclosure Navigation](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/), folding itself away when the links stop fitting |
@@ -446,6 +447,36 @@ padding is a floor the height cannot get under.
 The element is `display: contents`, so dropping it around existing markup changes
 no layout. With scripting off the region is simply visible and the button is not
 offered, which for a long description is the right way round.
+
+## `<feed-elemental>`
+
+A stream of articles that keeps growing, with the loading left to the page:
+
+```html
+<feed-elemental aria-label="Reviews" auto-load="2">
+  <article><h3>Gino's</h3><p>Thin crust, long queue.</p></article>
+  <article><h3>La Bella</h3><p>Four things on the menu.</p></article>
+</feed-elemental>
+<button type="button" class="more">Load more</button>
+```
+
+| Attribute   | Type   | Default | Description                                                                                  |
+| ----------- | ------ | ------- | -------------------------------------------------------------------------------------------- |
+| `auto-load` | number | —       | How many times the feed may ask for more on its own as the last article comes into view. Absent and it never does. |
+| `total`     | number | —       | How many articles there are in all. Absent and each one says `aria-setsize="-1"`.             |
+
+`role="feed"` is a contract rather than a widget, and the
+[standing criticism](https://www.deque.com/blog/infinite-scrolling-rolefeed-accessibility-issues/)
+of it is that pages ship the role and none of the rest. The rest is this: `aria-posinset` and
+`aria-setsize` on every article, a name pointed at the article's own heading, `aria-busy` while
+a load is out, `Page Up`/`Page Down` between articles and `Ctrl`+`End` past the whole feed —
+which lands on the button after it, so the way out and the way on are the same key.
+
+It does not fetch. `feed-load` hands over a `count`, an `AbortSignal` and a `wait(promise)`,
+and whatever you append is what it indexes. It does not scroll forever either: `auto-load` is a
+budget, not a switch, and once it is spent the button — a `click` away from `feed.load()` —
+is the only way on. Without script the
+articles are articles, in order.
 
 ## `<field-elemental>`
 

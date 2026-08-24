@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Password
 description: A password field you can look at, and a button that says so out loud.
-order: 23
+order: 24
 navGroup: No APG pattern
 ---
 

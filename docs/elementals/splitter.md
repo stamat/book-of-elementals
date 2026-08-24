@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Splitter
 description: Two panes and a draggable seam between them — the APG Window Splitter pattern, keyboard included, for a pattern that has never had a reference example.
-order: 11
+order: 12
 ---
 
 # `<splitter-elemental>`

@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Toolbar
 description: A row of buttons the arrow keys walk and Tab passes in one step — the APG Toolbar pattern, across the page or down it.
-order: 15
+order: 16
 ---
 
 # `<toolbar-elemental>`

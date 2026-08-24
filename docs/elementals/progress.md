@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Progress
 description: A native <progress> whose fill CSS can draw — and a second value beside it, for the part that is loaded but not played yet.
-order: 19
+order: 20
 navGroup: No APG pattern
 ---
 

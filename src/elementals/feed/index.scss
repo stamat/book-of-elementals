@@ -1,0 +1,16 @@
+// Structure only: a block box, and the room a focused article keeps off the edge of the
+// screen. The look - the border, the padding, the space between one article and the next -
+// is `theme.scss`, and optional.
+
+feed-elemental {
+  display: block;
+}
+
+// Not decoration. `focus()` is how this element moves the reader from article to article and
+// the browser scrolls what it focuses into view, hard against the edge unless something says
+// otherwise - so an article landing under a sticky header is one the reader has to scroll
+// back to after every press, which is the keyboard fighting the screen.
+feed-elemental > article,
+feed-elemental > [role="article"] {
+  scroll-margin-block: var(--feed-elemental-scroll-margin, 1rem);
+}

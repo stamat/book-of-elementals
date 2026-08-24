@@ -1,0 +1,2 @@
+/* book-of-elementals v3.0.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
+feed-elemental{display:block}feed-elemental>article,feed-elemental>[role=article]{scroll-margin-block:var(--feed-elemental-scroll-margin, 1rem)}

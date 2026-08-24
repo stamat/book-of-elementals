@@ -28,10 +28,10 @@ redraw a page that did not ask.
 ## Patterns that are not coming
 
 There are 30 [APG patterns](https://www.w3.org/WAI/ARIA/apg/patterns/) and this book
-implements 16 of them, across 17 elements — `<combobox-elemental>` and `<suggest-elemental>`
+implements 17 of them, across 18 elements — `<combobox-elemental>` and `<suggest-elemental>`
 share Combobox, `<disclosure-elemental>` and `<navbar-elemental>` share Disclosure, and
 `<slider-elemental>` answers both Slider and Slider (Multi-Thumb) depending on how many
-thumbs the markup has. The other 14 were each run through the question at the top of this
+thumbs the markup has. The other 13 were each run through the question at the top of this
 file — does it upgrade markup you would have written anyway, and does the platform leave a
 gap worth filling — and each one came back no. That is written down here so the answer is
 checked before the code exists rather than argued about after, and so a PR proposing one
@@ -51,7 +51,6 @@ wrong, not a working implementation.
 | [Menu and Menubar](https://www.w3.org/WAI/ARIA/apg/patterns/menubar/) | `<menu-elemental>` already writes `role="menu"` and `role="menuitem"`. Only the menubar half is missing, and that is application chrome — a site's navigation is `<navbar-elemental>` |
 | [Alert](https://www.w3.org/WAI/ARIA/apg/patterns/alert/) | `role="alert"` on a `<div>` is the whole pattern. A page-level announcer would be an imperative `announce()` call, which is the opposite of a tag you put around markup |
 | [Alert and Message Dialogs](https://www.w3.org/WAI/ARIA/apg/patterns/alertdialog/) | Not a second element beside `<modal-elemental>` — at most an `alert` attribute on it, swapping the role and pointing `aria-describedby` at the message. Nobody has needed it yet; when someone does, that is the shape |
-| [Feed](https://www.w3.org/WAI/ARIA/apg/patterns/feed/) | It would ship half a fix wearing a whole one's name. `role="feed"` serves screen-reader browse mode and [leaves keyboard-only readers with content they cannot reach](https://www.deque.com/blog/infinite-scrolling-rolefeed-accessibility-issues/) |
 | [Spinbutton](https://www.w3.org/WAI/ARIA/apg/patterns/spinbutton/) | It would be rebuilding what the best-researched design system in the field removed. [GOV.UK dropped `input type="number"`](https://technology.blog.gov.uk/2020/02/24/why-the-gov-uk-design-system-team-changed-the-input-type-for-numbers/) — undictatable in Dragon, an unlabelled spin button in NVDA object navigation, letters silently discarded, the value changed by a stray scroll wheel — and landed on `type="text" inputmode="numeric"`, which needs no script. The validation half they name is `<field-elemental>`. A quantity stepper is the one live question inside this row |
 | [Table](https://www.w3.org/WAI/ARIA/apg/patterns/table/) | `<table>` already is one. The roles the pattern describes are for markup that is not a table, and re-declaring them on one that is would be replacing semantics the browser already has. What the pattern's own [sortable example](https://www.w3.org/WAI/ARIA/apg/patterns/table/examples/sortable-table/) adds on top is `<sortable-table-elemental>`, which is why that element's page says it implements no pattern |
 | [Grid](https://www.w3.org/WAI/ARIA/apg/patterns/grid/) | The smallest useful version is an application, not a smallest functional whole. Sorting a real `<table>` is `<sortable-table-elemental>`; the rest — paging, filtering, column resizing, row selection — is a data grid |

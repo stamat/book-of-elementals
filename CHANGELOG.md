@@ -15,6 +15,43 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Added
+
+- **`<feed-elemental>`, a stream of articles that keeps growing.** Wrap a run of `<article>`s
+  and each one is told where it sits in the set, named off its own first heading, and made
+  focusable; <kbd>Page Up</kbd> and <kbd>Page Down</kbd> walk them and <kbd>Ctrl</kbd> +
+  <kbd>End</kbd> gets past the whole feed, per the
+  [APG Feed pattern](https://www.w3.org/WAI/ARIA/apg/patterns/feed/).
+
+  **Feed was on the list of patterns that are not coming, and the reason there was half
+  wrong.** That row said `role="feed"` serves screen-reader browse mode and leaves the
+  keyboard with content it cannot reach — which describes infinite scroll, not the pattern:
+  the pattern's own keyboard contract is exactly that reach, and
+  [MDN says applying it is the author's job](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/feed_role),
+  which is what an element is for. What survives the correction is the criticism of endless
+  loading itself — [Deque's](https://www.deque.com/blog/infinite-scrolling-rolefeed-accessibility-issues/)
+  and [DigitalA11Y's](https://www.digitala11y.com/ok-aria-rolefeed-is-here-its-not-ready-for-prime-time/)
+  — and both ask for the same thing, which is loading the reader controls. So the element is
+  built round that: `auto-load` is a budget rather than a switch, and with no `auto-load`
+  there is no `IntersectionObserver` at all.
+
+  **It does not fetch**, the same seam `<search-elemental>` holds: `feed-load` hands over
+  `detail.count`, an `AbortSignal` and a `wait(promise)`, and whatever the page appends is
+  what the feed indexes. `feed.load()` is the same ask from script and is what a "Load more"
+  button after the feed calls — which is also where <kbd>Ctrl</kbd> + <kbd>End</kbd> lands, so
+  the way out of the feed and the way on through it are one key. A load that rejects stops the
+  sentinel and leaves the button, rather than retrying on every scroll.
+
+  **DOM it writes:** `role="feed"` and `aria-busy` on the element; `tabindex="0"`,
+  `aria-posinset`, `aria-setsize` and — where the article has no name of its own —
+  `aria-labelledby` on each direct-child `<article>` or `[role="article"]`, pointed at that
+  article's first heading, which is given an `id` if it has none. `aria-setsize` is `-1`
+  until the page states a `total`, because that is the pattern's word for a set whose size is
+  not known yet. **CSS it adds:** a block box and `--feed-elemental-scroll-margin` on the
+  articles in the structure sheet; borders, padding and `--feed-elemental-gap` in the optional
+  theme. No `aria-describedby`, no fetching, no virtualisation, no unloading of articles
+  scrolled past.
+
 ## [3.0.0] - 2026-08-24
 
 ### Added
