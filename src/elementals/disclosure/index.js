@@ -47,10 +47,10 @@ export function slideFrom(open, hidden, height) {
 }
 
 /**
- * The open state a `media` query dictates, or `null` when it dictates nothing.
+ * The open state a media query dictates, or `null` when it dictates nothing.
  *
  * The null is the load-bearing case rather than a tidy default: every disclosure on a
- * page runs this, and one without a `media` attribute has no opinion about its own
+ * page runs this, and one without an `open-when` attribute has no opinion about its own
  * state at all. Returning `false` for "no query" would read as "closed", and every
  * plain disclosure in the document would slam shut on a breakpoint it never asked
  * about.
@@ -63,7 +63,7 @@ export function mediaOpen(query) {
 }
 
 /**
- * The name for which side of a `media` query the element is on, for CSS to hold on to.
+ * The name for which side of a media query the element is on, for CSS to hold on to.
  *
  * Which exists so a stylesheet does not have to repeat the breakpoint. A drawer's layout
  * is a media query in every page that writes one by hand, and that query has to agree
@@ -117,7 +117,6 @@ let regionCount = 0;
  * @attr {boolean} [open=false] - Whether the region is showing. Reflected - it tracks the live state.
  * @attr {string} for - `id` of the region. Also read as `data-for`. Defaults to the button's next element sibling.
  * @attr {string} open-when - A media query that owns `open`: held open while it matches, closed when it stops. Unset means the button is the only thing that opens it.
- * @attr {string} media - Deprecated spelling of `open-when`, still honoured. `open-when` wins where both are written.
  *
  * @cssprop {<time>} [--disclosure-elemental-duration=250ms] - How long the region takes to slide. Override it on the region, which is where the element reads it back out of the computed styles - `0s` toggles instantly.
  * @cssprop {<easing-function>} [--disclosure-elemental-easing=ease] - How the slide moves. On the region, like the duration.
@@ -129,7 +128,7 @@ let regionCount = 0;
  */
 export class DisclosureElemental extends ElementBase {
   static get observedAttributes() {
-    return ['open', 'open-when', 'media'];
+    return ['open', 'open-when'];
   }
 
   /** The `<button>` that toggles the region. Direct child, so a button inside the
@@ -260,13 +259,11 @@ export class DisclosureElemental extends ElementBase {
     });
   }
 
-  /** Start watching whatever `media` names now, and stop watching whatever it named
+  /** Start watching whatever `open-when` names now, and stop watching whatever it named
    * before. Both halves matter: the attribute can be rewritten at runtime. */
   watchMedia() {
     if (this.query) this.query.removeEventListener('change', this.onMediaChange);
-    // TODO: drop the `media` fallback at the next major - `open-when` is the name, and this pair
-    // is the whole of the deprecation.
-    const media = this.getAttribute('open-when') ?? this.getAttribute('media');
+    const media = this.getAttribute('open-when');
     this.query = media && window.matchMedia ? window.matchMedia(media) : null;
     if (this.query) this.query.addEventListener('change', this.onMediaChange);
   }
@@ -280,7 +277,7 @@ export class DisclosureElemental extends ElementBase {
    * queueing a slide per frame.
    */
   onMediaChange() {
-    // Before the state, and outside the early return below: dropping the `media`
+    // Before the state, and outside the early return below: dropping the `open-when`
     // attribute has no new state to write, and still has a stale mode to take off.
     this.reflectMode();
 
@@ -320,7 +317,7 @@ export class DisclosureElemental extends ElementBase {
   attributeChangedCallback(name, previous, current) {
     if (!this.initialized || previous === current) return;
 
-    if (name === 'open-when' || name === 'media') {
+    if (name === 'open-when') {
       this.watchMedia();
       this.onMediaChange();
       return;

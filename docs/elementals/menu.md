@@ -98,7 +98,6 @@ like — every level is wired the same way.
 | Attribute | Type    | Default | Description                                                                     |
 | --------- | ------- | ------- | ------------------------------------------------------------------------------- |
 | `flyout-when`   | string  | none    | The media query the flyout exists in. Outside it, nested disclosures. Unset means a menu at every width. |
-| `media`   | string  | none    | Deprecated spelling of `flyout-when`, still honoured. `flyout-when` wins where both are written. |
 | `open`    | boolean | `false` | Whether the root list is showing. Reflected, so `[open]` is a styling hook.      |
 | `hover`   | boolean | `false` | A mouse also opens it by [pointing at it](#opening-on-hover). Never on touch, never inline. |
 

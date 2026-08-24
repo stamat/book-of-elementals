@@ -136,7 +136,6 @@ the panel laid out as its own element wrote it.
 | Attribute | Type    | Default | Description                                                                     |
 | --------- | ------- | ------- | ------------------------------------------------------------------------------- |
 | `bar-when`   | string  | none    | The media query the bar exists in. Outside it, the drawer. Unset means a bar at every width — until the links stop fitting. |
-| `media`   | string  | none    | Deprecated spelling of `bar-when`, still honoured. `bar-when` wins where both are written. |
 | `min-bar-items` | number | `1` | How many links have to fit for this to still be a bar. `2` says one link beside an overflow button is a drawer instead. |
 | `open`    | boolean | `false` | Whether the drawer is showing. Reflected, so `[open]` is a styling hook.          |
 | `hover`   | boolean | `false` | A mouse also opens a panel by [pointing at it](#opening-on-hover). Never on touch, never stacked. |

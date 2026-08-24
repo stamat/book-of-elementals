@@ -93,7 +93,6 @@ instantiate, no init call to forget.
 | `open`    | boolean | `false` | Whether the region is showing. Reflected — it tracks the live state. |
 | `for`     | string  | —       | `id` of the region. Defaults to the button's next element sibling.   |
 | `open-when`   | string  | —       | A media query that owns `open`: held open while it matches, closed when it stops. |
-| `media`   | string  | —       | Deprecated spelling of `open-when`, still honoured. `open-when` wins where both are written. |
 
 `for` is also read as `data-for`. `open` is not — it is state, not configuration, so it has
 one spelling.

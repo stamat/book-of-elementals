@@ -14,7 +14,7 @@ export { stepIndex };
  * Which of the two widgets the bar is right now.
  *
  * Two inputs, because there are two ways to run out of room and only one of them is a
- * width. `media` not matching is the author saying "this is a phone"; too few items still
+ * width. `bar-when` not matching is the author saying "this is a phone"; too few items still
  * fitting is the bar saying "there is nothing left on me" - at which point the overflow
  * button is not an overflow any more, it is the whole navigation, and a drawer is the
  * honest name for that.
@@ -23,7 +23,7 @@ export { stepIndex };
  * being one when nothing at all is left on it. Two says a single link beside an overflow
  * button is not a navigation bar either.
  *
- * @param {boolean} matches - Whether the `media` query matches, or there is no query.
+ * @param {boolean} matches - Whether the `bar-when` query matches, or there is no query.
  * @param {number} overflowed - How many items did not fit.
  * @param {number} total - How many items there are.
  * @param {number} [minimum=1] - How many have to fit for this to still be a bar.
@@ -147,7 +147,6 @@ let navbarCount = 0;
  *
  * @tag navbar-elemental
  * @attr {string} bar-when - The media query the bar exists in. Outside it, the drawer. Unset means a bar at every width, until the links stop fitting.
- * @attr {string} media - Deprecated spelling of `bar-when`, still honoured. `bar-when` wins where both are written.
  * @attr {number} [min-bar-items=1] - How many links have to fit for this to still be a bar. `2` says one link beside an overflow button is a drawer.
  * @attr {boolean} [open=false] - Whether the drawer is showing. Reflected, so `[open]` is a styling hook.
  * @attr {boolean} [hover=false] - A mouse also opens a panel by pointing at it. Never on touch, never stacked.
@@ -170,7 +169,7 @@ let navbarCount = 0;
  */
 export class NavbarElemental extends ElementBase {
   static get observedAttributes() {
-    return ['bar-when', 'media', 'min-bar-items', 'open'];
+    return ['bar-when', 'min-bar-items', 'open'];
   }
 
   /**
@@ -492,9 +491,7 @@ export class NavbarElemental extends ElementBase {
 
   watchMedia() {
     if (this.query) this.query.removeEventListener('change', this.onMediaChange);
-    // TODO: drop the `media` fallback at the next major - `bar-when` is the name, and this pair
-    // is the whole of the deprecation.
-    const media = this.getAttribute('bar-when') ?? this.getAttribute('media');
+    const media = this.getAttribute('bar-when');
     this.query = media && window.matchMedia ? window.matchMedia(media) : null;
     if (this.query) this.query.addEventListener('change', this.onMediaChange);
   }
@@ -655,7 +652,7 @@ export class NavbarElemental extends ElementBase {
 
   attributeChangedCallback(name, previous, current) {
     if (!this.initialized || previous === current) return;
-    if (name === 'bar-when' || name === 'media') {
+    if (name === 'bar-when') {
       this.watchMedia();
       this.apply();
       return;

@@ -4,6 +4,7 @@
 // re-export surface every elemental imports through is complete. The same assertions exist
 // upstream; if the two ever disagree, one of the two libraries has been changed alone.
 import { placeFlyout, placeSubmenu, typeAheadIndex } from '../../core.js';
+import { MenuElemental } from './index.js';
 
 const VIEWPORT = { width: 1000, height: 800 };
 const PANEL = { width: 200, height: 300 };
@@ -92,4 +93,8 @@ test('nothing typed, nothing matching, and an empty menu all move nowhere', () =
   expect(typeAheadIndex(LABELS, 0, '')).toBeNull();
   expect(typeAheadIndex(LABELS, 0, 'z')).toBeNull();
   expect(typeAheadIndex([], 0, 'a')).toBeNull();
+});
+
+test('`flyout-when` is the only name for the query - the old `media` spelling is gone', () => {
+  expect(MenuElemental.observedAttributes).toEqual(['open', 'flyout-when']);
 });

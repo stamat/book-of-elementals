@@ -420,7 +420,6 @@ ARIA there is.
 | `open`    | boolean | `false` | Whether the region is showing. Reflected — it tracks the live state. |
 | `for`     | string  | —       | `id` of the region. Defaults to the button's next element sibling.   |
 | `open-when`   | string  | —       | A media query that owns `open`: held open while it matches, closed when it stops. |
-| `media`   | string  | —       | Deprecated spelling of `open-when`, still honoured. |
 
 `open-when` is for the disclosures that stop being disclosures at a width — a rail that is a
 drawer on a phone, a long description that is prose beside the figure when there is room.
@@ -578,7 +577,6 @@ thing stops being a menu.
 | Attribute | Type    | Default | Description                                                                       |
 | --------- | ------- | ------- | --------------------------------------------------------------------------------- |
 | `flyout-when`   | string  | —       | The query the flyout exists in. Outside it, nested disclosures. Unset means always a menu. |
-| `media`   | string  | —       | Deprecated spelling of `flyout-when`, still honoured. |
 | `open`    | boolean | `false` | Whether the root list is showing. Reflected.                                       |
 
 Inside `flyout-when` it is the [APG Menu
@@ -699,7 +697,6 @@ that do not fit to go, and a way to be a drawer instead on a narrow screen.
 | Attribute | Type    | Default | Description                                                                  |
 | --------- | ------- | ------- | ----------------------------------------------------------------------------- |
 | `bar-when`   | string  | —       | The query the bar exists in. Outside it, the drawer. Unset means a bar at every width. |
-| `media`   | string  | —       | Deprecated spelling of `bar-when`, still honoured. |
 | `open`    | boolean | `false` | Whether the drawer is showing. Reflected.                                     |
 | `hover`   | boolean | `false` | A mouse opens a panel by pointing at it too. Never on touch, never stacked.   |
 

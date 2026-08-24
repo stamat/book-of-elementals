@@ -25,7 +25,7 @@ function set(element, name, value) {
  * with one addition the APG has no opinion on, because it is a layout question:
  * below a breakpoint the whole thing stops being a menu.
  *
- * That is the `media` attribute, and it is the point of the element. A flyout is a
+ * That is the `flyout-when` attribute, and it is the point of the element. A flyout is a
  * desktop object: it floats over the page, only one branch of it is open at a time,
  * arrows move between items because the items are not in the tab order. On a phone
  * the same markup wants to be a stack of nested disclosures inside a drawer - links
@@ -51,7 +51,6 @@ function set(element, name, value) {
  *
  * @tag menu-elemental
  * @attr {string} flyout-when - The media query the flyout exists in. Outside it, nested disclosures. Unset means a menu at every width.
- * @attr {string} media - Deprecated spelling of `flyout-when`, still honoured. `flyout-when` wins where both are written.
  * @attr {boolean} [open=false] - Whether the root list is showing. Reflected, so `[open]` is a styling hook.
  * @attr {boolean} [hover=false] - A mouse also opens it by pointing at it. Never on touch, never inline.
  *
@@ -69,7 +68,7 @@ function set(element, name, value) {
  */
 export class MenuElemental extends ElementBase {
   static get observedAttributes() {
-    return ['open', 'flyout-when', 'media'];
+    return ['open', 'flyout-when'];
   }
 
   /**
@@ -117,7 +116,7 @@ export class MenuElemental extends ElementBase {
 
   /**
    * Whether this is currently the stack-of-disclosures rather than the flyout: a
-   * `media` that is not matching right now. No `media` at all means a menu that is
+   * `flyout-when` that is not matching right now. No `flyout-when` at all means a menu that is
    * a menu at every width, which is what a menu button is when nothing says otherwise.
    */
   get inline() {
@@ -263,9 +262,7 @@ export class MenuElemental extends ElementBase {
 
   watchMedia() {
     if (this.query) this.query.removeEventListener('change', this.onMediaChange);
-    // TODO: drop the `media` fallback at the next major - `flyout-when` is the name, and this pair
-    // is the whole of the deprecation.
-    const media = this.getAttribute('flyout-when') ?? this.getAttribute('media');
+    const media = this.getAttribute('flyout-when');
     this.query = media && window.matchMedia ? window.matchMedia(media) : null;
     if (this.query) this.query.addEventListener('change', this.onMediaChange);
   }
@@ -433,7 +430,7 @@ export class MenuElemental extends ElementBase {
    */
   attributeChangedCallback(name, previous, current) {
     if (!this.initialized || previous === current) return;
-    if (name === 'flyout-when' || name === 'media') {
+    if (name === 'flyout-when') {
       this.watchMedia();
       this.onMediaChange();
       return;

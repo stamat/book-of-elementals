@@ -86,12 +86,12 @@ Elements published so far:
   `<figcaption>`, a table row, a grid item, a region across the page). Reflected
   `open`, a `for` attribute for a detached region, `hidden="until-found"` so
   find-in-page still reaches a closed region, and a bubbling `disclosure-toggle`
-  event. A `media` attribute hands `open` to a media query — held open while it
+  event. An `open-when` attribute hands `open` to a media query — held open while it
   matches, closed when it stops — and writes `data-mode="pinned"`/`"free"` on the
   element and the region, so a stylesheet keys off the query without repeating it.
 - `<menu-elemental>` — APG menu button: a `<button>` and the nested lists it
   opens, with `role="menu"`/`role="menuitem"`, arrow keys, type-ahead, `Escape`
-  back to the trigger and one branch open at a time. A `media` attribute is the
+  back to the trigger and one branch open at a time. A `flyout-when` attribute is the
   width the flyout exists in; outside it the roles come off and the same markup is
   a stack of nested disclosures, which is what `data-mode` says. For commands —
   account menus, toolbars, "more actions" — not for site navigation.
@@ -115,7 +115,7 @@ Elements published so far:
   panels some of them open, writing no roles at all, because a link announced as a
   menu item is a link no longer. Links that stop fitting move behind an overflow
   button, measured with an `IntersectionObserver` on a copy of the row rather than
-  guessed at with a breakpoint; a `media` attribute is when the whole bar becomes a
+  guessed at with a breakpoint; a `bar-when` attribute is when the whole bar becomes a
   drawer. `data-mode="bar"`/`"stack"`, reflected `open`, a bubbling `navbar-toggle`,
   and three markup hooks: `data-navbar-more`, `data-navbar-toggle`,
   `data-navbar-stack`.

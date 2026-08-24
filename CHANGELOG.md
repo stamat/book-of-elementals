@@ -15,6 +15,22 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Removed
+
+- **The `media` attribute is gone from `<disclosure-elemental>`, `<menu-elemental>` and
+  `<navbar-elemental>`.** 2.0.0 renamed it to `open-when`, `flyout-when` and `bar-when` and kept
+  it answering to both, marked for removal at the next major — this is that major, and the
+  window between the two was a day. One name per query is the point: `media` said what kind of
+  thing the value was, the three new names say what the query decides, and an element that
+  answered to both was two names for one knob in every page that read the docs.
+
+  **DOM:** `media` is no longer observed and no longer read. A page still writing it gets an
+  element with no query at all — a disclosure the button alone opens, a menu that is a flyout
+  at every width, a bar that never becomes a drawer — which is the same element with the
+  attribute deleted, not a broken one. The fix is a rename in the markup, one attribute per
+  element. Nothing else moves: the attributes that replace it, `data-mode`, the events and the
+  CSS hooks are all unchanged.
+
 ### Changed
 
 - **`<splitter-elemental>`: the theme's seam is now three dots rather than a hairline.** A line

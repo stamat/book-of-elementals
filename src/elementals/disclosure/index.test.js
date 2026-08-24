@@ -1,4 +1,4 @@
-import { disclosureState, slideFrom, mediaOpen, mediaMode } from './index.js';
+import { disclosureState, slideFrom, mediaOpen, mediaMode, DisclosureElemental } from './index.js';
 
 test('an open disclosure is expanded and not hidden', () => {
   expect(disclosureState(true)).toEqual({ expanded: 'true', hidden: null, state: 'open' });
@@ -48,4 +48,8 @@ test('a matching query is the pinned mode', () => {
 
 test('a query that does not match is the free mode, where the button is in charge', () => {
   expect(mediaMode(false)).toBe('free');
+});
+
+test('`open-when` is the only name for the query - the old `media` spelling is gone', () => {
+  expect(DisclosureElemental.observedAttributes).toEqual(['open', 'open-when']);
 });

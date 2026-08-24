@@ -1,5 +1,5 @@
 import * as book from '../../index.js';
-import { hoverIntent, navbarMode, ownsRow, probeState, stepIndex } from './index.js';
+import { hoverIntent, navbarMode, ownsRow, probeState, stepIndex, NavbarElemental } from './index.js';
 
 test('the main entry still exports stepIndex, one binding from both modules', () => {
   // This module once declared its own copy of core's stepper, and `src/index.js`
@@ -114,4 +114,8 @@ test('the bar around the items closes nothing, because the gap is a place to pas
   // Between a button and the panel under it lies the bar's own padding. Closing there is
   // closing every panel the moment anyone reaches for one.
   expect(hoverIntent(null, null)).toBeNull();
+});
+
+test('`bar-when` is the only name for the query - the old `media` spelling is gone', () => {
+  expect(NavbarElemental.observedAttributes).toEqual(['bar-when', 'min-bar-items', 'open']);
 });
