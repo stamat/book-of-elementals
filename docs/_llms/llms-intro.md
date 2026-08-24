@@ -165,6 +165,28 @@ Elements published so far:
   clipboard API, or nothing named to copy, and the button is not offered at all —
   `data-unavailable` says which.
 
+- `<rearrangeable-elemental>` — a list, or a table's first `<tbody>`, whose items the reader can
+  rearrange by hand. No APG
+  pattern; the closest is the APG's rearrangeable listbox example, and what is taken from it
+  is the part that is not the listbox — move buttons on every item, `aria-keyshortcuts`
+  naming <kbd>Alt</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd>, focus staying on the button that moved, and
+  a `role="status"` region saying where the item landed. The buttons are the element and
+  `drag` is the option on top, which is WCAG 2.2 SC 2.5.7 Dragging Movements met by
+  construction rather than by a keyboard mode bolted on. Dragging is pointer events with a
+  captured pointer and `touch-action: none` on the handle alone, never the HTML drag and drop
+  API, which has no touch support and whose `aria-grabbed`/`aria-dropeffect` were deprecated
+  in ARIA 1.1. Writes one `<span data-rearrange-controls>` per item holding two `<button>`s —
+  named `Move {label} up`/`down` as visible text, not an `aria-label` over an icon — plus a
+  handle when `drag` is set; the ends of travel are `aria-disabled`, never `disabled`, which
+  would drop the pressing reader's focus to `<body>`. Attributes: `drag`, `up-text`,
+  `down-text`, `moved-text`, and `data-label`/`data-rearrange-handle`/`data-rearrange-cell` on the
+  items — a row's controls go in the cell marked `data-rearrange-cell` or its last one, since a
+  `<span>` between two `<td>`s is fostered out of the table, and a row with no `data-label` is
+  named by its `<th scope="row">` or first cell. Not for a table that is also a
+  `<sortable-table-elemental>`: that order is derived from a key, this one is not derived at all. One bubbling
+  `rearrangeable-move` per landing with `item`, `from` and `to` — not one per row
+  crossed. Nothing is persisted, and items arriving later are picked up by `.update()`.
+
 One stylesheet here is not an element's, and it is the only one that ever will be — a
 control gets a look in this package only when an element in it cannot be drawn without one:
 

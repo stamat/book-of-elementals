@@ -32,8 +32,8 @@
     "updated": "2026-08-23T21:34:23.506Z"
   },
   "docs/elementals/index.md": {
-    "hash": "2643a82b493c163e4596c5069f8dc9b18ac1c619",
-    "updated": "2026-08-23T16:51:33.053Z"
+    "hash": "78b43815624f81a62fd252ea448c28932651071b",
+    "updated": "2026-08-24T13:25:43.466Z"
   },
   "docs/elementals/marquee.md": {
     "hash": "7658e6d2ad8b82e596ca9f6b5b4468b4356efc48",
@@ -58,6 +58,10 @@
   "docs/elementals/progress.md": {
     "hash": "4d8e60b16ef6f639f7513de34e5ddd9a084cfe9a",
     "updated": "2026-08-23T21:34:23.502Z"
+  },
+  "docs/elementals/rearrangeable.md": {
+    "hash": "18af5f184e5af87c793f9c7bc9082f60ef07fd4c",
+    "updated": "2026-08-24T13:26:20.480Z"
   },
   "docs/elementals/search.md": {
     "hash": "5f6e765e42c64b29869b17f155234c3aa0a21a81",

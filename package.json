@@ -104,6 +104,12 @@
     "./progress/style.css": "./dist/elementals/progress.css",
     "./progress/theme.scss": "./src/elementals/progress/theme.scss",
     "./progress/theme.css": "./dist/elementals/progress-theme.css",
+    "./rearrangeable": "./src/elementals/rearrangeable/index.js",
+    "./rearrangeable/manifest": "./dist/elementals/rearrangeable-manifest.json",
+    "./rearrangeable/style.scss": "./src/elementals/rearrangeable/index.scss",
+    "./rearrangeable/style.css": "./dist/elementals/rearrangeable.css",
+    "./rearrangeable/theme.scss": "./src/elementals/rearrangeable/theme.scss",
+    "./rearrangeable/theme.css": "./dist/elementals/rearrangeable-theme.css",
     "./search": "./src/elementals/search/index.js",
     "./search/manifest": "./dist/elementals/search-manifest.json",
     "./search/style.scss": "./src/elementals/search/index.scss",
@@ -248,7 +254,7 @@
     "lint:es": "es-check es2020 \"dist/**/*.js\""
   },
   "dependencies": {
-    "book-of-spells": "^2.4.0"
+    "book-of-spells": "^2.6.0"
   },
   "devDependencies": {
     "@custom-elements-manifest/analyzer": "^0.11.0",

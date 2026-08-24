@@ -16,6 +16,7 @@ import './elementals/modal/index.js';
 import './elementals/navbar/index.js';
 import './elementals/password/index.js';
 import './elementals/progress/index.js';
+import './elementals/rearrangeable/index.js';
 import './elementals/search/index.js';
 import './elementals/segmented/index.js';
 import './elementals/slider/index.js';

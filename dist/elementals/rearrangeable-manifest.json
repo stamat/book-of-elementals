@@ -1,0 +1,567 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/elementals/rearrangeable/index.js",
+      "declarations": [
+        {
+          "kind": "variable",
+          "name": "DEFAULT_UP_TEXT",
+          "type": {
+            "text": "string"
+          },
+          "default": "'Move {label} up'",
+          "description": "What the buttons are named, and what the live region says. `{label}`, `{position}` and\n`{total}` are filled in; anything else in the string is left exactly as written."
+        },
+        {
+          "kind": "variable",
+          "name": "DEFAULT_DOWN_TEXT",
+          "type": {
+            "text": "string"
+          },
+          "default": "'Move {label} down'"
+        },
+        {
+          "kind": "variable",
+          "name": "DEFAULT_MOVED_TEXT",
+          "type": {
+            "text": "string"
+          },
+          "default": "'{label} moved to position {position} of {total}'"
+        },
+        {
+          "kind": "variable",
+          "name": "LABEL_MAX",
+          "type": {
+            "text": "number"
+          },
+          "default": "80",
+          "description": "Longest label the buttons and the announcement will carry.\n\nA list item is whatever the author put in it - a paragraph, a card, a whole form - and its\ntext goes into two button names and a live region on every move. Uncapped, one long item\nturns the reader's rotor into a wall and every announcement into a recital. `data-label` is\nthe way to say it shorter and better."
+        },
+        {
+          "kind": "variable",
+          "name": "ANNOUNCE_MS",
+          "type": {
+            "text": "number"
+          },
+          "default": "100",
+          "description": "How long an announcement waits before it lands.\n\nNot a nicety: Alt+Arrow held down repeats, and a drag crosses several neighbours in a\nsecond, so without this the region queues a sentence per crossing and the reader hears the\njourney instead of the destination. 100ms is\n[Primer's tested value](https://primer.style/accessibility/patterns/drag-and-drop/) for the\nsame problem, and one deliberate press never notices it."
+        },
+        {
+          "kind": "function",
+          "name": "itemLabel",
+          "parameters": [
+            {
+              "name": "item",
+              "type": {
+                "text": "Element|null|undefined"
+              }
+            },
+            {
+              "name": "max",
+              "default": "LABEL_MAX",
+              "optional": true,
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "description": "What one item is called: `data-label` when the author said, otherwise its own text.\n\nThis name lands in two buttons and every announcement, which is why the fallback is the\nitem's text rather than its position. \"Move up\" repeated down a list is a rotor full of\nidentical buttons and a reader with no way to tell which is which\n([WCAG 2.2 2.4.6](https://www.w3.org/WAI/WCAG22/Understanding/headings-and-labels.html));\nthe item's own words are the only thing on the page that tells them apart.\n\nCut at a word boundary when it is over the cap, and only when that boundary is not so early\nthat the label becomes a syllable - a 90-character item whose first space is at 3 would\notherwise be announced as \"The…\".",
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "format",
+          "parameters": [
+            {
+              "name": "template",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "values",
+              "type": {
+                "text": "object"
+              }
+            }
+          ],
+          "description": "Fill `{name}` placeholders from an object, leaving unknown ones alone.\n\nUnknown left alone rather than blanked, because these templates are the element's whole\ntranslation surface and a typo that silently deletes half the sentence is a string nobody\ncan debug from the page. `{potition}` coming back as `{potition}` says where to look.\n\n`hasOwnProperty` through `call`, so a template asking for `{constructor}` gets its own text\nback rather than the source of a function.",
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "dropIndex",
+          "parameters": [
+            {
+              "name": "y",
+              "description": "Pointer position, in client coordinates.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "boxes",
+              "description": "One per item, in current order.",
+              "type": {
+                "text": "Array<{top: number, height: number}>"
+              }
+            }
+          ],
+          "description": "Which position a drag is over, from the pointer and the items' boxes.\n\nBy midpoint rather than by edge: an item is taken over as soon as the pointer is past the\nhalf of it, which is what makes a drag between two items of different heights feel the same\nin both directions. The first midpoint below the pointer wins, and past the last one it is\nthe end of the list.\n\nBoxes are passed in rather than measured here - jsdom has no layout, and a sum that reads\nthe DOM cannot be tested anywhere but a browser.\n\nponytail: no hysteresis and no cached measurements. Both are answers to flicker on a list\nlong enough that a drag crosses several items per frame; the lists people rearrange by hand\nare short, and re-measuring is what keeps the maths right when the page reflows underneath.",
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          }
+        },
+        {
+          "kind": "class",
+          "description": "`<rearrangeable-elemental>` custom element.\n\nAn `<ol>`, a `<ul>` or a `<table>` whose items the reader can rearrange by hand. You write the\nmarkup; it writes the buttons.\n\nThere is no APG pattern for rearranging. The closest thing the APG has is its\n[rearrangeable listbox example](https://www.w3.org/WAI/ARIA/apg/patterns/listbox/examples/listbox-rearrangeable/),\nand what is borrowed from it is the part that is not the listbox: buttons that move an\noption, `aria-keyshortcuts` naming the fast way to press them, focus staying on the button\nthat moved so the next press is the same press, and a live region confirming where the\nthing landed. The listbox roles are deliberately not borrowed - a list of things you are\nrearranging is a list, not a set of options you are choosing between, and `role=\"listbox\"`\nwould tell the reader they are picking one.\n\n**The buttons are the element and dragging is the option, which is the whole design.** Every\npointer-drag library gets this backwards and then bolts a keyboard mode on the side;\n[WCAG 2.2 2.5.7 Dragging Movements](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html)\n(AA) names this exact case and asks for the opposite - *\"a sortable list of elements may,\nafter tapping or clicking on a list element, provide adjacent controls for moving the\nelement up or down\"*. Written this way round the criterion is met by construction: the\nbutton path cannot be switched off, because `drag` only ever adds a second way to do what\nthe buttons already do.\n\n**Not the HTML drag and drop API.** It has no touch support at all, which is why every\nlibrary that uses it ships a fallback mode, and its ARIA half - `aria-grabbed`,\n`aria-dropeffect` - was deprecated in ARIA 1.1 with nothing put in its place. Pointer\nevents, a captured pointer and a handle that says `touch-action: none` are what is left, and\nthey are the same three lines on a mouse, a pen and a finger.\n\nLight DOM, no shadow root. With no script it is your list, in the order it arrived, and no\nbuttons - which is a list, and a working page. Nothing is persisted: where the order is\nkept is the page's business, and `rearrangeable-move` is where it hears about it.\n\nponytail: no keyboard grab mode - no Space to pick up, arrows to move, Escape to drop. It is\na second way to do what the buttons do, it needs `role=\"application\"` on the grabbed element\nto take the arrow keys off the screen reader's own navigation, and a mode is a state both\nthe author and the reader have to hold. Alt+Arrow is the fast keyboard path without one.\n\nponytail: one axis, one container. No dragging between two of them, no columns, no nesting - a\nsecond container is a second element's worth of drop-target semantics, and a kanban board is\nnot a smallest functional whole. Not to be put on a table that is also a\n`<sortable-table-elemental>`: that one derives the order from a key in the cells and this one\nis a hand order nothing derives, so a table wearing both has two answers to what order its\nrows are in.",
+          "name": "RearrangeableElemental",
+          "cssProperties": [
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Theme. Both axes of one button.",
+              "name": "--rearrangeable-elemental-control-size",
+              "default": "1.75em"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Theme. Between the grip and the buttons, and between the buttons.",
+              "name": "--rearrangeable-elemental-gap",
+              "default": "0.15em"
+            },
+            {
+              "type": {
+                "text": "<length>"
+              },
+              "description": "Theme. Button corners.",
+              "name": "--rearrangeable-elemental-radius",
+              "default": "0.3rem"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. The arrows.",
+              "name": "--rearrangeable-elemental-color",
+              "default": "currentcolor"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. Fill under the pointer.",
+              "name": "--rearrangeable-elemental-hover",
+              "default": "currentcolor at 8%"
+            },
+            {
+              "type": {
+                "text": "<opacity>"
+              },
+              "description": "Theme. The button at the end of its travel - the first item's up, the last item's down.",
+              "name": "--rearrangeable-elemental-disabled-opacity",
+              "default": "0.3"
+            },
+            {
+              "type": {
+                "text": "<color>"
+              },
+              "description": "Theme. The dots on the drag handle.",
+              "name": "--rearrangeable-elemental-grip",
+              "default": "currentcolor at 45%"
+            },
+            {
+              "type": {
+                "text": "<shadow>"
+              },
+              "description": "Theme. Under the item while it is being dragged.",
+              "name": "--rearrangeable-elemental-lift",
+              "default": "0 0.5rem 1rem currentcolor at 15%"
+            }
+          ],
+          "slots": [
+            {
+              "description": "One `<ol>`, `<ul>`, `<menu>` or `<table>` - a table's first `<tbody>` holds the items and its `<tr>`s are them. Each item gets the buttons; one marked `data-label` is announced by that instead of by its text, and one containing `data-rearrange-handle` is dragged by that instead of by a grip the element writes. A row's controls go in the cell marked `data-rearrange-cell`, or in its last cell.",
+              "name": ""
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "drag",
+              "description": "Whether a pointer can drag as well as press. The buttons do not depend on it."
+            },
+            {
+              "kind": "field",
+              "name": "upText"
+            },
+            {
+              "kind": "field",
+              "name": "downText"
+            },
+            {
+              "kind": "field",
+              "name": "movedText"
+            },
+            {
+              "kind": "field",
+              "name": "container",
+              "description": "What holds the items: the list, or a table's first `<tbody>`.\n\nA direct child either way, so a list inside one of the items is not mistaken for this one's.\nThe first `<tbody>` only - a table with several is using them to group, and moving a row\nbetween groups would be rearranging the grouping away.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "items",
+              "description": "The items that move: the container's own children, never a nested list's.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "controlsHost",
+              "parameters": [
+                {
+                  "name": "item"
+                }
+              ],
+              "description": "Where an item's controls go: the item itself, and for a table row one of its cells.\n\nA `<span>` between two `<td>`s is not something table layout has anywhere to put - the\nparser fosters it out of the table entirely, and a node appended through the DOM instead\nlands in an anonymous cell of its own that widens the row by a column nothing declared. The\nlast cell is the default because it needs no `<th>` adding to the header; `data-rearrange-cell`\nis how a table that keeps a column for this says which one."
+            },
+            {
+              "kind": "field",
+              "name": "status",
+              "description": "The live region. Added at upgrade, because a live region only announces text that lands\nin one already in the document.",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "update",
+              "description": "Give every item its controls, and bring the names and the ends of travel up to date.\n\nponytail: called at upgrade and on demand, with no observer behind it. Items that arrive\nfrom a render after that call `.update()`; a `MutationObserver` over the list is the\nupgrade if that turns out to be the common case rather than the rare one."
+            },
+            {
+              "kind": "method",
+              "name": "controlsFor",
+              "parameters": [
+                {
+                  "name": "item"
+                }
+              ],
+              "description": "The controls for one item, made if they are not there yet."
+            },
+            {
+              "kind": "method",
+              "name": "moveButton",
+              "parameters": [
+                {
+                  "name": "direction"
+                }
+              ],
+              "description": "One move button.\n\n**The name is the visible text, not an `aria-label` over an icon.** A button labelled\n\"Up\" on the screen and \"Move Bananas up\" to the accessibility tree is\n[WCAG 2.2 2.5.3 Label in Name](https://www.w3.org/WAI/WCAG22/Understanding/label-in-name.html)\nfailed, and a reader speaking to their computer cannot say a name that is not written\nanywhere. The theme clips the span and draws an arrow over it, which leaves the name where\nit was; with no theme loaded the button reads what it does, which is a working control\nrather than an empty box."
+            },
+            {
+              "kind": "method",
+              "name": "handleFor",
+              "parameters": [
+                {
+                  "name": "item"
+                }
+              ],
+              "description": "The item's drag handle - the author's if they wrote one, ours if `drag` is set. Nested\nlists have their own element, so a handle belonging to one is not taken for this one's."
+            },
+            {
+              "kind": "method",
+              "name": "refresh",
+              "description": "Names on the buttons, ends of travel marked, handles present or gone. Cheap enough to run\non every move: the labels are read from the DOM each time, because the DOM is where the\npage may have just changed them."
+            },
+            {
+              "kind": "method",
+              "name": "move",
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "text": "Element"
+                  }
+                },
+                {
+                  "name": "to",
+                  "description": "Zero-based, in the list as it is now. Out of range is a no-op, which is\nwhat the first item's up and the last item's down are.",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ],
+              "description": "Move an item to a position, and say so.",
+              "return": {
+                "type": {
+                  "text": "boolean"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "place",
+              "parameters": [
+                {
+                  "name": "item"
+                },
+                {
+                  "name": "to"
+                }
+              ],
+              "description": "The DOM half of a move, with nothing announced and nothing dispatched.\n\nApart from `move`, because a drag crosses several positions on the way to one landing: the\npage wants one event describing where the item ended up, not one per item passed over, and\na server told about each of them is a drag that costs six requests.",
+              "return": {
+                "type": {
+                  "text": "number"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "report",
+              "parameters": [
+                {
+                  "name": "item"
+                },
+                {
+                  "name": "from"
+                },
+                {
+                  "name": "to"
+                }
+              ],
+              "description": "Tell the reader and tell the page. Both halves in one place, so a drag can never announce\nsomething a press would not."
+            },
+            {
+              "kind": "method",
+              "name": "announce",
+              "parameters": [
+                {
+                  "name": "message"
+                }
+              ],
+              "description": "Say something in the live region.\n\nCleared first and set back in a later task, because a live region announces a *change* and\nthe same sentence written twice running is no change at all - which is what an item moved\nup and then down again would be."
+            },
+            {
+              "kind": "method",
+              "name": "onClick",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onKeyDown",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ],
+              "description": "Alt+Arrow, from anywhere in the item.\n\nThe fast path the APG's rearrangeable listbox names, and the reason focus stays on the\nbutton after a move: an item three places from where it belongs is three presses of one\nkey, not three round trips through the tab order. Announced on the buttons with\n`aria-keyshortcuts`, which is how a reader finds out it exists."
+            },
+            {
+              "kind": "method",
+              "name": "onPointerDown",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ],
+              "description": "Take hold of an item.\n\nThe gesture is `drag()` from book-of-spells, started from the `pointerdown` already in hand -\nthe shape that lets one delegated listener serve a list whose rows come and go, rather than\nan instance per handle re-made every time the list grows one. What it owns is the pointer:\nthe capture, the `pointercancel` path, and the move listeners on the *document* rather than\non the handle, which is what keeps a drag alive across the `insertBefore` fallback in\n`place` - a captured element loses its capture the moment it is disconnected, and\n`insertBefore` disconnects before it re-inserts.\n\nWhat stays here is this element's rather than a gesture helper's: the box map, the\nre-basing, Escape, and where the item lands."
+            },
+            {
+              "kind": "method",
+              "name": "measure",
+              "description": "Where every item is, once, for the drag in progress.\n\n**Measured on the way in and again after each change of places, never per pointer event.** A\npointer reports faster than the screen refreshes, and `getBoundingClientRect` inside a\nhandler that has just written a transform forces layout every time it is asked - so the\nnaive loop is a forced layout per item per event. Between two crossings nothing here moves,\nwhich is what makes the cache correct rather than merely cheaper."
+            },
+            {
+              "kind": "method",
+              "name": "onDragScroll"
+            },
+            {
+              "kind": "method",
+              "name": "follow",
+              "parameters": [
+                {
+                  "name": "clientY"
+                }
+              ],
+              "description": "Follow the pointer, and change places on the way.\n\nThe item is translated to stay under the finger *and* moved in the DOM as it passes its\nneighbours - so what the reader is dragging is the real item in its real position, and\nletting go is not a separate animation that has to land somewhere.\n\nThe re-basing is the part that is easy to miss: moving the item in the DOM changes where\nlayout puts it, so the same translate would jump it by a row. The two rects either side of\nthe move differ by exactly that layout shift, and adding it to the origin cancels it out."
+            },
+            {
+              "kind": "method",
+              "name": "onDragEnd",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ],
+              "description": "The end of the gesture, either way it ended.\n\nA `dragcancel` is the platform taking the gesture away - a scroll it decided was one, a call\narriving - and not the reader letting go. Putting the item back is the only honest reading\nof a gesture that never finished.\n\nBoth names are the native drag and drop API's too, and the native ones bubble - an `<img>`\ninside an author's own handle is draggable without being asked. book-of-spells sends an\nobject as `detail`; a native `dragend` carries the number `UIEvent` gives it, which is what\ntells the two apart before this ends a drag nobody started."
+            },
+            {
+              "kind": "method",
+              "name": "onDragKey",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "endDrag",
+              "parameters": [
+                {
+                  "name": "cancel",
+                  "description": "Put the item back where the drag started, and say nothing.",
+                  "type": {
+                    "text": "boolean"
+                  }
+                }
+              ],
+              "description": "Let go of whatever is being dragged."
+            }
+          ],
+          "events": [
+            {
+              "name": "rearrangeable-move",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "An item has landed somewhere new. `detail.item` is the `<li>`, `detail.from` where it was and `detail.to` where it is, both zero-based. One per drag, not one per item crossed."
+            }
+          ],
+          "attributes": [
+            {
+              "name": "drag",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Also let a pointer drag the items, by a grip the element adds to each one. The buttons stay either way; this only adds to them."
+            },
+            {
+              "name": "up-text",
+              "type": {
+                "text": "string"
+              },
+              "description": "The first button's name. `{label}` is the item's.",
+              "default": "Move {label} up"
+            },
+            {
+              "name": "down-text",
+              "type": {
+                "text": "string"
+              },
+              "description": "The second button's name.",
+              "default": "Move {label} down"
+            },
+            {
+              "name": "moved-text",
+              "type": {
+                "text": "string"
+              },
+              "description": "What the live region says after a move. `{label}`, `{position}` and `{total}`.",
+              "default": "{label} moved to position {position} of {total}"
+            }
+          ],
+          "superclass": {
+            "name": "ElementBase",
+            "module": "/src/core.js"
+          },
+          "tagName": "rearrangeable-elemental",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "DEFAULT_UP_TEXT",
+          "declaration": {
+            "name": "DEFAULT_UP_TEXT",
+            "module": "src/elementals/rearrangeable/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DEFAULT_DOWN_TEXT",
+          "declaration": {
+            "name": "DEFAULT_DOWN_TEXT",
+            "module": "src/elementals/rearrangeable/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DEFAULT_MOVED_TEXT",
+          "declaration": {
+            "name": "DEFAULT_MOVED_TEXT",
+            "module": "src/elementals/rearrangeable/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "LABEL_MAX",
+          "declaration": {
+            "name": "LABEL_MAX",
+            "module": "src/elementals/rearrangeable/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ANNOUNCE_MS",
+          "declaration": {
+            "name": "ANNOUNCE_MS",
+            "module": "src/elementals/rearrangeable/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "itemLabel",
+          "declaration": {
+            "name": "itemLabel",
+            "module": "src/elementals/rearrangeable/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "format",
+          "declaration": {
+            "name": "format",
+            "module": "src/elementals/rearrangeable/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "dropIndex",
+          "declaration": {
+            "name": "dropIndex",
+            "module": "src/elementals/rearrangeable/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "RearrangeableElemental",
+          "declaration": {
+            "name": "RearrangeableElemental",
+            "module": "src/elementals/rearrangeable/index.js"
+          }
+        }
+      ]
+    }
+  ]
+}

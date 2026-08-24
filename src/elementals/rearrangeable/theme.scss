@@ -1,0 +1,152 @@
+// Optional look for `<rearrangeable-elemental>`. Not part of the element's own stylesheet and
+// not in its bundle: that one places the controls and makes the handle draggable, which every
+// page needs. This is the arrows, the grip and the lift, which are a look.
+
+// Two opinions and no more: the buttons stop looking like form controls, and the item being
+// dragged is lifted off the page. Nothing about the list's own padding, markers, borders or
+// rhythm - a list is something a page has already styled by the time it wants rearranging on it,
+// and that part would be a design system's answer written into a book of elements.
+
+// On the bare tag and not behind a gate, so a page replacing one writes a plain
+// `rearrangeable-elemental { … }` rule and wins.
+rearrangeable-elemental {
+  --rearrangeable-elemental-control-size: 1.75em;
+  --rearrangeable-elemental-gap: 0.15em;
+  --rearrangeable-elemental-radius: 0.3rem;
+  --rearrangeable-elemental-color: currentcolor;
+
+  // Mixed out of `currentcolor` rather than named, so all of these land in whatever palette the
+  // page is already painting in, dark mode included, with nothing to configure.
+  --rearrangeable-elemental-hover: #{color-mix(in srgb, currentcolor 8%, transparent)};
+  --rearrangeable-elemental-grip: #{color-mix(in srgb, currentcolor 45%, transparent)};
+  --rearrangeable-elemental-lift: 0 0.5rem 1rem #{color-mix(in srgb, currentcolor 15%, transparent)};
+
+  // Faint rather than gone: the button at the end of its travel is still there, still named and
+  // still focusable, and a control that vanished at the top of the list would move every other
+  // button on the row sideways on every press.
+  --rearrangeable-elemental-disabled-opacity: 0.3;
+
+  // What the item is painted on while it is lifted. The page's own background, so re-point it
+  // on a card - a transparent item over the ones it is passing is unreadable.
+  --rearrangeable-elemental-surface: Canvas;
+}
+
+rearrangeable-elemental:where(:defined) [data-rearrange-controls] {
+  gap: var(--rearrangeable-elemental-gap);
+}
+
+// Space between the item's own content and the controls. **The whole selector is inside
+// `:where()`, so it weighs nothing** - it is a default and not a decision, and the one rule an
+// author is most likely to write here is `[data-rearrange-controls] { margin-inline-start: auto }`
+// to push the controls to the far end of a flex row. At any real specificity this line wins that
+// fight and the page's layout quietly does not happen, which is a theme deciding a layout.
+:where(rearrangeable-elemental:defined [data-rearrange-controls]) {
+  margin-inline-start: var(--rearrangeable-elemental-gap);
+}
+
+// **The button's name is its text, and the text is clipped rather than replaced.** An icon with
+// an `aria-label` over it would be a name that is not written anywhere on the screen, which
+// fails [WCAG 2.5.3 Label in Name](https://www.w3.org/WAI/WCAG22/Understanding/label-in-name.html)
+// and leaves a reader speaking to their computer with nothing to say. Clipping keeps the name
+// exactly where the element put it.
+rearrangeable-elemental:where(:defined) .rearrangeable-elemental-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+rearrangeable-elemental:where(:defined) .rearrangeable-elemental-move {
+  // A square target rather than a glyph's worth of it: 1.75em at a 16px root is 28px, which is
+  // short of the 44px [WCAG 2.5.5](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html)
+  // asks for at AAA and past the 24px 2.5.8 asks for at AA. Re-point the custom property to buy
+  // the rest on a page where these are the primary controls.
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--rearrangeable-elemental-control-size);
+  block-size: var(--rearrangeable-elemental-control-size);
+  margin: 0;
+  padding: 0;
+  color: var(--rearrangeable-elemental-color);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: var(--rearrangeable-elemental-radius);
+
+  &:hover {
+    background: var(--rearrangeable-elemental-hover);
+  }
+
+  // Nothing happens on a press, so nothing should look like it will. The name and the focus
+  // stay: this is `aria-disabled`, not `disabled`, because a button that goes dead under the
+  // focus that is on it drops that focus to the page.
+  &[aria-disabled="true"] {
+    opacity: var(--rearrangeable-elemental-disabled-opacity);
+    cursor: default;
+
+    &:hover {
+      background: none;
+    }
+  }
+
+  // **Drawn with borders rather than written as `▲`.** A character in `content` is text, and
+  // text in a pseudo-element is read out by some screen readers - so a button whose name
+  // already says which way it moves would announce a second arrow nobody asked about. A
+  // triangle made of borders has nothing to read.
+  &::after {
+    content: "";
+    inline-size: 0;
+    block-size: 0;
+    border-inline: 0.3em solid transparent;
+  }
+
+  &[data-move="up"]::after {
+    border-block-end: 0.35em solid var(--rearrangeable-elemental-color);
+  }
+
+  &[data-move="down"]::after {
+    border-block-start: 0.35em solid var(--rearrangeable-elemental-color);
+  }
+}
+
+// Six dots in two columns, which is what a grip has looked like since the first one. Painted as
+// a tiled gradient rather than six elements or six shadows: one box, one property, and it scales
+// with the font because every length in it is relative.
+rearrangeable-elemental:where(:defined) .rearrangeable-elemental-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--rearrangeable-elemental-control-size);
+  block-size: var(--rearrangeable-elemental-control-size);
+
+  &::before {
+    content: "";
+    inline-size: 0.5em;
+    block-size: 0.8em;
+    background-image: radial-gradient(circle, var(--rearrangeable-elemental-grip) 34%, transparent 38%);
+
+    // Two columns by three rows, in the box above. Percentages rather than lengths, so the grid
+    // stays a grid at any control size.
+    background-size: 50% 33.34%;
+  }
+}
+
+// Lifted, and opaque, because it is passing over the items it used to sit between.
+rearrangeable-elemental:where(:defined) :is(li, tr)[data-dragging] {
+  background: var(--rearrangeable-elemental-surface);
+  box-shadow: var(--rearrangeable-elemental-lift);
+}
+
+// A table row's background is painted underneath its cells, so any cell with a background of its
+// own hides the rule above - a striped table would drag a row that is still see-through. The
+// cells carry it too, which is the layer the reader is actually looking at.
+rearrangeable-elemental:where(:defined) tr[data-dragging] > * {
+  background: var(--rearrangeable-elemental-surface);
+}

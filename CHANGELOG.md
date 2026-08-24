@@ -15,6 +15,59 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Added
+
+- **`<rearrangeable-elemental>`, a list or a table body the reader can rearrange by hand.** Wrap an
+  `<ol>`, a `<ul>` or a `<table>` and every item gets a pair of move buttons; hold <kbd>Alt</kbd>
+  and use the arrow keys for the fast path. There is no APG pattern for rearranging — the closest the APG has is its
+  [rearrangeable listbox example](https://www.w3.org/WAI/ARIA/apg/patterns/listbox/examples/listbox-rearrangeable/),
+  and what is taken from it is the part that is not the listbox: buttons that move an item,
+  `aria-keyshortcuts` naming the shortcut, focus staying on the button that moved so the next
+  press is the same press, and a live region confirming where the thing landed.
+
+  **The buttons are the element and `drag` is the option on top**, which is the whole design.
+  Every pointer-drag library does this the other way round and bolts a keyboard mode on the side;
+  [WCAG 2.2 SC 2.5.7 Dragging Movements](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html)
+  (AA) names this exact case and asks for the opposite, so written this way the criterion is met
+  by construction — the button path cannot be switched off. `drag` adds a grip and pointer
+  dragging, with <kbd>Esc</kbd> putting a drag back where it started. Not the HTML drag and drop
+  API: that one has no touch support at all, and its `aria-grabbed`/`aria-dropeffect` half was
+  deprecated in ARIA 1.1 with nothing put in its place.
+
+  **DOM:** one `<span class="rearrangeable-elemental-controls" data-rearrange-controls>` appended to
+  each item — to the `<li>` itself, and for a `<tr>` into the cell marked `data-rearrange-cell` or
+  its last cell, because a `<span>` between two `<td>`s is fostered out of the table by the
+  parser. It holds two `<button class="rearrangeable-elemental-move" data-move="up|down">`
+  — each with its name as visible text in a `<span class="rearrangeable-elemental-label">`,
+  never an `aria-label` over an icon — and, when `drag` is set, a
+  `<span class="rearrangeable-elemental-handle" data-rearrange-handle aria-hidden="true">` before
+  them. One `<p class="rearrangeable-elemental-status" role="status">` at the end of the
+  element. The ends of travel are marked `aria-disabled`, never `disabled`, which would drop the
+  focus of the reader who pressed there down to `<body>`. Nothing is written onto your list or
+  your items, and no role is added to either.
+
+  **CSS:** `rearrangeable/index.scss` places the controls and makes the handle draggable;
+  `theme.scss` draws the arrows, the grip and the lift, behind
+  `--rearrangeable-elemental-control-size|gap|radius|color|hover|disabled-opacity|grip|lift|surface`.
+  The structure stylesheet deliberately has no opinion about where in the item the controls sit —
+  `[data-rearrange-controls] { margin-inline-start: auto }` on a flex `<li>` is yours to write.
+
+  **The gesture is `drag()` from book-of-spells**, started from the `pointerdown` this element
+  already hears — one delegated listener for a list whose rows come and go, rather than an
+  instance per handle re-made every time the list grows one. That second way in is new in
+  **`book-of-spells@^2.6.0`**, which is why the dependency floor moves there; so are the
+  `clientX`/`clientY` this element measures in and the `dragcancel` that tells a gesture the
+  platform took away from one the reader finished. On 2.5.0 `drag()` is mouse and touch events
+  with no cancel path, so the floor is the version, not the caret.
+
+  Attributes: `drag`, `up-text`, `down-text`, `moved-text`, plus `data-label`,
+  `data-rearrange-handle` and `data-rearrange-cell` on the items. A row with no `data-label` is named
+  by its `<th scope="row">` or its first cell, never by every cell run together. Do not put this
+  on a table that is also a `<sortable-table-elemental>`: that one derives the order from a key
+  in the cells and this one is a hand order nothing derives. One bubbling `rearrangeable-move` per landing, with
+  `item`, `from` and `to` — not one per row a drag crosses. Nothing is persisted; items that
+  arrive after the upgrade are picked up by `.update()`.
+
 ### Removed
 
 - **The `media` attribute is gone from `<disclosure-elemental>`, `<menu-elemental>` and
