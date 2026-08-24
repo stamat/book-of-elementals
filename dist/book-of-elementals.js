@@ -6015,9 +6015,10 @@
        * somewhere to go. The middle until something else has been seen, rather than `min` - a
        * restore that put the pane back where it already was would read as a key that did nothing. */
       __publicField(this, "restorePosition", DEFAULT_POSITION);
-      /** The pointer id of the drag in progress, `null` when there is none. Held so a second
-       * finger arriving mid-drag is ignored rather than fighting the first. */
-      __publicField(this, "pointerId", null);
+      /** The gesture in progress, `null` when there is none - what book-of-spells' `drag()` hands
+       * back, and what ends it. Held so a second finger arriving mid-drag is ignored rather than
+       * fighting the first. */
+      __publicField(this, "gesture", null);
       /** The `vertical-when` query being watched, `null` when there is none. */
       __publicField(this, "mql", null);
       /** Whether the `vertical` attribute on this element is one this element wrote. It is what
@@ -6095,8 +6096,7 @@
       this.initialized = true;
       this.onKeyDown = this.onKeyDown.bind(this);
       this.onPointerDown = this.onPointerDown.bind(this);
-      this.onPointerMove = this.onPointerMove.bind(this);
-      this.onPointerUp = this.onPointerUp.bind(this);
+      this.onDragEnd = this.onDragEnd.bind(this);
       this.onViewportChange = this.onViewportChange.bind(this);
       this.build();
       this.render();
@@ -6246,25 +6246,40 @@
     rtl() {
       return getComputedStyle(this).direction === "rtl";
     }
+    /**
+     * Take hold of the handle.
+     *
+     * The gesture is `drag()` from book-of-spells, started from the `pointerdown` this element
+     * already listens for rather than handed the handle to own: started that way it writes no
+     * attributes and no inline `touch-action` into a handle this element wrote and index.scss
+     * already styles, and the `preventDefault` and the focus below stay this element's to do.
+     * What it owns is the pointer - the capture, which a handle this narrow needs the moment the
+     * pointer outruns it, and the `pointercancel` path.
+     */
     onPointerDown(event) {
-      if (this.pointerId !== null) return;
-      this.pointerId = event.pointerId;
+      if (this.gesture) return;
       this.dragRtl = this.rtl();
       this.dragMoved = false;
-      if (this.handle.setPointerCapture) this.handle.setPointerCapture(event.pointerId);
-      this.handle.addEventListener("pointermove", this.onPointerMove);
-      this.handle.addEventListener("pointerup", this.onPointerUp);
-      this.handle.addEventListener("pointercancel", this.onPointerUp);
       event.preventDefault();
       this.handle.focus();
+      this.handle.addEventListener("dragend", this.onDragEnd);
+      this.handle.addEventListener("dragcancel", this.onDragEnd);
+      this.gesture = drag(event, { target: this.handle, callback: (point) => this.follow(point) });
     }
-    onPointerMove(event) {
-      if (event.pointerId !== this.pointerId) return;
+    follow(point) {
       this.dragMoved = true;
-      this.moveTo(this.positionFromEvent(event), false);
+      this.moveTo(this.positionFromPoint(point), false);
     }
-    onPointerUp(event) {
-      if (event.pointerId !== this.pointerId) return;
+    /**
+     * The end of the gesture, either way it ended.
+     *
+     * A `dragcancel` reports the same as a release, which is the opposite of what a list being
+     * rearranged does with one: there is nothing to put back. Every move of this drag has already
+     * been applied to the panes, so the separator really is where the cancelled gesture left it,
+     * and a page that stored the last position it was told would otherwise hold a number the
+     * layout disagrees with.
+     */
+    onDragEnd() {
       const moved = this.dragMoved;
       this.endDrag();
       if (!moved) return;
@@ -6274,24 +6289,21 @@
       }));
     }
     /** Let go of the pointer and stop listening for it. Safe to call twice, which is what a
-     * `pointercancel` arriving after a `pointerup` needs it to be. */
+     * disconnection in the middle of a gesture needs it to be. */
     endDrag() {
-      if (this.pointerId === null) return;
+      if (!this.gesture) return;
       if (this.handle) {
-        if (this.handle.releasePointerCapture && this.handle.hasPointerCapture(this.pointerId)) {
-          this.handle.releasePointerCapture(this.pointerId);
-        }
-        this.handle.removeEventListener("pointermove", this.onPointerMove);
-        this.handle.removeEventListener("pointerup", this.onPointerUp);
-        this.handle.removeEventListener("pointercancel", this.onPointerUp);
+        this.handle.removeEventListener("dragend", this.onDragEnd);
+        this.handle.removeEventListener("dragcancel", this.onDragEnd);
       }
-      this.pointerId = null;
+      this.gesture.destroy();
+      this.gesture = null;
     }
     /** Where the pointer puts the separator. The handle's own extent comes out of the sum, and
      * it is measured rather than assumed: `--splitter-elemental-size` is the page's to set. */
-    positionFromEvent(event) {
+    positionFromPoint(point) {
       const box = this.handle.getBoundingClientRect();
-      return positionFrom(this.getBoundingClientRect(), event.clientX, event.clientY, {
+      return positionFrom(this.getBoundingClientRect(), point.clientX, point.clientY, {
         vertical: this.vertical,
         rtl: this.dragRtl,
         size: this.vertical ? box.height : box.width

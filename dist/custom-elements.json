@@ -6947,12 +6947,12 @@
             },
             {
               "kind": "field",
-              "name": "pointerId",
+              "name": "gesture",
               "type": {
                 "text": "null"
               },
               "default": "null",
-              "description": "The pointer id of the drag in progress, `null` when there is none. Held so a second\nfinger arriving mid-drag is ignored rather than fighting the first."
+              "description": "The gesture in progress, `null` when there is none - what book-of-spells' `drag()` hands\nback, and what ends it. Held so a second finger arriving mid-drag is ignored rather than\nfighting the first."
             },
             {
               "kind": "field",
@@ -7093,37 +7093,34 @@
                 {
                   "name": "event"
                 }
-              ]
+              ],
+              "description": "Take hold of the handle.\n\nThe gesture is `drag()` from book-of-spells, started from the `pointerdown` this element\nalready listens for rather than handed the handle to own: started that way it writes no\nattributes and no inline `touch-action` into a handle this element wrote and index.scss\nalready styles, and the `preventDefault` and the focus below stay this element's to do.\nWhat it owns is the pointer - the capture, which a handle this narrow needs the moment the\npointer outruns it, and the `pointercancel` path."
             },
             {
               "kind": "method",
-              "name": "onPointerMove",
+              "name": "follow",
               "parameters": [
                 {
-                  "name": "event"
+                  "name": "point"
                 }
               ]
             },
             {
               "kind": "method",
-              "name": "onPointerUp",
-              "parameters": [
-                {
-                  "name": "event"
-                }
-              ]
+              "name": "onDragEnd",
+              "description": "The end of the gesture, either way it ended.\n\nA `dragcancel` reports the same as a release, which is the opposite of what a list being\nrearranged does with one: there is nothing to put back. Every move of this drag has already\nbeen applied to the panes, so the separator really is where the cancelled gesture left it,\nand a page that stored the last position it was told would otherwise hold a number the\nlayout disagrees with."
             },
             {
               "kind": "method",
               "name": "endDrag",
-              "description": "Let go of the pointer and stop listening for it. Safe to call twice, which is what a\n`pointercancel` arriving after a `pointerup` needs it to be."
+              "description": "Let go of the pointer and stop listening for it. Safe to call twice, which is what a\ndisconnection in the middle of a gesture needs it to be."
             },
             {
               "kind": "method",
-              "name": "positionFromEvent",
+              "name": "positionFromPoint",
               "parameters": [
                 {
-                  "name": "event"
+                  "name": "point"
                 }
               ],
               "description": "Where the pointer puts the separator. The handle's own extent comes out of the sum, and\nit is measured rather than assumed: `--splitter-elemental-size` is the page's to set."

@@ -1,3 +1,5 @@
+// Aliased, because `drag` reads as this element's own gesture and this is where it starts.
+import { drag as startDrag } from 'book-of-spells/src/dom.mjs';
 import { ElementBase, define } from '../../core.js';
 
 /** Down the middle, when nothing says otherwise. */
@@ -180,9 +182,10 @@ export class SplitterElemental extends ElementBase {
    * restore that put the pane back where it already was would read as a key that did nothing. */
   restorePosition = DEFAULT_POSITION;
 
-  /** The pointer id of the drag in progress, `null` when there is none. Held so a second
-   * finger arriving mid-drag is ignored rather than fighting the first. */
-  pointerId = null;
+  /** The gesture in progress, `null` when there is none - what book-of-spells' `drag()` hands
+   * back, and what ends it. Held so a second finger arriving mid-drag is ignored rather than
+   * fighting the first. */
+  gesture = null;
 
   /** The `vertical-when` query being watched, `null` when there is none. */
   mql = null;
@@ -285,8 +288,7 @@ export class SplitterElemental extends ElementBase {
 
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onPointerDown = this.onPointerDown.bind(this);
-    this.onPointerMove = this.onPointerMove.bind(this);
-    this.onPointerUp = this.onPointerUp.bind(this);
+    this.onDragEnd = this.onDragEnd.bind(this);
     this.onViewportChange = this.onViewportChange.bind(this);
 
     this.build();
@@ -471,34 +473,49 @@ export class SplitterElemental extends ElementBase {
     return getComputedStyle(this).direction === 'rtl';
   }
 
+  /**
+   * Take hold of the handle.
+   *
+   * The gesture is `drag()` from book-of-spells, started from the `pointerdown` this element
+   * already listens for rather than handed the handle to own: started that way it writes no
+   * attributes and no inline `touch-action` into a handle this element wrote and index.scss
+   * already styles, and the `preventDefault` and the focus below stay this element's to do.
+   * What it owns is the pointer - the capture, which a handle this narrow needs the moment the
+   * pointer outruns it, and the `pointercancel` path.
+   */
   onPointerDown(event) {
-    if (this.pointerId !== null) return;
-    this.pointerId = event.pointerId;
+    if (this.gesture) return;
     this.dragRtl = this.rtl();
     this.dragMoved = false;
-    // Capture, so a pointer that outruns the handle - which it will, the handle being as wide
-    // as it is - keeps reporting to the element that is following it rather than to whatever
-    // it happens to be over.
-    if (this.handle.setPointerCapture) this.handle.setPointerCapture(event.pointerId);
-    this.handle.addEventListener('pointermove', this.onPointerMove);
-    this.handle.addEventListener('pointerup', this.onPointerUp);
-    this.handle.addEventListener('pointercancel', this.onPointerUp);
     // Not the page being scrolled, and not a selection being dragged across the two panes
     // either. It also takes the focus that a press on a control normally brings with it, so
     // the focus is put back by hand - a handle you have just dragged and cannot then nudge
     // with the arrow keys is the whole keyboard half of this pattern, lost to one line.
     event.preventDefault();
     this.handle.focus();
+
+    // Neither event bubbles, so both are heard on the handle itself, and both come off again in
+    // `endDrag` - the one place this element already lets go of everything.
+    this.handle.addEventListener('dragend', this.onDragEnd);
+    this.handle.addEventListener('dragcancel', this.onDragEnd);
+    this.gesture = startDrag(event, { target: this.handle, callback: (point) => this.follow(point) });
   }
 
-  onPointerMove(event) {
-    if (event.pointerId !== this.pointerId) return;
+  follow(point) {
     this.dragMoved = true;
-    this.moveTo(this.positionFromEvent(event), false);
+    this.moveTo(this.positionFromPoint(point), false);
   }
 
-  onPointerUp(event) {
-    if (event.pointerId !== this.pointerId) return;
+  /**
+   * The end of the gesture, either way it ended.
+   *
+   * A `dragcancel` reports the same as a release, which is the opposite of what a list being
+   * rearranged does with one: there is nothing to put back. Every move of this drag has already
+   * been applied to the panes, so the separator really is where the cancelled gesture left it,
+   * and a page that stored the last position it was told would otherwise hold a number the
+   * layout disagrees with.
+   */
+  onDragEnd() {
     const moved = this.dragMoved;
     this.endDrag();
     if (!moved) return;
@@ -511,25 +528,24 @@ export class SplitterElemental extends ElementBase {
   }
 
   /** Let go of the pointer and stop listening for it. Safe to call twice, which is what a
-   * `pointercancel` arriving after a `pointerup` needs it to be. */
+   * disconnection in the middle of a gesture needs it to be. */
   endDrag() {
-    if (this.pointerId === null) return;
+    if (!this.gesture) return;
     if (this.handle) {
-      if (this.handle.releasePointerCapture && this.handle.hasPointerCapture(this.pointerId)) {
-        this.handle.releasePointerCapture(this.pointerId);
-      }
-      this.handle.removeEventListener('pointermove', this.onPointerMove);
-      this.handle.removeEventListener('pointerup', this.onPointerUp);
-      this.handle.removeEventListener('pointercancel', this.onPointerUp);
+      this.handle.removeEventListener('dragend', this.onDragEnd);
+      this.handle.removeEventListener('dragcancel', this.onDragEnd);
     }
-    this.pointerId = null;
+    // Releases the capture and takes the document listeners off, and dispatches nothing doing
+    // it - so ending a drag from anywhere but the gesture cannot come back through `onDragEnd`.
+    this.gesture.destroy();
+    this.gesture = null;
   }
 
   /** Where the pointer puts the separator. The handle's own extent comes out of the sum, and
    * it is measured rather than assumed: `--splitter-elemental-size` is the page's to set. */
-  positionFromEvent(event) {
+  positionFromPoint(point) {
     const box = this.handle.getBoundingClientRect();
-    return positionFrom(this.getBoundingClientRect(), event.clientX, event.clientY, {
+    return positionFrom(this.getBoundingClientRect(), point.clientX, point.clientY, {
       vertical: this.vertical,
       rtl: this.dragRtl,
       size: this.vertical ? box.height : box.width

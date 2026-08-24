@@ -58,7 +58,9 @@ may already be targeting**, since neither shows up in a function signature.
   **`book-of-spells@^2.6.0`**, which is why the dependency floor moves there; so are the
   `clientX`/`clientY` this element measures in and the `dragcancel` that tells a gesture the
   platform took away from one the reader finished. On 2.5.0 `drag()` is mouse and touch events
-  with no cancel path, so the floor is the version, not the caret.
+  with no cancel path, so the floor is the version, not the caret. The handle dispatches the helper's own
+  `dragstart`, `drag`, `dragend` and `dragcancel` as the gesture runs; none of them bubbles, and
+  `rearrangeable-move` is still the event to read.
 
   Attributes: `drag`, `up-text`, `down-text`, `moved-text`, plus `data-label`,
   `data-rearrange-handle` and `data-rearrange-cell` on the items. A row with no `data-label` is named
@@ -85,6 +87,24 @@ may already be targeting**, since neither shows up in a function signature.
   CSS hooks are all unchanged.
 
 ### Changed
+
+- **`<splitter-elemental>` drags with `drag()` from book-of-spells** instead of its own pointer
+  bookkeeping. Started from the `pointerdown` the element already listens for rather than handed
+  the handle to own, which is what keeps the handle free of the `drag-enabled` and `dragging`
+  attributes and the inline `touch-action` that `drag()` writes when it owns an element — the
+  handle's attributes are the same ten it always had, `splitter/index.scss` still owns its
+  `touch-action`, and the `preventDefault` and the focus a press moves are still this element's.
+
+  **What changed for a page:** the handle now dispatches `dragstart`, `drag`, `dragend` and
+  `dragcancel` as the gesture runs. They are the helper's rather than this element's, they do not
+  bubble — a delegated listener on an ancestor never sees them — and `splitter-change` is still
+  the event to read. A cancelled gesture reports like a release, as it always has: every move is
+  applied to the panes as it happens, so the separator really is where the cancelled gesture left
+  it, and saying nothing would leave a stored position the layout disagrees with.
+
+  Verified in Chromium against the same drag before and after: same landing position, one
+  `splitter-change`, focus still on the handle afterwards, arrows still moving it. Not covered by
+  a test — `splitter/index.test.js` pins the sums, and a drag needs layout and a real pointer.
 
 - **`<splitter-elemental>`: the theme's seam is now three dots rather than a hairline.** A line
   down the middle of the handle reads as a border — a thing that separates — and the handle is a

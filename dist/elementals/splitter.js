@@ -4,6 +4,301 @@
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
+  // node_modules/book-of-spells/src/helpers.mjs
+  function shallowMerge(target, source) {
+    for (const key of Object.keys(source)) {
+      if (key === "__proto__" || key === "constructor" || key === "prototype") continue;
+      target[key] = source[key];
+    }
+    return target;
+  }
+  var objProto = Object.prototype;
+  var foldF64 = new Float64Array(1);
+  var foldU32 = new Uint32Array(foldF64.buffer);
+  function isObject(o) {
+    return typeof o === "object" && !Array.isArray(o) && o !== null;
+  }
+  function isFunction(o) {
+    return typeof o === "function";
+  }
+  var PLAIN = {
+    \u00C6: "AE",
+    \u00E6: "ae",
+    \u0152: "OE",
+    \u0153: "oe",
+    \u00DF: "ss",
+    "\u1E9E": "SS",
+    \u00DE: "TH",
+    \u00FE: "th",
+    \u0110: "D",
+    \u0111: "d",
+    \u00D0: "D",
+    \u00F0: "d",
+    \u00D8: "O",
+    \u00F8: "o",
+    \u0141: "L",
+    \u0142: "l",
+    \u013F: "L",
+    \u0140: "l",
+    \u0126: "H",
+    \u0127: "h",
+    \u0166: "T",
+    \u0167: "t",
+    \u01E4: "G",
+    \u01E5: "g",
+    \u014A: "N",
+    \u014B: "n",
+    \u0131: "i"
+  };
+  var PLAIN_RE = new RegExp(`[${Object.keys(PLAIN).join("")}]`, "g");
+  function percentage(num, total) {
+    if (Number.isNaN(num) || Number.isNaN(total) || total === 0) return 0;
+    return num / total * 100;
+  }
+
+  // node_modules/book-of-spells/src/dom.mjs
+  var dragging = /* @__PURE__ */ new WeakSet();
+  function drag(target, opts) {
+    const fromEvent = !!target && typeof target === "object" && target.type === "pointerdown" && "pointerId" in target;
+    const element = fromEvent ? isObject(opts) && opts.target || target.currentTarget || target.target : target;
+    if (!element || !(element instanceof Element)) return;
+    if (!fromEvent && element.getAttribute("drag-enabled") === "true") return;
+    if (fromEvent && dragging.has(element)) return;
+    const doc = element.ownerDocument;
+    let x = 0;
+    let y = 0;
+    let clientX = 0;
+    let clientY = 0;
+    let prevX = 0;
+    let prevY = 0;
+    let velocityX = 0;
+    let velocityY = 0;
+    let pointerId = null;
+    let pointerType = "";
+    let rect = null;
+    let inertiaId = null;
+    let inertiaTime = 0;
+    let samples = [];
+    const options = {
+      inertia: false,
+      bounce: false,
+      friction: 0.9,
+      bounceFactor: 0.2,
+      velocityWindow: 80,
+      maxVelocity: 2,
+      callback: null,
+      preventDefaultTouch: true
+    };
+    if (isFunction(opts)) {
+      options.callback = opts;
+    } else if (isObject(opts)) {
+      shallowMerge(options, opts);
+    }
+    options.friction = Math.abs(options.friction);
+    options.bounceFactor = Math.abs(options.bounceFactor);
+    options.maxVelocity = Math.abs(options.maxVelocity);
+    const cap = function(v) {
+      if (v > options.maxVelocity) return options.maxVelocity;
+      if (v < -options.maxVelocity) return -options.maxVelocity;
+      return v;
+    };
+    const sampleVelocity = function() {
+      if (samples.length < 2) return { vx: 0, vy: 0 };
+      const last = samples[samples.length - 1];
+      let start = samples[0];
+      for (let i = samples.length - 1; i >= 0; i--) {
+        start = samples[i];
+        if (last.t - samples[i].t >= options.velocityWindow) break;
+      }
+      const dt = last.t - start.t;
+      if (dt <= 0) return { vx: 0, vy: 0 };
+      return { vx: cap((last.x - start.x) / dt), vy: cap((last.y - start.y) / dt) };
+    };
+    if (!fromEvent) {
+      element.setAttribute("drag-enabled", "true");
+      element.setAttribute("dragging", "false");
+    }
+    const ownTouchAction = element.style.touchAction || "";
+    if (!fromEvent && options.preventDefaultTouch) element.style.touchAction = "none";
+    const calcPageRelativeRect = function() {
+      const origRect = element.getBoundingClientRect();
+      const rect2 = {
+        top: origRect.top + window.scrollY,
+        left: origRect.left + window.scrollX,
+        width: origRect.width,
+        height: origRect.height
+      };
+      return rect2;
+    };
+    const handleStart = function(e) {
+      if (dragging.has(element)) return;
+      dragging.add(element);
+      samples = [];
+      pointerId = e.pointerId;
+      pointerType = e.pointerType || "";
+      setXY(e);
+      prevX = x;
+      prevY = y;
+      rect = calcPageRelativeRect();
+      if (!fromEvent) element.setAttribute("dragging", "true");
+      if (element.setPointerCapture) {
+        try {
+          element.setPointerCapture(e.pointerId);
+        } catch {
+        }
+      }
+      doc.addEventListener("pointermove", handleMove);
+      doc.addEventListener("pointerup", handleEnd);
+      doc.addEventListener("pointercancel", handleCancel);
+      if (inertiaId) {
+        cancelAnimationFrame(inertiaId);
+        inertiaId = null;
+      }
+      const event = new CustomEvent("dragstart", { detail: getDetail() });
+      element.dispatchEvent(event);
+    };
+    const handleMove = function(e) {
+      if (e.pointerId !== pointerId) return;
+      if (e.clientX === clientX && e.clientY === clientY && e.pageX === x && e.pageY === y) return;
+      setXY(e);
+      const v = sampleVelocity();
+      velocityX = v.vx;
+      velocityY = v.vy;
+      const detail = getDetail();
+      if (options.callback) options.callback(detail);
+      const event = new CustomEvent("drag", { detail });
+      element.dispatchEvent(event);
+    };
+    const stop = function() {
+      dragging.delete(element);
+      if (!fromEvent) element.setAttribute("dragging", "false");
+      doc.removeEventListener("pointermove", handleMove);
+      doc.removeEventListener("pointerup", handleEnd);
+      doc.removeEventListener("pointercancel", handleCancel);
+      if (element.hasPointerCapture && element.hasPointerCapture(pointerId)) element.releasePointerCapture(pointerId);
+      pointerId = null;
+    };
+    const handleEnd = function(e) {
+      if (e.pointerId !== pointerId) return;
+      stop();
+      const t = performance.now();
+      samples.push({ t, x, y });
+      const v = sampleVelocity();
+      velocityX = v.vx;
+      velocityY = v.vy;
+      inertiaTime = t;
+      if (options.inertia) inertiaId = requestAnimationFrame(inertia);
+      const event = new CustomEvent("dragend", { detail: getDetail() });
+      element.dispatchEvent(event);
+    };
+    const handleCancel = function(e) {
+      if (e.pointerId !== pointerId) return;
+      stop();
+      velocityX = 0;
+      velocityY = 0;
+      samples = [];
+      const event = new CustomEvent("dragcancel", { detail: getDetail() });
+      element.dispatchEvent(event);
+    };
+    const setXY = function(e) {
+      prevX = x;
+      prevY = y;
+      x = e.pageX;
+      y = e.pageY;
+      clientX = e.clientX;
+      clientY = e.clientY;
+      samples.push({ t: performance.now(), x, y });
+      if (samples.length > 12) samples.shift();
+    };
+    const getDetail = function() {
+      const relativeX = x - rect.left;
+      const relativeY = y - rect.top;
+      const xPercentage = percentage(relativeX, rect.width);
+      const yPercentage = percentage(relativeY, rect.height);
+      const detail = {
+        target: element,
+        x,
+        y,
+        clientX,
+        clientY,
+        relativeX,
+        relativeY,
+        xPercentage,
+        yPercentage,
+        velocityX,
+        velocityY,
+        prevX,
+        prevY,
+        pointerType
+      };
+      if (xPercentage < 0) detail.xPercentage = 0;
+      if (xPercentage > 100) detail.xPercentage = 100;
+      if (yPercentage < 0) detail.yPercentage = 0;
+      if (yPercentage > 100) detail.yPercentage = 100;
+      return detail;
+    };
+    const inertia = function() {
+      const t = performance.now();
+      const dt = t - inertiaTime;
+      inertiaTime = t;
+      x += velocityX * dt;
+      y += velocityY * dt;
+      const decay = Math.pow(options.friction, dt / 16.6667);
+      velocityX *= decay;
+      velocityY *= decay;
+      if (options.bounce) {
+        if (x < rect.left) {
+          x = rect.left;
+          velocityX *= -options.bounceFactor;
+        }
+        if (x > rect.width + rect.left) {
+          x = rect.width + rect.left;
+          velocityX *= -options.bounceFactor;
+        }
+        if (y < rect.top) {
+          y = rect.top;
+          velocityY *= -options.bounceFactor;
+        }
+        if (y > rect.height + rect.top) {
+          y = rect.height + rect.top;
+          velocityY *= -options.bounceFactor;
+        }
+      }
+      if (Math.abs(velocityX) < 0.01) velocityX = 0;
+      if (Math.abs(velocityY) < 0.01) velocityY = 0;
+      const detail = getDetail();
+      if (velocityX !== 0 || velocityY !== 0) {
+        if (options.callback) options.callback(detail);
+        const event = new CustomEvent("draginertia", { detail });
+        element.dispatchEvent(event);
+        inertiaId = requestAnimationFrame(inertia);
+      } else {
+        inertiaId = null;
+        if (options.callback) options.callback(detail);
+        const event = new CustomEvent("draginertiaend", { detail });
+        element.dispatchEvent(event);
+      }
+    };
+    if (fromEvent) handleStart(target);
+    else element.addEventListener("pointerdown", handleStart);
+    return {
+      //TODO: add manual start, move and end methods - for programmatic control
+      destroy: function() {
+        if (pointerId !== null) stop();
+        if (!fromEvent) {
+          element.removeEventListener("pointerdown", handleStart);
+          element.style.touchAction = ownTouchAction;
+          element.removeAttribute("drag-enabled");
+          element.removeAttribute("dragging");
+        }
+        if (inertiaId) {
+          cancelAnimationFrame(inertiaId);
+          inertiaId = null;
+        }
+      }
+    };
+  }
+
   // node_modules/book-of-spells/src/elements.mjs
   var ElementBase = typeof HTMLElement !== "undefined" ? HTMLElement : class {
   };
@@ -63,9 +358,10 @@
        * somewhere to go. The middle until something else has been seen, rather than `min` - a
        * restore that put the pane back where it already was would read as a key that did nothing. */
       __publicField(this, "restorePosition", DEFAULT_POSITION);
-      /** The pointer id of the drag in progress, `null` when there is none. Held so a second
-       * finger arriving mid-drag is ignored rather than fighting the first. */
-      __publicField(this, "pointerId", null);
+      /** The gesture in progress, `null` when there is none - what book-of-spells' `drag()` hands
+       * back, and what ends it. Held so a second finger arriving mid-drag is ignored rather than
+       * fighting the first. */
+      __publicField(this, "gesture", null);
       /** The `vertical-when` query being watched, `null` when there is none. */
       __publicField(this, "mql", null);
       /** Whether the `vertical` attribute on this element is one this element wrote. It is what
@@ -143,8 +439,7 @@
       this.initialized = true;
       this.onKeyDown = this.onKeyDown.bind(this);
       this.onPointerDown = this.onPointerDown.bind(this);
-      this.onPointerMove = this.onPointerMove.bind(this);
-      this.onPointerUp = this.onPointerUp.bind(this);
+      this.onDragEnd = this.onDragEnd.bind(this);
       this.onViewportChange = this.onViewportChange.bind(this);
       this.build();
       this.render();
@@ -294,25 +589,40 @@
     rtl() {
       return getComputedStyle(this).direction === "rtl";
     }
+    /**
+     * Take hold of the handle.
+     *
+     * The gesture is `drag()` from book-of-spells, started from the `pointerdown` this element
+     * already listens for rather than handed the handle to own: started that way it writes no
+     * attributes and no inline `touch-action` into a handle this element wrote and index.scss
+     * already styles, and the `preventDefault` and the focus below stay this element's to do.
+     * What it owns is the pointer - the capture, which a handle this narrow needs the moment the
+     * pointer outruns it, and the `pointercancel` path.
+     */
     onPointerDown(event) {
-      if (this.pointerId !== null) return;
-      this.pointerId = event.pointerId;
+      if (this.gesture) return;
       this.dragRtl = this.rtl();
       this.dragMoved = false;
-      if (this.handle.setPointerCapture) this.handle.setPointerCapture(event.pointerId);
-      this.handle.addEventListener("pointermove", this.onPointerMove);
-      this.handle.addEventListener("pointerup", this.onPointerUp);
-      this.handle.addEventListener("pointercancel", this.onPointerUp);
       event.preventDefault();
       this.handle.focus();
+      this.handle.addEventListener("dragend", this.onDragEnd);
+      this.handle.addEventListener("dragcancel", this.onDragEnd);
+      this.gesture = drag(event, { target: this.handle, callback: (point) => this.follow(point) });
     }
-    onPointerMove(event) {
-      if (event.pointerId !== this.pointerId) return;
+    follow(point) {
       this.dragMoved = true;
-      this.moveTo(this.positionFromEvent(event), false);
+      this.moveTo(this.positionFromPoint(point), false);
     }
-    onPointerUp(event) {
-      if (event.pointerId !== this.pointerId) return;
+    /**
+     * The end of the gesture, either way it ended.
+     *
+     * A `dragcancel` reports the same as a release, which is the opposite of what a list being
+     * rearranged does with one: there is nothing to put back. Every move of this drag has already
+     * been applied to the panes, so the separator really is where the cancelled gesture left it,
+     * and a page that stored the last position it was told would otherwise hold a number the
+     * layout disagrees with.
+     */
+    onDragEnd() {
       const moved = this.dragMoved;
       this.endDrag();
       if (!moved) return;
@@ -322,24 +632,21 @@
       }));
     }
     /** Let go of the pointer and stop listening for it. Safe to call twice, which is what a
-     * `pointercancel` arriving after a `pointerup` needs it to be. */
+     * disconnection in the middle of a gesture needs it to be. */
     endDrag() {
-      if (this.pointerId === null) return;
+      if (!this.gesture) return;
       if (this.handle) {
-        if (this.handle.releasePointerCapture && this.handle.hasPointerCapture(this.pointerId)) {
-          this.handle.releasePointerCapture(this.pointerId);
-        }
-        this.handle.removeEventListener("pointermove", this.onPointerMove);
-        this.handle.removeEventListener("pointerup", this.onPointerUp);
-        this.handle.removeEventListener("pointercancel", this.onPointerUp);
+        this.handle.removeEventListener("dragend", this.onDragEnd);
+        this.handle.removeEventListener("dragcancel", this.onDragEnd);
       }
-      this.pointerId = null;
+      this.gesture.destroy();
+      this.gesture = null;
     }
     /** Where the pointer puts the separator. The handle's own extent comes out of the sum, and
      * it is measured rather than assumed: `--splitter-elemental-size` is the page's to set. */
-    positionFromEvent(event) {
+    positionFromPoint(point) {
       const box = this.handle.getBoundingClientRect();
-      return positionFrom(this.getBoundingClientRect(), event.clientX, event.clientY, {
+      return positionFrom(this.getBoundingClientRect(), point.clientX, point.clientY, {
         vertical: this.vertical,
         rtl: this.dragRtl,
         size: this.vertical ? box.height : box.width
