@@ -51,6 +51,28 @@
     if (Number.isNaN(num) || Number.isNaN(total) || total === 0) return 0;
     return num / total * 100;
   }
+  function clamp(value, min, max) {
+    if (value < min) return min;
+    if (value > max) return max;
+    return value;
+  }
+  function sampleVelocity(samples, windowMs = 80) {
+    const result = {};
+    if (!samples || !samples.length) return result;
+    const last = samples[samples.length - 1];
+    const keys = Object.keys(last).filter((key) => key !== "t" && typeof last[key] === "number");
+    for (const key of keys) result[key] = 0;
+    if (samples.length < 2) return result;
+    let start = samples[0];
+    for (let i = samples.length - 1; i >= 0; i--) {
+      start = samples[i];
+      if (last.t - samples[i].t >= windowMs) break;
+    }
+    const dt = last.t - start.t;
+    if (dt <= 0) return result;
+    for (const key of keys) result[key] = (last[key] - start[key]) / dt;
+    return result;
+  }
 
   // node_modules/book-of-spells/src/dom.mjs
   var dragging = /* @__PURE__ */ new WeakSet();
@@ -76,12 +98,14 @@
     let inertiaTime = 0;
     let samples = [];
     const options = {
+      within: null,
       inertia: false,
       bounce: false,
       friction: 0.9,
       bounceFactor: 0.2,
       velocityWindow: 80,
       maxVelocity: 2,
+      axis: null,
       callback: null,
       preventDefaultTouch: true
     };
@@ -92,23 +116,15 @@
     }
     options.friction = Math.abs(options.friction);
     options.bounceFactor = Math.abs(options.bounceFactor);
-    options.maxVelocity = Math.abs(options.maxVelocity);
-    const cap = function(v) {
-      if (v > options.maxVelocity) return options.maxVelocity;
-      if (v < -options.maxVelocity) return -options.maxVelocity;
-      return v;
-    };
-    const sampleVelocity = function() {
-      if (samples.length < 2) return { vx: 0, vy: 0 };
-      const last = samples[samples.length - 1];
-      let start = samples[0];
-      for (let i = samples.length - 1; i >= 0; i--) {
-        start = samples[i];
-        if (last.t - samples[i].t >= options.velocityWindow) break;
-      }
-      const dt = last.t - start.t;
-      if (dt <= 0) return { vx: 0, vy: 0 };
-      return { vx: cap((last.x - start.x) / dt), vy: cap((last.y - start.y) / dt) };
+    const capInPercent = typeof options.maxVelocity === "string" && options.maxVelocity.trim().endsWith("%");
+    const cap = Math.abs(parseFloat(options.maxVelocity));
+    options.maxVelocity = Number.isNaN(cap) ? 2 : cap;
+    let capX = options.maxVelocity;
+    let capY = options.maxVelocity;
+    const measureVelocity = function() {
+      const v = sampleVelocity(samples, options.velocityWindow);
+      velocityX = options.axis === "y" ? 0 : clamp(v.x || 0, -capX, capX);
+      velocityY = options.axis === "x" ? 0 : clamp(v.y || 0, -capY, capY);
     };
     if (!fromEvent) {
       element.setAttribute("drag-enabled", "true");
@@ -116,8 +132,9 @@
     }
     const ownTouchAction = element.style.touchAction || "";
     if (!fromEvent && options.preventDefaultTouch) element.style.touchAction = "none";
+    const measured = options.within instanceof Element ? options.within : element;
     const calcPageRelativeRect = function() {
-      const origRect = element.getBoundingClientRect();
+      const origRect = measured.getBoundingClientRect();
       const rect2 = {
         top: origRect.top + window.scrollY,
         left: origRect.left + window.scrollX,
@@ -136,6 +153,10 @@
       prevX = x;
       prevY = y;
       rect = calcPageRelativeRect();
+      if (capInPercent) {
+        capX = rect.width * options.maxVelocity / 100;
+        capY = rect.height * options.maxVelocity / 100;
+      }
       if (!fromEvent) element.setAttribute("dragging", "true");
       if (element.setPointerCapture) {
         try {
@@ -157,9 +178,7 @@
       if (e.pointerId !== pointerId) return;
       if (e.clientX === clientX && e.clientY === clientY && e.pageX === x && e.pageY === y) return;
       setXY(e);
-      const v = sampleVelocity();
-      velocityX = v.vx;
-      velocityY = v.vy;
+      measureVelocity();
       const detail = getDetail();
       if (options.callback) options.callback(detail);
       const event = new CustomEvent("drag", { detail });
@@ -179,9 +198,7 @@
       stop();
       const t = performance.now();
       samples.push({ t, x, y });
-      const v = sampleVelocity();
-      velocityX = v.vx;
-      velocityY = v.vy;
+      measureVelocity();
       inertiaTime = t;
       if (options.inertia) inertiaId = requestAnimationFrame(inertia);
       const event = new CustomEvent("dragend", { detail: getDetail() });
@@ -264,10 +281,10 @@
       if (Math.abs(velocityY) < 0.01) velocityY = 0;
       const detail = getDetail();
       if (velocityX !== 0 || velocityY !== 0) {
+        inertiaId = requestAnimationFrame(inertia);
         if (options.callback) options.callback(detail);
         const event = new CustomEvent("draginertia", { detail });
         element.dispatchEvent(event);
-        inertiaId = requestAnimationFrame(inertia);
       } else {
         inertiaId = null;
         if (options.callback) options.callback(detail);
