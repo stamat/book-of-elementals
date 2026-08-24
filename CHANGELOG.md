@@ -15,6 +15,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-08-24
+
 ### Added
 
 - **`<rearrange-elemental>`, a list or a table body the reader can rearrange by hand.** Wrap an
