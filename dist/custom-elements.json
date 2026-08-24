@@ -4930,13 +4930,13 @@
             },
             {
               "name": "boxes",
-              "description": "One per item, in current order.",
+              "description": "One per item *except* the dragged one, in current order.",
               "type": {
                 "text": "Array<{top: number, height: number}>"
               }
             }
           ],
-          "description": "Which position a drag is over, from the pointer and the items' boxes.\n\nBy midpoint rather than by edge: an item is taken over as soon as the pointer is past the\nhalf of it, which is what makes a drag between two items of different heights feel the same\nin both directions. The first midpoint below the pointer wins, and past the last one it is\nthe end of the list.\n\nBoxes are passed in rather than measured here - jsdom has no layout, and a sum that reads\nthe DOM cannot be tested anywhere but a browser.\n\nponytail: no hysteresis and no cached measurements. Both are answers to flicker on a list\nlong enough that a drag crosses several items per frame; the lists people rearrange by hand\nare short, and re-measuring is what keeps the maths right when the page reflows underneath.",
+          "description": "Which position a drag is over, from the pointer and the boxes of the items it is not.\n\nBy midpoint rather than by edge: an item is taken over as soon as the pointer is past the\nhalf of it, which is what makes a drag between two items of different heights feel the same\nin both directions. The answer is how many of the others the pointer has already passed the\nmiddle of, which is the position the dragged item belongs at among them.\n\n**The dragged item's own box is left out, and that is what stops the flicker.** With it in,\nthe question is asked about a list the answer then rearranges: a short item crossing the\nmiddle of a tall one swaps them, the swap slides the tall row up under the pointer, and the\nsame pointer position now reads as put it back - so the two trade places on every pointer\nevent for as long as the finger sits still, anywhere in the band between the two midpoints.\nCounting only the others makes every position in that band a resting place, which is\nhysteresis sized by the dragged item's own height rather than by a constant somebody has to\ntune.\n\nBoxes are passed in rather than measured here - jsdom has no layout, and a sum that reads\nthe DOM cannot be tested anywhere but a browser.",
           "return": {
             "type": {
               "text": "number"

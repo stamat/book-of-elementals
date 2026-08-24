@@ -19,7 +19,7 @@ rearrangeable-elemental {
   // page is already painting in, dark mode included, with nothing to configure.
   --rearrangeable-elemental-hover: #{color-mix(in srgb, currentcolor 8%, transparent)};
   --rearrangeable-elemental-grip: #{color-mix(in srgb, currentcolor 45%, transparent)};
-  --rearrangeable-elemental-lift: 0 0.5rem 1rem #{color-mix(in srgb, currentcolor 15%, transparent)};
+  --rearrangeable-elemental-lift: 0 0.1rem 0.3rem #{color-mix(in srgb, currentcolor 10%, transparent)};
 
   // Faint rather than gone: the button at the end of its travel is still there, still named and
   // still focusable, and a control that vanished at the top of the list would move every other

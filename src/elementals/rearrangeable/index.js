@@ -108,31 +108,35 @@ export function format(template, values) {
 }
 
 /**
- * Which position a drag is over, from the pointer and the items' boxes.
+ * Which position a drag is over, from the pointer and the boxes of the items it is not.
  *
  * By midpoint rather than by edge: an item is taken over as soon as the pointer is past the
  * half of it, which is what makes a drag between two items of different heights feel the same
- * in both directions. The first midpoint below the pointer wins, and past the last one it is
- * the end of the list.
+ * in both directions. The answer is how many of the others the pointer has already passed the
+ * middle of, which is the position the dragged item belongs at among them.
+ *
+ * **The dragged item's own box is left out, and that is what stops the flicker.** With it in,
+ * the question is asked about a list the answer then rearranges: a short item crossing the
+ * middle of a tall one swaps them, the swap slides the tall row up under the pointer, and the
+ * same pointer position now reads as put it back - so the two trade places on every pointer
+ * event for as long as the finger sits still, anywhere in the band between the two midpoints.
+ * Counting only the others makes every position in that band a resting place, which is
+ * hysteresis sized by the dragged item's own height rather than by a constant somebody has to
+ * tune.
  *
  * Boxes are passed in rather than measured here - jsdom has no layout, and a sum that reads
  * the DOM cannot be tested anywhere but a browser.
  *
- * ponytail: no hysteresis and no cached measurements. Both are answers to flicker on a list
- * long enough that a drag crosses several items per frame; the lists people rearrange by hand
- * are short, and re-measuring is what keeps the maths right when the page reflows underneath.
- *
  * @param {number} y Pointer position, in client coordinates.
- * @param {Array<{top: number, height: number}>} boxes One per item, in current order.
- * @returns {number}
+ * @param {Array<{top: number, height: number}>} boxes One per item *except* the dragged one, in current order.
+ * @returns {number} A position in the whole list, the dragged item counted back in.
  * @example
- * dropIndex(30, [{ top: 0, height: 20 }, { top: 20, height: 20 }]) // => 1
+ * dropIndex(30, [{ top: 0, height: 20 }, { top: 40, height: 20 }]) // => 1
  */
 export function dropIndex(y, boxes) {
-  for (let i = 0; i < boxes.length; i++) {
-    if (y < boxes[i].top + boxes[i].height / 2) return i;
-  }
-  return Math.max(0, boxes.length - 1);
+  let index = 0;
+  while (index < boxes.length && y >= boxes[index].top + boxes[index].height / 2) index++;
+  return index;
 }
 
 /**
@@ -612,10 +616,11 @@ export class RearrangeableElemental extends ElementBase {
   measure() {
     const drag = this.dragging;
     if (!drag) return;
-    drag.boxes = this.items.map((element) => {
+    // The dragged item is not in the map: `dropIndex` counts the items it is not, and why is
+    // written there. Which is also why nothing here undoes its transform.
+    drag.boxes = this.items.filter((element) => element !== drag.item).map((element) => {
       const rect = element.getBoundingClientRect();
-      // The dragged item is translated; where the midpoints are is where layout put it.
-      return { top: element === drag.item ? rect.top - drag.translate : rect.top, height: rect.height };
+      return { top: rect.top, height: rect.height };
     });
   }
 

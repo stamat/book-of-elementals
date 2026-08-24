@@ -4618,10 +4618,9 @@
     return String(template).replace(/\{(\w+)\}/g, (whole, key) => Object.prototype.hasOwnProperty.call(values, key) ? String(values[key]) : whole);
   }
   function dropIndex(y, boxes) {
-    for (let i = 0; i < boxes.length; i++) {
-      if (y < boxes[i].top + boxes[i].height / 2) return i;
-    }
-    return Math.max(0, boxes.length - 1);
+    let index = 0;
+    while (index < boxes.length && y >= boxes[index].top + boxes[index].height / 2) index++;
+    return index;
   }
   var RearrangeableElemental = class extends ElementBase {
     static get observedAttributes() {
@@ -4953,9 +4952,9 @@
     measure() {
       const drag2 = this.dragging;
       if (!drag2) return;
-      drag2.boxes = this.items.map((element) => {
+      drag2.boxes = this.items.filter((element) => element !== drag2.item).map((element) => {
         const rect = element.getBoundingClientRect();
-        return { top: element === drag2.item ? rect.top - drag2.translate : rect.top, height: rect.height };
+        return { top: rect.top, height: rect.height };
       });
     }
     onDragScroll() {

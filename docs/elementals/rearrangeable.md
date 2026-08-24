@@ -168,7 +168,9 @@ nothing put in its place.
 - **`touch-action: none` is on the handle alone.** On the item it would take the page's scrolling
   away everywhere a finger lands on a list, which is most of a phone screen.
 - **The item is taken over as soon as the pointer passes the middle of its neighbour**, which is
-  what makes a drag feel the same in both directions between rows of different heights.
+  what makes a drag feel the same in both directions between rows of different heights. The
+  neighbour is measured with the dragged item lifted out of the way, so undoing a swap costs the
+  dragged item's own height in travel instead of the two rows trading places under a still finger.
 - **The item moves in the DOM as it goes**, rather than a ghost being animated into place at the
   end — so what you are dragging is the real item in its real position.
 - **One event per landing**, not one per row crossed. A page persisting the order to a server
@@ -339,7 +341,7 @@ in the box the rule above pushes to the end.
 | `--rearrangeable-elemental-hover` | `currentcolor` at 8% | Theme. Fill under the pointer |
 | `--rearrangeable-elemental-disabled-opacity` | `0.3` | Theme. The button at the end of its travel |
 | `--rearrangeable-elemental-grip` | `currentcolor` at 45% | Theme. The dots on the handle |
-| `--rearrangeable-elemental-lift` | `0 0.5rem 1rem currentcolor` at 15% | Theme. Under the item while it is dragged |
+| `--rearrangeable-elemental-lift` | `0 0.1rem 0.3rem currentcolor` at 10% | Theme. Under the item while it is dragged |
 | `--rearrangeable-elemental-surface` | `Canvas` | Theme. What the dragged item is painted on — re-point it on a card |
 
 The arrows are drawn with borders rather than written as `▲`, for the reason

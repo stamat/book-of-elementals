@@ -10,7 +10,10 @@
 //
 // `dropIndex` is passed boxes rather than measuring any, which is what lets it be tested at all:
 // jsdom has no layout, so a sum that read `getBoundingClientRect` would only ever run in a
-// browser.
+// browser. Those boxes are the items the drag is *not*, and the last test here is why: with the
+// dragged item's own box among them the answer rearranges the list the question was asked about,
+// and a pointer holding still between two rows of different heights trades them back and forth
+// on every event.
 //
 // Deliberately not covered here: the buttons, the live region, the ends of travel and the moves
 // themselves, which are `dom.test.js`; and the pointer drag, which needs layout, pointer capture
@@ -115,7 +118,21 @@ test('the middle is the middle whatever the items are worth in height', () => {
   expect(dropIndex(51, boxes)).toBe(1);
 });
 
-test('past the last middle the drag is at the end, and an empty list is position zero', () => {
-  expect(dropIndex(999, [{ top: 0, height: 20 }, { top: 20, height: 20 }])).toBe(1);
+test('past the last middle the drag is at the end, and a list of one is position zero', () => {
+  // Two others passed is the third position, because the dragged item is counted back in.
+  expect(dropIndex(999, [{ top: 0, height: 20 }, { top: 20, height: 20 }])).toBe(2);
+  // No others at all: the only item there is the one in hand, and it is already home.
   expect(dropIndex(10, [])).toBe(0);
+});
+
+test('a pointer holding still between two rows does not trade them back and forth', () => {
+  // The flicker, and the reason the dragged item's box is not in the map. A 20px item crossing
+  // the middle of a 100px row swaps them; the swap slides that row up under the pointer, the
+  // same pointer position reads as put it back, and the two trade places on every event for as
+  // long as the finger sits still. Measured without it in the way, both orders answer with the
+  // order they are already in, and the band between the two midpoints is somewhere to rest.
+  const above = [{ top: 20, height: 100 }]; // the tall row, with the dragged item above it
+  const below = [{ top: 0, height: 100 }];  // the same row, with the dragged item below it
+  expect(dropIndex(60, above)).toBe(0);
+  expect(dropIndex(60, below)).toBe(1);
 });
