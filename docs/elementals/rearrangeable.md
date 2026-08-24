@@ -24,10 +24,10 @@ between, and `role="listbox"` would tell the reader they are picking one.
 ```html
 <rearrangeable-elemental drag>
   <ol>
-    <li>Boil the kettle</li>
-    <li>Warm the pot</li>
-    <li>Measure the leaves</li>
-    <li>Pour, and wait</li>
+    <li><span class="rearrangeable-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Boil the kettle</li>
+    <li><span class="rearrangeable-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Warm the pot</li>
+    <li><span class="rearrangeable-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Measure the leaves</li>
+    <li><span class="rearrangeable-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Pour, and wait</li>
   </ol>
 </rearrangeable-elemental>
 ```
@@ -37,7 +37,8 @@ between, and `role="listbox"` would tell the reader they are picking one.
 ol { margin: 0; padding: 0; list-style: none; }
 li { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.6rem; border: 1px solid color-mix(in srgb, CanvasText 15%, transparent); border-radius: 0.4rem; }
 li + li { margin-block-start: 0.35rem; }
-/* the controls are the last thing in the item, so this is what pushes them to the far end */
+/* the grip is the item's first child, so the flex row puts it at the front on its own; the
+   controls are the last, and this is what pushes them to the far end */
 [data-rearrange-controls] { margin-inline-start: auto; }
 ```
 
@@ -85,7 +86,10 @@ A list. That is the whole of it:
   in the row's last cell, which is the choice that needs no extra `<th>` in the header.
 - **`data-rearrange-handle` inside an item** is your own grip, used instead of the one the element
   would write. It is your markup: give it `aria-hidden="true"` if it is a glyph, and the element
-  leaves it alone when `drag` goes away.
+  leaves it alone when `drag` goes away. It is also the only way to a grip somewhere the controls
+  are not — the front of the item, rather than beside the buttons at the end of it. The samples on
+  this page borrow `class="rearrangeable-elemental-handle"` so the theme paints their grip; a page
+  with a look of its own writes one.
 
 ## What it writes
 
@@ -248,9 +252,9 @@ A `<table>` works the same way, with two differences the markup forces:
       <tr><th>Peak</th><th>Height</th><th><span class="sr">Order</span></th></tr>
     </thead>
     <tbody>
-      <tr><th scope="row">Midžor</th><td>2169</td><td data-rearrange-cell></td></tr>
-      <tr><th scope="row">Đeravica</th><td>2656</td><td data-rearrange-cell></td></tr>
-      <tr><th scope="row">Rtanj</th><td>1560</td><td data-rearrange-cell></td></tr>
+      <tr><th scope="row"><span class="rearrangeable-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Midžor</th><td>2169</td><td data-rearrange-cell></td></tr>
+      <tr><th scope="row"><span class="rearrangeable-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Đeravica</th><td>2656</td><td data-rearrange-cell></td></tr>
+      <tr><th scope="row"><span class="rearrangeable-elemental-handle" data-rearrange-handle aria-hidden="true"></span>Rtanj</th><td>1560</td><td data-rearrange-cell></td></tr>
     </tbody>
   </table>
 </rearrangeable-elemental>
@@ -262,6 +266,8 @@ table { border-collapse: separate; border-spacing: 0; inline-size: 100%; }
 caption { margin-block-end: 0.5rem; font-weight: 600; text-align: start; }
 th, td { padding: 0.4rem 0.6rem; text-align: start; border-block-end: 1px solid color-mix(in srgb, CanvasText 20%, transparent); }
 tbody th { font-weight: 400; }
+/* the grip sits in the row's name cell, on the text's own line */
+.rearrangeable-elemental-handle { margin-inline-end: 0.35em; vertical-align: middle; }
 /* the column the controls live in, kept as narrow as they are */
 td[data-rearrange-cell] { inline-size: 1%; white-space: nowrap; }
 /* the header cell over it has a name for screen readers and nothing to show */
@@ -273,6 +279,10 @@ td[data-rearrange-cell] { inline-size: 1%; white-space: nowrap; }
   anonymous cell that widens the row by a column nothing declared. Without `data-rearrange-cell` the
   last cell is used, so a table that has a spare column needs no markup change at all.
 - **A row is named by one cell**, as above.
+- **A grip at the front of a row is markup you write.** A row's layout is its cells, so there is
+  no reordering the one the element would write out of the cell the buttons are in —
+  `data-rearrange-handle` on a `<span>` in the cell you want it in, and the element writes none of
+  its own.
 
 **This is not [`<sortable-table-elemental>`](sortable-table.html) and the two do not belong on the
 same table.** That one sorts by a key in the cells and the order is derived; this one is a hand
@@ -315,6 +325,10 @@ li { display: flex; align-items: center; }
 
 That rule works with no `!important` and no longer selector because the theme's own margin on the
 controls is written inside `:where()` and weighs nothing. It is a default, not a decision.
+
+The grip is placed the same way, by being somewhere else in the markup: `data-rearrange-handle`
+on a `<span>` at the front of the item leaves the element writing only the two buttons, which stay
+in the box the rule above pushes to the end.
 
 | Custom property | Default | What it does |
 | --- | --- | --- |
