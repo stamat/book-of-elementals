@@ -351,6 +351,25 @@ A row short enough that everything fits is at **both** ends, and both arrows go 
 to scroll is a list, and two live buttons over a list that cannot move get pressed twice and
 then distrusted.
 
+Both at once is also the selector for taking the controls off a shelf that fits. The picker
+under it is four buttons pointing at four slides already on screen, and it says as little as
+the dim arrows do:
+
+```css
+carousel-elemental[data-carousel-at-start][data-carousel-at-end] > [data-carousel-controls] {
+  display: none;
+}
+```
+
+Not the default, and the reason is the resize you are hiding for: the bar goes and comes back
+as the window crosses the width where the row stops fitting, and everything under the carousel
+moves with it. `visibility: hidden` holds the space and pays a blank strip instead. Which of
+the two a page wants is the page's, which is why the element ships neither.
+
+The rotation control is not in the bar — it is a child of the element, over the corner of the
+row — so `autoplay` on a shelf that fits needs `> [data-carousel-rotate]` hidden too, or the
+attribute taken off.
+
 The rotation is the one thing that wraps: at the last slide it goes back to the first, because
 a carousel that rotates to the end and stops is a carousel that quietly died. The buttons do
 not, because they are dim there, and a control that looks spent must not still act.
@@ -675,6 +694,76 @@ the only thing telling it apart. Motion is two things and both answer to
 `prefers-reduced-motion`: the scroll itself, switched off in `style.scss` by one media query
 because every way the row moves goes through the same `scrollLeft`, and the countdown ring in
 the theme, which is not drawn moving at all under that preference.
+
+### Your own arrows
+
+The element writes the controls and writes them again on every [`wire()`](#slides-that-change),
+so a button you append to the bar yourself is gone the next time the slides change. Two ways
+round that, and they cost different things:
+
+| What you want                 | How                                                                                            | What it costs                                                                        |
+| ----------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| A different icon or shape     | Style `[data-carousel-prev]` and `[data-carousel-next]`, and hide the `<svg>` the element drew | Nothing — the button, its name and its `aria-disabled` stay the element's             |
+| Buttons of your own elsewhere | Hide the bar, write your own, call `previous()` and `next()`                                    | The dim state is yours, and a screen reader is told nothing unless you write it       |
+
+The first is the one to reach for. The icons are ordinary children, so a rule takes them off
+and the button keeps everything that makes it a control:
+
+```css
+carousel-elemental :is([data-carousel-prev], [data-carousel-next]) > svg {
+  display: none;
+}
+carousel-elemental [data-carousel-prev]::before {
+  content: '\2190';
+}
+carousel-elemental [data-carousel-next]::before {
+  content: '\2192';
+}
+```
+
+The glyph is decoration and not a name: the element wrote `aria-label` on the button, which
+wins over anything in it, so a screen reader still says `Next slide` — or whatever `next-text`
+says instead. Rename with the attribute, never with the content.
+
+Buttons of your own are two lines, since `previous()` and `next()` are public and already stop
+at the ends:
+
+```html
+<carousel-elemental id="gallery" aria-label="Gallery">
+  <ul>
+    <li>One</li>
+    <li>Two</li>
+  </ul>
+</carousel-elemental>
+
+<button type="button" data-prev>Back</button>
+<button type="button" data-next>On</button>
+```
+
+```javascript
+const gallery = document.querySelector('#gallery');
+
+document.querySelector('[data-prev]').addEventListener('click', () => gallery.previous());
+document.querySelector('[data-next]').addEventListener('click', () => gallery.next());
+```
+
+What you have taken on is the half the arrows do without being pressed. `next()` at the end
+does nothing and says nothing, so a button that still looks live gets pressed twice and then
+distrusted — the bug [the ends](#at-the-ends) exist to avoid. CSS covers the look, off the same
+attributes, as long as your buttons come after the element:
+
+```css
+carousel-elemental[data-carousel-at-end] ~ [data-next] {
+  opacity: 0.35;
+}
+```
+
+The screen reader is the part CSS cannot reach. `aria-disabled` on your button is yours to
+write, and there is no event for the ends — `carousel-change` fires when the *slide* changes,
+and a resize that leaves the row at its end without moving it is exactly the case it stays
+quiet for. Watching `data-carousel-at-start` and `data-carousel-at-end` with a
+[`MutationObserver`](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver) is the
+whole of it, and it is also the argument for restyling the buttons that are already there.
 
 ### Styling hooks
 
