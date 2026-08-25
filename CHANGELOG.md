@@ -15,6 +15,8 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-08-25
+
 ### Added
 
 - **`<feed-elemental>`, a stream of articles that keeps growing.** Wrap a run of `<article>`s
