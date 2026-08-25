@@ -350,10 +350,10 @@ function reducedMotion() {
  * **The scroll container is the state.** There is no transform engine, no clones and no
  * index attribute to keep in step with where the row actually is: the slides sit in a
  * scroll-snapping scroller, moving means setting `scrollLeft`, and which slide is current is
- * whatever an `IntersectionObserver` says is on screen. That is what buys the
- * responsiveness for nothing - resize the window, change how many slides fit in CSS, or put
- * the whole thing in a container query, and there is no listener to fire and no measurement
- * to redo, because nothing was measured in the first place.
+ * read off the boxes themselves. That is what buys the responsiveness for nothing - resize
+ * the window, change how many slides fit in CSS, or put the whole thing in a container
+ * query, and the answer is measured from the layout that came out of it rather than from an
+ * index some earlier layout wrote down.
  *
  * Light DOM, no shadow root. Nothing you wrote is moved or wrapped; the element adds the
  * roles to your list and its items, and appends the controls - which is also why the
@@ -482,7 +482,7 @@ export class CarouselElemental extends ElementBase {
     if (!this.scroller) return;
 
     this.onClick = this.onClick.bind(this);
-    this.onIntersect = this.onIntersect.bind(this);
+    this.onLayout = this.onLayout.bind(this);
     this.onScroll = this.onScroll.bind(this);
     this.onSwipe = this.onSwipe.bind(this);
     this.onHeightEnd = this.onHeightEnd.bind(this);
@@ -684,18 +684,26 @@ export class CarouselElemental extends ElementBase {
       scroller.addEventListener('transitioncancel', this.onHeightEnd);
       this.heights = scroller;
     } else {
-      // A spread rather than one threshold: this observer is a layout-change notifier now, and
-      // a single value only fires when a slide happens to cross that exact ratio. A resize
-      // that leaves every slide fully visible would cross nothing at all.
-      this.observer = new IntersectionObserver(this.onIntersect, {
-        root: scroller,
-        threshold: [0, 0.25, 0.5, 0.75, 1]
-      });
+      // A resize observer and not an intersection one, which is what this was and is the bug
+      // it had. Nothing here ever read an entry - the callback re-measures the row from the
+      // boxes - so the observer was only ever a notifier, and an intersection notifier speaks
+      // in thresholds: between `0.75` and `1` there is no value to cross, so a row that
+      // overflowed by less than a quarter of a slide changed no ratio and said nothing. That
+      // is a quarter of a slide's worth of window widths where the row can scroll, the next
+      // button is dim, and `next()` refuses because the button is dim. Measured in Chromium
+      // at 300px slides: 75px of scrollable row behind a dead arrow. A size is a size.
+      //
+      // The slides are watched as well as the scroller, and that is the half a
+      // container-only observer misses: a breakpoint changing
+      // `--carousel-elemental-slide-size` inside a fixed-width column resizes every slide
+      // and leaves the scroller exactly the size it was.
+      this.observer = new ResizeObserver(this.onLayout);
+      this.observer.observe(scroller);
       for (const slide of slides) this.observer.observe(slide);
-      // The observer answers "which slide", and cannot answer "is there anywhere left to
-      // go": the last stretch of a row whose slides are narrower than it brings nothing new
-      // into view, and that is exactly where the next button has to go dim. Passive, and two
-      // reads of numbers the browser has already computed for the scroll it is dispatching.
+      // The observer answers a row that changed shape; this answers a row that changed
+      // place, which is every swipe, wheel and key press and none of them a resize. Passive,
+      // and reads of numbers the browser has already computed for the scroll it is
+      // dispatching.
       scroller.addEventListener('scroll', this.onScroll, { passive: true });
       this.scrolls = scroller;
     }
@@ -817,12 +825,17 @@ export class CarouselElemental extends ElementBase {
    * The observer's whole job: notice that the layout changed and re-read it.
    *
    * A resize, a container query flipping how many slides fit, a webfont landing - none of
-   * them fire a scroll event, and this is the callback that would otherwise have to be a
-   * resize listener. The `scroll-padding` is re-read here rather than on every scroll,
-   * because a media query is the only thing that changes it and this is where layout changes
-   * arrive.
+   * them fire a scroll event, and a row measured before any of them is a row whose current
+   * slide and whose dim arrows both belong to a layout that is gone. The `scroll-padding` is
+   * re-read here rather than on every scroll, because a media query is the only thing that
+   * changes it and this is where layout changes arrive.
+   *
+   * What it still does not catch: a slide that moves without resizing and without a scroll -
+   * `--carousel-elemental-gap` changing at a breakpoint is the one. Nothing observes
+   * position, and a rule that watches for it would be watching every carousel on every page
+   * for the few that change their gap mid-life.
    */
-  onIntersect() {
+  onLayout() {
     const scroller = this.scroller;
     if (!scroller) return;
     const styles = getComputedStyle(scroller);

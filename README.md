@@ -187,10 +187,11 @@ A row of slides you scroll through, on the list you would have written anyway:
 The scroll container is the state. There is no transform engine, no cloned slides
 and no index attribute to keep in step with where the row actually is: the slides
 sit in a scroll-snapping scroller, moving is one assignment to `scrollLeft`, and
-which slide is current is whatever an `IntersectionObserver` says is on screen.
-That is what makes it responsive for nothing — resize the window, change
-`--carousel-elemental-slide-size` at a breakpoint, put the whole thing in a
-container query, and there is no listener to fire and no measurement to redo.
+which slide is current is read off the boxes themselves, whenever a
+`ResizeObserver` says the row changed shape. That is what makes it responsive for
+nothing — resize the window, change `--carousel-elemental-slide-size` at a
+breakpoint, put the whole thing in a container query, and the answer comes from
+the layout that came out of it rather than from an index kept in step by hand.
 There is no key handler either: a focused scroll container already answers to the
 arrows, `Home`, `End` and the page keys.
 

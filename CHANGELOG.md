@@ -52,6 +52,30 @@ may already be targeting**, since neither shows up in a function signature.
   theme. No `aria-describedby`, no fetching, no virtualisation, no unloading of articles
   scrolled past.
 
+### Fixed
+
+- **`<carousel-elemental>`: the next button went dim while the row could still scroll.** A
+  shelf whose last slide was clipped by less than a quarter of its width reported itself as
+  being at the end — both arrows dimmed, `data-carousel-at-end` written — and `next()` refuses
+  to move once that attribute is set, so the arrow was not only wrong but inert. Measured in
+  Chromium at 300px slides: 75px of scrollable row behind a dead arrow, across 74 of 125
+  window widths swept a pixel at a time. Only the wheel, the trackpad or the arrow keys on the
+  focused scroller got out of it, and the scrollbar is hidden after upgrade.
+
+  The cause was the observer, not the arithmetic. Which slide is current and whether the row
+  has anywhere left to go were always measured from the boxes; the `IntersectionObserver`
+  behind them never read an entry and was only ever a "the layout moved" notifier — and an
+  intersection notifier speaks in thresholds, so between `0.75` and `1` there was no value for
+  a slide to cross and nothing fired. It is a `ResizeObserver` now, on the scroller **and**
+  every slide, which has no threshold to miss. The slides are watched as well as the scroller
+  because a breakpoint changing `--carousel-elemental-slide-size` inside a fixed-width column
+  resizes every slide and leaves the scroller the size it was.
+
+  **No DOM or CSS change**: the same `data-carousel-at-start` / `data-carousel-at-end` on the
+  element and the same `aria-disabled` on the arrows, now written when they are true. Still
+  not caught, and it was not caught before either: a slide that moves without resizing and
+  without a scroll, which is `--carousel-elemental-gap` changing at a breakpoint.
+
 ## [3.0.0] - 2026-08-24
 
 ### Added

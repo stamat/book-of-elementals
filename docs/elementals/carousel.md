@@ -468,9 +468,11 @@ attribute because there is nothing for one to do that this does not, and CSS can
 mind at a breakpoint while an attribute cannot.
 
 Previous and next then move by one slide, not by one screenful, and the row still stops at
-its own end: at the last screenful, next is the first slide again. That is the scroller's
+its own end: on the last screenful next goes dim, and the press that got you there was a
+short one — as far as the row had left rather than a whole slide. That is the scroller's
 answer rather than arithmetic on the index — with three slides on screen the last two can
-never be the first visible one, so counting would leave the last press doing nothing.
+never be the first visible one, so counting to the last slide would leave the final presses
+doing nothing.
 
 ## Fade
 

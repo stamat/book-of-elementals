@@ -2,10 +2,13 @@
 // moves, which of the slides on screen counts as the current one, the name a slide gets
 // when the markup gave it none, and what the `interval` attribute is allowed to mean.
 //
-// Deliberately not covered here: anything that needs a scroll container or an
-// IntersectionObserver. jsdom has no layout and no `IntersectionObserver`, so a scroller faked
-// in one would answer every question with zero and prove nothing - which is why this element
-// has no `dom.test.js` beside this file where most of the book does. The roles, the focus order and the rotation control are checked by
+// Deliberately not covered here: anything that needs a scroll container or a
+// `ResizeObserver`. jsdom has neither, and every box in it measures zero, so a scroller faked
+// there would answer every question with the same nothing and prove none of them - which is
+// why this element has no `dom.test.js` beside this file where most of the book does. The
+// resize path is the one that has now been wrong once: an observer that spoke in intersection
+// thresholds went quiet for the last quarter of a slide's worth of overflow, and it took a
+// real browser to see it. The roles, the focus order and the rotation control are checked by
 // `script/a11y` over the built demos, in a real browser. `fade`'s travelling height is here
 // as the rule that decides whether to pin one at all - the two measurements it decides on are
 // layout, and belong to the same paragraph as everything else above.

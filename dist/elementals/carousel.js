@@ -297,7 +297,7 @@
       if (this.initialized) return;
       if (!this.scroller) return;
       this.onClick = this.onClick.bind(this);
-      this.onIntersect = this.onIntersect.bind(this);
+      this.onLayout = this.onLayout.bind(this);
       this.onScroll = this.onScroll.bind(this);
       this.onSwipe = this.onSwipe.bind(this);
       this.onHeightEnd = this.onHeightEnd.bind(this);
@@ -436,10 +436,8 @@
         scroller.addEventListener("transitioncancel", this.onHeightEnd);
         this.heights = scroller;
       } else {
-        this.observer = new IntersectionObserver(this.onIntersect, {
-          root: scroller,
-          threshold: [0, 0.25, 0.5, 0.75, 1]
-        });
+        this.observer = new ResizeObserver(this.onLayout);
+        this.observer.observe(scroller);
         for (const slide of slides) this.observer.observe(slide);
         scroller.addEventListener("scroll", this.onScroll, { passive: true });
         this.scrolls = scroller;
@@ -536,12 +534,17 @@
      * The observer's whole job: notice that the layout changed and re-read it.
      *
      * A resize, a container query flipping how many slides fit, a webfont landing - none of
-     * them fire a scroll event, and this is the callback that would otherwise have to be a
-     * resize listener. The `scroll-padding` is re-read here rather than on every scroll,
-     * because a media query is the only thing that changes it and this is where layout changes
-     * arrive.
+     * them fire a scroll event, and a row measured before any of them is a row whose current
+     * slide and whose dim arrows both belong to a layout that is gone. The `scroll-padding` is
+     * re-read here rather than on every scroll, because a media query is the only thing that
+     * changes it and this is where layout changes arrive.
+     *
+     * What it still does not catch: a slide that moves without resizing and without a scroll -
+     * `--carousel-elemental-gap` changing at a breakpoint is the one. Nothing observes
+     * position, and a rule that watches for it would be watching every carousel on every page
+     * for the few that change their gap mid-life.
      */
-    onIntersect() {
+    onLayout() {
       const scroller = this.scroller;
       if (!scroller) return;
       const styles = getComputedStyle(scroller);

@@ -4,8 +4,8 @@
 
 // This is the one layout the element has an opinion about, because the pattern cannot work
 // without it: the scroll container *is* the state. The element sets `scrollLeft` and reads
-// an `IntersectionObserver`; take these rules away and there is nothing to scroll and
-// nothing to observe.
+// the row back off the layout; take these rules away and there is nothing to scroll and
+// nothing to measure.
 carousel-elemental {
   display: block;
   position: relative;
