@@ -5,10 +5,12 @@
 // Deliberately not covered here: anything that needs a scroll container or a
 // `ResizeObserver`. jsdom has neither, and every box in it measures zero, so a scroller faked
 // there would answer every question with the same nothing and prove none of them - which is
-// why this element has no `dom.test.js` beside this file where most of the book does. The
-// resize path is the one that has now been wrong once: an observer that spoke in intersection
-// thresholds went quiet for the last quarter of a slide's worth of overflow, and it took a
-// real browser to see it. The roles, the focus order and the rotation control are checked by
+// why `dom.test.js` beside this file runs in `fade` and asks about the lifecycle, never about
+// a number. The measured path is the one that has now been wrong twice: an observer that
+// spoke in intersection thresholds went quiet for the last quarter of a slide's worth of
+// overflow, and a start edge read off the left of a row that starts on the right left every
+// right-to-left carousel on its first slide - and both took a real browser to see. The roles,
+// the focus order and the rotation control are checked by
 // `script/a11y` over the built demos, in a real browser. `fade`'s travelling height is here
 // as the rule that decides whether to pin one at all - the two measurements it decides on are
 // layout, and belong to the same paragraph as everything else above.
@@ -18,7 +20,7 @@
 // `swipe()` in book-of-spells now, tested there. What stays here is the half that is the
 // carousel's own - which way `left` points when the reader reads right to left.
 
-import { currentSlide, markerName, roleDescription, rotationHeld, rotationInterval, scrollEdges, slideName, startInset, stepSlide, swapHeight, swipeStep } from './index.js';
+import { currentSlide, markerName, pressOrigin, roleDescription, rotationHeld, rotationInterval, scrollDelta, scrollEdges, slideName, startEdge, startInset, stepSlide, swapHeight, swipeStep } from './index.js';
 
 test('rotation stays held while either the pointer or the keyboard is in the carousel', () => {
   // The APG asks for hover and focus both gone before rotation resumes. One flag is the
@@ -236,4 +238,40 @@ test('and so does a reader who asked for less movement', () => {
   // Same trap by the other road: under that preference the stylesheet drops the transition,
   // so there is again no end for the pin to come off at. The height changes at once instead.
   expect(swapHeight(120, 260, true)).toBe(false);
+});
+
+test('a slide\'s start is measured from the row\'s own start edge, which reads left to right', () => {
+  expect(startEdge({ left: 300, right: 600 }, { left: 0, right: 900 }, false)).toBe(300);
+  expect(startEdge({ left: -300, right: 0 }, { left: 0, right: 900 }, false)).toBe(-300);
+});
+
+test('and in a right-to-left row the start edges are the right ones', () => {
+  // Three slides a screen, at rest: the first sits against the right edge and the second is a
+  // slide's width past it, to the *left*. By left edges the first would read as the furthest
+  // along of all of them, and the row would never be on anything but slide one - which is what
+  // every right-to-left carousel did.
+  expect(startEdge({ left: 600, right: 900 }, { left: 0, right: 900 }, true)).toBe(0);
+  expect(startEdge({ left: 300, right: 600 }, { left: 0, right: 900 }, true)).toBe(300);
+  // Scrolled one slide on, the first is behind the edge: off to the right.
+  expect(startEdge({ left: 900, right: 1200 }, { left: 0, right: 900 }, true)).toBe(-300);
+});
+
+test('the scroll that brings a slide to the snap edge is its start less the padding', () => {
+  expect(scrollDelta(300, 0, false)).toBe(300);
+  expect(scrollDelta(300, 206, false)).toBe(94);
+});
+
+test('and right to left the same distance is taken off, because that row counts down from zero', () => {
+  expect(scrollDelta(300, 0, true)).toBe(-300);
+  expect(scrollDelta(300, 206, true)).toBe(-94);
+});
+
+test('a press counts from the slide the row is on', () => {
+  expect(pressOrigin(2, null)).toBe(2);
+});
+
+test('and from the one it is on its way to while the last press is still scrolling', () => {
+  // The index catches up at the end of the trip, so a second press before then would send the
+  // row to the slide it was already going to: two quick presses of next, one slide.
+  expect(pressOrigin(0, 1)).toBe(1);
 });

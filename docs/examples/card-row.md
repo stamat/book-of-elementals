@@ -143,8 +143,8 @@ Everything else the element does is unchanged: the row is a `region` with
 the accessibility tree and in reading order whether it is on screen or not, and the arrow with
 nowhere to go is `aria-disabled` and dimmed rather than removed.
 
-With no script, the same markup is a list of five cards that still scrolls sideways, still
-snaps, and still has its scrollbar — the element hides that only once it has upgraded and put
-its own controls there instead.
+With no script, the same markup is a list of five cards down the page, every one of them
+readable: the row, the snap and the bleed all hang off `[data-carousel-slides]`, which the
+element writes as it upgrades, so nothing here applies until the controls exist to drive it.
 
 <script src="{{ relativePathPrefix }}dist/elementals/carousel.js"></script>

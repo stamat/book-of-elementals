@@ -252,6 +252,57 @@ export function currentSlide(starts, inset, fallback) {
 }
 
 /**
+ * How far a slide's start edge is past the row's, in the direction the row scrolls.
+ *
+ * Left edges where the row reads left to right, right edges where it reads the other way.
+ * Measured by its left edge, a right-to-left row's first slide - the one against the right
+ * edge - reads as the furthest along of them all and every slide after it as behind: the
+ * index never leaves zero, the picker never moves, and next sends the row a slide's width the
+ * wrong way. `scrollEdges` and `startInset` already read the direction; this is the third
+ * measurement that has to.
+ *
+ * @param {{left: number, right: number}} slide - The slide's box.
+ * @param {{left: number, right: number}} scroller - The scroller's box.
+ * @param {boolean} rtl - Whether the row reads right to left.
+ * @returns {number} Positive past the start edge, negative behind it.
+ */
+export function startEdge(slide, scroller, rtl) {
+  return rtl ? scroller.right - slide.right : slide.left - scroller.left;
+}
+
+/**
+ * What to add to `scrollLeft` to bring a slide's start to the row's snap edge.
+ *
+ * The start is measured in reading direction and `scrollLeft` is not: a right-to-left row
+ * counts down from zero, so the same distance is travelled by taking it off.
+ *
+ * @param {number} start - The slide's `startEdge()`.
+ * @param {number} inset - The row's `scroll-padding` on the start side.
+ * @param {boolean} rtl - Whether the row reads right to left.
+ * @returns {number}
+ */
+export function scrollDelta(start, inset, rtl) {
+  return rtl ? inset - start : start - inset;
+}
+
+/**
+ * The slide a press counts from: the one the row is on its way to, or, once it has landed,
+ * the one it is on.
+ *
+ * The index catches up at the end of the trip - the scroll event that moves it comes when the
+ * row has crossed the next slide's start - so a second press during the smooth scroll the
+ * first one started would count from where the row still was, and send it to the slide it
+ * was already going to: two quick presses of next, one slide.
+ *
+ * @param {number} index - The slide the row is on.
+ * @param {number|null} destination - The slide the last press asked for, or null once the row has landed.
+ * @returns {number}
+ */
+export function pressOrigin(index, destination) {
+  return destination === null ? index : destination;
+}
+
+/**
  * What counts as something the keyboard can already reach inside the scroller.
  *
  * ponytail: the same heuristic `<tabs-elemental>` uses, and deliberately not a focusability
@@ -340,6 +391,17 @@ function reducedMotion() {
 }
 
 /**
+ * `aria-disabled` on a control, written only when it changes. The edges are pushed on every
+ * scroll event, and an attribute rewritten to the value it already has still queues a
+ * mutation record - two of them a frame, to say nothing changed.
+ */
+function disable(button, disabled) {
+  if (!button) return;
+  const value = String(disabled);
+  if (button.getAttribute('aria-disabled') !== value) button.setAttribute('aria-disabled', value);
+}
+
+/**
  * `<carousel-elemental>` custom element.
  *
  * A row of slides you scroll through, per the
@@ -359,8 +421,10 @@ function reducedMotion() {
  * roles to your list and its items, and appends the controls - which is also why the
  * controls are its to write rather than yours. A previous button authored in the markup is
  * a button that does nothing until the script lands, and this element's promise is the
- * other way round: with no script the slides are a scroll-snapping row you swipe, drag the
- * scrollbar of, or reach with the keyboard, every slide in the page and in reading order.
+ * other way round: with no script the slides are a plain list, every one of them on the page
+ * and in reading order. The row, the snap and the controls all arrive with the script - the
+ * stylesheet keys on what the upgrade writes - so nothing is ever there to press before it
+ * works.
  *
  * **No live region while it scrolls, and that is deliberate.** The APG's example flips
  * `aria-live` between `off` and `polite` because there one slide exists at a time and a
@@ -404,7 +468,7 @@ function reducedMotion() {
  * @cssprop {<color>} [--carousel-elemental-control=currentcolor] - Text and border of the controls.
  * @cssprop {<color>} [--carousel-elemental-border=color-mix(in srgb, currentcolor 20%, transparent)] - Border of a control that is not the current slide's.
  * @cssprop {<color>} [--carousel-elemental-hover=color-mix(in srgb, currentcolor 10%, transparent)] - Control background under the pointer.
- * @cssprop {<color>} [--carousel-elemental-current=currentcolor] - Fill of the picker button for the slide on screen.
+ * @cssprop {<color>} [--carousel-elemental-current=CanvasText] - Fill of the picker button for the slide on screen. `CanvasText` and not `currentcolor`: that button's text inverts to `Canvas`, and `currentcolor` in its background would resolve against that.
  * @cssprop {<color>} [--carousel-elemental-chip=Canvas] - Fill behind the rotation control - the one control drawn over a slide rather than over the page, which is why it is opaque and does not follow `currentcolor`.
  * @cssprop {<color>} [--carousel-elemental-rotate-hover-color=CanvasText] - The rotation control's foreground under the pointer: its icon, and the countdown ring with it.
  * @cssprop {<length>} [--carousel-elemental-ring=3px] - How thick the rotation control's countdown ring is. A hairline is a countdown nobody reads at a glance.
@@ -474,12 +538,6 @@ export class CarouselElemental extends ElementBase {
     // Wait until the light-DOM children have been parsed. The bundle is loaded deferred or
     // at the end of the body, so by upgrade time they are there.
     if (this.initialized) return;
-    // A list is the markup this element upgrades, not something it writes, so an element with
-    // none is not a carousel and cannot become one. How many slides are *in* that list is a
-    // different question, and `wire()` owns it: a gallery whose slides are built later starts
-    // with an empty row, and the listeners have to be on it by then or the controls that
-    // arrive with the slides drive nothing.
-    if (!this.scroller) return;
 
     this.onClick = this.onClick.bind(this);
     this.onLayout = this.onLayout.bind(this);
@@ -497,12 +555,16 @@ export class CarouselElemental extends ElementBase {
     // writes one where the page wrote none, and `strip()` may only take that one back.
     this.wroteRole = false;
     this.index = 0;
-    // The row's `scroll-padding` on the start side, re-read whenever the layout changes.
+    // The row's `scroll-padding` on the start side, and which way the row reads - both
+    // re-read whenever the layout changes, and once more on a press.
     this.inset = 0;
+    this.rtl = false;
     this.painted = false;
     // Null rather than absent: `applyEdges` runs before the first move.
     this.settling = null;
     this.settleTimer = null;
+    // The slide the last press sent the row to, until it lands there - see `pressOrigin`.
+    this.destination = null;
     // The handle `swipe()` gives back, so the gesture can be taken off again.
     this.swipes = null;
     // The scroller whose height this element has pinned, and which it owes back.
@@ -523,6 +585,11 @@ export class CarouselElemental extends ElementBase {
     this.addEventListener('focusout', this.onFocusOut);
 
     this.initialized = true;
+    // Bound before `wire()` looks for anything, and whatever it finds. A gallery whose slides
+    // are built later starts with an empty row - or with no list at all - and the listeners
+    // have to be on the element by the time `wire()` is called on what arrived, or the
+    // controls that come with it drive nothing. Returning early on a missing list was the
+    // version where that `wire()` threw.
     this.wire();
 
     // Reduced motion is the one case where `autoplay` is read and not obeyed. The control
@@ -568,6 +635,10 @@ export class CarouselElemental extends ElementBase {
     this.unswipe();
     this.unpin();
     this.arrived();
+    // The clock too, or an emptied carousel ticks at nothing for the life of the page with
+    // `data-carousel-rotating` still on. `rotating` stays as it was: it is the reader's
+    // answer, and `wire()` restarts the clock from it when the slides come back.
+    this.clearTimer();
 
     this.removeControls();
     this.painted = false;
@@ -697,6 +768,7 @@ export class CarouselElemental extends ElementBase {
       // container-only observer misses: a breakpoint changing
       // `--carousel-elemental-slide-size` inside a fixed-width column resizes every slide
       // and leaves the scroller exactly the size it was.
+      this.measure(scroller);
       this.observer = new ResizeObserver(this.onLayout);
       this.observer.observe(scroller);
       for (const slide of slides) this.observer.observe(slide);
@@ -709,6 +781,10 @@ export class CarouselElemental extends ElementBase {
     }
 
     this.apply(Math.min(this.index, Math.max(slides.length - 1, 0)));
+    // The clock, where `strip()` took it off a row that had nothing to rotate and the slides
+    // are back: only if the rotation is still on, and not out from under a pointer or a focus
+    // that is holding it - unless the reader started it by hand, which outranks both.
+    if (this.rotating && !this.timer && (this.pinned || !rotationHeld(this.hovering, this.focused))) this.tick();
   }
 
   /**
@@ -803,12 +879,11 @@ export class CarouselElemental extends ElementBase {
   /**
    * Where the row is now, read off the layout.
    *
-   * Called from both of the things that can move it, which is not belt and braces: the
-   * observer fires when a slide crosses one of its thresholds, and a press that shifts the row
-   * by less than that - the last step into a clamped end, or any step at all on a row of wide
-   * slides - crosses nothing and would leave the index behind. A stale index is not a cosmetic
-   * problem: the next press is measured from it, so previous appears to work once and then do
-   * nothing at all, and next jumps several slides at a time.
+   * Called for a scroll and for a resize alike, which is not belt and braces: a scroll moves
+   * the row without changing its shape, a resize changes its shape without moving it, and the
+   * index is stale after either. A stale index is not a cosmetic problem: the next press is
+   * measured from it, so previous appears to work once and then do nothing at all, and next
+   * jumps several slides at a time.
    */
   readIndex() {
     const scroller = this.scroller;
@@ -816,9 +891,16 @@ export class CarouselElemental extends ElementBase {
     // zero - and moving the carousel because something folded over it is a change nobody
     // asked for.
     if (!scroller || !scroller.clientWidth) return;
-    const edge = scroller.getBoundingClientRect().left;
-    const starts = this.slides.map((slide) => slide.getBoundingClientRect().left - edge);
+    const box = scroller.getBoundingClientRect();
+    const starts = this.slides.map((slide) => startEdge(slide.getBoundingClientRect(), box, this.rtl));
     this.apply(currentSlide(starts, this.inset, this.index));
+  }
+
+  /** Which way the row reads, and how far in from its box the snap edge sits. */
+  measure(scroller) {
+    const styles = getComputedStyle(scroller);
+    this.rtl = styles.direction === 'rtl';
+    this.inset = startInset(styles, this.rtl);
   }
 
   /**
@@ -838,8 +920,7 @@ export class CarouselElemental extends ElementBase {
   onLayout() {
     const scroller = this.scroller;
     if (!scroller) return;
-    const styles = getComputedStyle(scroller);
-    this.inset = startInset(styles, styles.direction === 'rtl');
+    this.measure(scroller);
     this.readIndex();
   }
 
@@ -858,6 +939,7 @@ export class CarouselElemental extends ElementBase {
     if (this.settleTimer) clearTimeout(this.settleTimer);
     this.settleTimer = null;
     this.settling = null;
+    this.destination = null;
   }
 
   /**
@@ -933,8 +1015,8 @@ export class CarouselElemental extends ElementBase {
 
     this.toggleAttribute('data-carousel-at-start', at.start);
     this.toggleAttribute('data-carousel-at-end', at.end);
-    if (this.prevButton) this.prevButton.setAttribute('aria-disabled', String(at.start));
-    if (this.nextButton) this.nextButton.setAttribute('aria-disabled', String(at.end));
+    disable(this.prevButton, at.start);
+    disable(this.nextButton, at.end);
   }
 
   /**
@@ -986,9 +1068,8 @@ export class CarouselElemental extends ElementBase {
     // Re-read rather than trusted: the observer refreshes this on layout changes, and a page
     // is free to change `scroll-padding` without moving anything - which fires nothing at all.
     // A press is once per reader, so it can afford to ask.
-    const styles = getComputedStyle(scroller);
-    this.inset = startInset(styles, styles.direction === 'rtl');
-    const delta = slide.getBoundingClientRect().left - scroller.getBoundingClientRect().left - this.inset;
+    this.measure(scroller);
+    const delta = scrollDelta(startEdge(slide.getBoundingClientRect(), scroller.getBoundingClientRect(), this.rtl), this.inset, this.rtl);
     // Recorded before the scroll rather than after it, so the buttons answer for the move as
     // it starts. Clamped to the scrollable range, which is not tidying: the last slide of a
     // row that shows three at a time is asked for from further away than the row can scroll,
@@ -999,6 +1080,7 @@ export class CarouselElemental extends ElementBase {
     const wanted = scroller.scrollLeft + delta;
     const reach = Math.max(scroller.scrollWidth - scroller.clientWidth, 0);
     this.settling = Math.sign(wanted) * Math.min(Math.abs(wanted), reach);
+    this.destination = at;
     if (this.settleTimer) clearTimeout(this.settleTimer);
     // The backstop, and the reason this cannot get stuck: a scroll the reader interrupts
     // with a swipe never reaches the position it was sent to, and there is no event for
@@ -1015,12 +1097,12 @@ export class CarouselElemental extends ElementBase {
   /** One on, stopping at the end - where the button is dim and says so. */
   next() {
     if (this.hasAttribute('data-carousel-at-end')) return;
-    this.to(stepSlide(this.index, 1, this.slides.length));
+    this.to(stepSlide(pressOrigin(this.index, this.destination), 1, this.slides.length));
   }
 
   previous() {
     if (this.hasAttribute('data-carousel-at-start')) return;
-    this.to(stepSlide(this.index, -1, this.slides.length));
+    this.to(stepSlide(pressOrigin(this.index, this.destination), -1, this.slides.length));
   }
 
   /**
@@ -1032,7 +1114,7 @@ export class CarouselElemental extends ElementBase {
    */
   advance() {
     if (this.hasAttribute('data-carousel-at-end')) this.to(0);
-    else this.to(stepSlide(this.index, 1, this.slides.length));
+    else this.to(stepSlide(pressOrigin(this.index, this.destination), 1, this.slides.length));
   }
 
   /**
@@ -1210,16 +1292,15 @@ export class CarouselElemental extends ElementBase {
       // The mode change swaps what the element watches - an observer and a scroll listener,
       // or neither - so the whole wiring is re-read rather than patched in place.
       this.wire();
-      this.applyLive();
       return;
     }
     if (name === 'autoplay') {
-      // The control appears and disappears with the attribute, so the rotation has to be
-      // re-decided after it: `play()` labels a button that has to exist by then.
-      this.writeControls();
-      this.apply(this.index);
-      if (this.autoplay && !reducedMotion()) this.play();
-      else this.pause();
+      // Off is decided before the re-wire, so `wire()` finds no rotation to restart; on is
+      // decided after it, because `play()` labels a control that `wire()` writes - and refuses
+      // to write over fewer than two slides, exactly as the upgrade does.
+      if (!this.autoplay) this.pause();
+      this.wire();
+      if (this.autoplay && this.slides.length > 1 && !reducedMotion()) this.play();
       return;
     }
     if (this.rotating && this.timer) this.tick();

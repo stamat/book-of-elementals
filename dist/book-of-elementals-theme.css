@@ -139,7 +139,8 @@ carousel-elemental > [data-carousel-controls] [data-carousel-markers] {
   gap: var(--carousel-elemental-controls-gap);
 }
 
-carousel-elemental button[aria-controls] {
+carousel-elemental > [data-carousel-controls] button,
+carousel-elemental > button[data-carousel-rotate] {
   display: grid;
   place-items: center;
   inline-size: var(--carousel-elemental-marker-size);
@@ -153,7 +154,8 @@ carousel-elemental button[aria-controls] {
   border: 1px solid var(--carousel-elemental-border);
   border-radius: var(--carousel-elemental-radius);
 }
-carousel-elemental button[aria-controls]:not([data-carousel-rotate]):hover {
+
+carousel-elemental > [data-carousel-controls] button:hover {
   background: var(--carousel-elemental-hover);
 }
 

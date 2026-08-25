@@ -61,9 +61,10 @@ p {
 ```
 
 That markup is the page you would have had anyway: a list. The element adds the
-roles and appends the controls — so before it upgrades, and if it never does, the same list
-is a scroll-snapping row you can swipe, drag the scrollbar of, or reach with the keyboard,
-with every slide in the page and in reading order.
+roles and appends the controls — and before it upgrades, or if it never does, it is still that
+list: every slide on the page, in reading order, nothing hidden and nothing to press. The row,
+the snap and the controls all arrive with the script, because the stylesheet keys on what the
+upgrade writes — so a page without it has a list, not a carousel missing its buttons.
 
 ## Prior art
 
@@ -74,9 +75,10 @@ Two came before it, both now archived, and this element is what replaced them:
 | [slidescroll](https://github.com/stamat/slidescroll) | a scroll-snapping row moved by `scrollIntoView`, one dependency, never published               | 216 lines with no `role`, no `aria-*` and no key handler — it scrolls beautifully with a mouse and is invisible to everyone else                                                                                                                                      |
 | [slideswap](https://github.com/stamat/slideswap)     | a fade slideshow on npm: adaptive height, infinite loop, swipe, your own prev and next buttons | `aria-hidden` and `tabindex` on the slides, and nothing else; keyboard navigation and bullet navigation were still on its TODO list when it was archived. Its markup is its own vocabulary — `.slideswap-slide` inside `.slideswap-slides`, wired up by a constructor |
 
-The idea both were right about carried over: the browser owns the position, so there is no
-resize listener here either — [the scroller is the state](#at-the-ends). What did not is the
-shape. These took a selector and an options object; this upgrades the list you already wrote,
+The idea both were right about carried over: the browser owns the position and nothing here
+writes it back from an index — [the scroller is the state](#at-the-ends), and a resize is a
+reason to read it again, never to move it. What did not is the shape. These took a selector
+and an options object; this upgrades the list you already wrote,
 and the APG roles, the picker and the keyboard are the part that was missing rather than a
 setting. [`fade`](#fade) is slideswap's stack with all of that on it, minus
 [the infinite loop](#the-infinite-loop-that-is-not-here), which was measured and refused.
@@ -311,7 +313,9 @@ book supports — so there is no key handler here at all, and nothing taken from
 was done with the carousel.
 
 No control moves the focus. That is the APG's rule and the reason it matters is repetition:
-press next four times and the focus is still on next.
+press next four times and the focus is still on next — and the row is four slides on, because
+each press counts from the slide the last one asked for rather than from wherever the scroll
+has got to.
 
 ### The live region there is not
 
@@ -373,6 +377,10 @@ attribute taken off.
 The rotation is the one thing that wraps: at the last slide it goes back to the first, because
 a carousel that rotates to the end and stops is a carousel that quietly died. The buttons do
 not, because they are dim there, and a control that looks spent must not still act.
+
+A `dir="rtl"` row runs the other way, and everything here runs with it: next is the slide to
+the left, the start is the right edge, the snap inset is the one on that side, and in `fade`
+the swipe reads the same way round as the arrows.
 
 ## Rotation
 
@@ -552,7 +560,7 @@ attribute rather than the default:
 | No live region needed                        | `aria-live`, `polite` when pressed and `off` while rotating     |
 | Find-in-page searches every slide            | Finds only the slide showing                                    |
 | Swipe, scrollbar, arrow keys on the scroller | Swipe, the buttons and the picker — no scrollbar, no arrow keys |
-| Without script: a scrolling row              | Without script: every slide stacked on top of the last          |
+| Without script: a plain list                 | Without script: the same plain list — the stack arrives with the script, like the row |
 
 `visibility` and not `opacity` alone, because a slide at `opacity: 0` is still focusable and
 still read — a tab stop in a slide nobody can see is worse than no fade at all. The delay on
@@ -616,13 +624,15 @@ page that never touches them.
 puts no pattern on it — one slide is a figure, and a picker with a single button in it would
 be worse than the markup it upgraded — but it still binds its listeners and waits, so a
 gallery that ships an empty `<ul>` and fills it on demand is a `wire()` away from a working
-carousel. Emptying one takes the roles, the names and the controls back off and leaves the
-list, rather than leaving controls that drive nothing. The
+carousel. Emptying one takes the roles, the names, the controls and the rotation's clock back
+off and leaves the list, rather than leaving controls that drive nothing; filling it again
+brings them all back, the clock included unless the reader had stopped it. The
 [lightbox example](../examples/lightbox.html#a-gallery-at-scale) is that shape end to end.
 
 The one thing it cannot do is invent the list. The scroller is markup this element upgrades,
 never something it writes: with no `<ul>`, `<ol>` or `<menu>` inside, there is nothing to
-wire and `wire()` returns.
+wire and `wire()` returns. Append one and call it again — the listeners were bound at upgrade
+and are waiting for it.
 
 ## The look
 
@@ -640,7 +650,7 @@ of round buttons, mixed out of `currentcolor` so they sit in whatever palette th
 | `--carousel-elemental-control`      | `currentcolor`        | Text and border of the controls                                                                           |
 | `--carousel-elemental-border`       | 20% of `currentcolor` | Border of a control                                                                                       |
 | `--carousel-elemental-hover`        | 10% of `currentcolor` | Control background under the pointer                                                                      |
-| `--carousel-elemental-current`      | `currentcolor`        | Fill of the picker button for the slide on screen                                                         |
+| `--carousel-elemental-current`      | `CanvasText`          | Fill of the picker button for the slide on screen — not `currentcolor`, which its inverted text would turn `Canvas` |
 | `--carousel-elemental-chip`         | `Canvas`              | Fill behind the rotation control, which sits over a slide rather than over the page                       |
 | `--carousel-elemental-rotate-hover-color` | `CanvasText`    | The rotation control's foreground under the pointer — its icon, and the countdown ring with it            |
 | `--carousel-elemental-ring`         | `3px`                 | How thick the rotation control's countdown ring is                                                        |
@@ -685,11 +695,11 @@ visible half of the button's name — `Slide 3` contains `3`, which is what
 over a label — and a dot is a target with nothing in it to read. Draw dots if the design
 wants them, and hide the number knowing what it costs.
 
-The scrollbar comes off the row — and only once the element has upgraded. The rule is written
-against `[data-carousel-slides]`, which the element writes as it upgrades, so a page whose
-script never lands keeps the native scrollbar and the only way through the row that it has.
-After the upgrade the buttons and the picker are that way, and a scrollbar under them is a
-second one nobody uses. The wheel, the trackpad and the arrow keys are unaffected either way.
+The scrollbar comes off the row. After the upgrade the buttons and the picker are the way
+through, and a scrollbar under them is a second one nobody uses; the wheel, the trackpad and
+the arrow keys are unaffected. Before the upgrade there is no row to have one — every
+structure rule is written against `[data-carousel-slides]`, which the element writes — so a
+page whose script never lands has the plain list and nothing taken from it.
 
 Under `forced-colors` the current picker button is repainted in `Highlight`, since a fill is
 the only thing telling it apart. Motion is two things and both answer to

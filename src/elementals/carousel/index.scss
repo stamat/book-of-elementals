@@ -28,9 +28,9 @@ carousel-elemental > [data-carousel-slides] {
   scroll-snap-type: x mandatory;
 
   // No scrollbar - and the selector is the whole argument for that being safe. The element
-  // writes `data-carousel-slides` as it upgrades, so nothing here applies until the buttons
-  // and the picker exist to move the row instead. Before that, and on a page where the
-  // script never lands, the native scrollbar is still there and is the only way through.
+  // writes `data-carousel-slides` as it upgrades, so this applies only once the buttons and
+  // the picker exist to move the row instead. Before that there is no row to hide the
+  // scrollbar of: a plain list, with nothing to scroll.
   scrollbar-width: none;
 
   &::-webkit-scrollbar {

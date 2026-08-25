@@ -78,7 +78,12 @@ carousel-elemental > [data-carousel-controls] [data-carousel-markers] {
 
 // One shape for all four controls - previous, next, every picker button, and the rotation
 // control over the corner of the row. They do the same kind of thing and are read as one set.
-carousel-elemental button[aria-controls] {
+// Named by where the element put them and not by `button[aria-controls]`, which a disclosure
+// trigger, a tab or a menu button inside a slide carries too - and a page's own controls are
+// not this theme's to redraw. The same (0,1,2) specificity that selector had, so an override
+// that beat it beats this.
+carousel-elemental > [data-carousel-controls] button,
+carousel-elemental > button[data-carousel-rotate] {
   display: grid;
   place-items: center;
   inline-size: var(--carousel-elemental-marker-size);
@@ -91,12 +96,13 @@ carousel-elemental button[aria-controls] {
   background: none;
   border: 1px solid var(--carousel-elemental-border);
   border-radius: var(--carousel-elemental-radius);
+}
 
-  // Every control but the rotation one: that button is a chip over a photograph rather than a
-  // tint over the page, and it draws its own hover into the fill this would replace.
-  &:not([data-carousel-rotate]):hover {
-    background: var(--carousel-elemental-hover);
-  }
+// Every control but the rotation one: that button is a chip over a photograph rather than a
+// tint over the page, and it draws its own hover into the fill this would replace. A rule of
+// its own at (0,2,2), which is what lets a dim arrow's `background: none` below win over it.
+carousel-elemental > [data-carousel-controls] button:hover {
+  background: var(--carousel-elemental-hover);
 }
 
 // The icons are drawn on a 16 viewBox and sized in `em`, so they follow the button's text
@@ -151,10 +157,11 @@ carousel-elemental [data-carousel-marker][aria-disabled="true"] {
 // rest, because the markup has it first - the APG wants it at the head of the tab sequence,
 // and a control drawn a long way from where it is read is a tab order that lies. Over the
 // corner is close enough to both.
-// `button` in the selector is load-bearing rather than decoration: the shared rule above is
-// `carousel-elemental button[aria-controls]`, and a selector without the element name here is
-// one step short of it - the fill below would lose to that rule's `background: none` and this
-// button would be transparent over whatever the slide behind it happens to be.
+// `button` in the selector is load-bearing rather than decoration: the shared rule above
+// names this control as `carousel-elemental > button[data-carousel-rotate]`, and a selector
+// without the element name here is one step short of it - the fill below would lose to that
+// rule's `background: none` and this button would be transparent over whatever the slide
+// behind it happens to be.
 carousel-elemental > button[data-carousel-rotate] {
   position: absolute;
   z-index: 1;

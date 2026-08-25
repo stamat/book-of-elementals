@@ -200,6 +200,15 @@
     }
     return starts.length - 1;
   }
+  function startEdge(slide, scroller, rtl) {
+    return rtl ? scroller.right - slide.right : slide.left - scroller.left;
+  }
+  function scrollDelta(start, inset, rtl) {
+    return rtl ? inset - start : start - inset;
+  }
+  function pressOrigin(index, destination) {
+    return destination === null ? index : destination;
+  }
   var FOCUSABLE = "a[href], button, input, select, textarea, summary, iframe, [tabindex], [contenteditable]";
   var carouselCount = 0;
   var ICON = {
@@ -246,6 +255,11 @@
   }
   function reducedMotion() {
     return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+  function disable(button, disabled) {
+    if (!button) return;
+    const value = String(disabled);
+    if (button.getAttribute("aria-disabled") !== value) button.setAttribute("aria-disabled", value);
   }
   var CarouselElemental = class extends ElementBase {
     static get observedAttributes() {
@@ -295,7 +309,6 @@
     }
     connectedCallback() {
       if (this.initialized) return;
-      if (!this.scroller) return;
       this.onClick = this.onClick.bind(this);
       this.onLayout = this.onLayout.bind(this);
       this.onScroll = this.onScroll.bind(this);
@@ -310,9 +323,11 @@
       this.wroteRole = false;
       this.index = 0;
       this.inset = 0;
+      this.rtl = false;
       this.painted = false;
       this.settling = null;
       this.settleTimer = null;
+      this.destination = null;
       this.swipes = null;
       this.heights = null;
       this.named = /* @__PURE__ */ new WeakMap();
@@ -357,6 +372,7 @@
       this.unswipe();
       this.unpin();
       this.arrived();
+      this.clearTimer();
       this.removeControls();
       this.painted = false;
       this.removeAttribute("data-carousel-at-start");
@@ -436,6 +452,7 @@
         scroller.addEventListener("transitioncancel", this.onHeightEnd);
         this.heights = scroller;
       } else {
+        this.measure(scroller);
         this.observer = new ResizeObserver(this.onLayout);
         this.observer.observe(scroller);
         for (const slide of slides) this.observer.observe(slide);
@@ -443,6 +460,7 @@
         this.scrolls = scroller;
       }
       this.apply(Math.min(this.index, Math.max(slides.length - 1, 0)));
+      if (this.rotating && !this.timer && (this.pinned || !rotationHeld(this.hovering, this.focused))) this.tick();
     }
     /**
      * Write the controls, or write them again after the slides changed.
@@ -516,19 +534,24 @@
     /**
      * Where the row is now, read off the layout.
      *
-     * Called from both of the things that can move it, which is not belt and braces: the
-     * observer fires when a slide crosses one of its thresholds, and a press that shifts the row
-     * by less than that - the last step into a clamped end, or any step at all on a row of wide
-     * slides - crosses nothing and would leave the index behind. A stale index is not a cosmetic
-     * problem: the next press is measured from it, so previous appears to work once and then do
-     * nothing at all, and next jumps several slides at a time.
+     * Called for a scroll and for a resize alike, which is not belt and braces: a scroll moves
+     * the row without changing its shape, a resize changes its shape without moving it, and the
+     * index is stale after either. A stale index is not a cosmetic problem: the next press is
+     * measured from it, so previous appears to work once and then do nothing at all, and next
+     * jumps several slides at a time.
      */
     readIndex() {
       const scroller = this.scroller;
       if (!scroller || !scroller.clientWidth) return;
-      const edge = scroller.getBoundingClientRect().left;
-      const starts = this.slides.map((slide) => slide.getBoundingClientRect().left - edge);
+      const box = scroller.getBoundingClientRect();
+      const starts = this.slides.map((slide) => startEdge(slide.getBoundingClientRect(), box, this.rtl));
       this.apply(currentSlide(starts, this.inset, this.index));
+    }
+    /** Which way the row reads, and how far in from its box the snap edge sits. */
+    measure(scroller) {
+      const styles = getComputedStyle(scroller);
+      this.rtl = styles.direction === "rtl";
+      this.inset = startInset(styles, this.rtl);
     }
     /**
      * The observer's whole job: notice that the layout changed and re-read it.
@@ -547,8 +570,7 @@
     onLayout() {
       const scroller = this.scroller;
       if (!scroller) return;
-      const styles = getComputedStyle(scroller);
-      this.inset = startInset(styles, styles.direction === "rtl");
+      this.measure(scroller);
       this.readIndex();
     }
     /** Scrolled: the edges are the scroller's to report, and they change without the set of
@@ -565,6 +587,7 @@
       if (this.settleTimer) clearTimeout(this.settleTimer);
       this.settleTimer = null;
       this.settling = null;
+      this.destination = null;
     }
     /**
      * Push the current slide onto the picker and the slides, and tell the page when it moved.
@@ -607,8 +630,8 @@
       const at = this.fade ? { start: this.index <= 0, end: this.index >= this.slides.length - 1 } : scrollEdges(offset, scroller.clientWidth, scroller.scrollWidth);
       this.toggleAttribute("data-carousel-at-start", at.start);
       this.toggleAttribute("data-carousel-at-end", at.end);
-      if (this.prevButton) this.prevButton.setAttribute("aria-disabled", String(at.start));
-      if (this.nextButton) this.nextButton.setAttribute("aria-disabled", String(at.end));
+      disable(this.prevButton, at.start);
+      disable(this.nextButton, at.end);
     }
     /**
      * Carry the stack's height from the slide that left to the slide that arrived.
@@ -650,12 +673,12 @@
         return;
       }
       const scroller = this.scroller;
-      const styles = getComputedStyle(scroller);
-      this.inset = startInset(styles, styles.direction === "rtl");
-      const delta = slide.getBoundingClientRect().left - scroller.getBoundingClientRect().left - this.inset;
+      this.measure(scroller);
+      const delta = scrollDelta(startEdge(slide.getBoundingClientRect(), scroller.getBoundingClientRect(), this.rtl), this.inset, this.rtl);
       const wanted = scroller.scrollLeft + delta;
       const reach = Math.max(scroller.scrollWidth - scroller.clientWidth, 0);
       this.settling = Math.sign(wanted) * Math.min(Math.abs(wanted), reach);
+      this.destination = at;
       if (this.settleTimer) clearTimeout(this.settleTimer);
       this.settleTimer = setTimeout(() => {
         this.arrived();
@@ -667,11 +690,11 @@
     /** One on, stopping at the end - where the button is dim and says so. */
     next() {
       if (this.hasAttribute("data-carousel-at-end")) return;
-      this.to(stepSlide(this.index, 1, this.slides.length));
+      this.to(stepSlide(pressOrigin(this.index, this.destination), 1, this.slides.length));
     }
     previous() {
       if (this.hasAttribute("data-carousel-at-start")) return;
-      this.to(stepSlide(this.index, -1, this.slides.length));
+      this.to(stepSlide(pressOrigin(this.index, this.destination), -1, this.slides.length));
     }
     /**
      * One on for the rotation, which is the only thing here that wraps.
@@ -682,7 +705,7 @@
      */
     advance() {
       if (this.hasAttribute("data-carousel-at-end")) this.to(0);
-      else this.to(stepSlide(this.index, 1, this.slides.length));
+      else this.to(stepSlide(pressOrigin(this.index, this.destination), 1, this.slides.length));
     }
     /**
      * Start rotating.
@@ -833,14 +856,12 @@
       if (!this.initialized || previous === current) return;
       if (name === "fade") {
         this.wire();
-        this.applyLive();
         return;
       }
       if (name === "autoplay") {
-        this.writeControls();
-        this.apply(this.index);
-        if (this.autoplay && !reducedMotion()) this.play();
-        else this.pause();
+        if (!this.autoplay) this.pause();
+        this.wire();
+        if (this.autoplay && this.slides.length > 1 && !reducedMotion()) this.play();
         return;
       }
       if (this.rotating && this.timer) this.tick();

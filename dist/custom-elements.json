@@ -561,8 +561,100 @@
           }
         },
         {
+          "kind": "function",
+          "name": "startEdge",
+          "parameters": [
+            {
+              "name": "slide",
+              "description": "The slide's box.",
+              "type": {
+                "text": "{left: number, right: number}"
+              }
+            },
+            {
+              "name": "scroller",
+              "description": "The scroller's box.",
+              "type": {
+                "text": "{left: number, right: number}"
+              }
+            },
+            {
+              "name": "rtl",
+              "description": "Whether the row reads right to left.",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "How far a slide's start edge is past the row's, in the direction the row scrolls.\n\nLeft edges where the row reads left to right, right edges where it reads the other way.\nMeasured by its left edge, a right-to-left row's first slide - the one against the right\nedge - reads as the furthest along of them all and every slide after it as behind: the\nindex never leaves zero, the picker never moves, and next sends the row a slide's width the\nwrong way. `scrollEdges` and `startInset` already read the direction; this is the third\nmeasurement that has to.",
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "scrollDelta",
+          "parameters": [
+            {
+              "name": "start",
+              "description": "The slide's `startEdge()`.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "inset",
+              "description": "The row's `scroll-padding` on the start side.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "rtl",
+              "description": "Whether the row reads right to left.",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "description": "What to add to `scrollLeft` to bring a slide's start to the row's snap edge.\n\nThe start is measured in reading direction and `scrollLeft` is not: a right-to-left row\ncounts down from zero, so the same distance is travelled by taking it off.",
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "name": "pressOrigin",
+          "parameters": [
+            {
+              "name": "index",
+              "description": "The slide the row is on.",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "destination",
+              "description": "The slide the last press asked for, or null once the row has landed.",
+              "type": {
+                "text": "number|null"
+              }
+            }
+          ],
+          "description": "The slide a press counts from: the one the row is on its way to, or, once it has landed,\nthe one it is on.\n\nThe index catches up at the end of the trip - the scroll event that moves it comes when the\nrow has crossed the next slide's start - so a second press during the smooth scroll the\nfirst one started would count from where the row still was, and send it to the slide it\nwas already going to: two quick presses of next, one slide.",
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          }
+        },
+        {
           "kind": "class",
-          "description": "`<carousel-elemental>` custom element.\n\nA row of slides you scroll through, per the\n[APG Carousel pattern](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/) - previous and\nnext, a picker with one button per slide, and, when it is asked for, automatic rotation\nwith the control that stops it.\n\n**The scroll container is the state.** There is no transform engine, no clones and no\nindex attribute to keep in step with where the row actually is: the slides sit in a\nscroll-snapping scroller, moving means setting `scrollLeft`, and which slide is current is\nread off the boxes themselves. That is what buys the responsiveness for nothing - resize\nthe window, change how many slides fit in CSS, or put the whole thing in a container\nquery, and the answer is measured from the layout that came out of it rather than from an\nindex some earlier layout wrote down.\n\nLight DOM, no shadow root. Nothing you wrote is moved or wrapped; the element adds the\nroles to your list and its items, and appends the controls - which is also why the\ncontrols are its to write rather than yours. A previous button authored in the markup is\na button that does nothing until the script lands, and this element's promise is the\nother way round: with no script the slides are a scroll-snapping row you swipe, drag the\nscrollbar of, or reach with the keyboard, every slide in the page and in reading order.\n\n**No live region while it scrolls, and that is deliberate.** The APG's example flips\n`aria-live` between `off` and `polite` because there one slide exists at a time and a\nreader who cannot see the swap would otherwise never hear about it. Scrolling, every slide\nis in the DOM, in the accessibility tree and in reading order the whole time, so there is\nnothing to announce and nothing hidden to miss - and no `aria-hidden` on the slides off\nscreen either, which is the bug that puts a focusable link inside a hidden subtree.\n`fade` is the mode where one slide really is all there is, and there the live region comes\nback, off while rotating and polite when it is not, exactly as the pattern asks.\n\n**One gesture, and only in `fade`.** A scrolling row swipes because it is a scroll\ncontainer, and a second answer laid over the browser's would fight it. A stack is not one,\nso there the swipe is read here - touch and pen, never the mouse, which has the buttons and\nthe keyboard and would pay for a drag with the page's text selection and link clicks.\n\nponytail: one axis, horizontal. A vertical carousel is the same code with the block\nproperties, and nothing has asked for one; the refusal is on the page rather than an\n`orientation` attribute nobody sets.",
+          "description": "`<carousel-elemental>` custom element.\n\nA row of slides you scroll through, per the\n[APG Carousel pattern](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/) - previous and\nnext, a picker with one button per slide, and, when it is asked for, automatic rotation\nwith the control that stops it.\n\n**The scroll container is the state.** There is no transform engine, no clones and no\nindex attribute to keep in step with where the row actually is: the slides sit in a\nscroll-snapping scroller, moving means setting `scrollLeft`, and which slide is current is\nread off the boxes themselves. That is what buys the responsiveness for nothing - resize\nthe window, change how many slides fit in CSS, or put the whole thing in a container\nquery, and the answer is measured from the layout that came out of it rather than from an\nindex some earlier layout wrote down.\n\nLight DOM, no shadow root. Nothing you wrote is moved or wrapped; the element adds the\nroles to your list and its items, and appends the controls - which is also why the\ncontrols are its to write rather than yours. A previous button authored in the markup is\na button that does nothing until the script lands, and this element's promise is the\nother way round: with no script the slides are a plain list, every one of them on the page\nand in reading order. The row, the snap and the controls all arrive with the script - the\nstylesheet keys on what the upgrade writes - so nothing is ever there to press before it\nworks.\n\n**No live region while it scrolls, and that is deliberate.** The APG's example flips\n`aria-live` between `off` and `polite` because there one slide exists at a time and a\nreader who cannot see the swap would otherwise never hear about it. Scrolling, every slide\nis in the DOM, in the accessibility tree and in reading order the whole time, so there is\nnothing to announce and nothing hidden to miss - and no `aria-hidden` on the slides off\nscreen either, which is the bug that puts a focusable link inside a hidden subtree.\n`fade` is the mode where one slide really is all there is, and there the live region comes\nback, off while rotating and polite when it is not, exactly as the pattern asks.\n\n**One gesture, and only in `fade`.** A scrolling row swipes because it is a scroll\ncontainer, and a second answer laid over the browser's would fight it. A stack is not one,\nso there the swipe is read here - touch and pen, never the mouse, which has the buttons and\nthe keyboard and would pay for a drag with the page's text selection and link clicks.\n\nponytail: one axis, horizontal. A vertical carousel is the same code with the block\nproperties, and nothing has asked for one; the refusal is on the page rather than an\n`orientation` attribute nobody sets.",
           "name": "CarouselElemental",
           "cssProperties": [
             {
@@ -633,9 +725,9 @@
               "type": {
                 "text": "<color>"
               },
-              "description": "Fill of the picker button for the slide on screen.",
+              "description": "Fill of the picker button for the slide on screen. `CanvasText` and not `currentcolor`: that button's text inverts to `Canvas`, and `currentcolor` in its background would resolve against that.",
               "name": "--carousel-elemental-current",
-              "default": "currentcolor"
+              "default": "CanvasText"
             },
             {
               "type": {
@@ -754,7 +846,17 @@
             {
               "kind": "method",
               "name": "readIndex",
-              "description": "Where the row is now, read off the layout.\n\nCalled from both of the things that can move it, which is not belt and braces: the\nobserver fires when a slide crosses one of its thresholds, and a press that shifts the row\nby less than that - the last step into a clamped end, or any step at all on a row of wide\nslides - crosses nothing and would leave the index behind. A stale index is not a cosmetic\nproblem: the next press is measured from it, so previous appears to work once and then do\nnothing at all, and next jumps several slides at a time."
+              "description": "Where the row is now, read off the layout.\n\nCalled for a scroll and for a resize alike, which is not belt and braces: a scroll moves\nthe row without changing its shape, a resize changes its shape without moving it, and the\nindex is stale after either. A stale index is not a cosmetic problem: the next press is\nmeasured from it, so previous appears to work once and then do nothing at all, and next\njumps several slides at a time."
+            },
+            {
+              "kind": "method",
+              "name": "measure",
+              "parameters": [
+                {
+                  "name": "scroller"
+                }
+              ],
+              "description": "Which way the row reads, and how far in from its box the snap edge sits."
             },
             {
               "kind": "method",
@@ -1124,6 +1226,30 @@
           "name": "currentSlide",
           "declaration": {
             "name": "currentSlide",
+            "module": "src/elementals/carousel/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "startEdge",
+          "declaration": {
+            "name": "startEdge",
+            "module": "src/elementals/carousel/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "scrollDelta",
+          "declaration": {
+            "name": "scrollDelta",
+            "module": "src/elementals/carousel/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "pressOrigin",
+          "declaration": {
+            "name": "pressOrigin",
             "module": "src/elementals/carousel/index.js"
           }
         },

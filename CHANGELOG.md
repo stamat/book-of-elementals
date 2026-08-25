@@ -76,6 +76,54 @@ may already be targeting**, since neither shows up in a function signature.
   not caught, and it was not caught before either: a slide that moves without resizing and
   without a scroll, which is `--carousel-elemental-gap` changing at a breakpoint.
 
+- **`<carousel-elemental>`: a right-to-left row was stuck on its first slide.** With
+  `dir="rtl"` the current slide and the distance to the next one were both measured off left
+  edges, which in a row that starts on the right are the wrong ones: the index never left `0`,
+  the picker never moved, and next scrolled nowhere — measured in Chromium at three slides a
+  screen; one a screen fails the same way from the second slide on. The edges, the snap inset
+  and the `fade` swipe already read the direction, and the two measurements now do too. No DOM
+  or CSS change.
+
+- **`<carousel-elemental>`: two quick presses of next moved one slide.** The index catches up
+  at the end of the smooth scroll, and a press landing before then counted from where the row
+  still was — so it asked for the slide the row was already going to. A press now counts from
+  the slide the last one asked for, and still stops where the arrows are dim; `next()` twice
+  from script moves two.
+
+- **`<carousel-elemental>`: `wire()` threw on a carousel that upgraded without a list** —
+  `TypeError: Cannot read properties of undefined (reading 'set')`. The upgrade returned before
+  binding anything, so a page that appended the list afterwards and called `wire()` as
+  documented hit it. It binds at upgrade and waits for the list now, as it already did for
+  the slides.
+
+- **`<carousel-elemental>`: emptying the slides through `wire()` left the rotation's clock
+  running.** Roles and controls came off; `data-carousel-rotating`, the inline
+  `--carousel-elemental-tick` and the interval stayed, ticking at nothing for the life of the
+  page. The clock stops with the pattern now and starts again when the slides come back through
+  `wire()` — unless the reader had stopped it, or is holding it with the pointer or the focus.
+  **DOM:** `data-carousel-rotating` and `--carousel-elemental-tick` now come off an emptied
+  carousel.
+
+- **`<carousel-elemental>`: `autoplay` switched on after upgrade wrote controls over fewer than
+  two slides**, pointed at `aria-controls=""`, with a clock behind them. The attribute change
+  goes through `wire()` now, which refuses under two the way the upgrade always has.
+
+- **`<carousel-elemental>` theme: a page's own `button[aria-controls]` inside a slide was drawn
+  as a carousel control** — a disclosure trigger, a tab or a menu button in a slide came out as
+  a 28px circle. The theme names its four controls by where the element put them. **CSS:** the
+  shared control rule is now `carousel-elemental > [data-carousel-controls] button,
+  carousel-elemental > button[data-carousel-rotate]`, at the same (0,1,2) specificity, so an
+  override that beat the old rule beats this one. The hover tint is a rule of its own at
+  (0,2,2), which is what lets a dim arrow's `background: none` win over it — it had been
+  losing by a point, so a spent arrow still took the tint under the pointer.
+
+- **Docs: the carousel said a page without its script keeps a scroll-snapping row.** It keeps
+  a plain list — every structure rule keys on `[data-carousel-slides]`, which the upgrade
+  writes — and the page, the README, the card-row example and the class comment all said
+  otherwise. Corrected, along with the "no resize listener" line the `ResizeObserver` above
+  made untrue and the `--carousel-elemental-current` default, which the theme sets to
+  `CanvasText` and the manifest reported as `currentcolor`.
+
 ## [3.0.0] - 2026-08-24
 
 ### Added

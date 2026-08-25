@@ -19,7 +19,7 @@ holds the JavaScript helpers, this one holds the elements.
 | Element                  | Pattern                                                                                            |
 | ------------------------ | -------------------------------------------------------------------------------------------------- |
 | `<accordion-elemental>`  | [APG Accordion](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/), over native `<details>`      |
-| `<carousel-elemental>`   | [APG Carousel](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/) on a scroll-snapping list — the scroller is the state, so nothing is measured on resize |
+| `<carousel-elemental>`   | [APG Carousel](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/) on a scroll-snapping list — the scroller is the state, read back off the layout and never written from an index |
 | `<checkbox-group-elemental>` | [APG Checkbox (Mixed-State)](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/), a select-all that shows the dash when it is some of them |
 | `<combobox-elemental>`   | [APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/), a `<select>` you can type your way down, one value or many |
 | `<disclosure-elemental>` | [APG Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), where `<details>` cannot go |
@@ -200,8 +200,8 @@ The element writes the roles of the
 appends the controls — previous, a picker with one button per slide, next — which
 is the enhancement working rather than a preference: a previous button authored in
 the markup is a button that does nothing until the script lands. Without the script
-the same list is a scroll-snapping row you can swipe, drag the scrollbar of and
-reach with the keyboard, every slide in the page and in reading order.
+the same list is a plain list, every slide on the page and in reading order — the
+row, the snap and the controls all arrive together.
 
 The arrows stop at the ends and say so before you press them: the one with nowhere
 to go takes `aria-disabled` and is dimmed, and `data-carousel-at-start` /
