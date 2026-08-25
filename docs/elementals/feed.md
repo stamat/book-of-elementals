@@ -239,6 +239,12 @@ past — the pattern permits both and neither is this element's business, since 
 article a reader is standing in is a bug you want written where the data is. No "new posts"
 banner, no scroll restoration, no empty state.
 
+Scroll restoration is the one of those an infinite feed actually needs, and it needs things
+this element has no way to know — how many articles were loaded, what the request that
+rebuilds them looks like, which article the reader left from. [The infinite scroll feed
+example](../examples/infinite-scroll-feed.html) is that written out on the page's side: what
+to save, what order to put it back in, and which parts the browser already does.
+
 ## Styling
 
 The structure stylesheet gives the element a box and keeps a focused article off the edge of

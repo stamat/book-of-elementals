@@ -199,8 +199,10 @@ export class FeedElemental extends ElementBase {
 
   attributeChangedCallback(name, previous, current) {
     if (!this.initialized || previous === current) return;
-    // A budget set again is a budget given again - the page saying "keep going" after the
-    // feed stopped, which is the only reason to touch the attribute twice.
+    // A new budget is a budget given again - the page saying "keep going" after the feed
+    // stopped. It has to be a *different* number, because the guard above drops a write that
+    // did not change the value: a page refilling on every load counts up rather than setting
+    // the same one twice.
     if (name === 'auto-load') this.budget = this.autoLoad;
     this.wire();
   }

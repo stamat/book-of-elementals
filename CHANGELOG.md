@@ -15,6 +15,27 @@ may already be targeting**, since neither shows up in a function signature.
 
 ## [Unreleased]
 
+### Added
+
+- **An infinite scroll feed example**, at
+  [examples/infinite-scroll-feed.html](https://stamat.github.io/book-of-elementals/examples/infinite-scroll-feed.html).
+  `<feed-elemental>` over a mocked endpoint, in a scroll pane of its own, doing the half of
+  infinite scroll every page gets wrong: coming back to it. What the page saves on the way out
+  — how many articles were loaded, the pane's offset, which article the reader opened — what
+  order those go back in, and why the way back is one request for the whole prefix instead of
+  one round trip per page. Two traps written down with it: a `display: none` box reads
+  `scrollTop` as `0` and refuses to be set, and `focus()` scrolls what it lands on, so the
+  restore focuses with `preventScroll` and sets the offset after.
+
+  It also answers the question the element refuses: there is no `auto-load="infinite"`, so the
+  page lists the three ways to have one — a ceiling, a budget refilled on every load, or the
+  page owning the `IntersectionObserver` — and what each costs. **Refilling needs a number the
+  element has not seen**: an attribute write that does not change the value is dropped, so
+  re-setting `auto-load="2"` refills nothing and counting up does. Driven in Chromium over the
+  built page; the comment in `feed/index.js` that implied otherwise now says so.
+
+  Docs only — nothing about the package changes.
+
 ## [3.1.0] - 2026-08-25
 
 ### Added
