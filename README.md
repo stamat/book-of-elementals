@@ -833,6 +833,55 @@ attributes, so one `MutationObserver` on the child catches every way of moving i
 Without the script the theme draws nothing, because it hangs off `:defined`: what shows is
 the browser's own bar with the real value on it, rather than a themed bar frozen at zero.
 
+## `<rearrange-elemental>`
+
+A list, a table body, or a board of named columns the reader puts in their own order:
+
+```html
+<rearrange-elemental drag>
+  <ol>
+    <li>Bananas</li>
+    <li>Coffee</li>
+  </ol>
+</rearrange-elemental>
+```
+
+| Attribute       | Type    | Default                                           | Description                                                                     |
+| --------------- | ------- | ------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `drag`          | boolean | `false`                                           | Let a pointer drag the items as well, by a grip the element adds to each one. The buttons stay either way. |
+| `up-text`       | string  | `Move {label} up`                                 | The first button's name. `{label}` is the item's.                               |
+| `down-text`     | string  | `Move {label} down`                               | The second button's name.                                                       |
+| `to-text`       | string  | `Move {label} to {container}`                     | A board's crossing buttons. `{container}` is the column the item would land in.  |
+| `moved-text`    | string  | `{label} moved to position {position} of {total}` | What the live region says after a move inside one list.                         |
+| `moved-to-text` | string  | `{label} moved to {container}, position {position} of {total}` | What it says after a crossing.                                     |
+
+On the items: `data-label` names one in the buttons and announcements instead of its own text,
+`data-rearrange-handle` is dragged instead of the grip the element writes, and
+`data-rearrange-cell` picks which cell of a `<tr>` the controls go in — its last cell otherwise.
+
+There is no APG pattern for rearranging; the nearest is the
+[rearrangeable listbox example](https://www.w3.org/WAI/ARIA/apg/patterns/listbox/examples/listbox-rearrangeable/),
+and what is taken from it is the part that is not the listbox. **The buttons are the element and
+`drag` is the option on top.** Every pointer-drag library does this the other way round and
+[WCAG 2.2 SC 2.5.7](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html) asks for
+the opposite, so written this way the criterion is met before the first drag event. The fast path
+is <kbd>Alt</kbd> and an arrow key; <kbd>Esc</kbd> puts a drag back where it started.
+
+**Several named lists in one element is a board**, with no attribute for it — two lists side by
+side have already said so. Each item then also gets a button for the column on either side of it,
+named by where it lands and never by a direction, since "move right" is a sentence a reader off
+the screen cannot use. A list in a board with no `aria-labelledby` or `aria-label` throws, naming
+the attribute it wanted. The keyboard path across is <kbd>Alt</kbd> + <kbd>Shift</kbd> + a
+sideways arrow, because <kbd>Alt</kbd> and a sideways arrow alone is the browser's Back and
+Forward; both flip in a right-to-left layout.
+
+One `rearrange-move` per landing carries `item`, `from`, `to`, `fromContainer`, `toContainer` and
+`sameContainer` — branch on the last, since `from` and `to` count inside their own column and a
+card that keeps its place while changing column reports `0` to `0`. Nothing is persisted, items
+arriving later need `.update()`, and a board wider than its viewport is scrolled by hand mid-drag.
+Not for a table that is also a `<sortable-table-elemental>`: that one derives the order from a key
+in the cells, and this is a hand order nothing derives.
+
 ## `<segmented-elemental>`
 
 One choice out of a few, drawn as a track with a knob that slides under it — the
@@ -1028,8 +1077,8 @@ row tracks in an `auto`-height grid resolve as `auto`.
 
 The handle is `24px` thick because that is
 [WCAG 2.2 2.5.8](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)'s minimum
-target, and the theme draws a `1px` line inside it — the hairline every other splitter makes you
-hit is a pseudo-element here, not the target. `splitter-change` fires when the gesture is over;
+target, and the theme draws three dots inside it, one `--splitter-elemental-dot-size` across —
+the grip every other splitter makes you hit is a pseudo-element here, not the target. `splitter-change` fires when the gesture is over;
 a pane that has to keep up with the drag wants a `ResizeObserver` on itself.
 
 Not [compare-images-slider](https://github.com/stamat/compare-images-slider), which puts the same
