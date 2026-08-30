@@ -31,6 +31,10 @@
     return null;
   }
   var CONTROLS = "button, a[href]";
+  function reachable(control) {
+    if (control.closest("[hidden]")) return false;
+    return control.checkVisibility ? control.checkVisibility({ visibilityProperty: true }) : true;
+  }
   var ToolbarElemental = class extends ElementBase {
     static get observedAttributes() {
       return ["vertical"];
@@ -53,6 +57,17 @@
     get controls() {
       return Array.from(this.querySelectorAll(CONTROLS)).filter((control) => !control.disabled);
     }
+    /**
+     * The controls the arrows walk: `controls`, less whatever is not on screen.
+     *
+     * Two lists rather than one narrower list, because they answer to different things.
+     * `tabindex` is written to and taken off every control the bar owns - a hidden one at
+     * teardown as much as a visible one, or it keeps a `tabindex="-1"` that outlives the element
+     * and is a button nobody can reach again.
+     */
+    get walkable() {
+      return this.controls.filter(reachable);
+    }
     connectedCallback() {
       if (this.initialized) return;
       if (!this.controls.length) return;
@@ -63,7 +78,7 @@
       this.addEventListener("keydown", this.onKeyDown);
       this.addEventListener("focusin", this.onFocusIn);
       this.observer = new MutationObserver(() => this.wire());
-      this.observer.observe(this, { childList: true, subtree: true, attributeFilter: ["disabled"] });
+      this.observer.observe(this, { childList: true, subtree: true, attributeFilter: ["disabled", "hidden"] });
       this.wire();
     }
     disconnectedCallback() {
@@ -90,7 +105,9 @@
       if (!controls.length) return;
       const focused = controls.find((control) => control === document.activeElement);
       const held = controls.find((control) => control.getAttribute("tabindex") === "0");
-      const stop = focused || held || controls[0];
+      const candidate = focused || held;
+      const stop = candidate && reachable(candidate) ? candidate : this.walkable[0];
+      if (!stop) return;
       for (const control of controls) control.tabIndex = control === stop ? 0 : -1;
     }
     attributeChangedCallback(name, previous, current) {
@@ -103,7 +120,7 @@
     onKeyDown(e) {
       const key = toolbarKey(e.key, this.vertical);
       if (!key) return;
-      const controls = this.controls;
+      const controls = this.walkable;
       const at = controls.indexOf(e.target);
       if (at === -1) return;
       const to = stepIndex(at, key, controls.length);

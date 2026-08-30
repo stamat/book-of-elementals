@@ -9509,7 +9509,7 @@
         },
         {
           "kind": "class",
-          "description": "`<toolbar-elemental>` custom element.\n\nA row of buttons the arrow keys walk and Tab passes in one step, per the\n[APG Toolbar pattern](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/).\n\nA bar of six buttons is six tab stops between the reader and whatever is after it. The\npattern's answer is a roving `tabindex`: one stop for the bar, arrows between the\ncontrols inside it. That is all this element is - the role, the axis, and the one\n`tabindex=\"0\"` that moves.\n\nThe ends do not wrap. Running off one is not how you get anywhere here: Tab is, and a bar\nthat looped would be a bar a reader can walk forever without noticing they had.\n\n**Name it.** A toolbar takes its name from `aria-label`, or `aria-labelledby` if something\non the page already says it - and where there is more than one bar, naming them is not\noptional. The element cannot invent one, and does not pretend to: an unnamed toolbar is\nannounced as a toolbar and nothing else.\n\nLight DOM, no shadow root. Degrades to what it is: with no script, the buttons are\nbuttons, each its own tab stop. That is the state the pattern improves on, not a broken\none - nothing is lost when the script never arrives.",
+          "description": "`<toolbar-elemental>` custom element.\n\nA row of buttons the arrow keys walk and Tab passes in one step, per the\n[APG Toolbar pattern](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/).\n\nA bar of six buttons is six tab stops between the reader and whatever is after it. The\npattern's answer is a roving `tabindex`: one stop for the bar, arrows between the\ncontrols inside it. That is all this element is - the role, the axis, and the one\n`tabindex=\"0\"` that moves.\n\nThe arrows visit what a reader can actually land on. A `disabled` control is stepped over,\nand so is one a stylesheet or a folded-away region has taken off the screen: neither can take\nfocus, and a cursor that stops where focus cannot follow is a bar that stops moving.\n\nThe ends do not wrap. Running off one is not how you get anywhere here: Tab is, and a bar\nthat looped would be a bar a reader can walk forever without noticing they had.\n\n**Name it.** A toolbar takes its name from `aria-label`, or `aria-labelledby` if something\non the page already says it - and where there is more than one bar, naming them is not\noptional. The element cannot invent one, and does not pretend to: an unnamed toolbar is\nannounced as a toolbar and nothing else.\n\nLight DOM, no shadow root. Degrades to what it is: with no script, the buttons are\nbuttons, each its own tab stop. That is the state the pattern improves on, not a broken\none - nothing is lost when the script never arrives.",
           "name": "ToolbarElemental",
           "cssProperties": [
             {
@@ -9577,6 +9577,12 @@
               "kind": "field",
               "name": "controls",
               "description": "The controls the arrows walk, in document order.\n\nA `disabled` button is left out because the platform will not focus one, and a cursor\nthat lands where focus cannot follow is a bar that stops moving. Keeping such a control\nreachable is `aria-disabled` on it instead - still focusable, still announced, and this\nlist still has it.",
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "walkable",
+              "description": "The controls the arrows walk: `controls`, less whatever is not on screen.\n\nTwo lists rather than one narrower list, because they answer to different things.\n`tabindex` is written to and taken off every control the bar owns - a hidden one at\nteardown as much as a visible one, or it keeps a `tabindex=\"-1\"` that outlives the element\nand is a button nobody can reach again.",
               "readonly": true
             },
             {

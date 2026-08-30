@@ -129,6 +129,26 @@ Buttons that enable and disable as the document changes are the ordinary case, n
 one, so the element watches for it. Nothing has to call a refresh, and forgetting one would
 be a bar whose only tab stop had just gone `disabled`.
 
+## Hidden controls
+
+A control that is not on screen is stepped over for the same reason a `disabled` one is:
+`focus()` on it does nothing, so an arrow that lands there is an arrow that moves nothing. That
+covers a button your own stylesheet hides — the one for a feature this browser turned out not to
+have — and a whole region folded away on a narrow screen, which is how a crowded bar sheds its
+rarely-used half.
+
+The tab stop goes with it. A stop left on a control the reader cannot see is a bar
+<kbd>Tab</kbd> enters and lands nowhere in, so it moves to the first control still on screen. A
+bar hidden whole keeps the stop it had, because that bar is waiting on something rather than
+gone.
+
+Fading is not hiding. A control row that drops to `opacity: 0` over a video is still a row the
+keyboard reaches, and focus arriving in it is usually what brings it back — so opacity is no
+part of the question.
+
+Before Safari 17.4 there is no `checkVisibility` to ask, and only the `hidden` attribute is seen.
+A control hidden by a CSS rule there behaves as it did before: the arrows still stop on it.
+
 ## Without script
 
 Buttons, each its own tab stop. That is the state the pattern improves on rather than a

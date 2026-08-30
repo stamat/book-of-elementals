@@ -37,6 +37,34 @@ export function toolbarKey(key, vertical) {
 const CONTROLS = 'button, a[href]';
 
 /**
+ * Whether a keypress can land on this control.
+ *
+ * A control a stylesheet has taken off the screen is still in the DOM and still not
+ * `disabled`, and `focus()` on it does nothing at all - so an arrow that steps onto one is an
+ * arrow that moves nothing, and a bar that stops moving there.
+ *
+ * Opacity is deliberately no part of it. A control row faded out over a video is still a row a
+ * keyboard reaches, and focus arriving in it is what fades it back in.
+ *
+ * `hidden` is read as an attribute rather than left to `checkVisibility`, because
+ * `hidden="until-found"` hides by skipping the region's contents rather than by `display:
+ * none`, and because it is the one hidden state readable where there is no layout to consult.
+ *
+ * Where `checkVisibility` is missing - Safari before 17.4, and any environment without layout -
+ * the rest of the answer is yes, which is what every version before this one answered. The two
+ * ways to be wrong here are not the same size: a control wrongly called reachable is the dead
+ * end this function exists to remove, and a control wrongly called unreachable is a working
+ * button the arrows now refuse to visit. The fallback takes the first.
+ *
+ * @param {HTMLElement} control
+ * @returns {boolean}
+ */
+function reachable(control) {
+  if (control.closest('[hidden]')) return false;
+  return control.checkVisibility ? control.checkVisibility({ visibilityProperty: true }) : true;
+}
+
+/**
  * `<toolbar-elemental>` custom element.
  *
  * A row of buttons the arrow keys walk and Tab passes in one step, per the
@@ -46,6 +74,10 @@ const CONTROLS = 'button, a[href]';
  * pattern's answer is a roving `tabindex`: one stop for the bar, arrows between the
  * controls inside it. That is all this element is - the role, the axis, and the one
  * `tabindex="0"` that moves.
+ *
+ * The arrows visit what a reader can actually land on. A `disabled` control is stepped over,
+ * and so is one a stylesheet or a folded-away region has taken off the screen: neither can take
+ * focus, and a cursor that stops where focus cannot follow is a bar that stops moving.
  *
  * The ends do not wrap. Running off one is not how you get anywhere here: Tab is, and a bar
  * that looped would be a bar a reader can walk forever without noticing they had.
@@ -99,6 +131,18 @@ export class ToolbarElemental extends ElementBase {
     return Array.from(this.querySelectorAll(CONTROLS)).filter((control) => !control.disabled);
   }
 
+  /**
+   * The controls the arrows walk: `controls`, less whatever is not on screen.
+   *
+   * Two lists rather than one narrower list, because they answer to different things.
+   * `tabindex` is written to and taken off every control the bar owns - a hidden one at
+   * teardown as much as a visible one, or it keeps a `tabindex="-1"` that outlives the element
+   * and is a button nobody can reach again.
+   */
+  get walkable() {
+    return this.controls.filter(reachable);
+  }
+
   connectedCallback() {
     if (this.initialized) return;
     if (!this.controls.length) return;
@@ -117,7 +161,7 @@ export class ToolbarElemental extends ElementBase {
     // takes a `refresh()` off the API of every caller, which is the call nobody remembers
     // until the keyboard has already stopped working.
     this.observer = new MutationObserver(() => this.wire());
-    this.observer.observe(this, { childList: true, subtree: true, attributeFilter: ['disabled'] });
+    this.observer.observe(this, { childList: true, subtree: true, attributeFilter: ['disabled', 'hidden'] });
 
     this.wire();
   }
@@ -157,7 +201,16 @@ export class ToolbarElemental extends ElementBase {
 
     const focused = controls.find((control) => control === document.activeElement);
     const held = controls.find((control) => control.getAttribute('tabindex') === '0');
-    const stop = focused || held || controls[0];
+    const candidate = focused || held;
+    // The visibility test is spent on the one control that would keep the stop rather than on
+    // every control in the bar: it flushes style, and this runs on every mutation inside a bar
+    // whose contents are the page's to change - a clock rewriting its own text four times a
+    // second is an ordinary member of one.
+    const stop = candidate && reachable(candidate) ? candidate : this.walkable[0];
+    // Nothing on screen to put it on. The old stop stays where it is, because a bar hidden
+    // whole - one waiting on its media, or on a breakpoint - is coming back, and `hidden` in the
+    // observer above is what brings this round again when it does.
+    if (!stop) return;
     for (const control of controls) control.tabIndex = control === stop ? 0 : -1;
   }
 
@@ -174,7 +227,7 @@ export class ToolbarElemental extends ElementBase {
     const key = toolbarKey(e.key, this.vertical);
     if (!key) return;
 
-    const controls = this.controls;
+    const controls = this.walkable;
     const at = controls.indexOf(e.target);
     // A key pressed on something in the bar that is not one of its controls belongs to
     // whatever that is - the arrows are only the bar's while the reader is on it.

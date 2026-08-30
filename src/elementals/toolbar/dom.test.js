@@ -8,7 +8,10 @@
  * focus leaves the reader where they were.
  *
  * Deliberately not covered: the look of a pressed control, which is CSS and belongs to the docs
- * page; and `stepIndex`, which is book-of-spells' and tested there.
+ * page; `stepIndex`, which is book-of-spells' and tested there; and a control hidden by a
+ * stylesheet rather than by `hidden`, which takes `checkVisibility` and so a layout to see.
+ * jsdom has neither, so the hiding below is always the attribute, and the CSS half of the same
+ * behaviour is covered by nothing that runs on its own.
  *
  * @jest-environment jsdom
  */
@@ -182,6 +185,66 @@ test('the tab stop moves off a control that goes disabled, so the bar is never l
   bold.disabled = true;
   await settled();
   expect(stops(bar)).toEqual(['Italic']);
+});
+
+test('a control hidden from the page is stepped over, because focus cannot land on one either', () => {
+  // The same defect as an arrow reaching a `disabled` control, from the other side: the platform
+  // declines the focus either way, and an arrow that moves nothing is a bar that stops moving.
+  const bar = mount(MARKUP.replace('aria-pressed="false"', 'hidden'));
+  const [bold] = controls(bar);
+  bold.focus();
+  press(bold, 'ArrowRight');
+  expect(document.activeElement.textContent).toBe('Link');
+});
+
+test('a control inside a region that has folded away goes with it', () => {
+  // Which is how a crowded bar sheds its rarely-used half on a narrow screen: the region carries
+  // the `hidden`, and every control under it is one the arrows must not stop on.
+  const bar = mount(`
+    <toolbar-elemental aria-label="Formatting">
+      <button type="button">Bold</button>
+      <div hidden><button type="button">Italic</button></div>
+      <a href="#link">Link</a>
+    </toolbar-elemental>`);
+  const [bold] = controls(bar);
+  bold.focus();
+  press(bold, 'ArrowRight');
+  expect(document.activeElement.textContent).toBe('Link');
+});
+
+test('the tab stop leaves a control that goes hidden, so Tab still reaches the bar', async () => {
+  // A stop sitting on a control the reader cannot see is a bar Tab enters and lands nowhere in.
+  const bar = mount();
+  expect(stops(bar)).toEqual(['Bold']);
+  controls(bar)[0].hidden = true;
+  await settled();
+  expect(stops(bar)).toEqual(['Italic']);
+});
+
+test('a bar with nothing left on screen keeps the stop it had, for when it comes back', async () => {
+  // A bar hidden whole is one waiting - on its media, on a breakpoint - rather than one being
+  // torn down. Rewriting the stop while there is nowhere to put it would move it to the first
+  // control instead of leaving it where the reader put it.
+  const bar = mount();
+  controls(bar)[2].focus();
+  expect(stops(bar)).toEqual(['Link']);
+  bar.hidden = true;
+  await settled();
+  expect(stops(bar)).toEqual(['Link']);
+  bar.hidden = false;
+  await settled();
+  expect(stops(bar)).toEqual(['Link']);
+});
+
+test('a bar faded to transparent is still a bar the arrows walk', () => {
+  // A control row over a video fades out while it plays and comes back when focus arrives in it,
+  // so "can it be seen" is not the question this element asks and must not become it.
+  const bar = mount();
+  bar.style.opacity = '0';
+  const [bold] = controls(bar);
+  bold.focus();
+  press(bold, 'ArrowRight');
+  expect(document.activeElement.textContent).toBe('Italic');
 });
 
 test('a control added later joins the walk without anyone calling a refresh', async () => {

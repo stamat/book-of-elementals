@@ -31,6 +31,17 @@ to the docs page and the commit, not here.
   does not change the value is dropped, so re-setting `auto-load="2"` refills nothing and
   counting up does. Docs only; nothing about the package changes.
 
+### Fixed
+
+- **`<toolbar-elemental>` steps over a control that is not on screen**, instead of moving the
+  cursor onto one and stopping there. A button hidden by your own stylesheet, or one folded away
+  with the region it sits in, is still in the DOM and still not `disabled` — so the arrows walked
+  onto it, `focus()` quietly did nothing, and every control past it was unreachable.
+
+- **The tab stop leaves a control that goes hidden**, so a bar whose only stop was folded away is
+  one <kbd>Tab</kbd> can still enter. `hidden` is watched alongside `disabled` for it, and a bar
+  hidden whole keeps the stop it had, since that bar is waiting rather than gone.
+
 ## [3.1.0] - 2026-08-25
 
 ### Added
