@@ -19,6 +19,8 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-08-30
+
 ### Added
 
 - **An infinite scroll feed example**, at
