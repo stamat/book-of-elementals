@@ -19,6 +19,8 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-08-31
+
 ### Added
 
 - **`container:` in front of a condition measures the nearest ancestor container instead of
