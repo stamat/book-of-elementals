@@ -1,2 +1,2 @@
-/* book-of-elementals v3.2.1 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v3.3.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 tree-view-elemental{display:block}tree-view-elemental[role=tree] ul,tree-view-elemental[role=tree] ol{list-style:none}tree-view-elemental [role=treeitem][aria-expanded]:not([href]){cursor:pointer;user-select:none}

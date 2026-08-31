@@ -1,4 +1,4 @@
-/* book-of-elementals v3.2.1 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v3.3.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 (() => {
   // node_modules/book-of-spells/src/elements.mjs
   var ElementBase = typeof HTMLElement !== "undefined" ? HTMLElement : class {
