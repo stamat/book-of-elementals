@@ -67,7 +67,7 @@ install to absorb them.
 
 | Element | What it is |
 | ------- | ---------- |
-| [`<media-player>`](https://github.com/stamat/media-player) | A player over the `<audio>` or `<video>` you already wrote — and **you** write the controls, in your markup, in the order you put them. `npm i media-player-element` |
+| [`<media-player>`](https://github.com/stamat/media-player-element) | A player over the `<audio>` or `<video>` you already wrote — and **you** write the controls, in your markup, in the order you put them. `npm i media-player-element` |
 | [`<compare-images-slider>`](https://github.com/stamat/compare-images-slider) | A before/after reveal: two layers, one clipped over the other, and a handle between them |
 | [`<code-preview>`](https://github.com/stamat/code-preview-element) | A code block that renders itself in an isolated iframe. It is what builds the live previews on these pages |
 

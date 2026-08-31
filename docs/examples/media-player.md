@@ -160,7 +160,7 @@ moved something the element could not see:
 | `seek.value = media.currentTime` | An assigned value fires nothing |
 | `seek.max = media.duration` | The scale moved under a value that did not, so every ratio is stale |
 
-`<media-player>` [does the same thing in its `paint()`](https://github.com/stamat/media-player),
+`<media-player>` [does the same thing in its `paint()`](https://github.com/stamat/media-player-element),
 and for the same reason — this is the one line of glue that a hand-rolled player and a finished
 one have identically.
 
@@ -320,7 +320,7 @@ This is a demonstration of composition, not a media player. What it leaves out i
 captions and `<track>`, fullscreen, playback rate, picture-in-picture, a buffered range behind
 the scrubber, keyboard shortcuts on the media itself, a playlist, remembering where you stopped.
 
-**That is [`<media-player>`](https://github.com/stamat/media-player)** — one custom element over
+**That is [`<media-player>`](https://github.com/stamat/media-player-element)** — one custom element over
 the `<audio>` or `<video>` you already wrote, which keeps this arrangement and finishes it: you
 still write the controls, and it wires them by name instead of by the forty lines above. Its
 own control bar is a `<toolbar-elemental>` with a `<slider-elemental>` scrubber inside it, so

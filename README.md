@@ -1395,7 +1395,7 @@ list of links with every branch showing.
 Three custom elements of mine that are not in the book, because they have their own packages
 and this one does not break anyone's install to absorb them:
 
-- [**`<media-player>`**](https://github.com/stamat/media-player) — a player over the `<audio>`
+- [**`<media-player>`**](https://github.com/stamat/media-player-element) — a player over the `<audio>`
   or `<video>` you already wrote, where *you* write the controls. Worth a look even if you never
   want a player: its control bar is a `<toolbar-elemental>` with a `<slider-elemental>` scrubber
   inside it. The docs' [media player example](https://stamat.github.io/book-of-elementals/examples/media-player.html)
