@@ -19,7 +19,16 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
-## [3.2.1] - 2026-08-31
+### Changed
+
+- **The toolbar's arrows walk onto a `<select>` now, and it joins the bar's single tab
+  stop.** A select in a bar was a control the walk stepped past and a second tab stop
+  beside "one tab stop for the row" — the walk claims the bar's axis and
+  <kbd>Home</kbd>/<kbd>End</kbd>, the cross axis stays the select's, so on a horizontal
+  bar <kbd>↓</kbd> still opens and steps its list. **DOM:** the element now writes
+  `tabindex` on selects inside it, the way it always has on buttons and links; engines
+  that spend the bar's axis on a closed select — Windows' arrows — lose that to the walk,
+  with the costs on the docs page.
 
 ### Fixed
 

@@ -28,13 +28,19 @@ export function toolbarKey(key, vertical) {
 /**
  * What the arrows walk.
  *
- * Buttons and links only, which is what the pattern's "commonly used function buttons"
- * are. A `<select>` or a text field in a bar wants the arrow keys for itself, and MDN's
- * own advice is to keep such a control out of a toolbar or put it last - so rather than
- * guess which press was meant for whom, the arrows do not reach it and it stays a tab stop
- * of its own.
+ * Buttons, links - the pattern's "commonly used function buttons" - and a `<select>`,
+ * on the compromise the APG toolbar's own spin button demonstrates for a widget that
+ * spends arrows on itself: the bar claims only its axis and Home/End, the cross axis
+ * stays the widget's. On a bar across the page a select still opens and steps its list
+ * with Up and Down; before this it was a tab stop of its own that the walk stepped past,
+ * which read as a control the bar pretends is not there. The cost is real and named: an
+ * engine that spends the bar's axis on a closed select - the arrows on Windows, Home and
+ * End to first and last option - loses those to the walk, and a select on a vertical bar
+ * loses Up and Down; Space and Enter open the list everywhere. A text field is still out,
+ * per MDN's advice: every arrow is the caret's, there is no axis to split, so it stays a
+ * tab stop of its own.
  */
-const CONTROLS = 'button, a[href]';
+const CONTROLS = 'button, a[href], select';
 
 /**
  * Whether a keypress can land on this control.
@@ -103,7 +109,7 @@ function reachable(control) {
  * @cssprop {<color>} [--toolbar-elemental-hover=color-mix(in srgb, currentcolor 10%, transparent)] - A control under the pointer.
  * @cssprop {<color>} [--toolbar-elemental-pressed=color-mix(in srgb, currentcolor 18%, transparent)] - A control whose `aria-pressed` is true.
  *
- * @slot - The controls: `<button>`s and links, in the order the arrows should walk them.
+ * @slot - The controls: `<button>`s, links and `<select>`s, in the order the arrows should walk them.
  */
 export class ToolbarElemental extends ElementBase {
   static get observedAttributes() {

@@ -9563,7 +9563,7 @@
           ],
           "slots": [
             {
-              "description": "The controls: `<button>`s and links, in the order the arrows should walk them.",
+              "description": "The controls: `<button>`s, links and `<select>`s, in the order the arrows should walk them.",
               "name": ""
             }
           ],

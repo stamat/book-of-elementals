@@ -45,10 +45,18 @@ something on the page already says it. The element cannot invent one and does no
 to — an unnamed toolbar is announced as "toolbar" and nothing more, and where a page has
 two of them, naming is not optional.
 
-Only `<button>` and `<a href>` are walked. A `<select>` or a text field wants the arrow keys
-for itself, so it is left alone and stays a tab stop of its own — which is also
-[MDN's advice](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/toolbar_role):
-keep a control like that out of a toolbar, or put it last.
+`<button>`, `<a href>` and `<select>` are walked. The select spends arrows on itself, so the
+bar splits the axes the way the [APG toolbar's own spin
+button](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/examples/toolbar/) does: the bar's
+axis and <kbd>Home</kbd>/<kbd>End</kbd> walk, the cross axis stays the select's — on a bar
+across the page, <kbd>↓</kbd> still opens and steps its list. The split has a cost worth
+knowing: an engine that spends the bar's axis on a closed select — the arrows on Windows,
+<kbd>Home</kbd>/<kbd>End</kbd> to first and last option — loses those to the walk, and a
+select on a vertical bar loses <kbd>↓</kbd>/<kbd>↑</kbd>; <kbd>Space</kbd> and
+<kbd>Enter</kbd> open the list everywhere. A text field has no axis to spare — every arrow
+is the caret's — so it stays out of the walk and a tab stop of its own, which is
+[MDN's advice](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/toolbar_role)
+for a control like that: keep it out of a toolbar, or put it last.
 
 Both the pattern and MDN say a toolbar is for grouping **three or more** controls. Nothing
 here enforces it — two buttons are two tab stops, and a bar that saved one of them would be

@@ -30,7 +30,7 @@
     if (key === (vertical ? "ArrowUp" : "ArrowLeft")) return key;
     return null;
   }
-  var CONTROLS = "button, a[href]";
+  var CONTROLS = "button, a[href], select";
   function reachable(control) {
     if (control.closest("[hidden]")) return false;
     return control.checkVisibility ? control.checkVisibility({ visibilityProperty: true }) : true;

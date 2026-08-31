@@ -270,13 +270,43 @@ test('focus arriving from a click keeps the tab stop where the reader put it', (
 });
 
 test('a key pressed on something in the bar that is not one of its controls is not the bar\'s', () => {
-  // A `<select>` or a text field wants the arrows for itself, and the pattern's advice is to
-  // leave it its own tab stop rather than guess which press was meant for whom.
-  const bar = mount(MARKUP.replace('</toolbar-elemental>', '<select><option>a</option></select></toolbar-elemental>'));
+  // A text field wants every arrow for its caret - there is no axis to split the way a
+  // select's is split below - so it stays out of the walk and a tab stop of its own.
+  const bar = mount(MARKUP.replace('</toolbar-elemental>', '<input type="text"></toolbar-elemental>'));
+  const field = bar.querySelector('input');
+  field.focus();
+  expect(press(field, 'ArrowRight').defaultPrevented).toBe(false);
+  expect(document.activeElement).toBe(field);
+});
+
+const SELECT_MARKUP = MARKUP.replace(
+  '</toolbar-elemental>',
+  '<select aria-label="Speed"><option>1</option><option>2</option></select></toolbar-elemental>'
+);
+
+test('the arrows walk onto a select, so it is a control of the bar rather than one the walk steps past', () => {
+  const bar = mount(SELECT_MARKUP);
+  const link = controls(bar)[2];
+  link.focus();
+  press(link, 'ArrowRight');
+  expect(document.activeElement).toBe(bar.querySelector('select'));
+});
+
+test('the bar takes its own axis off a select and hands back the other, which is the one the list opens on', () => {
+  const bar = mount(SELECT_MARKUP);
   const select = bar.querySelector('select');
   select.focus();
-  expect(press(select, 'ArrowRight').defaultPrevented).toBe(false);
+  expect(press(select, 'ArrowDown').defaultPrevented).toBe(false); // the select's to open and step
   expect(document.activeElement).toBe(select);
+  press(select, 'ArrowLeft'); // the bar's axis walks off it
+  expect(document.activeElement.textContent).toBe('Link');
+});
+
+test('a select joins the single tab stop instead of standing as a second one', () => {
+  const bar = mount(SELECT_MARKUP);
+  expect(bar.querySelector('select').getAttribute('tabindex')).toBe('-1');
+  bar.remove();
+  expect(bar.querySelector('select').hasAttribute('tabindex')).toBe(false); // and leaves whole
 });
 
 test('an empty element is left alone, and wires itself when it has controls and is next connected', () => {
