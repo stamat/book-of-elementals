@@ -19,6 +19,8 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+## [3.2.1] - 2026-08-31
+
 ### Fixed
 
 - **3.2.0's tarball is whole again for source importers: `src/watch-query.js` ships.** The
