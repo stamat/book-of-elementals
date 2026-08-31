@@ -1,2 +1,2 @@
-/* book-of-elementals v3.2.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v3.2.1 | https://stamat.github.io/book-of-elementals/ | MIT License */
 rearrange-elemental{display:contents}rearrange-elemental [data-rearrange-controls]{display:inline-flex;align-items:center;vertical-align:middle}rearrange-elemental [data-rearrange-handle]{cursor:grab;touch-action:none}rearrange-elemental[data-dragging]{user-select:none}rearrange-elemental[data-dragging] [data-rearrange-handle]{cursor:grabbing}rearrange-elemental :is(li,tr)[data-dragging]{position:relative;z-index:1}rearrange-elemental>.rearrange-elemental-status{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
