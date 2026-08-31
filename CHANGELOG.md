@@ -19,6 +19,12 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+### Fixed
+
+- The disclosure hands focus to its button when an `open-when` crossing closes the region
+  over it, instead of letting it fall to `<body>`. Zooming in is the usual way to be
+  mid-read inside a region when the breakpoint moves.
+
 ## [3.1.1] - 2026-08-30
 
 ### Added

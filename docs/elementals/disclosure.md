@@ -284,7 +284,9 @@ anyway. `open-when` is that script, once, in the element that already owns the s
 
 Crossing lands instantly rather than sliding. A breakpoint change is the page being
 rearranged around the reader, and animating the region through a window drag would be
-animating something nobody asked for.
+animating something nobody asked for. If the reader's focus is inside a region the
+crossing closes — zooming in is the usual way to be mid-read when it happens — it moves
+to the button rather than falling to `<body>`, so the way back open is under their hands.
 
 ### The mode is on both ends
 

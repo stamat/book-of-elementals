@@ -283,6 +283,17 @@ export class DisclosureElemental extends ElementBase {
 
     const pinned = mediaOpen(this.query);
     if (pinned === null) return;
+    // A breakpoint that closes the region over the reader's focus — a zoom is the common
+    // way to cross one mid-read — would drop that focus on <body>. The button is the
+    // trigger the region collapses into, and it is visible by now because `reflectMode`
+    // above has already left pinned mode behind, so the reader lands where reopening is.
+    // The mirrored crossing needs nothing: pinning hides no content, and a consumer
+    // stylesheet that hides the button in pinned mode does so knowing what it holds.
+    if (!pinned) {
+      const region = this.region;
+      const button = this.button;
+      if (region && button && region.contains(document.activeElement)) button.focus();
+    }
     this.instant = true;
     this.open = pinned;
     this.instant = false;
