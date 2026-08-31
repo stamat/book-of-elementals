@@ -216,7 +216,7 @@
               "type": {
                 "text": "string"
               },
-              "description": "A media query that owns `open`: held open while it matches, closed when it stops. Unset means the button is the only thing that opens it."
+              "description": "A query that owns `open`: held open while it matches, closed when it stops. A plain media query measures the viewport; `container:` in front - `container:(min-width: 30rem)`, with a container name before the parenthesis where one is needed - measures the nearest ancestor container instead, for a disclosure living inside a component whose width is not the page's. Unset means the button is the only thing that opens it."
             },
             {
               "type": {

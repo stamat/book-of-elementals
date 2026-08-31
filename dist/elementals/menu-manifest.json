@@ -351,7 +351,7 @@
               "type": {
                 "text": "string"
               },
-              "description": "The media query the flyout exists in. Outside it, nested disclosures. Unset means a menu at every width."
+              "description": "The query the flyout exists in. Outside it, nested disclosures. A plain media query measures the viewport; `container:` in front - `container:(min-width: 30rem)`, with a container name before the parenthesis where one is needed - measures the nearest ancestor container instead, for a menu inside a component whose width is not the page's. Unset means a menu at every width."
             },
             {
               "type": {

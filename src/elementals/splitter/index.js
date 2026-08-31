@@ -1,6 +1,7 @@
 // Aliased, because `drag` reads as this element's own gesture and this is where it starts.
 import { drag as startDrag } from 'book-of-spells/src/dom.mjs';
 import { ElementBase, define } from '../../core.js';
+import { watchQuery, unwatchQuery } from '../../watch-query.js';
 
 /** Down the middle, when nothing says otherwise. */
 export const DEFAULT_POSITION = 50;
@@ -153,7 +154,7 @@ export function positionFrom(rect, x, y, options = {}) {
  * @attr {number} [min=0] - How far the primary pane may shrink, as a percentage. The floor for the pointer, the arrows and <kbd>Enter</kbd> alike, and `aria-valuemin`.
  * @attr {number} [max=100] - How far it may grow. `aria-valuemax`.
  * @attr {boolean} [vertical=false] - The panes are stacked down the page rather than side by side. Swaps the arrow keys with them.
- * @attr {string} [vertical-when] - A media query that owns `vertical`: the panes stack while it matches and go back side by side when it stops. The same shape as `open-when` on [`<disclosure-elemental>`](disclosure.html). A page that wrote `vertical` by hand meant it at every width and keeps it. Give the element a height for the stacked case - a percentage row track against an `auto` height resolves as `auto`, which is two panes at their content height and a separator that appears to do nothing.
+ * @attr {string} [vertical-when] - A query that owns `vertical`: the panes stack while it matches and go back side by side when it stops. A plain media query measures the viewport; `container:` in front - `container:(width < 30rem)`, with a container name before the parenthesis where one is needed - measures the nearest ancestor container instead, for a splitter inside a component whose width is not the page's. The same shape as `open-when` on [`<disclosure-elemental>`](disclosure.html). A page that wrote `vertical` by hand meant it at every width and keeps it. Give the element a height for the stacked case - a percentage row track against an `auto` height resolves as `auto`, which is two panes at their content height and a separator that appears to do nothing.
  * @attr {string} [label-text=Resize] - The handle's accessible name. The pattern asks for the separator to be named after the primary pane, so a page with a sidebar behind it says `label-text="Sidebar"`.
  *
  * `--splitter-elemental-position` is deliberately not tagged below. The element writes it into
@@ -188,7 +189,7 @@ export class SplitterElemental extends ElementBase {
   gesture = null;
 
   /** The `vertical-when` query being watched, `null` when there is none. */
-  mql = null;
+  query = null;
 
   /** Whether the `vertical` attribute on this element is one this element wrote. It is what
    * keeps a page that stacked its own panes stacked: once the breakpoint has flipped the
@@ -289,13 +290,13 @@ export class SplitterElemental extends ElementBase {
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onPointerDown = this.onPointerDown.bind(this);
     this.onDragEnd = this.onDragEnd.bind(this);
-    this.onViewportChange = this.onViewportChange.bind(this);
+    this.onMediaChange = this.onMediaChange.bind(this);
 
     this.build();
     this.render();
     // After the render, not before: the first reading of the breakpoint can flip `vertical`,
     // and a flip arriving before there is a handle is an `aria-orientation` written on null.
-    this.watchViewport();
+    this.watchMedia();
   }
 
   disconnectedCallback() {
@@ -303,7 +304,7 @@ export class SplitterElemental extends ElementBase {
     this.initialized = false;
 
     this.endDrag();
-    this.unwatchViewport();
+    this.unwatchMedia();
     this.removeAttribute('data-splitter-panes');
     if (this.handle) {
       this.handle.removeEventListener('keydown', this.onKeyDown);
@@ -320,54 +321,52 @@ export class SplitterElemental extends ElementBase {
   attributeChangedCallback(name, previous, value) {
     if (!this.initialized || previous === value) return;
     if (name === 'label-text') this.handle.setAttribute('aria-label', this.labelText);
-    else if (name === 'vertical-when') this.watchViewport();
+    else if (name === 'vertical-when') this.watchMedia();
     else this.render();
   }
 
   /**
-   * Watch the `vertical-when` query, and stack the panes now if it already matches.
+   * Watch what `vertical-when` names, and stack the panes now if it already matches.
    *
-   * The query is watched through `matchMedia` rather than measured: the browser is already
-   * evaluating media queries and will say when this one changes, where a `ResizeObserver` on
-   * the element would answer a different question - its own box, which a stacking splitter
-   * changes, and which is not the viewport the author wrote a query about. A query the browser
-   * cannot parse is one that never matches, which is a splitter left exactly as it was written.
+   * The query is watched rather than this element measured: a `ResizeObserver` here would
+   * answer a different question - this element's own box, which a stacking splitter changes,
+   * and which is not the thing the author wrote a query about. `container:` is not that
+   * loop either; it measures an ancestor container, whose size a container query has already
+   * made independent of what is inside it.
+   *
+   * A query the browser cannot parse is one that never matches, which is a splitter left
+   * exactly as it was written.
    *
    * Safe to call again; a `vertical-when` that changed is the old query dropped and a new one
    * taken out.
    */
-  watchViewport() {
-    this.unwatchViewport();
-    const query = this.getAttribute('vertical-when');
-    if (!query) return;
-
-    this.mql = window.matchMedia(query);
-    this.mql.addEventListener('change', this.onViewportChange);
-    this.onViewportChange(this.mql);
+  watchMedia() {
+    this.unwatchMedia();
+    this.query = watchQuery(this, this.getAttribute('vertical-when'));
+    if (!this.query) return;
+    this.query.addEventListener('change', this.onMediaChange);
+    this.onMediaChange(this.query);
   }
 
   /** Stop watching, and put back the markup as it was written: a `vertical` this element added
    * is this element's to take away, and one left behind on an element nothing is driving is a
    * layout with no breakpoint under it. */
-  unwatchViewport() {
-    if (this.mql) {
-      this.mql.removeEventListener('change', this.onViewportChange);
-      this.mql = null;
-    }
+  unwatchMedia() {
+    this.query = unwatchQuery(this.query, this.onMediaChange);
     if (!this.autoVertical) return;
     this.autoVertical = false;
     this.removeAttribute('vertical');
   }
 
   /**
-   * The viewport has crossed the breakpoint, or is being read for the first time.
+   * The query has changed, or is being read for the first time.
    *
    * `MediaQueryList` and the change event both carry `matches`, so the initial reading is this
    * same method called with the list itself rather than a second path that can drift from it.
    *
    * @param {MediaQueryList|MediaQueryListEvent} event
    */
-  onViewportChange(event) {
+  onMediaChange(event) {
     // A page that wrote `vertical` by hand meant it at every width, and the breakpoint has
     // nothing to add to a splitter that is already stacked.
     if (this.hasAttribute('vertical') && !this.autoVertical) return;

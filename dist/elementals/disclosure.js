@@ -142,6 +142,70 @@
     document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
   }
 
+  // src/watch-query.js
+  var probeCount = 0;
+  var CONTAINER = "container:";
+  function watchQuery(element, query) {
+    const condition = query ? query.trim() : "";
+    if (!condition) return null;
+    if (!condition.startsWith(CONTAINER)) {
+      return window.matchMedia ? window.matchMedia(condition) : null;
+    }
+    return watchContainer(element, condition.slice(CONTAINER.length).trim());
+  }
+  function unwatchQuery(query, listener) {
+    if (!query) return null;
+    query.removeEventListener("change", listener);
+    if (query.stop) query.stop();
+    return null;
+  }
+  function watchContainer(element, condition) {
+    if (!window.ResizeObserver) return null;
+    const id = String(++probeCount);
+    element.dataset.elementalProbe = id;
+    const subject = '[data-elemental-probe="' + id + '"]';
+    const style = document.createElement("style");
+    style.textContent = subject + "{--elemental-probe:no}@container " + condition + "{" + subject + "{--elemental-probe:yes}}";
+    document.head.append(style);
+    const container = nearestContainer(element, condition);
+    let listener = null;
+    const observer = new window.ResizeObserver(() => {
+      if (listener) listener(query);
+    });
+    const query = {
+      get matches() {
+        return window.getComputedStyle(element).getPropertyValue("--elemental-probe").trim() === "yes";
+      },
+      addEventListener(type, fn) {
+        listener = fn;
+        if (container) observer.observe(container);
+      },
+      removeEventListener() {
+        listener = null;
+        observer.disconnect();
+      },
+      stop() {
+        listener = null;
+        observer.disconnect();
+        style.remove();
+        delete element.dataset.elementalProbe;
+      }
+    };
+    return query;
+  }
+  function nearestContainer(element, condition) {
+    const paren = condition.indexOf("(");
+    const name = paren > 0 ? condition.slice(0, paren).trim() : "";
+    let node = element.parentElement;
+    while (node) {
+      const style = window.getComputedStyle(node);
+      const type = style.containerType;
+      if (type && type !== "normal" && (!name || (style.containerName || "").split(" ").indexOf(name) !== -1)) return node;
+      node = node.parentElement;
+    }
+    return null;
+  }
+
   // src/elementals/disclosure/index.js
   function disclosureState(open) {
     return {
@@ -210,8 +274,7 @@
     disconnectedCallback() {
       if (!this.initialized) return;
       this.removeEventListener("click", this.onClick);
-      if (this.query) this.query.removeEventListener("change", this.onMediaChange);
-      this.query = null;
+      this.query = unwatchQuery(this.query, this.onMediaChange);
       delete this.dataset.mode;
       const region = this.region;
       if (region) {
@@ -257,9 +320,8 @@
     /** Start watching whatever `open-when` names now, and stop watching whatever it named
      * before. Both halves matter: the attribute can be rewritten at runtime. */
     watchMedia() {
-      if (this.query) this.query.removeEventListener("change", this.onMediaChange);
-      const media = this.getAttribute("open-when");
-      this.query = media && window.matchMedia ? window.matchMedia(media) : null;
+      this.query = unwatchQuery(this.query, this.onMediaChange);
+      this.query = watchQuery(this, this.getAttribute("open-when"));
       if (this.query) this.query.addEventListener("change", this.onMediaChange);
     }
     /**
@@ -274,6 +336,11 @@
       this.reflectMode();
       const pinned = mediaOpen(this.query);
       if (pinned === null) return;
+      if (!pinned) {
+        const region = this.region;
+        const button = this.button;
+        if (region && button && region.contains(document.activeElement)) button.focus();
+      }
       this.instant = true;
       this.open = pinned;
       this.instant = false;

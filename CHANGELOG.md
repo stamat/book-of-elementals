@@ -19,6 +19,16 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+### Added
+
+- **`container:` in front of a condition measures the nearest ancestor container instead of
+  the viewport** — `open-when="container:(min-width: 30rem)"` on `<disclosure-elemental>`,
+  and the same on `vertical-when` on `<splitter-elemental>` and `flyout-when` on
+  `<menu-elemental>`, with a container name before the parenthesis where one is needed. It is
+  for an element inside a component whose width is not the page's, which a media query cannot
+  see. **DOM:** an element watching a `container:` condition keeps one `<style>` probe rule in
+  `<head>` and a `data-elemental-probe` attribute on itself while connected.
+
 ### Fixed
 
 - The disclosure hands focus to its button when an `open-when` crossing closes the region

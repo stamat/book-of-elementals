@@ -164,6 +164,24 @@ are as available as a breakpoint — and it is the same shape as `open-when` on
 never matches, so a typo leaves the splitter exactly as you wrote it rather than stacking it at
 every width.
 
+**A splitter inside a panel is not the width of the page**, and a media query cannot see that.
+`container:` in front hands the same condition to the nearest ancestor
+[container](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_containment/Container_queries)
+instead — a container name goes before the parenthesis, exactly where `@container` puts it:
+
+```html
+<div style="container-type: inline-size">
+  <splitter-elemental vertical-when="container:(width < 40rem)">…</splitter-elemental>
+</div>
+```
+
+It cannot chase its own tail: a container query makes the container's size independent of what
+is inside it, so the stacking this triggers cannot move the box being measured.
+[How the container is measured](disclosure.html#measured-against-a-container) is written up under
+`<disclosure-elemental>`, which takes the same two rulers — as does `flyout-when` on
+[`<menu-elemental>`](menu.html). `bar-when` on [`<navbar-elemental>`](navbar.html) is the one
+that does not, because a navbar already measures its own box to decide whether the links fit.
+
 **The height rule above still applies, and bites harder here** — at this breakpoint you are not
 otherwise writing any CSS, so it is easy to arrive at a stacked splitter that appears to ignore
 `position` and have nothing to blame. The `[vertical]` rule in that section is the fix, and it
@@ -250,7 +268,7 @@ framework, a fragment — is complete before it is ever connected, so nothing wa
 | `min` | number | `0` | How far the primary pane may shrink. `aria-valuemin`, and the floor for <kbd>Enter</kbd> as well as for the drag |
 | `max` | number | `100` | How far it may grow. `aria-valuemax` |
 | `vertical` | boolean | off | The panes are stacked down the page rather than side by side |
-| `vertical-when` | string | — | A media query that owns `vertical`: the panes stack while it matches |
+| `vertical-when` | string | — | A query that owns `vertical` — a media query, or `container:` and a container condition. The panes stack while it matches |
 | `label-text` | string | `Resize` | The handle's accessible name |
 
 **`label-text` is worth setting.** The pattern asks for the separator to be named after the

@@ -1,4 +1,5 @@
 import { ElementBase, define, nextIndex, typeAheadIndex, placeFlyout, placeSubmenu } from '../../core.js';
+import { watchQuery, unwatchQuery } from '../../watch-query.js';
 
 /** How long a type-ahead keeps collecting keystrokes, in milliseconds. */
 const TYPE_AHEAD_WINDOW = 500;
@@ -50,7 +51,7 @@ function set(element, name, value) {
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/menu/
  *
  * @tag menu-elemental
- * @attr {string} flyout-when - The media query the flyout exists in. Outside it, nested disclosures. Unset means a menu at every width.
+ * @attr {string} flyout-when - The query the flyout exists in. Outside it, nested disclosures. A plain media query measures the viewport; `container:` in front - `container:(min-width: 30rem)`, with a container name before the parenthesis where one is needed - measures the nearest ancestor container instead, for a menu inside a component whose width is not the page's. Unset means a menu at every width.
  * @attr {boolean} [open=false] - Whether the root list is showing. Reflected, so `[open]` is a styling hook.
  * @attr {boolean} [hover=false] - A mouse also opens it by pointing at it. Never on touch, never inline.
  *
@@ -178,7 +179,7 @@ export class MenuElemental extends ElementBase {
     document.removeEventListener('click', this.onDocumentClick);
     window.removeEventListener('resize', this.placeOpen);
     clearTimeout(this.hoverTimer);
-    if (this.query) this.query.removeEventListener('change', this.onMediaChange);
+    this.query = unwatchQuery(this.query, this.onMediaChange);
 
     // Lists left hidden by an element that is no longer here have nothing to open
     // them again. The roles go with them: a `role="menu"` nobody is driving is a
@@ -261,9 +262,8 @@ export class MenuElemental extends ElementBase {
   // ---- wiring ----
 
   watchMedia() {
-    if (this.query) this.query.removeEventListener('change', this.onMediaChange);
-    const media = this.getAttribute('flyout-when');
-    this.query = media && window.matchMedia ? window.matchMedia(media) : null;
+    this.query = unwatchQuery(this.query, this.onMediaChange);
+    this.query = watchQuery(this, this.getAttribute('flyout-when'));
     if (this.query) this.query.addEventListener('change', this.onMediaChange);
   }
 

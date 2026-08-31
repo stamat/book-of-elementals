@@ -97,7 +97,7 @@ like — every level is wired the same way.
 
 | Attribute | Type    | Default | Description                                                                     |
 | --------- | ------- | ------- | ------------------------------------------------------------------------------- |
-| `flyout-when`   | string  | none    | The media query the flyout exists in. Outside it, nested disclosures. Unset means a menu at every width. |
+| `flyout-when`   | string  | none    | The query the flyout exists in — a media query, or `container:` and a container condition. Outside it, nested disclosures. Unset means a menu at every width. |
 | `open`    | boolean | `false` | Whether the root list is showing. Reflected, so `[open]` is a styling hook.      |
 | `hover`   | boolean | `false` | A mouse also opens it by [pointing at it](#opening-on-hover). Never on touch, never inline. |
 
@@ -206,6 +206,22 @@ open where you left them, no floating anything.
 ```html
 <menu-elemental flyout-when="(min-width: 60rem)">…</menu-elemental>
 ```
+
+**A menu that is not the page's width asks about its own box instead.** One in a sidebar, a
+card or a rail is 380px wide on a desktop the media query calls wide, and it gets a flyout
+that has nowhere to float. `container:` in front hands the same condition to the nearest
+ancestor [container](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_containment/Container_queries)
+— a container name goes before the parenthesis, exactly where `@container` puts it:
+
+```html
+<div style="container-type: inline-size">
+  <menu-elemental flyout-when="container:(min-width: 30rem)">…</menu-elemental>
+</div>
+```
+
+Everything else is the plain-query behaviour: same crossing, same roles, same close.
+[How the container is measured](disclosure.html#measured-against-a-container) is
+written up under `<disclosure-elemental>`, which takes the same two rulers.
 
 What changes is not only the CSS. `role="menu"` is a promise that the arrows work and
 <kbd>Tab</kbd> does not, so inline the roles come off entirely — the items go back to

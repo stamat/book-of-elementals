@@ -70,6 +70,70 @@
     document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
   }
 
+  // src/watch-query.js
+  var probeCount = 0;
+  var CONTAINER = "container:";
+  function watchQuery(element, query) {
+    const condition = query ? query.trim() : "";
+    if (!condition) return null;
+    if (!condition.startsWith(CONTAINER)) {
+      return window.matchMedia ? window.matchMedia(condition) : null;
+    }
+    return watchContainer(element, condition.slice(CONTAINER.length).trim());
+  }
+  function unwatchQuery(query, listener) {
+    if (!query) return null;
+    query.removeEventListener("change", listener);
+    if (query.stop) query.stop();
+    return null;
+  }
+  function watchContainer(element, condition) {
+    if (!window.ResizeObserver) return null;
+    const id = String(++probeCount);
+    element.dataset.elementalProbe = id;
+    const subject = '[data-elemental-probe="' + id + '"]';
+    const style = document.createElement("style");
+    style.textContent = subject + "{--elemental-probe:no}@container " + condition + "{" + subject + "{--elemental-probe:yes}}";
+    document.head.append(style);
+    const container = nearestContainer(element, condition);
+    let listener = null;
+    const observer = new window.ResizeObserver(() => {
+      if (listener) listener(query);
+    });
+    const query = {
+      get matches() {
+        return window.getComputedStyle(element).getPropertyValue("--elemental-probe").trim() === "yes";
+      },
+      addEventListener(type, fn) {
+        listener = fn;
+        if (container) observer.observe(container);
+      },
+      removeEventListener() {
+        listener = null;
+        observer.disconnect();
+      },
+      stop() {
+        listener = null;
+        observer.disconnect();
+        style.remove();
+        delete element.dataset.elementalProbe;
+      }
+    };
+    return query;
+  }
+  function nearestContainer(element, condition) {
+    const paren = condition.indexOf("(");
+    const name = paren > 0 ? condition.slice(0, paren).trim() : "";
+    let node = element.parentElement;
+    while (node) {
+      const style = window.getComputedStyle(node);
+      const type = style.containerType;
+      if (type && type !== "normal" && (!name || (style.containerName || "").split(" ").indexOf(name) !== -1)) return node;
+      node = node.parentElement;
+    }
+    return null;
+  }
+
   // src/elementals/menu/index.js
   var TYPE_AHEAD_WINDOW = 500;
   var HOVER_CLOSE_DELAY = 250;
@@ -162,7 +226,7 @@
       document.removeEventListener("click", this.onDocumentClick);
       window.removeEventListener("resize", this.placeOpen);
       clearTimeout(this.hoverTimer);
-      if (this.query) this.query.removeEventListener("change", this.onMediaChange);
+      this.query = unwatchQuery(this.query, this.onMediaChange);
       for (const menu of this.menus) {
         menu.removeAttribute("hidden");
         set(menu, "role", null);
@@ -226,9 +290,8 @@
     }
     // ---- wiring ----
     watchMedia() {
-      if (this.query) this.query.removeEventListener("change", this.onMediaChange);
-      const media = this.getAttribute("flyout-when");
-      this.query = media && window.matchMedia ? window.matchMedia(media) : null;
+      this.query = unwatchQuery(this.query, this.onMediaChange);
+      this.query = watchQuery(this, this.getAttribute("flyout-when"));
       if (this.query) this.query.addEventListener("change", this.onMediaChange);
     }
     onMediaChange() {

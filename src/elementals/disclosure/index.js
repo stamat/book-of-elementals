@@ -1,5 +1,6 @@
 import { slide } from 'book-of-spells/src/animations.mjs';
 import { ElementBase, define } from '../../core.js';
+import { watchQuery, unwatchQuery } from '../../watch-query.js';
 
 /**
  * The state a disclosure's button and region carry, for a given open state.
@@ -116,7 +117,7 @@ let regionCount = 0;
  * @tag disclosure-elemental
  * @attr {boolean} [open=false] - Whether the region is showing. Reflected - it tracks the live state.
  * @attr {string} for - `id` of the region. Also read as `data-for`. Defaults to the button's next element sibling.
- * @attr {string} open-when - A media query that owns `open`: held open while it matches, closed when it stops. Unset means the button is the only thing that opens it.
+ * @attr {string} open-when - A query that owns `open`: held open while it matches, closed when it stops. A plain media query measures the viewport; `container:` in front - `container:(min-width: 30rem)`, with a container name before the parenthesis where one is needed - measures the nearest ancestor container instead, for a disclosure living inside a component whose width is not the page's. Unset means the button is the only thing that opens it.
  *
  * @cssprop {<time>} [--disclosure-elemental-duration=250ms] - How long the region takes to slide. Override it on the region, which is where the element reads it back out of the computed styles - `0s` toggles instantly.
  * @cssprop {<easing-function>} [--disclosure-elemental-easing=ease] - How the slide moves. On the region, like the duration.
@@ -198,8 +199,7 @@ export class DisclosureElemental extends ElementBase {
     if (!this.initialized) return;
     this.removeEventListener('click', this.onClick);
 
-    if (this.query) this.query.removeEventListener('change', this.onMediaChange);
-    this.query = null;
+    this.query = unwatchQuery(this.query, this.onMediaChange);
     delete this.dataset.mode;
 
     const region = this.region;
@@ -262,9 +262,8 @@ export class DisclosureElemental extends ElementBase {
   /** Start watching whatever `open-when` names now, and stop watching whatever it named
    * before. Both halves matter: the attribute can be rewritten at runtime. */
   watchMedia() {
-    if (this.query) this.query.removeEventListener('change', this.onMediaChange);
-    const media = this.getAttribute('open-when');
-    this.query = media && window.matchMedia ? window.matchMedia(media) : null;
+    this.query = unwatchQuery(this.query, this.onMediaChange);
+    this.query = watchQuery(this, this.getAttribute('open-when'));
     if (this.query) this.query.addEventListener('change', this.onMediaChange);
   }
 

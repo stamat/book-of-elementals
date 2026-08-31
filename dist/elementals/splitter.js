@@ -333,6 +333,70 @@
     document.addEventListener("DOMContentLoaded", () => define(tag, ctor), { once: true });
   }
 
+  // src/watch-query.js
+  var probeCount = 0;
+  var CONTAINER = "container:";
+  function watchQuery(element, query) {
+    const condition = query ? query.trim() : "";
+    if (!condition) return null;
+    if (!condition.startsWith(CONTAINER)) {
+      return window.matchMedia ? window.matchMedia(condition) : null;
+    }
+    return watchContainer(element, condition.slice(CONTAINER.length).trim());
+  }
+  function unwatchQuery(query, listener) {
+    if (!query) return null;
+    query.removeEventListener("change", listener);
+    if (query.stop) query.stop();
+    return null;
+  }
+  function watchContainer(element, condition) {
+    if (!window.ResizeObserver) return null;
+    const id = String(++probeCount);
+    element.dataset.elementalProbe = id;
+    const subject = '[data-elemental-probe="' + id + '"]';
+    const style = document.createElement("style");
+    style.textContent = subject + "{--elemental-probe:no}@container " + condition + "{" + subject + "{--elemental-probe:yes}}";
+    document.head.append(style);
+    const container = nearestContainer(element, condition);
+    let listener = null;
+    const observer = new window.ResizeObserver(() => {
+      if (listener) listener(query);
+    });
+    const query = {
+      get matches() {
+        return window.getComputedStyle(element).getPropertyValue("--elemental-probe").trim() === "yes";
+      },
+      addEventListener(type, fn) {
+        listener = fn;
+        if (container) observer.observe(container);
+      },
+      removeEventListener() {
+        listener = null;
+        observer.disconnect();
+      },
+      stop() {
+        listener = null;
+        observer.disconnect();
+        style.remove();
+        delete element.dataset.elementalProbe;
+      }
+    };
+    return query;
+  }
+  function nearestContainer(element, condition) {
+    const paren = condition.indexOf("(");
+    const name = paren > 0 ? condition.slice(0, paren).trim() : "";
+    let node = element.parentElement;
+    while (node) {
+      const style = window.getComputedStyle(node);
+      const type = style.containerType;
+      if (type && type !== "normal" && (!name || (style.containerName || "").split(" ").indexOf(name) !== -1)) return node;
+      node = node.parentElement;
+    }
+    return null;
+  }
+
   // src/elementals/splitter/index.js
   var DEFAULT_POSITION = 50;
   var STEP = 1;
@@ -380,7 +444,7 @@
        * fighting the first. */
       __publicField(this, "gesture", null);
       /** The `vertical-when` query being watched, `null` when there is none. */
-      __publicField(this, "mql", null);
+      __publicField(this, "query", null);
       /** Whether the `vertical` attribute on this element is one this element wrote. It is what
        * keeps a page that stacked its own panes stacked: once the breakpoint has flipped the
        * attribute on, the attribute alone can no longer say who meant it. */
@@ -457,16 +521,16 @@
       this.onKeyDown = this.onKeyDown.bind(this);
       this.onPointerDown = this.onPointerDown.bind(this);
       this.onDragEnd = this.onDragEnd.bind(this);
-      this.onViewportChange = this.onViewportChange.bind(this);
+      this.onMediaChange = this.onMediaChange.bind(this);
       this.build();
       this.render();
-      this.watchViewport();
+      this.watchMedia();
     }
     disconnectedCallback() {
       if (!this.initialized) return;
       this.initialized = false;
       this.endDrag();
-      this.unwatchViewport();
+      this.unwatchMedia();
       this.removeAttribute("data-splitter-panes");
       if (this.handle) {
         this.handle.removeEventListener("keydown", this.onKeyDown);
@@ -479,50 +543,49 @@
     attributeChangedCallback(name, previous, value) {
       if (!this.initialized || previous === value) return;
       if (name === "label-text") this.handle.setAttribute("aria-label", this.labelText);
-      else if (name === "vertical-when") this.watchViewport();
+      else if (name === "vertical-when") this.watchMedia();
       else this.render();
     }
     /**
-     * Watch the `vertical-when` query, and stack the panes now if it already matches.
+     * Watch what `vertical-when` names, and stack the panes now if it already matches.
      *
-     * The query is watched through `matchMedia` rather than measured: the browser is already
-     * evaluating media queries and will say when this one changes, where a `ResizeObserver` on
-     * the element would answer a different question - its own box, which a stacking splitter
-     * changes, and which is not the viewport the author wrote a query about. A query the browser
-     * cannot parse is one that never matches, which is a splitter left exactly as it was written.
+     * The query is watched rather than this element measured: a `ResizeObserver` here would
+     * answer a different question - this element's own box, which a stacking splitter changes,
+     * and which is not the thing the author wrote a query about. `container:` is not that
+     * loop either; it measures an ancestor container, whose size a container query has already
+     * made independent of what is inside it.
+     *
+     * A query the browser cannot parse is one that never matches, which is a splitter left
+     * exactly as it was written.
      *
      * Safe to call again; a `vertical-when` that changed is the old query dropped and a new one
      * taken out.
      */
-    watchViewport() {
-      this.unwatchViewport();
-      const query = this.getAttribute("vertical-when");
-      if (!query) return;
-      this.mql = window.matchMedia(query);
-      this.mql.addEventListener("change", this.onViewportChange);
-      this.onViewportChange(this.mql);
+    watchMedia() {
+      this.unwatchMedia();
+      this.query = watchQuery(this, this.getAttribute("vertical-when"));
+      if (!this.query) return;
+      this.query.addEventListener("change", this.onMediaChange);
+      this.onMediaChange(this.query);
     }
     /** Stop watching, and put back the markup as it was written: a `vertical` this element added
      * is this element's to take away, and one left behind on an element nothing is driving is a
      * layout with no breakpoint under it. */
-    unwatchViewport() {
-      if (this.mql) {
-        this.mql.removeEventListener("change", this.onViewportChange);
-        this.mql = null;
-      }
+    unwatchMedia() {
+      this.query = unwatchQuery(this.query, this.onMediaChange);
       if (!this.autoVertical) return;
       this.autoVertical = false;
       this.removeAttribute("vertical");
     }
     /**
-     * The viewport has crossed the breakpoint, or is being read for the first time.
+     * The query has changed, or is being read for the first time.
      *
      * `MediaQueryList` and the change event both carry `matches`, so the initial reading is this
      * same method called with the list itself rather than a second path that can drift from it.
      *
      * @param {MediaQueryList|MediaQueryListEvent} event
      */
-    onViewportChange(event) {
+    onMediaChange(event) {
       if (this.hasAttribute("vertical") && !this.autoVertical) return;
       this.autoVertical = event.matches;
       this.toggleAttribute("vertical", event.matches);

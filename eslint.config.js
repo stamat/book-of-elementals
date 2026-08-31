@@ -40,10 +40,12 @@ export default [
   {
     // The jsdom half of the tests. `index.test.js` is arithmetic and runs in node; a
     // `dom.test.js` runs the element itself under a document, so the file is a page as much
-    // as it is a test and needs both sets of globals. The event constructors are here rather
+    // as it is a test and needs both sets of globals. The glob is loose at the front for
+    // `watch-query.dom.test.js`, which is the same kind of file for a module rather than
+    // for an element. The event constructors are here rather
     // than in `browserGlobals` because the elements dispatch events, never construct them -
     // only a test standing in for a user does.
-    files: ['**/dom.test.js'],
+    files: ['**/*dom.test.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',

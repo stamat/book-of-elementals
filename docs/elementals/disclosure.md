@@ -288,6 +288,35 @@ animating something nobody asked for. If the reader's focus is inside a region t
 crossing closes — zooming in is the usual way to be mid-read when it happens — it moves
 to the button rather than falling to `<body>`, so the way back open is under their hands.
 
+### Measured against a container
+
+A plain query measures the viewport, which is the wrong ruler for a disclosure living
+inside a component: a 400px card in a desktop page is as cramped as a phone, and a media
+query cannot see that. `container:` in front hands the same condition to the nearest
+ancestor [container](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_containment/Container_queries)
+instead — a container name goes before the parenthesis, exactly where `@container` puts it:
+
+```html
+<div style="container-type: inline-size">
+  <disclosure-elemental for="extras" open-when="container:(min-width: 30rem)">
+    <button aria-label="More tools">…</button>
+  </disclosure-elemental>
+</div>
+```
+
+No API evaluates a container query from script, so the element does not try: the condition
+becomes a real `@container` rule in a `<style>` the element keeps in `<head>` — setting a
+custom property on itself, read back out of the computed styles — and a `ResizeObserver`
+on the container plays the part of the `change` event. The rule leaves with the element.
+Everything else is the plain-query behaviour: same crossings, same `data-mode`, same focus
+handoff. With no `ResizeObserver` to hear a crossing the query is ignored and the button
+alone is in charge; with no container ancestor to observe, the condition can never match
+and the disclosure stays free.
+
+The same `container:` is `vertical-when` on [`<splitter-elemental>`](splitter.html) and
+`flyout-when` on [`<menu-elemental>`](menu.html) — one probe, three attributes, and this is
+the page that explains it.
+
 ### The mode is on both ends
 
 Setting `open-when` also puts `data-mode` on the element **and on the region** — `pinned` while

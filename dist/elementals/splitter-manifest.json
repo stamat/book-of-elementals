@@ -172,7 +172,7 @@
             },
             {
               "kind": "field",
-              "name": "mql",
+              "name": "query",
               "type": {
                 "text": "null"
               },
@@ -244,17 +244,17 @@
             },
             {
               "kind": "method",
-              "name": "watchViewport",
-              "description": "Watch the `vertical-when` query, and stack the panes now if it already matches.\n\nThe query is watched through `matchMedia` rather than measured: the browser is already\nevaluating media queries and will say when this one changes, where a `ResizeObserver` on\nthe element would answer a different question - its own box, which a stacking splitter\nchanges, and which is not the viewport the author wrote a query about. A query the browser\ncannot parse is one that never matches, which is a splitter left exactly as it was written.\n\nSafe to call again; a `vertical-when` that changed is the old query dropped and a new one\ntaken out."
+              "name": "watchMedia",
+              "description": "Watch what `vertical-when` names, and stack the panes now if it already matches.\n\nThe query is watched rather than this element measured: a `ResizeObserver` here would\nanswer a different question - this element's own box, which a stacking splitter changes,\nand which is not the thing the author wrote a query about. `container:` is not that\nloop either; it measures an ancestor container, whose size a container query has already\nmade independent of what is inside it.\n\nA query the browser cannot parse is one that never matches, which is a splitter left\nexactly as it was written.\n\nSafe to call again; a `vertical-when` that changed is the old query dropped and a new one\ntaken out."
             },
             {
               "kind": "method",
-              "name": "unwatchViewport",
+              "name": "unwatchMedia",
               "description": "Stop watching, and put back the markup as it was written: a `vertical` this element added\nis this element's to take away, and one left behind on an element nothing is driving is a\nlayout with no breakpoint under it."
             },
             {
               "kind": "method",
-              "name": "onViewportChange",
+              "name": "onMediaChange",
               "parameters": [
                 {
                   "name": "event",
@@ -263,7 +263,7 @@
                   }
                 }
               ],
-              "description": "The viewport has crossed the breakpoint, or is being read for the first time.\n\n`MediaQueryList` and the change event both carry `matches`, so the initial reading is this\nsame method called with the list itself rather than a second path that can drift from it."
+              "description": "The query has changed, or is being read for the first time.\n\n`MediaQueryList` and the change event both carry `matches`, so the initial reading is this\nsame method called with the list itself rather than a second path that can drift from it."
             },
             {
               "kind": "method",
@@ -389,7 +389,7 @@
               "type": {
                 "text": "string"
               },
-              "description": "A media query that owns `vertical`: the panes stack while it matches and go back side by side when it stops. The same shape as `open-when` on [`<disclosure-elemental>`](disclosure.html). A page that wrote `vertical` by hand meant it at every width and keeps it. Give the element a height for the stacked case - a percentage row track against an `auto` height resolves as `auto`, which is two panes at their content height and a separator that appears to do nothing."
+              "description": "A query that owns `vertical`: the panes stack while it matches and go back side by side when it stops. A plain media query measures the viewport; `container:` in front - `container:(width < 30rem)`, with a container name before the parenthesis where one is needed - measures the nearest ancestor container instead, for a splitter inside a component whose width is not the page's. The same shape as `open-when` on [`<disclosure-elemental>`](disclosure.html). A page that wrote `vertical` by hand meant it at every width and keeps it. Give the element a height for the stacked case - a percentage row track against an `auto` height resolves as `auto`, which is two panes at their content height and a separator that appears to do nothing."
             },
             {
               "name": "label-text",
