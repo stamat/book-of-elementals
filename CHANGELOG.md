@@ -19,6 +19,13 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+### Fixed
+
+- **3.2.0's tarball is whole again for source importers: `src/watch-query.js` ships.** The
+  file the disclosure's `container:` support was extracted into never joined the `files`
+  allowlist, so a consumer bundling from `src/` — the way this package documents — got an
+  unresolvable import; `dist` consumers never noticed, which is how it slipped out.
+
 ## [3.2.0] - 2026-08-31
 
 ### Added
