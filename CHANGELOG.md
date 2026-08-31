@@ -19,6 +19,8 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-08-31
+
 ### Changed
 
 - **The toolbar's arrows walk onto a `<select>` now, and it joins the bar's single tab
