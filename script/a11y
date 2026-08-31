@@ -256,12 +256,20 @@ const report = { violations: 0, frames: 0, states: 0, skipped: [], dead: [], rev
 
 for (const path of pages) {
   for (const theme of THEMES) {
-    await page.goto(`http://127.0.0.1:${port}/${path}`, { waitUntil: 'load' });
+    // Not `load`: a few samples carry an image from picsum.photos, and a machine that cannot
+    // reach it waits out the navigation timeout on every one of them rather than auditing
+    // anything. Every such `<img>` carries `width` and `height`, so the box it reserves is the
+    // same whether the bytes arrive or not - which is what the contrast and layout readings
+    // below need from it.
+    await page.goto(`http://127.0.0.1:${port}/${path}`, { waitUntil: 'domcontentloaded' });
     // The previews write their srcdoc from `connectedCallback`, so the frames exist before
-    // the page's load event but their documents do not - wait for the content, not the count.
+    // their documents do - wait for the content, not the count. `interactive` rather than
+    // `complete` for the same reason as the navigation above: a frame whose sample holds a
+    // remote image never reaches `complete` offline, and the markup axe reads is parsed by
+    // then either way.
     await page.waitForFunction(
       () => [...document.querySelectorAll('code-preview iframe')].every(
-        (f) => f.contentDocument?.readyState === 'complete' && f.contentDocument.body?.children.length
+        (f) => f.contentDocument?.readyState !== 'loading' && f.contentDocument.body?.children.length
       ),
       null,
       { timeout: 15000 }

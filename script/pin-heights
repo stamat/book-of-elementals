@@ -107,7 +107,11 @@ for (const path of pages(SITE)) {
   const md = join(DOCS, rel.replace(/\.html$/, '.md'));
   if (!existsSync(md)) continue;
 
-  await page.goto(`http://127.0.0.1:${port}/${rel}`, { waitUntil: 'load' });
+  // Not `load`: a few samples carry an image from picsum.photos, and a machine that cannot
+  // reach it waits out the navigation timeout instead of measuring. Every such `<img>` carries
+  // `width` and `height`, so it reserves the same box either way and the heights pinned here
+  // are the heights a reader with the image gets.
+  await page.goto(`http://127.0.0.1:${port}/${rel}`, { waitUntil: 'domcontentloaded' });
   // Long enough for every frame to load its bundle, upgrade and be measured — the
   // element's own write is what settles the height this reads back.
   await page.waitForTimeout(1800);
