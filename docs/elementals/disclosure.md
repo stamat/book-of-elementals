@@ -313,6 +313,18 @@ handoff. With no `ResizeObserver` to hear a crossing the query is ignored and th
 alone is in charge; with no container ancestor to observe, the condition can never match
 and the disclosure stays free.
 
+**What it takes is a size query**, whole: a name, `not`, `and`, `or`, and both axes where the
+container is `container-type: size` — `container:card not (min-width: 30rem)` and
+`container:(min-width: 40rem) and (min-height: 10rem)` are both watched the way a plain one is.
+
+**What it refuses is `style()` and `scroll-state()`**, and a condition mixing one of those
+with a size query is refused whole. Nothing tells script that a custom property moved or that
+a box came unstuck — there is no event and no observer for either — so the element would read
+such a condition once and be wrong from the first flip onward. Refused means the attribute is
+ignored and the button alone is in charge, which is the same thing that happens with no
+`ResizeObserver`. Your stylesheet can still act on a style query; what the element adds is
+*state*, and state needs to be told when it changes.
+
 The same `container:` is `vertical-when` on [`<splitter-elemental>`](splitter.html) and
 `flyout-when` on [`<menu-elemental>`](menu.html) — one probe, three attributes, and this is
 the page that explains it.

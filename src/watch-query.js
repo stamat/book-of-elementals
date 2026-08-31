@@ -20,6 +20,14 @@ let probeCount = 0;
 
 const CONTAINER = 'container:';
 
+/** CSS's own words, which a condition can open with and a container name cannot be. */
+const KEYWORDS = ['not', 'and', 'or'];
+
+/** The container queries no observer can hear a change of: a custom property moving, or a
+ * sticky box changing state. Both are things CSS itself reacts to and script is never told
+ * about. */
+const UNHEARD = /(^|[\s(])(style|scroll-state)\s*\(/;
+
 /**
  * Watch what an attribute names, viewport or container.
  *
@@ -63,8 +71,11 @@ export function unwatchQuery(query, listener) {
  * so a `ResizeObserver` on it can play the part of the `change` event.
  *
  * Null - the attribute ignored, the element left as the markup wrote it - when there is no
- * `ResizeObserver` to hear a crossing. The condition is the author's own attribute on the
- * author's own page: nothing crosses a trust boundary on its way into the rule.
+ * `ResizeObserver` to hear a crossing, and when the condition is one no observer could hear
+ * anyway: `style()` and `scroll-state()` flip without a resize and without an event, so the
+ * honest answer is not to take the attribute rather than to read it once and go stale. The
+ * condition is the author's own attribute on the author's own page: nothing crosses a trust
+ * boundary on its way into the rule.
  *
  * @param {Element} element
  * @param {string} condition - What followed `container:`.
@@ -72,6 +83,10 @@ export function unwatchQuery(query, listener) {
  */
 function watchContainer(element, condition) {
   if (!window.ResizeObserver) return null;
+  // Refused whole, mixed conditions included: a `style()` beside a size query would be
+  // re-read on resizes and on nothing else, which is an element that is right often enough
+  // to be trusted and wrong the rest of the time.
+  if (UNHEARD.test(condition)) return null;
 
   const id = String(++probeCount);
   element.dataset.elementalProbe = id;
@@ -119,6 +134,23 @@ function watchContainer(element, condition) {
 }
 
 /**
+ * The container name a condition opens with, or `''` for one that names none.
+ *
+ * A name is a single identifier ahead of the query, so anything opening with a parenthesis
+ * has none - and `not`, which is the one keyword a condition can open with, is not a name
+ * however much it looks like one. Reading it as one was an element that watched a container
+ * that does not exist: the first reading right, every crossing after it missed.
+ *
+ * @param {string} condition
+ * @returns {string}
+ */
+function containerName(condition) {
+  const match = /^([^\s(]+)\s/.exec(condition);
+  if (!match) return '';
+  return KEYWORDS.indexOf(match[1]) === -1 ? match[1] : '';
+}
+
+/**
  * The box whose resizes can change the answer: the nearest ancestor that is a container,
  * and one carrying the name where the condition gives one - the same narrowing the rule
  * itself does.
@@ -128,8 +160,7 @@ function watchContainer(element, condition) {
  * @returns {Element|null}
  */
 function nearestContainer(element, condition) {
-  const paren = condition.indexOf('(');
-  const name = paren > 0 ? condition.slice(0, paren).trim() : '';
+  const name = containerName(condition);
   let node = element.parentElement;
   while (node) {
     const style = window.getComputedStyle(node);

@@ -29,6 +29,11 @@ to the docs page and the commit, not here.
   see. **DOM:** an element watching a `container:` condition keeps one `<style>` probe rule in
   `<head>` and a `data-elemental-probe` attribute on itself while connected.
 
+  **A size query, whole** — a container name, `not`, `and`, `or` and both axes are all watched.
+  **`style()` and `scroll-state()` are not taken**, mixed into a size query included: nothing
+  tells script that a custom property moved or that a box came unstuck, so such a condition is
+  ignored rather than read once and left stale.
+
 ### Fixed
 
 - The disclosure hands focus to its button when an `open-when` crossing closes the region

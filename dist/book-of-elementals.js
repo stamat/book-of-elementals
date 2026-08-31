@@ -2433,6 +2433,8 @@
   // src/watch-query.js
   var probeCount = 0;
   var CONTAINER = "container:";
+  var KEYWORDS = ["not", "and", "or"];
+  var UNHEARD = /(^|[\s(])(style|scroll-state)\s*\(/;
   function watchQuery(element, query) {
     const condition = query ? query.trim() : "";
     if (!condition) return null;
@@ -2449,6 +2451,7 @@
   }
   function watchContainer(element, condition) {
     if (!window.ResizeObserver) return null;
+    if (UNHEARD.test(condition)) return null;
     const id = String(++probeCount);
     element.dataset.elementalProbe = id;
     const subject = '[data-elemental-probe="' + id + '"]';
@@ -2481,9 +2484,13 @@
     };
     return query;
   }
+  function containerName(condition) {
+    const match = /^([^\s(]+)\s/.exec(condition);
+    if (!match) return "";
+    return KEYWORDS.indexOf(match[1]) === -1 ? match[1] : "";
+  }
   function nearestContainer(element, condition) {
-    const paren = condition.indexOf("(");
-    const name = paren > 0 ? condition.slice(0, paren).trim() : "";
+    const name = containerName(condition);
     let node = element.parentElement;
     while (node) {
       const style = window.getComputedStyle(node);

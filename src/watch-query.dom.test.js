@@ -88,6 +88,68 @@ test('two elements watching at once get a subject each, so one condition cannot 
   expect(document.head.querySelectorAll('style').length).toBe(2);
 });
 
+describe('what the condition names, and what it asks', () => {
+  test('a name in front of the condition narrows the walk the way it narrows the rule', () => {
+    document.getElementById('box').dataset.name = 'card';
+    const query = watchQuery(target(), 'container:card (min-width: 30rem)');
+    query.addEventListener('change', () => {});
+    expect(observed).toEqual([document.getElementById('box')]);
+  });
+
+  test('`not` is CSS keyword, not a container name - the condition it negates is still watched', () => {
+    const query = watchQuery(target(), 'container:not (min-width: 30rem)');
+    query.addEventListener('change', () => {});
+    expect(observed).toEqual([document.getElementById('box')]);
+  });
+
+  test('a name and a `not` together keep the name and drop the keyword', () => {
+    document.getElementById('box').dataset.name = 'card';
+    const query = watchQuery(target(), 'container:card not (min-width: 30rem)');
+    query.addEventListener('change', () => {});
+    expect(observed).toEqual([document.getElementById('box')]);
+    expect(document.head.querySelector('style').textContent)
+      .toContain('@container card not (min-width: 30rem)');
+  });
+
+  test('a condition that opens with a parenthesis has no name to find, however many parts it has', () => {
+    const query = watchQuery(target(), 'container:(min-width: 30rem) and (min-height: 20rem)');
+    query.addEventListener('change', () => {});
+    expect(observed).toEqual([document.getElementById('box')]);
+  });
+
+  test('a name nothing above carries is a rule that can never match, and no resize can change that', () => {
+    const query = watchQuery(target(), 'container:sidebar (min-width: 30rem)');
+    query.addEventListener('change', () => {});
+    expect(observed).toEqual([]);
+  });
+});
+
+describe('conditions nothing can hear a change of', () => {
+  test('a style query is refused rather than read once and left stale: no event says a custom property moved', () => {
+    expect(watchQuery(target(), 'container:style(--x: 1)')).toBe(null);
+    expect(document.head.querySelector('style')).toBe(null);
+    expect(target().dataset.elementalProbe).toBe(undefined);
+  });
+
+  test('a scroll-state query is refused for the same reason', () => {
+    expect(watchQuery(target(), 'container:scroll-state(stuck: top)')).toBe(null);
+    expect(document.head.querySelector('style')).toBe(null);
+  });
+
+  test('one heard half does not rescue the other: a size query mixed with a style query is refused whole', () => {
+    expect(watchQuery(target(), 'container:(min-width: 30rem) and style(--x: 1)')).toBe(null);
+    expect(watchQuery(target(), 'container:card style(--x: 1)')).toBe(null);
+    expect(document.head.querySelector('style')).toBe(null);
+  });
+
+  test('a media query is the browser`s to watch, style() and all - only the container half is refused', () => {
+    const mql = { matches: true, addEventListener() {}, removeEventListener() {} };
+    window.matchMedia = () => mql;
+    expect(watchQuery(target(), '(min-width: 30rem)')).toBe(mql);
+    delete window.matchMedia;
+  });
+});
+
 test('the container watched for resizes is the one the rule will resolve against, name and all', () => {
   const query = watchQuery(target(), 'container:card (min-width: 30rem)');
   query.addEventListener('change', () => {});
