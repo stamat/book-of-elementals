@@ -1,2 +1,2 @@
-/* book-of-elementals v3.1.1 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v3.2.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 feed-elemental{--feed-elemental-gap: 1rem;--feed-elemental-inset: 1rem;--feed-elemental-radius: .375rem;--feed-elemental-border: color-mix(in srgb, currentcolor 20%, transparent)}feed-elemental>article,feed-elemental>[role=article]{padding:var(--feed-elemental-inset);border:1px solid var(--feed-elemental-border);border-radius:var(--feed-elemental-radius)}feed-elemental>article+article,feed-elemental>[role=article]+[role=article]{margin-block-start:var(--feed-elemental-gap)}
