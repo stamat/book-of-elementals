@@ -35,6 +35,16 @@ test('and resumes only once both have left', () => {
   expect(rotationHeld(false, false)).toBe(false);
 });
 
+test('the reader pressing Start outranks a stray pointer, and does not outrank the row leaving the screen', () => {
+  // Pinned is somebody's choice, so hover and focus stop counting - the APG's rule. Off the
+  // screen there is no choice to honour and nobody at the carousel, so the clock holds even
+  // there: a timer running for the life of the page, to hand back a carousel parked mid-set
+  // on a slide nothing the reader did chose.
+  expect(rotationHeld(true, true, false, true)).toBe(false);
+  expect(rotationHeld(false, false, true, true)).toBe(true);
+  expect(rotationHeld(false, false, true, false)).toBe(true);
+});
+
 test('next moves on by one, and stops at the end rather than wrapping', () => {
   // The buttons dim at the ends, and a control that looks spent and then jumps you back to
   // the first slide is a control that lied. The rotation is the only thing that wraps.

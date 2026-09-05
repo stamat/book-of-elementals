@@ -213,9 +213,10 @@ the row is at its end while the current slide is the third.
 `autoplay` adds rotation and the control that stops it, first in the tab order
 inside the carousel, with a name that says what pressing it will do. Hover and
 focus pause it; rotation you started by hand ignores both until that button stops
-it; `prefers-reduced-motion: reduce` means it does not start on its own, and the
-control is still there for a reader who wants it. The rotation is the one thing
-that wraps at the end.
+it; scrolling the carousel off the screen pauses it too, and that one it does not
+ignore, because there is nobody there to have asked; `prefers-reduced-motion: reduce`
+means it does not start on its own, and the control is still there for a reader who
+wants it. The rotation is the one thing that wraps at the end.
 
 `fade` swaps the row for a stack that cross-fades — the same controls, picker,
 rotation and events, and the only mode where the scroller is not the state. It pays
@@ -582,7 +583,10 @@ never wanting this strip to move.
 
 The pointer, focus and the button all hold it still — the first two everywhere except over the
 button itself, which sits on the strip: counting it would stop the strip as the pointer
-arrived, while the button still read Stop, so the press changed nothing anybody could see. With no script there is no strip at
+arrived, while the button still read Stop, so the press changed nothing anybody could see. So
+does scrolling it off the screen, on its own attribute rather than the button's, so a lap
+nobody is watching costs nothing and a reader who stopped it by hand finds it still stopped on
+the way back. With no script there is no strip at
 all: every rule in the stylesheet is behind `:defined`, so the logos wrap the way any list
 of things does.
 

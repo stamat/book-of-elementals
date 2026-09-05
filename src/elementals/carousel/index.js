@@ -134,18 +134,31 @@ export function swapHeight(from, to, reduced) {
 }
 
 /**
- * Whether the rotation stays held: while the pointer or the keyboard is in the carousel.
+ * Whether the rotation stays held: while the pointer or the keyboard is in the carousel, and
+ * while the carousel is off the screen.
  *
- * Two facts rather than one flag, because either can end while the other holds - and the
- * APG asks that rotation not resume until hover *and* focus have both left. One flag is
- * the version that breaks: a mouse crossing a carousel a keyboard reader is inside leaves
- * again, and its leaving restarts the slides under someone mid-caption.
+ * Hover and focus are two facts rather than one flag, because either can end while the other
+ * holds - and the APG asks that rotation not resume until hover *and* focus have both left.
+ * One flag is the version that breaks: a mouse crossing a carousel a keyboard reader is
+ * inside leaves again, and its leaving restarts the slides under someone mid-caption.
+ *
+ * **`pinned` outranks those two and does not outrank `offscreen`, and that ordering is the
+ * whole of this function.** Pinned is the reader having pressed Start, and the APG's rule is
+ * that a rotation asked for by hand is not stopped again by a stray mouse - so ignoring hover
+ * and focus there is honouring a choice somebody made. Off the screen there is no such
+ * choice to honour, because there is nobody at the carousel: the timer would spend the life
+ * of the page advancing slides for no one, and hand the reader who scrolls back a carousel
+ * parked mid-set, on a slide nothing they did chose.
  *
  * @param {boolean} hovering
  * @param {boolean} focused
+ * @param {boolean} [offscreen=false]
+ * @param {boolean} [pinned=false]
  * @returns {boolean}
  */
-export function rotationHeld(hovering, focused) {
+export function rotationHeld(hovering, focused, offscreen, pinned) {
+  if (offscreen) return true;
+  if (pinned) return false;
   return hovering || focused;
 }
 
@@ -548,9 +561,13 @@ export class CarouselElemental extends ElementBase {
     this.onHoverOut = this.onHoverOut.bind(this);
     this.onFocusIn = this.onFocusIn.bind(this);
     this.onFocusOut = this.onFocusOut.bind(this);
+    this.onVisibility = this.onVisibility.bind(this);
 
     this.hovering = false;
     this.focused = false;
+    // Until an observer says otherwise, and where there is none, on the screen: no observer
+    // means no hold, which is what every carousel did before this.
+    this.offscreen = false;
     // Whether the `role` on the element is this element's own writing - `wire()` only
     // writes one where the page wrote none, and `strip()` may only take that one back.
     this.wroteRole = false;
@@ -592,6 +609,17 @@ export class CarouselElemental extends ElementBase {
     // version where that `wire()` threw.
     this.wire();
 
+    // The third hold, and the only one nobody is present for - see `rotationHeld` for why it
+    // outranks the reader's own Start where hover and focus do not. The element is watched
+    // and not the row, because the row is what `wire()` replaces and this outlives that.
+    //
+    // The margin is what keeps a carousel from arriving already still: it is rotating a
+    // couple of hundred pixels of scrolling before it is in frame.
+    if (typeof IntersectionObserver === 'function') {
+      this.visibility = new IntersectionObserver(this.onVisibility, { rootMargin: '200px' });
+      this.visibility.observe(this);
+    }
+
     // Reduced motion is the one case where `autoplay` is read and not obeyed. The control
     // is still written, so a reader who wants the rotation can still have it - which is the
     // difference between honouring a preference and overruling a person.
@@ -611,8 +639,13 @@ export class CarouselElemental extends ElementBase {
     this.removeEventListener('mouseleave', this.onHoverOut);
     this.removeEventListener('focusin', this.onFocusIn);
     this.removeEventListener('focusout', this.onFocusOut);
+    if (this.visibility) this.visibility.disconnect();
+    this.visibility = null;
     this.hovering = false;
     this.focused = false;
+    // Out of the document is not off the screen, and a carousel put back in has to start from
+    // what the next observer says rather than from what the last one saw.
+    this.offscreen = false;
 
     this.strip();
     this.initialized = false;
@@ -782,9 +815,10 @@ export class CarouselElemental extends ElementBase {
 
     this.apply(Math.min(this.index, Math.max(slides.length - 1, 0)));
     // The clock, where `strip()` took it off a row that had nothing to rotate and the slides
-    // are back: only if the rotation is still on, and not out from under a pointer or a focus
-    // that is holding it - unless the reader started it by hand, which outranks both.
-    if (this.rotating && !this.timer && (this.pinned || !rotationHeld(this.hovering, this.focused))) this.tick();
+    // are back: only if the rotation is still on and nothing is holding it - a pointer, a
+    // focus, or the row being off the screen. See `rotationHeld` for which of those a
+    // rotation the reader started by hand gets to ignore.
+    if (this.rotating && !this.timer && !this.held) this.tick();
   }
 
   /**
@@ -1127,7 +1161,10 @@ export class CarouselElemental extends ElementBase {
   play(pinned) {
     this.rotating = true;
     this.pinned = !!pinned;
-    this.tick();
+    // Pressing Start while the pointer is on the row rotates - that is what `pinned` is for.
+    // Pressing it on a row that is off the screen cannot happen, but `.play()` from a script
+    // can, and a clock started there would be one nobody asked for and nobody sees.
+    if (!this.held) this.tick();
     this.labelRotation();
     this.applyLive();
   }
@@ -1229,16 +1266,37 @@ export class CarouselElemental extends ElementBase {
     this.heights.style.height = '';
   }
 
-  /** Rotation held while the pointer or the focus is in the carousel - still rotating as far
-   * as the button's name is concerned, because it will be again on the way out. */
+  /** Whether anything is holding the clock right now. One question, asked in the four places
+   * that start or stop it, so none of them can answer it differently from the others. */
+  get held() {
+    return rotationHeld(this.hovering, this.focused, this.offscreen, this.pinned);
+  }
+
+  /** Rotation held while the pointer or the focus is in the carousel, or while it is off the
+   * screen - still rotating as far as the button's name is concerned, because it will be
+   * again on the way out. */
   suspend() {
-    if (this.rotating && !this.pinned) this.clearTimer();
+    if (this.rotating && this.held) this.clearTimer();
   }
 
   resume() {
-    // Both holds gone, not just the one that ended - see `rotationHeld`.
-    if (rotationHeld(this.hovering, this.focused)) return;
-    if (this.rotating && !this.pinned && !this.timer) this.tick();
+    // Every hold gone, not just the one that ended - see `rotationHeld`.
+    if (this.rotating && !this.held && !this.timer) this.tick();
+  }
+
+  /**
+   * The element crossing into or out of the viewport.
+   *
+   * The last entry and not the first: a burst of crossings coalesced into one callback ends
+   * on the state the element is actually in now, and reading `entries[0]` there is acting on
+   * a position it has already left.
+   */
+  onVisibility(entries) {
+    const entry = entries[entries.length - 1];
+    if (!entry) return;
+    this.offscreen = !entry.isIntersecting;
+    if (this.offscreen) this.suspend();
+    else this.resume();
   }
 
   onHoverIn() {

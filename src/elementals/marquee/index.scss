@@ -90,8 +90,10 @@ marquee-elemental:defined {
     --marquee-elemental-direction: normal;
   }
 
-  // The three ways it holds still. The pointer and the keyboard are the reader looking at
-  // something on the strip; the attribute is the reader having said so with the button.
+  // The four ways it holds still. The pointer and the keyboard are the reader looking at
+  // something on the strip; `[data-marquee-paused]` is the reader having said so with the
+  // button; `[data-marquee-offscreen]` is the strip out of the frame, where the element has
+  // seen it leave and there is nobody left for the lap to be for.
 
   // The hover is the element's own and not a copy's, because the copies are `inert` and an
   // inert box is not hit-tested - what the pointer lands on over one of them is this.
@@ -101,7 +103,8 @@ marquee-elemental:defined {
   // the reader who then pressed Start - taking the choice away in the name of respecting it.
   &:hover > *,
   &:focus-within > *,
-  &[data-marquee-paused] > * {
+  &[data-marquee-paused] > *,
+  &[data-marquee-offscreen] > * {
     animation-play-state: paused;
   }
 
@@ -117,8 +120,13 @@ marquee-elemental:defined {
   // comma-separated list with it - which silently dropped the pause with it. Standing alone,
   // the worst it can do where `:has()` is missing is leave the button pausing the strip the
   // way it did before, which is the behaviour to degrade to.
-  &:has(> .marquee-elemental-control:hover):not([data-marquee-paused]) > *,
-  &:has(> .marquee-elemental-control:focus):not([data-marquee-paused]) > * {
+
+  // Off the screen is the one hold this exception does not get to lift, and it is the focus
+  // half that needs saying so: a pointer cannot be over a button that is not on the screen,
+  // but focus stays on the button while the page scrolls out from under it, and this rule
+  // outweighs the one above on its own.
+  &:has(> .marquee-elemental-control:hover):not([data-marquee-paused], [data-marquee-offscreen]) > *,
+  &:has(> .marquee-elemental-control:focus):not([data-marquee-paused], [data-marquee-offscreen]) > * {
     animation-play-state: running;
   }
 

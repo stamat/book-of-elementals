@@ -19,6 +19,20 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+### Changed
+
+- **`<marquee-elemental>` holds its lap while it is off the screen.** An infinite loop is the
+  one animation here that never ends on its own, so a strip below the fold was the compositor
+  moving pixels nobody was looking at for as long as the tab stayed open. **CSS:** a new
+  `data-marquee-offscreen` on the element while it is out of the viewport plus 200px — separate
+  from `data-marquee-paused` so the button's name and the reader's own pause survive a scroll
+  past, and the strip resumes where it stopped.
+- **`<carousel-elemental autoplay>` holds its rotation while it is off the screen.** A timer
+  ticking below the fold advances slides for nobody and hands back a carousel parked mid-set.
+  Unlike hover and focus, this hold is not lifted by a rotation the reader started by hand —
+  there is nobody at the carousel to have asked. **DOM:** `data-carousel-rotating` comes off
+  while it is held, as it already does under a pointer.
+
 ## [3.3.0] - 2026-08-31
 
 ### Changed

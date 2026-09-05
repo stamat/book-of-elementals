@@ -8,8 +8,8 @@
     "updated": "2026-08-23T21:34:23.493Z"
   },
   "docs/elementals/carousel.md": {
-    "hash": "b810b80634cb2c9f6590511df20771714f35091d",
-    "updated": "2026-08-25T00:48:30.138Z"
+    "hash": "8af5df7cd0618767ac604c40ef132c0453fc9389",
+    "updated": "2026-09-05T20:50:51.581Z"
   },
   "docs/elementals/checkbox-group.md": {
     "hash": "4883e177d9ca136f791f54e74e71e275dc49da56",
@@ -36,12 +36,12 @@
     "updated": "2026-08-23T21:34:23.506Z"
   },
   "docs/elementals/index.md": {
-    "hash": "33413cd79fd1ddf79d3e949cb0040c92827bd76e",
-    "updated": "2026-08-24T23:29:57.845Z"
+    "hash": "180732ed8fd67c401b090b685770d2d43933cfc8",
+    "updated": "2026-08-31T13:58:48.076Z"
   },
   "docs/elementals/marquee.md": {
-    "hash": "7658e6d2ad8b82e596ca9f6b5b4468b4356efc48",
-    "updated": "2026-08-23T21:34:23.506Z"
+    "hash": "df5315af71f2980214df2094117f8bfc77a07a9a",
+    "updated": "2026-09-05T20:51:07.007Z"
   },
   "docs/elementals/menu.md": {
     "hash": "9aca24d429694b1b91788962a0a984c57caee17f",
@@ -140,8 +140,8 @@
     "updated": "2026-08-23T21:34:23.489Z"
   },
   "docs/examples/media-player.md": {
-    "hash": "8c86c07e6f7ad813afb9c55574bf7c0398b99c77",
-    "updated": "2026-08-23T21:34:23.486Z"
+    "hash": "1b5ae230d91abb56827dc1a89a1b06ab94225e6e",
+    "updated": "2026-08-31T13:58:48.076Z"
   },
   "docs/examples/sidebar-drawer.md": {
     "hash": "96ef804ae3944af8afe77197c27134efb4021de1",

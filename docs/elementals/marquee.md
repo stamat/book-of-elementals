@@ -29,6 +29,7 @@ that:
 | Copies in the tab order | <kbd>Tab</kbd> lands on a link scrolling past, then on its double | every copy is `inert` as well as `aria-hidden` |
 | Copies of your `id`s | `#anchor` and `aria-labelledby` resolve to whichever came first | `id` is stripped from every copy and everything inside it |
 | Motion nobody asked for | the strip moves before the reader has said anything | `prefers-reduced-motion` starts it stopped, with the button still there to start it |
+| A lap below the fold | the compositor moves pixels nobody is looking at, for as long as the tab is open | the strip holds while it is off the screen, on its own attribute so the button and the reader's own pause are untouched |
 
 `aria-hidden` on a copy is the one worth saying twice, because it is the fix everyone reaches
 for and it is half a fix: it takes the copy out of the screen reader and does nothing
@@ -64,7 +65,8 @@ marquee-elemental li {
 ```
 
 _Point at it and it holds. Press the button and it stays held — and the button's name changes
-from "Stop the moving content" to "Start", which is what a screen reader reads out. Narrow the
+from "Stop the moving content" to "Start", which is what a screen reader reads out. Scroll it
+off the screen and it holds there too, silently, picking up where it left off. Narrow the
 window: the number of copies is recounted, and nothing about the markup changes._
 
 ## The markup
@@ -129,13 +131,23 @@ means hold still.
 
 ## Stopping
 
-Three things stop it, and only one of them is a decision:
+Four things stop it, and only one of them is a decision:
 
 | What | Holds it while |
 | --- | --- |
 | the pointer | it is over the strip, but not when it is over the button |
 | focus | anything inside has it, but not the button |
 | the button | until the same button starts it again |
+| the viewport | the strip is off the screen, plus 200px of margin either side |
+
+The last one is not a preference and not a gesture, so it does not touch the button: it is a
+separate attribute, the strip resumes exactly where it stopped, and a reader who pressed
+Stop and then scrolled past finds it still stopped on the way back. An infinite lap is the
+only animation here that never ends on its own, so left alone it is the compositor moving
+pixels nobody is looking at for as long as the tab is open. The margin is what stops the
+strip arriving already still — it is moving a couple of hundred pixels of scrolling before it
+is in frame. Where there is no `IntersectionObserver` there is no hold, and the strip runs the
+way it did before.
 
 **The button is not the strip, and that exception is what makes it work at all.** It sits over
 the content, so reaching for it means hovering the element, and pressing it means focus is
@@ -224,12 +236,18 @@ Every one of these is declared on the bare `marquee-elemental` selector rather t
 wins. A default hidden behind `:defined` is one class more specific than the rule you would
 write to replace it, which is a default that quietly cannot be replaced.
 
-Two attributes go on the element as state, and they are yours to style against:
+Three attributes go on the element as state, and they are yours to style against:
 
 | Attribute | Means |
 | --- | --- |
 | `data-marquee-running` | the two numbers above are written and the lap exists — set after the copies are in, removed before they are rebuilt |
 | `data-marquee-paused` | stopped by the button or by `.pause()` |
+| `data-marquee-offscreen` | scrolled out of the viewport, plus 200px of margin — the element's own hold, and never the reader's |
+
+`data-marquee-paused` and `data-marquee-offscreen` are two attributes rather than one because
+they are two different answers: the first is somebody's decision and belongs to the button's
+name, the second is nobody there to see it. Folded together, a scroll past would relabel the
+control, and coming back would restart a strip the reader had stopped by hand.
 
 `data-marquee-running` is not decoration and not a hook added for the sake of one: WebKit
 resolves the custom properties inside a keyframe **once**, when the animation is created, and

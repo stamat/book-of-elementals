@@ -411,10 +411,20 @@ Everything the pattern asks of a moving carousel is in there:
 | Hovering the carousel pauses it               | Resumes when the pointer leaves                                                  |
 | Moving focus into it pauses it                | Resumes when focus leaves — moving between two controls is focus that never left |
 | Rotation the reader started by hand is theirs | Hover and focus are then ignored until the same button stops it                  |
+| Scrolling it off the screen pauses it         | Resumes 200px of scrolling before it is back in frame — and this one is not ignored, however the rotation started |
 | `prefers-reduced-motion: reduce`              | `autoplay` is not obeyed at upgrade. The control is still there to start it      |
 
-That last row is the one worth reading twice. The preference switches off motion nobody
+The last row is the one worth reading twice. The preference switches off motion nobody
 asked for; it does not take away a control from a reader who wants it.
+
+The row above it is the one exception to the row above *that*, and the ordering is
+deliberate. Hover and focus are a person at the carousel, so a reader who pressed Start gets
+to overrule them — that is the APG's rule and it is honouring a choice. Off the screen there
+is no choice to honour and nobody at the carousel at all: the clock would spend the life of
+the page advancing slides for no one, and hand back a carousel parked mid-set on a slide
+nothing the reader did chose. It is the timer that stops, so `data-carousel-rotating` comes
+off with it and the button still reads `Stop` — the same as under a pointer. Where there is
+no `IntersectionObserver` there is no hold, and the rotation runs the way it did before.
 
 The rotation control is drawn over the top corner of the row rather than down in the bar with
 the other controls. It has to be first in the tab order, and a control drawn a long way from

@@ -237,12 +237,37 @@ export class MarqueeElemental extends ElementBase {
       this.observer.observe(this);
       this.track.forEach((node) => this.observer.observe(node));
     }
+
+    // A lap off the screen is the compositor moving pixels nobody is looking at, for as long
+    // as the page stays open - the one animation here that never ends on its own, and so the
+    // one worth holding. It holds by a second attribute rather than by `pause()`, and that
+    // separation is the point: this is not the reader's answer, so the button's name must not
+    // change with it and the reader's own pause must survive a scroll past. The stylesheet
+    // stops the strip on either.
+    //
+    // The margin is what keeps the strip from arriving already still: it is moving a couple of
+    // hundred pixels of scrolling before it is in frame. Where there is no
+    // `IntersectionObserver` there is no hold, which is what every strip did before this.
+    if (typeof IntersectionObserver === 'function') {
+      this.visibility = new IntersectionObserver((entries) => {
+        // The last entry, not the first: a burst coalesced into one callback ends on the
+        // state the element is actually in now.
+        const entry = entries[entries.length - 1];
+        if (entry) this.toggleAttribute('data-marquee-offscreen', !entry.isIntersecting);
+      }, { rootMargin: '200px' });
+      this.visibility.observe(this);
+    }
   }
 
   disconnectedCallback() {
     if (!this.initialized) return;
     if (this.observer) this.observer.disconnect();
     this.observer = null;
+    if (this.visibility) this.visibility.disconnect();
+    this.visibility = null;
+    // Out of the document is not off the screen, and a strip put back in has to start from
+    // what the next observer says rather than from what the last one saw.
+    this.removeAttribute('data-marquee-offscreen');
     this.initialized = false;
   }
 
