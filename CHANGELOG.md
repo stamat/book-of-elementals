@@ -19,6 +19,8 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-09-05
+
 ### Changed
 
 - **`<marquee-elemental>` holds its lap while it is off the screen.** An infinite loop is the
