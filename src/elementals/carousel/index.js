@@ -91,6 +91,60 @@ export function scrollEdges(offset, visible, total) {
 }
 
 /**
+ * How much of a wheel is the page's rather than the row's, in pixels - and zero for a wheel
+ * the row can use itself.
+ *
+ * Safari holds a wheel gesture on the last scroller it moved. Side-wheel a row and the page
+ * under the pointer stops answering the vertical wheel, for as long as the pointer stays on
+ * the row. None of that is this element's doing - a bare `overflow-x: auto` div anywhere does
+ * the same, and WebKit fixed one variant of it in 2020
+ * (https://bugs.webkit.org/show_bug.cgi?id=215641) while this one survived it - but the
+ * scroller is the element's, so handing the scroll back is the element's too. Every other
+ * browser already does it, which is why only Safari is asked to run this.
+ *
+ * Three refusals, and each one is a gesture that must come through untouched: a wheel with
+ * more sideways in it than down is the row being scrolled on purpose; a row that has grown a
+ * vertical range of its own has somewhere to put the rest; and a row with nothing to scroll
+ * sideways never latched anything to begin with.
+ *
+ * A `deltaMode` other than pixels is refused rather than converted. Lines and pages are units
+ * only the browser knows the size of, and a guess at one would scroll the page by a distance
+ * nothing on it agrees with - so the wheel is left where it is, which is the behaviour of not
+ * having this at all.
+ *
+ * @param {WheelEvent|{deltaX: number, deltaY: number, deltaMode: number}} event
+ * @param {Element|{scrollWidth: number, clientWidth: number, scrollHeight: number, clientHeight: number}} scroller
+ * @returns {number}
+ */
+export function wheelHandoff(event, scroller) {
+  if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return 0;
+  if (event.deltaMode !== 0) return 0;
+  if (scroller.scrollHeight > scroller.clientHeight) return 0;
+  if (scroller.scrollWidth <= scroller.clientWidth) return 0;
+  return event.deltaY;
+}
+
+/**
+ * The box that should have taken the scroll: the nearest ancestor that can scroll down, and
+ * the page where there is none.
+ *
+ * Not `window` outright, which is the version that scrolls the document out from under a
+ * carousel inside a scrolling dialog - the latch is on whatever the wheel was meant for, and
+ * that is not always the page.
+ *
+ * @param {Element} from - The scroller the wheel arrived on.
+ * @returns {Element}
+ */
+function pageScroller(from) {
+  for (let node = from.parentElement; node; node = node.parentElement) {
+    if (node.scrollHeight <= node.clientHeight) continue;
+    const overflow = window.getComputedStyle(node).overflowY;
+    if (overflow === 'auto' || overflow === 'scroll') return node;
+  }
+  return document.scrollingElement || document.documentElement;
+}
+
+/**
  * How far short of the row's own edge a slide has to stop: its `scroll-padding` on the start
  * side.
  *
@@ -451,7 +505,9 @@ function disable(button, disabled) {
  * **One gesture, and only in `fade`.** A scrolling row swipes because it is a scroll
  * container, and a second answer laid over the browser's would fight it. A stack is not one,
  * so there the swipe is read here - touch and pen, never the mouse, which has the buttons and
- * the keyboard and would pay for a drag with the page's text selection and link clicks.
+ * the keyboard and would pay for a drag with the page's text selection and link clicks. The
+ * one input a scrolled row does take is the wheel it cannot use at all, which Safari alone
+ * keeps to itself rather than passing on - see `wheelHandoff`.
  *
  * ponytail: one axis, horizontal. A vertical carousel is the same code with the block
  * properties, and nothing has asked for one; the refusal is on the page rather than an
@@ -555,6 +611,7 @@ export class CarouselElemental extends ElementBase {
     this.onClick = this.onClick.bind(this);
     this.onLayout = this.onLayout.bind(this);
     this.onScroll = this.onScroll.bind(this);
+    this.onWheel = this.onWheel.bind(this);
     this.onSwipe = this.onSwipe.bind(this);
     this.onHeightEnd = this.onHeightEnd.bind(this);
     this.onHoverIn = this.onHoverIn.bind(this);
@@ -663,7 +720,10 @@ export class CarouselElemental extends ElementBase {
   strip() {
     if (this.observer) this.observer.disconnect();
     this.observer = null;
-    if (this.scrolls) this.scrolls.removeEventListener('scroll', this.onScroll);
+    if (this.scrolls) {
+      this.scrolls.removeEventListener('scroll', this.onScroll);
+      this.scrolls.removeEventListener('wheel', this.onWheel);
+    }
     this.scrolls = null;
     this.unswipe();
     this.unpin();
@@ -770,7 +830,10 @@ export class CarouselElemental extends ElementBase {
 
     if (this.observer) this.observer.disconnect();
     this.observer = null;
-    if (this.scrolls) this.scrolls.removeEventListener('scroll', this.onScroll);
+    if (this.scrolls) {
+      this.scrolls.removeEventListener('scroll', this.onScroll);
+      this.scrolls.removeEventListener('wheel', this.onWheel);
+    }
     this.scrolls = null;
     this.unswipe();
     this.unpin();
@@ -810,6 +873,13 @@ export class CarouselElemental extends ElementBase {
       // and reads of numbers the browser has already computed for the scroll it is
       // dispatching.
       scroller.addEventListener('scroll', this.onScroll, { passive: true });
+      // Safari's alone, and `GestureEvent` is how you ask: it is the one engine that has it,
+      // and the one engine that keeps the wheel - see `wheelHandoff`. Not passive, because
+      // handing the scroll back means taking this wheel off the browser first, and that is
+      // the cost this listener is gated to one browser to avoid paying everywhere.
+      if (typeof window.GestureEvent !== 'undefined') {
+        scroller.addEventListener('wheel', this.onWheel, { passive: false });
+      }
       this.scrolls = scroller;
     }
 
@@ -966,6 +1036,14 @@ export class CarouselElemental extends ElementBase {
       this.arrived();
     }
     this.readIndex();
+  }
+
+  /** The part of a wheel the row cannot use, put back on the box Safari stopped giving it to. */
+  onWheel(event) {
+    const pixels = wheelHandoff(event, event.currentTarget);
+    if (!pixels) return;
+    event.preventDefault();
+    pageScroller(event.currentTarget).scrollBy(0, pixels);
   }
 
   /** The programmatic scroll is over: the scroller speaks for itself again. */

@@ -382,6 +382,24 @@ A `dir="rtl"` row runs the other way, and everything here runs with it: next is 
 the left, the start is the right edge, the snap inset is the one on that side, and in `fade`
 the swipe reads the same way round as the arrows.
 
+## The wheel Safari keeps
+
+Side-wheel a row in Safari, then scroll the page with the pointer still over it, and the page
+does not move. Safari holds a wheel gesture on the last scroller it moved, and a row is a
+scroller. None of that is this element's doing — a bare `overflow-x: auto` div anywhere does
+the same, and WebKit fixed [one variant of it in
+2020](https://bugs.webkit.org/show_bug.cgi?id=215641) while this one survived it. But the
+scroller is the element's, so the element hands the scroll back: a wheel with more down in it
+than across, over a row that has no vertical range of its own, is taken off Safari and given
+to the nearest box that could have scrolled.
+
+Only Safari runs it. The gate is `window.GestureEvent`, which no other engine has and none of
+them needs — every one already passes on a scroll the row cannot use. The listener is not
+passive either, because handing a wheel on means taking it off the browser first, and that is
+exactly why it is gated rather than run everywhere: over that one box, Safari's own wheel
+easing is replaced by this. A row that has grown a vertical scroll of its own keeps its wheel,
+and so does a sideways one.
+
 ## Rotation
 
 `autoplay` writes the rotation control and starts the timer:

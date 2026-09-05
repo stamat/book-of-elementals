@@ -33,6 +33,13 @@ to the docs page and the commit, not here.
   there is nobody at the carousel to have asked. **DOM:** `data-carousel-rotating` comes off
   while it is held, as it already does under a pointer.
 
+### Fixed
+
+- **A scrolled row no longer traps the page's scroll in Safari.** Safari holds a wheel gesture
+  on the last scroller it moved, so side-wheeling a row left the page motionless under the
+  pointer; a row now hands Safari back a vertical wheel it has no range to use. Safari only —
+  every other browser already does this and is untouched.
+
 ## [3.3.0] - 2026-08-31
 
 ### Changed

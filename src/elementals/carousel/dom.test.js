@@ -8,11 +8,18 @@
  * `ResizeObserver`, none of which jsdom has, and the lifecycle is the same code either way -
  * the scrolled mode is this `wire()` with an observer and a scroll listener on the end of it.
  *
+ * The one test below that leaves `fade` is the wheel Safari will not hand back: it is about a
+ * listener being on the scroller and nothing else about the row, so a stub `ResizeObserver` is
+ * enough to get `wire()` through the scrolled branch, and the metrics it reads are written
+ * onto the box by hand.
+ *
  * Deliberately not covered: any number that comes off a box. Every rect in jsdom is zero and
  * `scrollLeft` does not move, so which slide is current, whether the row is at its end, what a
  * press does while the last one is still scrolling, and the right-to-left measurements are
  * `currentSlide`, `scrollEdges`, `pressOrigin` and `startEdge` in `index.test.js` - and the
- * docs page in a browser for the whole of it.
+ * docs page in a browser for the whole of it. Nor whether the handed-back scroll lands on the
+ * right box: choosing it walks ancestors asking each what it can scroll, and every box here
+ * answers zero.
  *
  * @jest-environment jsdom
  */
@@ -146,4 +153,81 @@ test('a carousel leaving the document takes its clock with it', () => {
   expect(rotating(carousel)).toBe(false);
   expect(carousel.querySelector('[data-carousel-controls]')).toBeNull();
   expect(carousel.querySelector('ul').hasAttribute('role')).toBe(false);
+});
+
+describe('the wheel Safari holds on to', () => {
+  // jsdom has neither, and the scrolled branch of `wire()` wants one of them.
+  const noResizes = { observe() {}, unobserve() {}, disconnect() {} };
+  let scrolled;
+
+  beforeEach(() => {
+    window.ResizeObserver = function () { return noResizes; };
+    // `GestureEvent` is the gate: this listener goes on in Safari and nowhere else.
+    window.GestureEvent = function () {};
+    scrolled = jest.fn();
+    document.documentElement.scrollBy = scrolled;
+  });
+
+  afterEach(() => {
+    delete window.ResizeObserver;
+    delete window.GestureEvent;
+    delete document.documentElement.scrollBy;
+  });
+
+  /** A row wider than it shows and no taller than its slides, which jsdom will not do itself. */
+  function row (carousel) {
+    const list = carousel.querySelector('ul');
+    for (const [name, value] of [['scrollWidth', 4000], ['clientWidth', 1400], ['scrollHeight', 500], ['clientHeight', 500]]) {
+      Object.defineProperty(list, name, { configurable: true, value });
+    }
+    return list;
+  }
+
+  test('is taken off the row and given to the page, which is the only thing that unsticks it', () => {
+    const carousel = mount(`<carousel-elemental aria-label="Gallery"><ul>${slides(3)}</ul></carousel-elemental>`);
+    const list = row(carousel);
+
+    const wheel = new window.WheelEvent('wheel', { deltaX: 0, deltaY: 120, deltaMode: 0, bubbles: true, cancelable: true });
+    list.dispatchEvent(wheel);
+
+    expect(wheel.defaultPrevented).toBe(true);
+    expect(scrolled).toHaveBeenCalledWith(0, 120);
+  });
+
+  test('and a sideways wheel is left alone, or the row could not be scrolled at all', () => {
+    const carousel = mount(`<carousel-elemental aria-label="Gallery"><ul>${slides(3)}</ul></carousel-elemental>`);
+    const list = row(carousel);
+
+    const wheel = new window.WheelEvent('wheel', { deltaX: 120, deltaY: 0, deltaMode: 0, bubbles: true, cancelable: true });
+    list.dispatchEvent(wheel);
+
+    expect(wheel.defaultPrevented).toBe(false);
+    expect(scrolled).not.toHaveBeenCalled();
+  });
+
+  test('and no other browser pays for it: without Safari there, the wheel is never taken', () => {
+    // Every engine but this one already hands the page a scroll the row cannot use. Taking
+    // the wheel there would buy nothing and cost the browser's own scrolling over the row.
+    delete window.GestureEvent;
+    const carousel = mount(`<carousel-elemental aria-label="Gallery"><ul>${slides(3)}</ul></carousel-elemental>`);
+    const list = row(carousel);
+
+    const wheel = new window.WheelEvent('wheel', { deltaX: 0, deltaY: 120, deltaMode: 0, bubbles: true, cancelable: true });
+    list.dispatchEvent(wheel);
+
+    expect(wheel.defaultPrevented).toBe(false);
+    expect(scrolled).not.toHaveBeenCalled();
+  });
+
+  test('and the listener comes off with the pattern, so a stripped row is a plain list again', () => {
+    const carousel = mount(`<carousel-elemental aria-label="Gallery"><ul>${slides(3)}</ul></carousel-elemental>`);
+    const list = row(carousel);
+    carousel.strip();
+
+    const wheel = new window.WheelEvent('wheel', { deltaX: 0, deltaY: 120, deltaMode: 0, bubbles: true, cancelable: true });
+    list.dispatchEvent(wheel);
+
+    expect(wheel.defaultPrevented).toBe(false);
+    expect(scrolled).not.toHaveBeenCalled();
+  });
 });

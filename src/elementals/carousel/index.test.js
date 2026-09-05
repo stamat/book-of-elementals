@@ -1,6 +1,7 @@
 // The decisions `<carousel-elemental>` makes on its own: how far a press of prev or next
 // moves, which of the slides on screen counts as the current one, the name a slide gets
-// when the markup gave it none, and what the `interval` attribute is allowed to mean.
+// when the markup gave it none, what the `interval` attribute is allowed to mean, and how
+// much of a wheel over the row belongs to the page instead.
 //
 // Deliberately not covered here: anything that needs a scroll container or a
 // `ResizeObserver`. jsdom has neither, and every box in it measures zero, so a scroller faked
@@ -20,7 +21,7 @@
 // `swipe()` in book-of-spells now, tested there. What stays here is the half that is the
 // carousel's own - which way `left` points when the reader reads right to left.
 
-import { currentSlide, markerName, pressOrigin, roleDescription, rotationHeld, rotationInterval, scrollDelta, scrollEdges, slideName, startEdge, startInset, stepSlide, swapHeight, swipeStep } from './index.js';
+import { currentSlide, markerName, pressOrigin, roleDescription, rotationHeld, rotationInterval, scrollDelta, scrollEdges, slideName, startEdge, startInset, stepSlide, swapHeight, swipeStep, wheelHandoff } from './index.js';
 
 test('rotation stays held while either the pointer or the keyboard is in the carousel', () => {
   // The APG asks for hover and focus both gone before rotation resumes. One flag is the
@@ -284,4 +285,35 @@ test('and from the one it is on its way to while the last press is still scrolli
   // The index catches up at the end of the trip, so a second press before then would send the
   // row to the slide it was already going to: two quick presses of next, one slide.
   expect(pressOrigin(0, 1)).toBe(1);
+});
+
+// A row: wider than it shows, and no taller than what is in it.
+const row = { scrollWidth: 4000, clientWidth: 1400, scrollHeight: 500, clientHeight: 500 };
+
+test('a wheel more down the page than across it is handed back to the page', () => {
+  // Safari keeps it otherwise, and a reader who side-wheeled the row a moment ago finds the
+  // page under their pointer will not move at all.
+  expect(wheelHandoff({ deltaX: 0, deltaY: 120, deltaMode: 0 }, row)).toBe(120);
+  expect(wheelHandoff({ deltaX: -4, deltaY: -120, deltaMode: 0 }, row)).toBe(-120);
+});
+
+test('and a wheel more across than down stays with the row, which is what it was aimed at', () => {
+  expect(wheelHandoff({ deltaX: 120, deltaY: 0, deltaMode: 0 }, row)).toBe(0);
+  expect(wheelHandoff({ deltaX: -120, deltaY: 8, deltaMode: 0 }, row)).toBe(0);
+});
+
+test('a row with a vertical range of its own keeps the wheel, because it has somewhere to put it', () => {
+  expect(wheelHandoff({ deltaX: 0, deltaY: 120, deltaMode: 0 }, { ...row, scrollHeight: 900 })).toBe(0);
+});
+
+test('and a row with nothing to scroll sideways keeps it too, having latched nothing', () => {
+  expect(wheelHandoff({ deltaX: 0, deltaY: 120, deltaMode: 0 }, { ...row, scrollWidth: 1400 })).toBe(0);
+});
+
+test('a wheel counted in lines or pages is left to the browser, whose units they are', () => {
+  // Converting one would scroll the page by a distance nothing else on it agrees with. Doing
+  // nothing is the behaviour of not having this at all, which is honest and is what Safari
+  // does not report anyway.
+  expect(wheelHandoff({ deltaX: 0, deltaY: 3, deltaMode: 1 }, row)).toBe(0);
+  expect(wheelHandoff({ deltaX: 0, deltaY: 1, deltaMode: 2 }, row)).toBe(0);
 });
