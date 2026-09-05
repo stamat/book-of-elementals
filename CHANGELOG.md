@@ -19,6 +19,8 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+## [3.4.1] - 2026-09-05
+
 ### Changed
 
 - **`<password-elemental>`'s themed icon now shows the state, not the next action.** A closed
