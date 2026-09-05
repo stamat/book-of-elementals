@@ -1,4 +1,4 @@
-/* book-of-elementals v3.3.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v3.4.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 (() => {
   var __defProp = Object.defineProperty;
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
@@ -825,6 +825,21 @@
     const at = Math.abs(offset);
     return { start: at <= 1, end: at + visible >= total - 1 };
   }
+  function wheelHandoff(event, scroller) {
+    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return 0;
+    if (event.deltaMode !== 0) return 0;
+    if (scroller.scrollHeight > scroller.clientHeight) return 0;
+    if (scroller.scrollWidth <= scroller.clientWidth) return 0;
+    return event.deltaY;
+  }
+  function pageScroller(from) {
+    for (let node = from.parentElement; node; node = node.parentElement) {
+      if (node.scrollHeight <= node.clientHeight) continue;
+      const overflow = window.getComputedStyle(node).overflowY;
+      if (overflow === "auto" || overflow === "scroll") return node;
+    }
+    return document.scrollingElement || document.documentElement;
+  }
   function startInset(styles, rtl) {
     const inset = parseFloat(rtl ? styles.scrollPaddingRight : styles.scrollPaddingLeft);
     return Number.isFinite(inset) ? inset : 0;
@@ -832,7 +847,9 @@
   function swapHeight(from, to, reduced) {
     return !reduced && from !== to;
   }
-  function rotationHeld(hovering, focused) {
+  function rotationHeld(hovering, focused, offscreen, pinned) {
+    if (offscreen) return true;
+    if (pinned) return false;
     return hovering || focused;
   }
   var POSITION = "{n} of {total}";
@@ -967,14 +984,17 @@
       this.onClick = this.onClick.bind(this);
       this.onLayout = this.onLayout.bind(this);
       this.onScroll = this.onScroll.bind(this);
+      this.onWheel = this.onWheel.bind(this);
       this.onSwipe = this.onSwipe.bind(this);
       this.onHeightEnd = this.onHeightEnd.bind(this);
       this.onHoverIn = this.onHoverIn.bind(this);
       this.onHoverOut = this.onHoverOut.bind(this);
       this.onFocusIn = this.onFocusIn.bind(this);
       this.onFocusOut = this.onFocusOut.bind(this);
+      this.onVisibility = this.onVisibility.bind(this);
       this.hovering = false;
       this.focused = false;
+      this.offscreen = false;
       this.wroteRole = false;
       this.index = 0;
       this.inset = 0;
@@ -993,6 +1013,10 @@
       this.addEventListener("focusout", this.onFocusOut);
       this.initialized = true;
       this.wire();
+      if (typeof IntersectionObserver === "function") {
+        this.visibility = new IntersectionObserver(this.onVisibility, { rootMargin: "200px" });
+        this.visibility.observe(this);
+      }
       if (this.autoplay && this.slides.length > 1 && !reducedMotion()) this.play();
     }
     disconnectedCallback() {
@@ -1005,8 +1029,11 @@
       this.removeEventListener("mouseleave", this.onHoverOut);
       this.removeEventListener("focusin", this.onFocusIn);
       this.removeEventListener("focusout", this.onFocusOut);
+      if (this.visibility) this.visibility.disconnect();
+      this.visibility = null;
       this.hovering = false;
       this.focused = false;
+      this.offscreen = false;
       this.strip();
       this.initialized = false;
     }
@@ -1022,7 +1049,10 @@
     strip() {
       if (this.observer) this.observer.disconnect();
       this.observer = null;
-      if (this.scrolls) this.scrolls.removeEventListener("scroll", this.onScroll);
+      if (this.scrolls) {
+        this.scrolls.removeEventListener("scroll", this.onScroll);
+        this.scrolls.removeEventListener("wheel", this.onWheel);
+      }
       this.scrolls = null;
       this.unswipe();
       this.unpin();
@@ -1096,7 +1126,10 @@
       this.applyLive();
       if (this.observer) this.observer.disconnect();
       this.observer = null;
-      if (this.scrolls) this.scrolls.removeEventListener("scroll", this.onScroll);
+      if (this.scrolls) {
+        this.scrolls.removeEventListener("scroll", this.onScroll);
+        this.scrolls.removeEventListener("wheel", this.onWheel);
+      }
       this.scrolls = null;
       this.unswipe();
       this.unpin();
@@ -1112,10 +1145,13 @@
         this.observer.observe(scroller);
         for (const slide2 of slides) this.observer.observe(slide2);
         scroller.addEventListener("scroll", this.onScroll, { passive: true });
+        if (typeof window.GestureEvent !== "undefined") {
+          scroller.addEventListener("wheel", this.onWheel, { passive: false });
+        }
         this.scrolls = scroller;
       }
       this.apply(Math.min(this.index, Math.max(slides.length - 1, 0)));
-      if (this.rotating && !this.timer && (this.pinned || !rotationHeld(this.hovering, this.focused))) this.tick();
+      if (this.rotating && !this.timer && !this.held) this.tick();
     }
     /**
      * Write the controls, or write them again after the slides changed.
@@ -1236,6 +1272,13 @@
         this.arrived();
       }
       this.readIndex();
+    }
+    /** The part of a wheel the row cannot use, put back on the box Safari stopped giving it to. */
+    onWheel(event) {
+      const pixels = wheelHandoff(event, event.currentTarget);
+      if (!pixels) return;
+      event.preventDefault();
+      pageScroller(event.currentTarget).scrollBy(0, pixels);
     }
     /** The programmatic scroll is over: the scroller speaks for itself again. */
     arrived() {
@@ -1372,7 +1415,7 @@
     play(pinned) {
       this.rotating = true;
       this.pinned = !!pinned;
-      this.tick();
+      if (!this.held) this.tick();
       this.labelRotation();
       this.applyLive();
     }
@@ -1461,14 +1504,33 @@
       if (e.target !== this.heights || e.propertyName !== "height") return;
       this.heights.style.height = "";
     }
-    /** Rotation held while the pointer or the focus is in the carousel - still rotating as far
-     * as the button's name is concerned, because it will be again on the way out. */
+    /** Whether anything is holding the clock right now. One question, asked in the four places
+     * that start or stop it, so none of them can answer it differently from the others. */
+    get held() {
+      return rotationHeld(this.hovering, this.focused, this.offscreen, this.pinned);
+    }
+    /** Rotation held while the pointer or the focus is in the carousel, or while it is off the
+     * screen - still rotating as far as the button's name is concerned, because it will be
+     * again on the way out. */
     suspend() {
-      if (this.rotating && !this.pinned) this.clearTimer();
+      if (this.rotating && this.held) this.clearTimer();
     }
     resume() {
-      if (rotationHeld(this.hovering, this.focused)) return;
-      if (this.rotating && !this.pinned && !this.timer) this.tick();
+      if (this.rotating && !this.held && !this.timer) this.tick();
+    }
+    /**
+     * The element crossing into or out of the viewport.
+     *
+     * The last entry and not the first: a burst of crossings coalesced into one callback ends
+     * on the state the element is actually in now, and reading `entries[0]` there is acting on
+     * a position it has already left.
+     */
+    onVisibility(entries) {
+      const entry = entries[entries.length - 1];
+      if (!entry) return;
+      this.offscreen = !entry.isIntersecting;
+      if (this.offscreen) this.suspend();
+      else this.resume();
     }
     onHoverIn() {
       this.hovering = true;
@@ -3164,11 +3226,21 @@
         this.observer.observe(this);
         this.track.forEach((node) => this.observer.observe(node));
       }
+      if (typeof IntersectionObserver === "function") {
+        this.visibility = new IntersectionObserver((entries) => {
+          const entry = entries[entries.length - 1];
+          if (entry) this.toggleAttribute("data-marquee-offscreen", !entry.isIntersecting);
+        }, { rootMargin: "200px" });
+        this.visibility.observe(this);
+      }
     }
     disconnectedCallback() {
       if (!this.initialized) return;
       if (this.observer) this.observer.disconnect();
       this.observer = null;
+      if (this.visibility) this.visibility.disconnect();
+      this.visibility = null;
+      this.removeAttribute("data-marquee-offscreen");
       this.initialized = false;
     }
     static get observedAttributes() {

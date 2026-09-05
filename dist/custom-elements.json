@@ -360,6 +360,30 @@
         },
         {
           "kind": "function",
+          "name": "wheelHandoff",
+          "parameters": [
+            {
+              "name": "event",
+              "type": {
+                "text": "WheelEvent|{deltaX: number, deltaY: number, deltaMode: number}"
+              }
+            },
+            {
+              "name": "scroller",
+              "type": {
+                "text": "Element|{scrollWidth: number, clientWidth: number, scrollHeight: number, clientHeight: number}"
+              }
+            }
+          ],
+          "description": "How much of a wheel is the page's rather than the row's, in pixels - and zero for a wheel\nthe row can use itself.\n\nSafari holds a wheel gesture on the last scroller it moved. Side-wheel a row and the page\nunder the pointer stops answering the vertical wheel, for as long as the pointer stays on\nthe row. None of that is this element's doing - a bare `overflow-x: auto` div anywhere does\nthe same, and WebKit fixed one variant of it in 2020\n(https://bugs.webkit.org/show_bug.cgi?id=215641) while this one survived it - but the\nscroller is the element's, so handing the scroll back is the element's too. Every other\nbrowser already does it, which is why only Safari is asked to run this.\n\nThree refusals, and each one is a gesture that must come through untouched: a wheel with\nmore sideways in it than down is the row being scrolled on purpose; a row that has grown a\nvertical range of its own has somewhere to put the rest; and a row with nothing to scroll\nsideways never latched anything to begin with.\n\nA `deltaMode` other than pixels is refused rather than converted. Lines and pages are units\nonly the browser knows the size of, and a guess at one would scroll the page by a distance\nnothing on it agrees with - so the wheel is left where it is, which is the behaviour of not\nhaving this at all.",
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          }
+        },
+        {
+          "kind": "function",
           "name": "startInset",
           "parameters": [
             {
@@ -432,9 +456,23 @@
               "type": {
                 "text": "boolean"
               }
+            },
+            {
+              "name": "offscreen",
+              "optional": true,
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "pinned",
+              "optional": true,
+              "type": {
+                "text": "boolean"
+              }
             }
           ],
-          "description": "Whether the rotation stays held: while the pointer or the keyboard is in the carousel.\n\nTwo facts rather than one flag, because either can end while the other holds - and the\nAPG asks that rotation not resume until hover *and* focus have both left. One flag is\nthe version that breaks: a mouse crossing a carousel a keyboard reader is inside leaves\nagain, and its leaving restarts the slides under someone mid-caption.",
+          "description": "Whether the rotation stays held: while the pointer or the keyboard is in the carousel, and\nwhile the carousel is off the screen.\n\nHover and focus are two facts rather than one flag, because either can end while the other\nholds - and the APG asks that rotation not resume until hover *and* focus have both left.\nOne flag is the version that breaks: a mouse crossing a carousel a keyboard reader is\ninside leaves again, and its leaving restarts the slides under someone mid-caption.\n\n**`pinned` outranks those two and does not outrank `offscreen`, and that ordering is the\nwhole of this function.** Pinned is the reader having pressed Start, and the APG's rule is\nthat a rotation asked for by hand is not stopped again by a stray mouse - so ignoring hover\nand focus there is honouring a choice somebody made. Off the screen there is no such\nchoice to honour, because there is nobody at the carousel: the timer would spend the life\nof the page advancing slides for no one, and hand the reader who scrolls back a carousel\nparked mid-set, on a slide nothing they did chose.",
           "return": {
             "type": {
               "text": "boolean"
@@ -654,7 +692,7 @@
         },
         {
           "kind": "class",
-          "description": "`<carousel-elemental>` custom element.\n\nA row of slides you scroll through, per the\n[APG Carousel pattern](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/) - previous and\nnext, a picker with one button per slide, and, when it is asked for, automatic rotation\nwith the control that stops it.\n\n**The scroll container is the state.** There is no transform engine, no clones and no\nindex attribute to keep in step with where the row actually is: the slides sit in a\nscroll-snapping scroller, moving means setting `scrollLeft`, and which slide is current is\nread off the boxes themselves. That is what buys the responsiveness for nothing - resize\nthe window, change how many slides fit in CSS, or put the whole thing in a container\nquery, and the answer is measured from the layout that came out of it rather than from an\nindex some earlier layout wrote down.\n\nLight DOM, no shadow root. Nothing you wrote is moved or wrapped; the element adds the\nroles to your list and its items, and appends the controls - which is also why the\ncontrols are its to write rather than yours. A previous button authored in the markup is\na button that does nothing until the script lands, and this element's promise is the\nother way round: with no script the slides are a plain list, every one of them on the page\nand in reading order. The row, the snap and the controls all arrive with the script - the\nstylesheet keys on what the upgrade writes - so nothing is ever there to press before it\nworks.\n\n**No live region while it scrolls, and that is deliberate.** The APG's example flips\n`aria-live` between `off` and `polite` because there one slide exists at a time and a\nreader who cannot see the swap would otherwise never hear about it. Scrolling, every slide\nis in the DOM, in the accessibility tree and in reading order the whole time, so there is\nnothing to announce and nothing hidden to miss - and no `aria-hidden` on the slides off\nscreen either, which is the bug that puts a focusable link inside a hidden subtree.\n`fade` is the mode where one slide really is all there is, and there the live region comes\nback, off while rotating and polite when it is not, exactly as the pattern asks.\n\n**One gesture, and only in `fade`.** A scrolling row swipes because it is a scroll\ncontainer, and a second answer laid over the browser's would fight it. A stack is not one,\nso there the swipe is read here - touch and pen, never the mouse, which has the buttons and\nthe keyboard and would pay for a drag with the page's text selection and link clicks.\n\nponytail: one axis, horizontal. A vertical carousel is the same code with the block\nproperties, and nothing has asked for one; the refusal is on the page rather than an\n`orientation` attribute nobody sets.",
+          "description": "`<carousel-elemental>` custom element.\n\nA row of slides you scroll through, per the\n[APG Carousel pattern](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/) - previous and\nnext, a picker with one button per slide, and, when it is asked for, automatic rotation\nwith the control that stops it.\n\n**The scroll container is the state.** There is no transform engine, no clones and no\nindex attribute to keep in step with where the row actually is: the slides sit in a\nscroll-snapping scroller, moving means setting `scrollLeft`, and which slide is current is\nread off the boxes themselves. That is what buys the responsiveness for nothing - resize\nthe window, change how many slides fit in CSS, or put the whole thing in a container\nquery, and the answer is measured from the layout that came out of it rather than from an\nindex some earlier layout wrote down.\n\nLight DOM, no shadow root. Nothing you wrote is moved or wrapped; the element adds the\nroles to your list and its items, and appends the controls - which is also why the\ncontrols are its to write rather than yours. A previous button authored in the markup is\na button that does nothing until the script lands, and this element's promise is the\nother way round: with no script the slides are a plain list, every one of them on the page\nand in reading order. The row, the snap and the controls all arrive with the script - the\nstylesheet keys on what the upgrade writes - so nothing is ever there to press before it\nworks.\n\n**No live region while it scrolls, and that is deliberate.** The APG's example flips\n`aria-live` between `off` and `polite` because there one slide exists at a time and a\nreader who cannot see the swap would otherwise never hear about it. Scrolling, every slide\nis in the DOM, in the accessibility tree and in reading order the whole time, so there is\nnothing to announce and nothing hidden to miss - and no `aria-hidden` on the slides off\nscreen either, which is the bug that puts a focusable link inside a hidden subtree.\n`fade` is the mode where one slide really is all there is, and there the live region comes\nback, off while rotating and polite when it is not, exactly as the pattern asks.\n\n**One gesture, and only in `fade`.** A scrolling row swipes because it is a scroll\ncontainer, and a second answer laid over the browser's would fight it. A stack is not one,\nso there the swipe is read here - touch and pen, never the mouse, which has the buttons and\nthe keyboard and would pay for a drag with the page's text selection and link clicks. The\none input a scrolled row does take is the wheel it cannot use at all, which Safari alone\nkeeps to itself rather than passing on - see `wheelHandoff`.\n\nponytail: one axis, horizontal. A vertical carousel is the same code with the block\nproperties, and nothing has asked for one; the refusal is on the page rather than an\n`orientation` attribute nobody sets.",
           "name": "CarouselElemental",
           "cssProperties": [
             {
@@ -870,6 +908,16 @@
             },
             {
               "kind": "method",
+              "name": "onWheel",
+              "parameters": [
+                {
+                  "name": "event"
+                }
+              ],
+              "description": "The part of a wheel the row cannot use, put back on the box Safari stopped giving it to."
+            },
+            {
+              "kind": "method",
               "name": "arrived",
               "description": "The programmatic scroll is over: the scroller speaks for itself again."
             },
@@ -985,13 +1033,29 @@
               "description": "The end of the height the swap pinned - or the end of any hope of one."
             },
             {
+              "kind": "field",
+              "name": "held",
+              "description": "Whether anything is holding the clock right now. One question, asked in the four places\nthat start or stop it, so none of them can answer it differently from the others.",
+              "readonly": true
+            },
+            {
               "kind": "method",
               "name": "suspend",
-              "description": "Rotation held while the pointer or the focus is in the carousel - still rotating as far\nas the button's name is concerned, because it will be again on the way out."
+              "description": "Rotation held while the pointer or the focus is in the carousel, or while it is off the\nscreen - still rotating as far as the button's name is concerned, because it will be\nagain on the way out."
             },
             {
               "kind": "method",
               "name": "resume"
+            },
+            {
+              "kind": "method",
+              "name": "onVisibility",
+              "parameters": [
+                {
+                  "name": "entries"
+                }
+              ],
+              "description": "The element crossing into or out of the viewport.\n\nThe last entry and not the first: a burst of crossings coalesced into one callback ends\non the state the element is actually in now, and reading `entries[0]` there is acting on\na position it has already left."
             },
             {
               "kind": "method",
@@ -1170,6 +1234,14 @@
           "name": "scrollEdges",
           "declaration": {
             "name": "scrollEdges",
+            "module": "src/elementals/carousel/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "wheelHandoff",
+          "declaration": {
+            "name": "wheelHandoff",
             "module": "src/elementals/carousel/index.js"
           }
         },

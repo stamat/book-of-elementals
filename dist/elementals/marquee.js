@@ -1,4 +1,4 @@
-/* book-of-elementals v3.3.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v3.4.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 (() => {
   var __defProp = Object.defineProperty;
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
@@ -107,11 +107,21 @@
         this.observer.observe(this);
         this.track.forEach((node) => this.observer.observe(node));
       }
+      if (typeof IntersectionObserver === "function") {
+        this.visibility = new IntersectionObserver((entries) => {
+          const entry = entries[entries.length - 1];
+          if (entry) this.toggleAttribute("data-marquee-offscreen", !entry.isIntersecting);
+        }, { rootMargin: "200px" });
+        this.visibility.observe(this);
+      }
     }
     disconnectedCallback() {
       if (!this.initialized) return;
       if (this.observer) this.observer.disconnect();
       this.observer = null;
+      if (this.visibility) this.visibility.disconnect();
+      this.visibility = null;
+      this.removeAttribute("data-marquee-offscreen");
       this.initialized = false;
     }
     static get observedAttributes() {
