@@ -19,6 +19,13 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+### Changed
+
+- **`<password-elemental>`'s themed icon now shows the state, not the next action.** A closed
+  eye while the value is masked, an open one while it is on screen — the way round every
+  password field the reader has already used. **CSS:** only the theme's `::before` mask
+  changed; a page supplying its own icon with `content: none` is untouched.
+
 ## [3.4.0] - 2026-09-05
 
 ### Changed

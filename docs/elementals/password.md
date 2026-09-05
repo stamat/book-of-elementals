@@ -207,7 +207,7 @@ table, with the values live:
 <label for="pw-look">Password</label>
 <password-elemental>
   <input type="password" id="pw-look" name="password" autocomplete="current-password">
-  <button type="button"><span class="visually-hidden">Show password</span></button>
+  <button type="button"></button>
 </password-elemental>
 ```
 
