@@ -19,6 +19,8 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+## [3.4.3] - 2026-09-06
+
 ### Fixed
 
 - **`<marquee-elemental>` no longer snaps back to the start of its lap in Safari.** WebKit
