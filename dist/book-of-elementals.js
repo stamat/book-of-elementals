@@ -1,4 +1,4 @@
-/* book-of-elementals v3.4.2 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v3.4.3 | https://stamat.github.io/book-of-elementals/ | MIT License */
 (() => {
   var __defProp = Object.defineProperty;
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
@@ -3152,6 +3152,10 @@
     if (!(distance > 0)) return 0;
     return distance / (speed > 0 ? speed : DEFAULT_SPEED);
   }
+  var DISTANCE_SLACK = 1;
+  function stripHolds(copies, distance, lastCopies, lastDistance) {
+    return copies === lastCopies && Math.abs(distance - lastDistance) < DISTANCE_SLACK;
+  }
   function reducedMotion2() {
     return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
@@ -3310,7 +3314,7 @@
       const track = Math.max(...edges.map((box) => box.right)) - Math.min(...edges.map((box) => box.left));
       const distance = track + gap;
       const copies = cloneCount(track, gap, width);
-      if (copies === this.copies && distance === this.distance) return;
+      if (stripHolds(copies, distance, this.copies, this.distance)) return;
       this.copies = copies;
       this.distance = distance;
       this.removeAttribute("data-marquee-running");

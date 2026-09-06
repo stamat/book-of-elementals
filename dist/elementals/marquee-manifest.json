@@ -58,6 +58,25 @@
           "description": "One lap, in seconds: the distance between two copies at the speed asked for. A speed that\nis not a positive number falls back rather than resolving to a `NaN` duration, which is an\nanimation that never runs with the strip parked wherever the clones left it."
         },
         {
+          "kind": "function",
+          "name": "stripHolds",
+          "parameters": [
+            {
+              "name": "copies"
+            },
+            {
+              "name": "distance"
+            },
+            {
+              "name": "lastCopies"
+            },
+            {
+              "name": "lastDistance"
+            }
+          ],
+          "description": "Whether a fresh measurement describes the strip that is already on screen. A `distance`\nthis has never measured is not one of them - `NaN` fails the comparison, which is the first\npass building rather than skipping."
+        },
+        {
           "kind": "class",
           "description": "`<marquee-elemental>` custom element.\n\nA row of content that scrolls forever - a logo strip, a ticker - built out of the list you\nalready wrote.\n\nThere is no APG pattern for this, because there is no widget: nothing here is operated, and\nthe content is the same content it was standing still. What there is instead is an\nobligation, and it is a Level A one.\n[WCAG 2.2 2.2.2 Pause, Stop, Hide](https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide.html)\nsays movement that starts on its own, runs longer than five seconds and sits beside other\ncontent has to have a mechanism to stop it - and an infinite loop is longer than five\nseconds. Every marquee in the ecosystem leaves that mechanism to you: the CSS-only recipes\npause on `:hover`, which no keyboard has, and the component libraries hand you a `play`\nprop and a hook to build the button out of. **This writes the button.**\n\nThe second half is the one nobody has at all. A seamless loop is copies of the track, and a\ncopy of a logo strip is a copy of its links: `aria-hidden` keeps them out of the screen\nreader, and does nothing whatever about <kbd>Tab</kbd>, so the keyboard walks into copies of\nthe same links scrolling past under the focus ring. The copies here are `inert` as well as\n`aria-hidden`, and their `id`s are stripped on the way out, because a duplicated `id` is\nthe same bug one layer down.\n\n**The copies are counted, not guessed.** Two of everything is the usual recipe and it is\nright for one screen width: cover a wide monitor with a short track and the loop shows a\nhole. This measures the track against the container and clones until the strip covers it,\nagain whenever a resize changes the answer - one clone when the track already fills the\ncontainer, more when it does not, and none at all while nothing is moving, so a reader on\nreduced motion is not handed copies of the page they never asked to see move.\n\nLight DOM, no shadow root. Nothing you wrote is moved or wrapped - the copies are appended\nafter it and the control after those. With no script it is a list, wrapped or scrolling the\nway any list of things does, every item in the page and in reading order.\n\nponytail: no vertical axis, no `pauseOnClick`, no gradient-mask props. The fade at the\nedges is the theme's, the gap is a custom property, and the axis is one someone can ask\nfor when they have a ticker that needs it.",
           "name": "MarqueeElemental",
@@ -293,6 +312,14 @@
           "name": "cycleDuration",
           "declaration": {
             "name": "cycleDuration",
+            "module": "src/elementals/marquee/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "stripHolds",
+          "declaration": {
+            "name": "stripHolds",
             "module": "src/elementals/marquee/index.js"
           }
         },
