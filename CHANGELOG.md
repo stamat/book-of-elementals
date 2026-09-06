@@ -19,6 +19,8 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+## [3.4.2] - 2026-09-06
+
 ### Changed
 
 - **`<password-elemental>`'s themed icon is back to showing the next action**, reverting
