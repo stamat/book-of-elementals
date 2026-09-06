@@ -50,6 +50,29 @@ export function cycleDuration(distance, speed) {
   return distance / (speed > 0 ? speed : DEFAULT_SPEED);
 }
 
+/**
+ * How far the lap may move before the strip is worth rebuilding, in CSS pixels.
+ *
+ * WebKit reports a translated element's border box up to 5/16px wider than its layout box,
+ * and hands that difference to `ResizeObserver` as a size change on a track nothing has
+ * touched - most often while the strip is held still, where a wobbled reading stays put long
+ * enough to be noticed instead of flickering back within the frame. Compared exactly, that
+ * rebuilds the strip, and a rebuild cancels the animation and starts the lap over: the strip
+ * snaps back to its first frame under a reader who is looking straight at it.
+ *
+ * A pixel of slack is what makes a sub-pixel reading not a size change. It costs a lap up to
+ * a pixel long, which is a sub-pixel seam once a lap; the rebuild it replaces is the whole
+ * strip jumping.
+ */
+const DISTANCE_SLACK = 1;
+
+/** Whether a fresh measurement describes the strip that is already on screen. A `distance`
+ * this has never measured is not one of them - `NaN` fails the comparison, which is the first
+ * pass building rather than skipping. */
+export function stripHolds(copies, distance, lastCopies, lastDistance) {
+  return copies === lastCopies && Math.abs(distance - lastDistance) < DISTANCE_SLACK;
+}
+
 /** Whether the reader has asked the system for less movement. */
 function reducedMotion() {
   return typeof window !== 'undefined'
@@ -347,7 +370,7 @@ export class MarqueeElemental extends ElementBase {
     // Nothing about the strip changed, so nothing is rebuilt. Rebuilding restarts the lap,
     // and an observer that rebuilt on every callback would be one whose own writes are what
     // it hears next, which is a loop with no bottom to it.
-    if (copies === this.copies && distance === this.distance) return;
+    if (stripHolds(copies, distance, this.copies, this.distance)) return;
     this.copies = copies;
     this.distance = distance;
     // **The animation comes off before the copies change and goes back on after the numbers

@@ -19,6 +19,13 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`<marquee-elemental>` no longer snaps back to the start of its lap in Safari.** WebKit
+  reports a translated box up to 5/16px wider than its layout box and hands that difference to
+  `ResizeObserver`, which the element took for a resize and rebuilt the strip over — and a
+  rebuild restarts the lap; a measurement now has to move a whole pixel to count as one.
+
 ## [3.4.2] - 2026-09-06
 
 ### Changed

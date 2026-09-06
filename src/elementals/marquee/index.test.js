@@ -1,6 +1,7 @@
-// The two sums this element does, and the only two decisions it makes that are not a
-// listener or an attribute: how many copies of the track it takes to cover the container
-// without a gap, and how long one lap of the loop should last at the speed asked for.
+// The three sums this element does, and the only decisions it makes that are not a listener
+// or an attribute: how many copies of the track it takes to cover the container without a
+// gap, how long one lap of the loop should last at the speed asked for, and whether a fresh
+// measurement is worth rebuilding the strip over.
 //
 // Both are pure on purpose. The clone count is the part every marquee gets wrong - a
 // hard-coded pair of copies looks right on the laptop it was written on and leaves a hole
@@ -12,7 +13,7 @@
 // can still reach is a bug only a real browser can show, so those are checked by `script/a11y`
 // over the docs page instead.
 
-import { cloneCount, cycleDuration, MAX_CLONES, DEFAULT_SPEED } from './index.js';
+import { cloneCount, cycleDuration, stripHolds, MAX_CLONES, DEFAULT_SPEED } from './index.js';
 
 test('a track that already fills the container is still cloned once, because none at all is a visible jump', () => {
   // The strip has to be at least the container plus one repeat long: the animation ends
@@ -84,4 +85,30 @@ test('a speed that is not a number falls back rather than freezing the strip mid
 test('nothing to travel takes no time, and says so with a zero rather than a division', () => {
   expect(cycleDuration(0, 50)).toBe(0);
   expect(cycleDuration(NaN, 50)).toBe(0);
+});
+
+test('a sub-pixel difference in the measured lap is not a size change, because a rebuild is a visible jump', () => {
+  // WebKit reports a translated element's border box up to 5/16px wider than its layout box
+  // and hands that to `ResizeObserver` as a resize of a track nothing has touched. Compared
+  // exactly it rebuilds the strip, which cancels the animation and starts the lap over -
+  // the strip snapping back to its first frame, mid-scroll, in front of the reader.
+  expect(stripHolds(2, 1961.703125, 2, 1961.390625)).toBe(true);
+  expect(stripHolds(2, 1961.390625, 2, 1961.703125)).toBe(true);
+});
+
+test('a lap that really moved is rebuilt, slack or no slack', () => {
+  // A webfont landing, an image arriving, a page turning the gap up: the track is a
+  // different width and the strip has to be measured against it again.
+  expect(stripHolds(2, 1962.5, 2, 1961.390625)).toBe(false);
+  expect(stripHolds(2, 2400, 2, 1961.390625)).toBe(false);
+});
+
+test('one more copy is a rebuild whatever the lap measures, because the extra copy is the hole', () => {
+  expect(stripHolds(3, 1961.390625, 2, 1961.390625)).toBe(false);
+});
+
+test('a strip that has never been measured is built rather than held', () => {
+  // `distance` is `undefined` before the first pass, and a comparison against it is `NaN` -
+  // which has to come out as "not the same strip", or the element never builds one.
+  expect(stripHolds(2, 1961.390625, undefined, undefined)).toBe(false);
 });

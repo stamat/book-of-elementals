@@ -125,9 +125,11 @@ gap — visible, and fixed with more content rather than with more copies.
 
 Nothing is measured again until the box changes size. A resize, a container query, a webfont
 landing, a sidebar folding away: all of them are one `ResizeObserver`, and none of them
-rebuild the strip if the width came out the same — rebuilding restarts the lap, and a lap that
-restarts under a reader who has just pressed pause is a jump asked for by the one gesture that
-means hold still.
+rebuild the strip unless the lap moved by a whole pixel — rebuilding restarts the lap, and a
+lap that restarts under a reader who has just pressed pause is a jump asked for by the one
+gesture that means hold still. The pixel of slack is Safari's: WebKit reports a translated box
+up to 5/16px wider than its layout box, and a strip rebuilt over that difference snaps back to
+its first frame mid-scroll.
 
 ## Stopping
 
