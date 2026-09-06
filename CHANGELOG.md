@@ -19,6 +19,14 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+### Changed
+
+- **`<password-elemental>`'s themed icon is back to showing the next action**, reverting
+  [3.4.1]: an open eye while the value is masked, a crossed-out one while it is on screen.
+  **CSS:** the theme's `::before` mask only; a page supplying its own icon with
+  `content: none` never saw either direction.
+  I briefly hallucinated at 2AM...
+
 ## [3.4.1] - 2026-09-05
 
 ### Changed
@@ -205,7 +213,7 @@ to the docs page and the commit, not here.
   cell — holding two `<button class="rearrange-elemental-move" data-move="up|down">` named by
   visible text in a `<span class="rearrange-elemental-label">`, plus `data-move="prev|next"` on
   a board and a `<span class="rearrange-elemental-handle" data-rearrange-handle
-  aria-hidden="true">` under `drag`. One `<p class="rearrange-elemental-status" role="status">`
+aria-hidden="true">` under `drag`. One `<p class="rearrange-elemental-status" role="status">`
   closes the element. Ends of travel are `aria-disabled`, never `disabled`. Nothing is written
   onto your list or your items, and no role is added to either.
 
@@ -322,7 +330,7 @@ to the docs page and the commit, not here.
 
   **DOM:** `role="tree"` on the element, `role="none"` on the outer list and every `<li>`,
   `role="group"` with a generated `id` on each branch, and `aria-owns` tying node to branch —
-  load-bearing, since a branch is a *sibling* of its node. A closed branch carries `hidden`. No
+  load-bearing, since a branch is a _sibling_ of its node. A closed branch carries `hidden`. No
   `aria-level`, `aria-setsize` or `aria-posinset`. Teardown puts back only what upgrade wrote, so
   an `id` the page put on a branch list survives. `aria-current="false"` is read as what it means,
   so a router writing it on every inactive link neither opens every branch nor tints the sidebar.
@@ -482,7 +490,7 @@ to the docs page and the commit, not here.
   structure stylesheets now split that rendering on `@media (scripting)`: scripting off keeps the
   old fallback, scripting on paints the closed state the upgrade is about to wire.
 
-  **The trade:** a bundle that never arrives *while scripting is on* — blocked, 404 — now leaves
+  **The trade:** a bundle that never arrives _while scripting is on_ — blocked, 404 — now leaves
   the closed state with nothing to open it. CSS only, no DOM output changed, and every new rule
   sits under `:not(:defined)`.
 
@@ -721,7 +729,7 @@ to the docs page and the commit, not here.
 
 - **`<slider-elemental>` quietly under-delivered `gap` when `step` did not divide it.**
   `step="10"` with `gap="25"` left the pair 20 apart, since the input put the thumb back on the
-  nearest notch, which is the one *towards* the other thumb half the time. The thumb now gives way
+  nearest notch, which is the one _towards_ the other thumb half the time. The thumb now gives way
   to the notch past where the gap lands, which costs at most one notch and cannot be silently
   wrong.
 
@@ -767,7 +775,7 @@ to the docs page and the commit, not here.
 
   **DOM:** `data-indeterminate` on the element while the `<progress>` has no `value`, and nothing
   else. **CSS:** `--progress-elemental-value` and `--progress-elemental-buffer`, both percentages,
-  both clamped; the value property is *removed* rather than set to `0%` while indeterminate,
+  both clamped; the value property is _removed_ rather than set to `0%` while indeterminate,
   because a bar at zero claims nothing has started and a bar with no value claims nobody knows.
 
   Every way of moving the bar works — `element.value`, `progress.value` and `setAttribute` —
@@ -1178,7 +1186,9 @@ to the docs page and the commit, not here.
   accordion must not silently redraw every checkbox on the page.
 
   ```html
-  <label class="checkbox-elemental"><input type="checkbox" /> Remember me</label>
+  <label class="checkbox-elemental"
+    ><input type="checkbox" /> Remember me</label
+  >
   ```
 
   New exports `book-of-elementals/checkbox.scss` and `/checkbox.css`, plus
@@ -1356,7 +1366,7 @@ to the docs page and the commit, not here.
   a panel opens nothing; it now reads the row item the pointer is inside, however deep.
 
 - **`<navbar-elemental>` no longer gives the page a horizontal scrollbar.** The measured copy is
-  deliberately wider than its box — that overhang *is* the measurement — but nothing clipped it, so
+  deliberately wider than its box — that overhang _is_ the measurement — but nothing clipped it, so
   it counted toward the document's scrollable width and a header whose links did not fit handed the
   whole page a sideways scroll.
 
@@ -1376,7 +1386,10 @@ to the docs page and the commit, not here.
   attribute rather than a `matchMedia` listener per page.
 
   ```html
-  <disclosure-elemental for="sidebar" media="(min-width: 60rem)"></disclosure-elemental>
+  <disclosure-elemental
+    for="sidebar"
+    media="(min-width: 60rem)"
+  ></disclosure-elemental>
   ```
 
   Crossing lands instantly rather than sliding, since a breakpoint change is the layout being
@@ -1431,7 +1444,7 @@ to the docs page and the commit, not here.
 
   **The breakpoint at which links fold away is measured rather than declared** — an
   `IntersectionObserver` reports which items are not entirely inside the row, and those reappear
-  under the overflow button one at a time. What is observed is a *copy* of the row, because an
+  under the overflow button one at a time. What is observed is a _copy_ of the row, because an
   observer watching the box it is also changing is an infinite loop. `media` is the separate
   question of when the whole bar becomes a drawer, and stays a query because nothing the element
   does can change the width of the window.
@@ -1487,7 +1500,7 @@ to the docs page and the commit, not here.
 
 - **`<disclosure-elemental>`** — the
   [APG Disclosure pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/): a real `<button>`
-  wired to a region it shows and hides. `<details>` wins wherever the region can live *inside* the
+  wired to a region it shows and hides. `<details>` wins wherever the region can live _inside_ the
   trigger's element; this is for where it cannot — a `<figcaption>`, a table row, a grid item, a
   panel on the other side of the page.
 
@@ -1499,7 +1512,7 @@ to the docs page and the commit, not here.
 
   **CSS:** the region slides on `--disclosure-elemental-duration` and
   `--disclosure-elemental-easing`, read back out of the computed styles, so the stylesheet times the
-  animation — including to nothing. `hidden` therefore lands at the *end* of a close, while
+  animation — including to nothing. `hidden` therefore lands at the _end_ of a close, while
   `aria-expanded`, `open` and the event all change immediately. **The region is the animated box, so
   it must not be padded or bordered** — block padding is a floor `height: 0` cannot get under. Put
   the inset on a box inside the region.
@@ -1585,7 +1598,7 @@ to the docs page and the commit, not here.
 
 - **Behaviour:** closing a panel is the element's, not the browser's — `<details>` sets its contents
   to `display: none` the moment `open` goes away, which cuts a close animation off at frame one. So
-  `accordion-toggle` fires for a close at the *end* of the slide; opening still fires it
+  `accordion-toggle` fires for a close at the _end_ of the slide; opening still fires it
   immediately. The old `::details-content` and `interpolate-size` pair is gone, since it only
   animates in Chromium.
 
