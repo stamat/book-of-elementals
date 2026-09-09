@@ -292,6 +292,19 @@ export function roleDescription(raw, fallback) {
 }
 
 /**
+ * Whether the scroller is a list, which is the one thing the two markups differ by: `<li>`
+ * slides rather than any child, and a list role that has to come off for the slides to be
+ * groups rather than list items.
+ *
+ * @param {Element} element - The scroller.
+ * @returns {boolean}
+ */
+export function isList(element) {
+  const tag = element.tagName;
+  return tag === 'UL' || tag === 'OL' || tag === 'MENU';
+}
+
+/**
  * Which slide the carousel is on: the first one that has not gone past the row's start edge.
  *
  * Measured against the *snap* edge rather than the scroller's box, which is the only version
@@ -485,11 +498,11 @@ function disable(button, disabled) {
  * index some earlier layout wrote down.
  *
  * Light DOM, no shadow root. Nothing you wrote is moved or wrapped; the element adds the
- * roles to your list and its items, and appends the controls - which is also why the
+ * roles to your scroller and its children, and appends the controls - which is also why the
  * controls are its to write rather than yours. A previous button authored in the markup is
  * a button that does nothing until the script lands, and this element's promise is the
- * other way round: with no script the slides are a plain list, every one of them on the page
- * and in reading order. The row, the snap and the controls all arrive with the script - the
+ * other way round: with no script the slides are the markup you wrote, every one of them on
+ * the page and in reading order. The row, the snap and the controls all arrive with the script - the
  * stylesheet keys on what the upgrade writes - so nothing is ever there to press before it
  * works.
  *
@@ -545,23 +558,33 @@ function disable(button, disabled) {
  *
  * @fires carousel-change - `detail.index` is the slide now on screen, `detail.slide` the element itself.
  *
- * @slot - One `<ul>`, `<ol>` or `<menu>` of `<li>` slides.
+ * @slot - One `<ul>`, `<ol>` or `<menu>` of `<li>` slides, or any other single element whose children are the slides.
  */
 export class CarouselElemental extends ElementBase {
   static get observedAttributes() {
     return ['autoplay', 'interval', 'fade'];
   }
 
-  /** The scroller: the first list in the element. A carousel inside a slide keeps its own. */
+  /**
+   * The scroller: a list among the element's children, or else the first child it did not
+   * write itself.
+   *
+   * Children and not the first list anywhere inside, which is what this asked for and is the
+   * bug it had the moment slides stopped being `<li>`s: a `<ul>` inside a slide - a card's
+   * sizes, a set of links - was found first and driven as the row. A direct child was always
+   * the only shape that worked anyway, since the stylesheet reaches the scroller through
+   * `carousel-elemental > [data-carousel-slides]`.
+   */
   get scroller() {
-    const list = this.querySelector('ul, ol, menu');
-    return list && list.closest('carousel-elemental') === this ? list : null;
+    return this.querySelector(':scope > ul, :scope > ol, :scope > menu')
+      || this.querySelector(':scope > :not([data-carousel-controls]):not([data-carousel-rotate])');
   }
 
-  /** The slides, in order. What the list holds, so a list inside a slide is not one. */
+  /** The slides, in order: a list's `<li>`s, or whatever else the scroller holds. */
   get slides() {
-    const list = this.scroller;
-    return list ? Array.from(list.querySelectorAll(':scope > li')) : [];
+    const scroller = this.scroller;
+    if (!scroller) return [];
+    return isList(scroller) ? Array.from(scroller.querySelectorAll(':scope > li')) : Array.from(scroller.children);
   }
 
   /** The picker buttons, in slide order. */
@@ -660,9 +683,9 @@ export class CarouselElemental extends ElementBase {
 
     this.initialized = true;
     // Bound before `wire()` looks for anything, and whatever it finds. A gallery whose slides
-    // are built later starts with an empty row - or with no list at all - and the listeners
+    // are built later starts with an empty row - or with no scroller at all - and the listeners
     // have to be on the element by the time `wire()` is called on what arrived, or the
-    // controls that come with it drive nothing. Returning early on a missing list was the
+    // controls that come with it drive nothing. Returning early on a missing scroller was the
     // version where that `wire()` threw.
     this.wire();
 
@@ -709,7 +732,7 @@ export class CarouselElemental extends ElementBase {
   }
 
   /**
-   * Take the pattern back off, leaving the markup the page wrote: a list.
+   * Take the pattern back off, leaving the markup the page wrote.
    *
    * Two callers, which are the same event approached from opposite sides - a carousel leaving
    * the document, and one whose page has taken its slides away. Everything written comes back
@@ -745,7 +768,8 @@ export class CarouselElemental extends ElementBase {
     const scroller = this.scroller;
     if (scroller) {
       scroller.removeAttribute('data-carousel-slides');
-      scroller.removeAttribute('role');
+      // Only where `wire()` wrote one: a role on a scroller that is not a list is the page's.
+      if (isList(scroller)) scroller.removeAttribute('role');
       scroller.removeAttribute('tabindex');
       scroller.removeAttribute('aria-live');
     }
@@ -775,8 +799,8 @@ export class CarouselElemental extends ElementBase {
     // button in it would be worse than the markup it upgraded. An empty row is the same answer
     // for a different reason: a gallery builds its slides when the reader asks for them, and
     // until then there is nothing to put a pattern on. Either way this is the pass that takes
-    // it back off, so a page that empties its carousel is left with a list rather than with
-    // controls driving nothing.
+    // it back off, so a page that empties its carousel is left with its own markup rather
+    // than with controls driving nothing.
     if (slides.length < 2) {
       this.strip();
       return;
@@ -795,14 +819,15 @@ export class CarouselElemental extends ElementBase {
 
     if (!scroller.id) scroller.id = 'carousel-elemental-slides-' + (++carouselCount);
     scroller.setAttribute('data-carousel-slides', '');
-    // The list stops being a list. Its children are slides - `role="group"`, which is what
-    // the pattern asks of them - and a list whose children are not list items is a broken
-    // list to a screen reader, not a carousel. `role="none"` would not do it either: the
-    // scroller can end up focusable two lines below, and a presentational role on a
-    // focusable element is thrown away and the list role comes back. A screen reader
-    // counting list items here would be counting the wrong thing anyway - each slide is
-    // already named `3 of 10`.
-    scroller.setAttribute('role', 'group');
+    // A list stops being a list. Its children are slides - `role="group"`, which is what the
+    // pattern asks of them - and a list whose children are not list items is a broken list to
+    // a screen reader, not a carousel. `role="none"` would not do it either: the scroller can
+    // end up focusable two lines below, and a presentational role on a focusable element is
+    // thrown away and the list role comes back. A screen reader counting list items here would
+    // be counting the wrong thing anyway - each slide is already named `3 of 10`. Nothing is
+    // written on a scroller that is not a list: there is no role there to take off, and a
+    // second unnamed group inside the carousel's own is one more thing announced for nothing.
+    if (isList(scroller)) scroller.setAttribute('role', 'group');
     // A scrollable region with nothing focusable in it is content no keyboard can scroll to
     // (WCAG 2.1.1). A row of slides full of links already has stops enough - and stacked
     // slides do not scroll at all, so there is nothing there to reach.
@@ -1106,7 +1131,7 @@ export class CarouselElemental extends ElementBase {
    * and onto the element as a styling hook.
    *
    * Both at once is a row short enough to fit, and both buttons go dim: a carousel with
-   * nothing to scroll is a list, and two live buttons over a list that cannot move is the
+   * nothing to scroll is a row that does not move, and two live buttons over it are the
    * kind of thing that gets pressed twice and then distrusted.
    */
   applyEdges() {
@@ -1141,7 +1166,7 @@ export class CarouselElemental extends ElementBase {
    * the layout, instead of to a pixel count taken before any of them happened.
    *
    * Measured off the scroller rather than off the slide, so whatever padding or `box-sizing`
-   * the page gave the list is inside both numbers instead of neither.
+   * the page gave the scroller is inside both numbers instead of neither.
    *
    * @param {number} from The height the stack had before the current marker moved.
    */
@@ -1310,7 +1335,7 @@ export class CarouselElemental extends ElementBase {
    * `swipe` reports the axis it travelled furthest along, and only that one.
    */
   onSwipe(e) {
-    // The list can be gone between the finger landing and it lifting - a page is free to
+    // The scroller can be gone between the finger landing and it lifting - a page is free to
     // swap its slides out, and `getComputedStyle(null)` throws.
     const scroller = this.scroller;
     if (!e.horizontal || !scroller) return;
@@ -1326,8 +1351,8 @@ export class CarouselElemental extends ElementBase {
   }
 
   /** Give the stack its height back, and stop listening for the swap that pinned it. The
-   * inline height is this element's own writing, so leaving one behind is leaving the list a
-   * size the page never asked for. */
+   * inline height is this element's own writing, so leaving one behind is leaving the scroller
+   * a size the page never asked for. */
   unpin() {
     if (!this.heights) return;
     this.heights.removeEventListener('transitionend', this.onHeightEnd);

@@ -34,13 +34,13 @@ Elements published so far:
 - `<accordion-elemental>` — APG accordion over native `<details>`; `exclusive`
   and `name` attributes, arrow-key header navigation, fragment deep links, and a
   bubbling `accordion-toggle` event.
-- `<carousel-elemental>` — APG carousel on a `<ul>`/`<ol>`/`<menu>` of `<li>` slides in a
-  scroll-snapping scroller: the scroll container is the state, so there is no transform
+- `<carousel-elemental>` — APG carousel on a `<ul>`/`<ol>`/`<menu>` of `<li>` slides, or on
+  any other child element whose own children are the slides, in a scroll-snapping scroller: the scroll container is the state, so there is no transform
   engine, no cloned slides and no index attribute, moving is one assignment to `scrollLeft`,
   and the current slide is read off the boxes whenever a `ResizeObserver` says the row
   changed shape — which is why resize and a CSS change to how many slides fit cost no code. It writes
   `aria-roledescription="carousel"` plus `role="region"` (named) or `"group"`, `role="group"`
-  on the list and on each slide with `aria-roledescription="slide"` and an `N of M` label,
+  on a list scroller and on each slide with `aria-roledescription="slide"` and an `N of M` label,
   `data-carousel-current` on the slide showing, and appends previous, a picker of one
   `aria-disabled` button per slide, and next. The arrows stop at the ends rather than
   wrapping and take `aria-disabled` there, with `data-carousel-at-start`/`-at-end` on the

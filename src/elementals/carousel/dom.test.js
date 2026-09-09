@@ -3,6 +3,9 @@
  * upgrade, when the slides go away and come back, and when `autoplay` is switched after the
  * fact - the paths nothing on a page looks wrong on until it has tried them.
  *
+ * Both markups are here: a list of `<li>`s, and a scroller whose children are the slides -
+ * they part company at the roles and at what counts as a slide, and nowhere else.
+ *
  * `index.test.js` pins the decisions as plain functions. This file is the element around them,
  * and it runs in `fade` on purpose: stacked slides need no layout, no scroll container and no
  * `ResizeObserver`, none of which jsdom has, and the lifecycle is the same code either way -
@@ -229,5 +232,53 @@ describe('the wheel Safari holds on to', () => {
 
     expect(wheel.defaultPrevented).toBe(false);
     expect(scrolled).not.toHaveBeenCalled();
+  });
+});
+
+
+describe('slides that are not a list', () => {
+  const boxes = (n) => Array.from({ length: n }, (_, i) => `<div>Slide ${i + 1}</div>`).join('');
+
+  test('a scroller of plain elements is driven exactly like a list, and each of its children is a slide', () => {
+    const carousel = mount(`<carousel-elemental fade aria-label="Gallery"><div>${boxes(3)}</div></carousel-elemental>`);
+
+    expect(carousel.slides).toHaveLength(3);
+    expect(carousel.querySelectorAll('[data-carousel-marker]')).toHaveLength(3);
+    expect(carousel.slides[0].getAttribute('role')).toBe('group');
+    expect(carousel.slides[0].getAttribute('aria-roledescription')).toBe('slide');
+    expect(carousel.slides[0].getAttribute('aria-label')).toBe('1 of 3');
+
+    carousel.querySelector('[data-carousel-next]').click();
+    expect(carousel.index).toBe(1);
+    expect(carousel.slides[1].hasAttribute('data-carousel-current')).toBe(true);
+  });
+
+  test('and the scroller keeps the role the page gave it, since there is no list role to take off', () => {
+    // `role="group"` on a `<ul>` is there to stop a screen reader counting list items that are
+    // not list items. On a `<div>` it would be a second unnamed group inside the carousel's own.
+    const carousel = mount(`<carousel-elemental fade aria-label="Gallery"><div>${boxes(3)}</div></carousel-elemental>`);
+    expect(carousel.scroller.hasAttribute('role')).toBe(false);
+    expect(carousel.scroller.hasAttribute('data-carousel-slides')).toBe(true);
+  });
+
+  test('a list inside a slide is not mistaken for the row', () => {
+    // The reason the scroller is looked for among the children: a card with a list of sizes in
+    // it is markup a page writes without a thought, and finding the first list anywhere inside
+    // drove that list as the row - three slides became one, and the carousel went away.
+    const carousel = mount(`<carousel-elemental fade aria-label="Gallery"><div><div><ul><li>41</li><li>42</li></ul></div>${boxes(2)}</div></carousel-elemental>`);
+
+    expect(carousel.scroller.tagName).toBe('DIV');
+    expect(carousel.slides).toHaveLength(3);
+  });
+
+  test('and stripping leaves the markup the page wrote', () => {
+    const carousel = mount(`<carousel-elemental fade aria-label="Gallery"><div>${boxes(3)}</div></carousel-elemental>`);
+    const scroller = carousel.scroller;
+    carousel.strip();
+
+    expect(carousel.querySelector('[data-carousel-controls]')).toBeNull();
+    expect(scroller.hasAttribute('data-carousel-slides')).toBe(false);
+    expect(scroller.firstElementChild.hasAttribute('role')).toBe(false);
+    expect(scroller.firstElementChild.hasAttribute('aria-roledescription')).toBe(false);
   });
 });

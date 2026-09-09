@@ -19,6 +19,20 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+### Added
+
+- **`<carousel-elemental>` takes slides that are not `<li>`s.** With no `<ul>`, `<ol>` or
+  `<menu>` among its children, the element's first child is the scroller and that child's
+  children are the slides. `<div>` slides clear axe's `aria-allowed-role`: the `role="group"`
+  the APG asks of a slide is allowed on a `<div>` and not on an `<li>`. **DOM:** no
+  `role="group"` on a scroller that is not a list.
+
+### Changed
+
+- **The scroller is now a child of the element**, not the first list anywhere inside it. A
+  `<ul>` inside a slide was found first and driven as the row; a scroller nested deeper never
+  got the row's layout, which comes from `carousel-elemental > [data-carousel-slides]`.
+
 ## [3.4.3] - 2026-09-06
 
 ### Fixed

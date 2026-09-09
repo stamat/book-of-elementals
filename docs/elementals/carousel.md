@@ -78,7 +78,7 @@ Two came before it, both now archived, and this element is what replaced them:
 The idea both were right about carried over: the browser owns the position and nothing here
 writes it back from an index — [the scroller is the state](#at-the-ends), and a resize is a
 reason to read it again, never to move it. What did not is the shape. These took a selector
-and an options object; this upgrades the list you already wrote,
+and an options object; this upgrades the markup you already wrote,
 and the APG roles, the picker and the keyboard are the part that was missing rather than a
 setting. [`fade`](#fade) is slideswap's stack with all of that on it, minus
 [the infinite loop](#the-infinite-loop-that-is-not-here), which was measured and refused.
@@ -113,8 +113,29 @@ instantiate, no init call to forget.
 
 ### The markup it expects
 
-- **The scroller** is the first `<ul>`, `<ol>` or `<menu>` in the element.
-- **The slides** are its `<li>`s. Anything can be inside one.
+- **The scroller** is a `<ul>`, `<ol>` or `<menu>` among the element's children — or, where
+  there is none, the first child the element did not write itself.
+- **The slides** are the `<li>`s of a list, and every child of any other scroller. Anything
+  can be inside one.
+
+A list is the markup this element was built for and what every sample here uses: the page you
+would have had anyway, and a list of slides before the script lands. Any other element is the
+same carousel — the reason to reach for one is
+[the role collision](#the-slides-are-groups-and-that-is-a-collision) a list carries:
+
+```html
+<carousel-elemental aria-label="Places">
+  <div>
+    <div>Kopaonik</div>
+    <div>Đerdap</div>
+    <div>Tara</div>
+  </div>
+</carousel-elemental>
+```
+
+Either way the scroller is a child of the element, never something deeper. The stylesheet
+reaches it through `carousel-elemental > [data-carousel-slides]`, so a scroller wrapped in
+something else has no row layout at all.
 
 Two slides is the minimum. One is a figure, not a carousel, and an element that wrote a
 picker with a single button in it would be worse than the markup it upgraded — so with fewer
@@ -206,7 +227,7 @@ yours as it always was: the element cannot invent a name and does not try.
 | ------------ | ----------- | ----------------------------------------------------------------------- |
 | `index`      | number      | Which slide is on screen. Assigning it does not scroll — that is `to()` |
 | `slides`     | `Element[]` | Read-only, in order.                                                    |
-| `scroller`   | `Element`   | Read-only. The list.                                                    |
+| `scroller`   | `Element`   | Read-only. The element holding the slides.                              |
 | `autoplay`   | boolean     | Get/set. Writes the attribute.                                          |
 | `interval`   | number      | Get/set. Milliseconds.                                                  |
 | `fade`       | boolean     | Get/set. Writes the attribute.                                          |
@@ -232,7 +253,7 @@ const carousel = document.querySelector('carousel-elemental');
 
 carousel.addEventListener('carousel-change', (e) => {
   e.detail.index; // 2
-  e.detail.slide; // the <li>
+  e.detail.slide; // the slide element
 });
 ```
 
@@ -246,8 +267,8 @@ lies about where it is would be the worse default.
 | Element        | Attributes                                                                                                                                                                                                                                                                                    |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | the element    | `aria-roledescription="carousel"` — `roledescription-text` —, `role="region"` (named) or `role="group"` (not), `data-carousel-at-start` / `data-carousel-at-end` while there is nowhere left to go that way, and `data-carousel-rotating` with an inline `--carousel-elemental-tick` while the timer is actually running |
-| the list       | `role="group"`, `data-carousel-slides`, an `id` if it had none, `tabindex="0"` if nothing inside is focusable, and `aria-live` in `fade` only                                                                                                                                                 |
-| each `<li>`    | `role="group"`, `aria-roledescription="slide"` — `slide-roledescription-text` —, `aria-label="3 of 10"` — `position-text` — if it had no name, `data-carousel-slide`, and `data-carousel-current` on the one showing                                                                          |
+| the scroller   | `data-carousel-slides`, an `id` if it had none, `tabindex="0"` if nothing inside is focusable, `aria-live` in `fade` only, and `role="group"` on a list alone                                                                                                                                |
+| each slide     | `role="group"`, `aria-roledescription="slide"` — `slide-roledescription-text` —, `aria-label="3 of 10"` — `position-text` — if it had no name, `data-carousel-slide`, and `data-carousel-current` on the one showing                                                                          |
 | the controls   | a `<div data-carousel-controls>` appended, holding the previous button, the picker and the next button                                                                                                                                                                                        |
 | previous, next | an Octicon chevron, and `aria-disabled` at the end it cannot pass                                                                                                                                                                                                                             |
 | the picker     | `role="group"`, `aria-label`, `data-carousel-markers`, one `<button data-carousel-marker>` per slide with `aria-disabled="true"` on the current one                                                                                                                                                                    |
@@ -276,25 +297,32 @@ already a circle with a countdown ring around it, and the crop that brings the t
 the chevrons' height sits half a unit left of the shape's centre — a triangle carries its area
 behind its point, so one centred on its bounding box reads as leaning left.
 
-The list stops being a list. Its children are slides — `role="group"`, which is what the
+#### The slides are groups, and that is a collision
+
+A list stops being a list. Its children are slides — `role="group"`, which is what the
 pattern asks of them — and a list whose children are not list items is a broken list to a
 screen reader, not a carousel. `role="none"` would not do it either: the scroller can be
 focusable, and a presentational role on a focusable element is thrown away. Nothing is lost
-by it, because each slide is already named `3 of 10`.
+by it, because each slide is already named `3 of 10`. A scroller that is not a list is left
+alone: there is no role there to take off, and a second unnamed group inside the carousel's
+own is one more thing announced for nothing.
 
-The slides keep `role="group"` on the `<li>`, and that is a deliberate collision.
-[ARIA in HTML](https://www.w3.org/TR/html-aria/) allows a short list of roles on an `<li>`
-inside a list, and `group` is not among them — axe's `aria-allowed-role` rule says so, and it
-is right. The [APG carousel](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/) asks for
-`role="group"` on a slide, and that role is what lets a slide carry the name `3 of 10` and the
-`aria-roledescription` that makes a screen reader say "slide" instead of "list item". The
-pattern wins: the alternative is slides that are `<div>`s in a `<div>`, which is markup nobody
-would have written without this element, and the whole promise here is that they would have.
-`aria-allowed-role` is a best-practice rule rather than a WCAG one, so `script/a11y` — which
-runs the WCAG tags — does not report it. If you run axe yourself with everything switched on,
-this is the one you will see, and it is on purpose.
+The slides keep `role="group"` whatever element they are, and on an `<li>` that is a
+collision. [ARIA in HTML](https://www.w3.org/TR/html-aria/) allows a short list of roles on
+an `<li>` inside a list, and `group` is not among them — axe's `aria-allowed-role` rule says
+so, and it is right. The [APG carousel](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/)
+asks for `role="group"` on a slide, and that role is what lets a slide carry the name
+`3 of 10` and the `aria-roledescription` that makes a screen reader say "slide" instead of
+"list item". The pattern wins over the conformance rule: a slide announced as a list item
+with no name is the worse page, and `aria-allowed-role` is a best-practice rule rather than a
+WCAG one, so `script/a11y` — which runs the WCAG tags — does not report it.
 
-The list gets `tabindex="0"` only when there is nothing focusable inside the slides. A
+**Write your slides as `<div>`s if that rule has to come back clean.** `group` is allowed on
+a `<div>`, so a `<div>` of `<div>`s upgrades into the same carousel with nothing left to
+report — at the cost of markup that is a row of boxes rather than a list before the script
+lands, which is the trade this element leaves to you rather than making for you.
+
+The scroller gets `tabindex="0"` only when there is nothing focusable inside the slides. A
 scrollable region a keyboard cannot reach is content a keyboard cannot read
 ([WCAG 2.1.1](https://www.w3.org/WAI/WCAG22/Understanding/keyboard.html)); a row of slides
 full of links already has stops enough.
@@ -588,7 +616,7 @@ attribute rather than the default:
 | No live region needed                        | `aria-live`, `polite` when pressed and `off` while rotating     |
 | Find-in-page searches every slide            | Finds only the slide showing                                    |
 | Swipe, scrollbar, arrow keys on the scroller | Swipe, the buttons and the picker — no scrollbar, no arrow keys |
-| Without script: a plain list                 | Without script: the same plain list — the stack arrives with the script, like the row |
+| Without script: the markup you wrote          | Without script: the same markup — the stack arrives with the script, like the row |
 
 `visibility` and not `opacity` alone, because a slide at `opacity: 0` is still focusable and
 still read — a tab stop in a slide nobody can see is worse than no fade at all. The delay on
@@ -648,7 +676,7 @@ rebuilds the picker and re-observes the row. Safe to call as often as you like. 
 line on the pages that build their slides, instead of a `MutationObserver` running on every
 page that never touches them.
 
-**It works from empty, and back to empty.** An element whose list has fewer than two slides
+**It works from empty, and back to empty.** An element whose scroller has fewer than two slides
 puts no pattern on it — one slide is a figure, and a picker with a single button in it would
 be worse than the markup it upgraded — but it still binds its listeners and waits, so a
 gallery that ships an empty `<ul>` and fills it on demand is a `wire()` away from a working
@@ -657,10 +685,10 @@ off and leaves the list, rather than leaving controls that drive nothing; fillin
 brings them all back, the clock included unless the reader had stopped it. The
 [lightbox example](../examples/lightbox.html#a-gallery-at-scale) is that shape end to end.
 
-The one thing it cannot do is invent the list. The scroller is markup this element upgrades,
-never something it writes: with no `<ul>`, `<ol>` or `<menu>` inside, there is nothing to
-wire and `wire()` returns. Append one and call it again — the listeners were bound at upgrade
-and are waiting for it.
+The one thing it cannot do is invent the scroller. It is markup this element upgrades, never
+something it writes: with no child to hold the slides, there is nothing to wire and `wire()`
+returns. Append one and call it again — the listeners were bound at upgrade and are waiting
+for it.
 
 ## The look
 
