@@ -19,6 +19,8 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+## [3.5.0] - 2026-09-10
+
 ### Added
 
 - **`<combobox-elemental>` can be told to wait for a query: `min-chars="2"`.** The popup stays
