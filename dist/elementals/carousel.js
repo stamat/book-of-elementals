@@ -1,4 +1,4 @@
-/* book-of-elementals v3.4.3 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v3.5.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 (() => {
   // node_modules/book-of-spells/src/helpers.mjs
   var objProto = Object.prototype;
@@ -210,6 +210,10 @@
   function roleDescription(raw, fallback) {
     return raw == null || raw.trim() === "" ? fallback : raw;
   }
+  function isList(element) {
+    const tag = element.tagName;
+    return tag === "UL" || tag === "OL" || tag === "MENU";
+  }
   function currentSlide(starts, inset, fallback) {
     if (!starts.length) return fallback;
     for (let i = 0; i < starts.length; i++) {
@@ -282,15 +286,24 @@
     static get observedAttributes() {
       return ["autoplay", "interval", "fade"];
     }
-    /** The scroller: the first list in the element. A carousel inside a slide keeps its own. */
+    /**
+     * The scroller: a list among the element's children, or else the first child it did not
+     * write itself.
+     *
+     * Children and not the first list anywhere inside, which is what this asked for and is the
+     * bug it had the moment slides stopped being `<li>`s: a `<ul>` inside a slide - a card's
+     * sizes, a set of links - was found first and driven as the row. A direct child was always
+     * the only shape that worked anyway, since the stylesheet reaches the scroller through
+     * `carousel-elemental > [data-carousel-slides]`.
+     */
     get scroller() {
-      const list = this.querySelector("ul, ol, menu");
-      return list && list.closest("carousel-elemental") === this ? list : null;
+      return this.querySelector(":scope > ul, :scope > ol, :scope > menu") || this.querySelector(":scope > :not([data-carousel-controls]):not([data-carousel-rotate])");
     }
-    /** The slides, in order. What the list holds, so a list inside a slide is not one. */
+    /** The slides, in order: a list's `<li>`s, or whatever else the scroller holds. */
     get slides() {
-      const list = this.scroller;
-      return list ? Array.from(list.querySelectorAll(":scope > li")) : [];
+      const scroller = this.scroller;
+      if (!scroller) return [];
+      return isList(scroller) ? Array.from(scroller.querySelectorAll(":scope > li")) : Array.from(scroller.children);
     }
     /** The picker buttons, in slide order. */
     get markers() {
@@ -383,7 +396,7 @@
       this.initialized = false;
     }
     /**
-     * Take the pattern back off, leaving the markup the page wrote: a list.
+     * Take the pattern back off, leaving the markup the page wrote.
      *
      * Two callers, which are the same event approached from opposite sides - a carousel leaving
      * the document, and one whose page has taken its slides away. Everything written comes back
@@ -413,7 +426,7 @@
       const scroller = this.scroller;
       if (scroller) {
         scroller.removeAttribute("data-carousel-slides");
-        scroller.removeAttribute("role");
+        if (isList(scroller)) scroller.removeAttribute("role");
         scroller.removeAttribute("tabindex");
         scroller.removeAttribute("aria-live");
       }
@@ -450,7 +463,7 @@
       }
       if (!scroller.id) scroller.id = "carousel-elemental-slides-" + ++carouselCount;
       scroller.setAttribute("data-carousel-slides", "");
-      scroller.setAttribute("role", "group");
+      if (isList(scroller)) scroller.setAttribute("role", "group");
       if (this.fade || scroller.querySelector(FOCUSABLE)) scroller.removeAttribute("tabindex");
       else scroller.tabIndex = 0;
       const position = this.getAttribute("position-text");
@@ -663,7 +676,7 @@
      * and onto the element as a styling hook.
      *
      * Both at once is a row short enough to fit, and both buttons go dim: a carousel with
-     * nothing to scroll is a list, and two live buttons over a list that cannot move is the
+     * nothing to scroll is a row that does not move, and two live buttons over it are the
      * kind of thing that gets pressed twice and then distrusted.
      */
     applyEdges() {
@@ -686,7 +699,7 @@
      * the layout, instead of to a pixel count taken before any of them happened.
      *
      * Measured off the scroller rather than off the slide, so whatever padding or `box-sizing`
-     * the page gave the list is inside both numbers instead of neither.
+     * the page gave the scroller is inside both numbers instead of neither.
      *
      * @param {number} from The height the stack had before the current marker moved.
      */
@@ -835,8 +848,8 @@
       this.swipes = null;
     }
     /** Give the stack its height back, and stop listening for the swap that pinned it. The
-     * inline height is this element's own writing, so leaving one behind is leaving the list a
-     * size the page never asked for. */
+     * inline height is this element's own writing, so leaving one behind is leaving the scroller
+     * a size the page never asked for. */
     unpin() {
       if (!this.heights) return;
       this.heights.removeEventListener("transitionend", this.onHeightEnd);

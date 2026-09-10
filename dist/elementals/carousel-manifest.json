@@ -335,6 +335,25 @@
         },
         {
           "kind": "function",
+          "name": "isList",
+          "parameters": [
+            {
+              "name": "element",
+              "description": "The scroller.",
+              "type": {
+                "text": "Element"
+              }
+            }
+          ],
+          "description": "Whether the scroller is a list, which is the one thing the two markups differ by: `<li>`\nslides rather than any child, and a list role that has to come off for the slides to be\ngroups rather than list items.",
+          "return": {
+            "type": {
+              "text": "boolean"
+            }
+          }
+        },
+        {
+          "kind": "function",
           "name": "currentSlide",
           "parameters": [
             {
@@ -460,7 +479,7 @@
         },
         {
           "kind": "class",
-          "description": "`<carousel-elemental>` custom element.\n\nA row of slides you scroll through, per the\n[APG Carousel pattern](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/) - previous and\nnext, a picker with one button per slide, and, when it is asked for, automatic rotation\nwith the control that stops it.\n\n**The scroll container is the state.** There is no transform engine, no clones and no\nindex attribute to keep in step with where the row actually is: the slides sit in a\nscroll-snapping scroller, moving means setting `scrollLeft`, and which slide is current is\nread off the boxes themselves. That is what buys the responsiveness for nothing - resize\nthe window, change how many slides fit in CSS, or put the whole thing in a container\nquery, and the answer is measured from the layout that came out of it rather than from an\nindex some earlier layout wrote down.\n\nLight DOM, no shadow root. Nothing you wrote is moved or wrapped; the element adds the\nroles to your list and its items, and appends the controls - which is also why the\ncontrols are its to write rather than yours. A previous button authored in the markup is\na button that does nothing until the script lands, and this element's promise is the\nother way round: with no script the slides are a plain list, every one of them on the page\nand in reading order. The row, the snap and the controls all arrive with the script - the\nstylesheet keys on what the upgrade writes - so nothing is ever there to press before it\nworks.\n\n**No live region while it scrolls, and that is deliberate.** The APG's example flips\n`aria-live` between `off` and `polite` because there one slide exists at a time and a\nreader who cannot see the swap would otherwise never hear about it. Scrolling, every slide\nis in the DOM, in the accessibility tree and in reading order the whole time, so there is\nnothing to announce and nothing hidden to miss - and no `aria-hidden` on the slides off\nscreen either, which is the bug that puts a focusable link inside a hidden subtree.\n`fade` is the mode where one slide really is all there is, and there the live region comes\nback, off while rotating and polite when it is not, exactly as the pattern asks.\n\n**One gesture, and only in `fade`.** A scrolling row swipes because it is a scroll\ncontainer, and a second answer laid over the browser's would fight it. A stack is not one,\nso there the swipe is read here - touch and pen, never the mouse, which has the buttons and\nthe keyboard and would pay for a drag with the page's text selection and link clicks. The\none input a scrolled row does take is the wheel it cannot use at all, which Safari alone\nkeeps to itself rather than passing on - see `wheelHandoff`.\n\nponytail: one axis, horizontal. A vertical carousel is the same code with the block\nproperties, and nothing has asked for one; the refusal is on the page rather than an\n`orientation` attribute nobody sets.",
+          "description": "`<carousel-elemental>` custom element.\n\nA row of slides you scroll through, per the\n[APG Carousel pattern](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/) - previous and\nnext, a picker with one button per slide, and, when it is asked for, automatic rotation\nwith the control that stops it.\n\n**The scroll container is the state.** There is no transform engine, no clones and no\nindex attribute to keep in step with where the row actually is: the slides sit in a\nscroll-snapping scroller, moving means setting `scrollLeft`, and which slide is current is\nread off the boxes themselves. That is what buys the responsiveness for nothing - resize\nthe window, change how many slides fit in CSS, or put the whole thing in a container\nquery, and the answer is measured from the layout that came out of it rather than from an\nindex some earlier layout wrote down.\n\nLight DOM, no shadow root. Nothing you wrote is moved or wrapped; the element adds the\nroles to your scroller and its children, and appends the controls - which is also why the\ncontrols are its to write rather than yours. A previous button authored in the markup is\na button that does nothing until the script lands, and this element's promise is the\nother way round: with no script the slides are the markup you wrote, every one of them on\nthe page and in reading order. The row, the snap and the controls all arrive with the script - the\nstylesheet keys on what the upgrade writes - so nothing is ever there to press before it\nworks.\n\n**No live region while it scrolls, and that is deliberate.** The APG's example flips\n`aria-live` between `off` and `polite` because there one slide exists at a time and a\nreader who cannot see the swap would otherwise never hear about it. Scrolling, every slide\nis in the DOM, in the accessibility tree and in reading order the whole time, so there is\nnothing to announce and nothing hidden to miss - and no `aria-hidden` on the slides off\nscreen either, which is the bug that puts a focusable link inside a hidden subtree.\n`fade` is the mode where one slide really is all there is, and there the live region comes\nback, off while rotating and polite when it is not, exactly as the pattern asks.\n\n**One gesture, and only in `fade`.** A scrolling row swipes because it is a scroll\ncontainer, and a second answer laid over the browser's would fight it. A stack is not one,\nso there the swipe is read here - touch and pen, never the mouse, which has the buttons and\nthe keyboard and would pay for a drag with the page's text selection and link clicks. The\none input a scrolled row does take is the wheel it cannot use at all, which Safari alone\nkeeps to itself rather than passing on - see `wheelHandoff`.\n\nponytail: one axis, horizontal. A vertical carousel is the same code with the block\nproperties, and nothing has asked for one; the refusal is on the page rather than an\n`orientation` attribute nobody sets.",
           "name": "CarouselElemental",
           "cssProperties": [
             {
@@ -570,7 +589,7 @@
           ],
           "slots": [
             {
-              "description": "One `<ul>`, `<ol>` or `<menu>` of `<li>` slides.",
+              "description": "One `<ul>`, `<ol>` or `<menu>` of `<li>` slides, or any other single element whose children are the slides.",
               "name": ""
             }
           ],
@@ -578,13 +597,13 @@
             {
               "kind": "field",
               "name": "scroller",
-              "description": "The scroller: the first list in the element. A carousel inside a slide keeps its own.",
+              "description": "The scroller: a list among the element's children, or else the first child it did not\nwrite itself.\n\nChildren and not the first list anywhere inside, which is what this asked for and is the\nbug it had the moment slides stopped being `<li>`s: a `<ul>` inside a slide - a card's\nsizes, a set of links - was found first and driven as the row. A direct child was always\nthe only shape that worked anyway, since the stylesheet reaches the scroller through\n`carousel-elemental > [data-carousel-slides]`.",
               "readonly": true
             },
             {
               "kind": "field",
               "name": "slides",
-              "description": "The slides, in order. What the list holds, so a list inside a slide is not one.",
+              "description": "The slides, in order: a list's `<li>`s, or whatever else the scroller holds.",
               "readonly": true
             },
             {
@@ -611,7 +630,7 @@
             {
               "kind": "method",
               "name": "strip",
-              "description": "Take the pattern back off, leaving the markup the page wrote: a list.\n\nTwo callers, which are the same event approached from opposite sides - a carousel leaving\nthe document, and one whose page has taken its slides away. Everything written comes back\noff in both, because a `role=\"group\"` with `aria-roledescription=\"slide\"` on a row nothing\nis driving is a carousel announced to a screen reader that no longer has controls, and a\nscroller left with a tab stop is a stop onto nothing."
+              "description": "Take the pattern back off, leaving the markup the page wrote.\n\nTwo callers, which are the same event approached from opposite sides - a carousel leaving\nthe document, and one whose page has taken its slides away. Everything written comes back\noff in both, because a `role=\"group\"` with `aria-roledescription=\"slide\"` on a row nothing\nis driving is a carousel announced to a screen reader that no longer has controls, and a\nscroller left with a tab stop is a stop onto nothing."
             },
             {
               "kind": "method",
@@ -702,7 +721,7 @@
             {
               "kind": "method",
               "name": "applyEdges",
-              "description": "Whether there is anywhere left to go, either way - onto the two buttons as `aria-disabled`\nand onto the element as a styling hook.\n\nBoth at once is a row short enough to fit, and both buttons go dim: a carousel with\nnothing to scroll is a list, and two live buttons over a list that cannot move is the\nkind of thing that gets pressed twice and then distrusted."
+              "description": "Whether there is anywhere left to go, either way - onto the two buttons as `aria-disabled`\nand onto the element as a styling hook.\n\nBoth at once is a row short enough to fit, and both buttons go dim: a carousel with\nnothing to scroll is a row that does not move, and two live buttons over it are the\nkind of thing that gets pressed twice and then distrusted."
             },
             {
               "kind": "method",
@@ -716,7 +735,7 @@
                   }
                 }
               ],
-              "description": "Carry the stack's height from the slide that left to the slide that arrived.\n\nA transition needs two numbers and `auto` is neither of them, so the height the box had a\nmoment ago is written back on, read once so the browser takes it as a start, and replaced\nwith the height it is going to. `transitionend` hands the box back to `auto` as soon as it\nlands - which is what leaves a resize, a font arriving or an image that finally loaded to\nthe layout, instead of to a pixel count taken before any of them happened.\n\nMeasured off the scroller rather than off the slide, so whatever padding or `box-sizing`\nthe page gave the list is inside both numbers instead of neither."
+              "description": "Carry the stack's height from the slide that left to the slide that arrived.\n\nA transition needs two numbers and `auto` is neither of them, so the height the box had a\nmoment ago is written back on, read once so the browser takes it as a start, and replaced\nwith the height it is going to. `transitionend` hands the box back to `auto` as soon as it\nlands - which is what leaves a resize, a font arriving or an image that finally loaded to\nthe layout, instead of to a pixel count taken before any of them happened.\n\nMeasured off the scroller rather than off the slide, so whatever padding or `box-sizing`\nthe page gave the scroller is inside both numbers instead of neither."
             },
             {
               "kind": "method",
@@ -788,7 +807,7 @@
             {
               "kind": "method",
               "name": "unpin",
-              "description": "Give the stack its height back, and stop listening for the swap that pinned it. The\ninline height is this element's own writing, so leaving one behind is leaving the list a\nsize the page never asked for."
+              "description": "Give the stack its height back, and stop listening for the swap that pinned it. The\ninline height is this element's own writing, so leaving one behind is leaving the scroller\na size the page never asked for."
             },
             {
               "kind": "method",
@@ -1058,6 +1077,14 @@
           "name": "roleDescription",
           "declaration": {
             "name": "roleDescription",
+            "module": "src/elementals/carousel/index.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "isList",
+          "declaration": {
+            "name": "isList",
             "module": "src/elementals/carousel/index.js"
           }
         },

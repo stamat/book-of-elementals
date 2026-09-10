@@ -1,4 +1,4 @@
-/* book-of-elementals v3.4.3 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v3.5.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 accordion-elemental {
   --accordion-elemental-border-color: color-mix(in srgb, currentcolor 15%, transparent);
   --accordion-elemental-radius: 0.5rem;
@@ -427,6 +427,28 @@ combobox-elemental .combobox-elemental-option[aria-selected=true]::after {
     background: CanvasText;
   }
 }
+combobox-elemental .combobox-elemental-list[aria-multiselectable=true] .combobox-elemental-option::before {
+  box-sizing: border-box;
+  flex: none;
+  order: -2;
+  inline-size: var(--checkbox-elemental-size, 1.15em);
+  block-size: var(--checkbox-elemental-size, 1.15em);
+  content: "";
+  border: var(--checkbox-elemental-border-width, 1.5px) solid var(--checkbox-elemental-border-color, color-mix(in srgb, currentcolor 45%, transparent));
+  border-radius: var(--checkbox-elemental-radius, 0.25em);
+}
+combobox-elemental .combobox-elemental-list[aria-multiselectable=true] .combobox-elemental-option[aria-selected=true]::before {
+  background: var(--checkbox-elemental-fill, currentcolor);
+  border-color: var(--checkbox-elemental-fill, currentcolor);
+}
+combobox-elemental .combobox-elemental-list[aria-multiselectable=true] .combobox-elemental-option[aria-selected=true]::after {
+  flex: none;
+  order: -1;
+  inline-size: var(--checkbox-elemental-size, 1.15em);
+  block-size: var(--checkbox-elemental-size, 1.15em);
+  margin-inline-start: calc((var(--checkbox-elemental-size, 1.15em) + var(--combobox-elemental-inset)) * -1);
+  background: var(--checkbox-elemental-mark, Canvas);
+}
 combobox-elemental .combobox-elemental-option[aria-disabled=true],
 combobox-elemental .combobox-elemental-empty {
   opacity: 0.5;
@@ -463,6 +485,11 @@ combobox-elemental .combobox-elemental-group {
   }
   combobox-elemental .combobox-elemental-option[data-active]::after {
     background: HighlightText;
+  }
+  combobox-elemental .combobox-elemental-list[aria-multiselectable=true] {
+    --checkbox-elemental-border-color: CanvasText;
+    --checkbox-elemental-fill: Highlight;
+    --checkbox-elemental-mark: HighlightText;
   }
 }
 @media (prefers-reduced-motion: reduce) {

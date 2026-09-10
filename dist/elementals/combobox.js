@@ -1,4 +1,4 @@
-/* book-of-elementals v3.4.3 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v3.5.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
 (() => {
   // node_modules/book-of-spells/src/helpers.mjs
   var objProto = Object.prototype;
@@ -95,6 +95,9 @@
     if (!value) return false;
     return !texts.some((text) => String(text == null ? "" : text).trim().toLowerCase() === value);
   }
+  function opensOnQuery(query, minChars) {
+    return String(query == null ? "" : query).trim().length >= minChars;
+  }
   var comboboxCount = 0;
   function el(tag, className) {
     const node = document.createElement(tag);
@@ -180,6 +183,17 @@
     get addText() {
       return this.getAttribute("add-text") || "Add {label}";
     }
+    /**
+     * How many characters the field waits for before the popup appears at all.
+     *
+     * Zero is both the default and what anything unreadable comes out as - a list that has
+     * been told to wait for "soon" is a list nothing would ever open, and a popup a reader
+     * cannot get to is worse than one that opens too eagerly.
+     */
+    get minChars() {
+      const chars = Number.parseInt(this.getAttribute("min-chars"), 10);
+      return Number.isNaN(chars) || chars < 0 ? 0 : chars;
+    }
     connectedCallback() {
       if (this.initialized) return;
       const select = this.select;
@@ -253,7 +267,7 @@
       this.input = el("input", "combobox-elemental-input");
       this.list = el("ul", "combobox-elemental-list");
       this.error = el("p", "combobox-elemental-error");
-      this.indicator = select.multiple ? null : el("button", "combobox-elemental-indicator");
+      this.indicator = el("button", "combobox-elemental-indicator");
       this.input.id = id;
       this.input.type = "text";
       this.input.autocomplete = "off";
@@ -262,19 +276,16 @@
       this.input.setAttribute("aria-expanded", "false");
       this.input.setAttribute("aria-controls", id + "-list");
       this.input.setAttribute("aria-autocomplete", "list");
-      if (this.indicator) {
-        this.indicator.type = "button";
-        this.indicator.tabIndex = -1;
-        this.indicator.setAttribute("aria-hidden", "true");
-      }
+      this.indicator.type = "button";
+      this.indicator.tabIndex = -1;
+      this.indicator.setAttribute("aria-hidden", "true");
       this.list.id = id + "-list";
       this.list.setAttribute("role", "listbox");
       this.list.hidden = true;
       if (select.multiple) this.list.setAttribute("aria-multiselectable", "true");
       this.error.id = id + "-error";
       this.error.hidden = true;
-      this.field.append(this.chips, this.input);
-      if (this.indicator) this.field.append(this.indicator);
+      this.field.append(this.chips, this.input, this.indicator);
       this.insertBefore(this.field, select);
       this.insertBefore(this.list, select);
       this.insertBefore(this.error, select);
@@ -391,7 +402,7 @@
       }
       this.input.placeholder = this.placeholder;
       this.input.disabled = disabled;
-      if (this.indicator) this.indicator.disabled = disabled;
+      this.indicator.disabled = disabled;
       if (select.required) this.input.setAttribute("aria-required", "true");
       else this.input.removeAttribute("aria-required");
       if (disabled && this.open) this.open = false;
@@ -457,8 +468,16 @@
      * Move the popup's cursor. Focus itself never moves - it stays in the field, which is
      * what `aria-activedescendant` is for and what lets typing carry on narrowing the list
      * while an option is "focused".
+     *
+     * @param {number} index
+     * @param {boolean} [scroll=true] - Whether to bring the row into view. False for a cursor
+     *   the pointer moved, and it has to be: the row at either end of the scroller is usually
+     *   half cut off, `nearest` scrolls it fully in, and the list moving under a still pointer
+     *   puts a different row under it - which scrolls again. A popup that runs away from the
+     *   cursor, and worst where it opened upwards and the page can scroll with it. The pointer
+     *   needs none of it, since the row it is on is on screen by definition.
      */
-    setActive(index) {
+    setActive(index, scroll = true) {
       for (const pair2 of this.pairs) pair2.item.removeAttribute("data-active");
       if (this.add) this.add.removeAttribute("data-active");
       const pair = this.navigable()[index];
@@ -468,7 +487,7 @@
       }
       pair.item.setAttribute("data-active", "");
       this.input.setAttribute("aria-activedescendant", pair.item.id);
-      pair.item.scrollIntoView({ block: "nearest" });
+      if (scroll) pair.item.scrollIntoView({ block: "nearest" });
     }
     /**
      * Point the popup at whichever side of the field it fits on, and write that on it for
@@ -601,8 +620,10 @@
     onInput() {
       this.query = this.input.value;
       this.filter();
-      if (!this.open) this.open = true;
-      else this.place();
+      if (!this.open) {
+        if (!opensOnQuery(this.query, this.minChars)) return;
+        this.open = true;
+      } else this.place();
       this.setActive(0);
     }
     /**
@@ -629,7 +650,7 @@
       const item = e.target.closest && e.target.closest('[role="option"]');
       if (!item || !this.list.contains(item)) return;
       const index = this.navigable().findIndex((pair) => pair.item === item);
-      if (index >= 0) this.setActive(index);
+      if (index >= 0) this.setActive(index, false);
     }
     onClick(e) {
       if (this.disabled) return;
@@ -645,7 +666,8 @@
         return;
       }
       if (!this.field.contains(e.target)) return;
-      this.open = this.indicator && this.indicator.contains(e.target) ? !this.open : true;
+      if (this.indicator.contains(e.target)) this.open = !this.open;
+      else if (opensOnQuery(this.query, this.minChars)) this.open = true;
       this.input.focus();
     }
     onKeyDown(e) {
