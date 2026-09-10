@@ -176,14 +176,16 @@ combobox-elemental {
     gap: var(--combobox-elemental-inset);
     align-items: center;
 
-    // Left edge the same as the field's text, right edge the same as the caret's, so the
-    // tick lands under the caret and the whole control reads as two halves of one box.
+    // Left edge the same as the field's text, right edge the same as the caret's, so a
+    // single select's tick lands under the caret and the whole control reads as two halves
+    // of one box.
     padding: 0.35rem var(--combobox-elemental-inset);
   }
 
-  // Chosen. The paler of the two tints, plus a tick - because "already picked" and "where
-  // the cursor is" are two different facts about one row, and a reader seeing both at once
-  // has to be able to tell which is which.
+  // Chosen. The paler of the two tints, plus a mark - a tick, or on a multiple the box
+  // further down - because "already picked" and "where the cursor is" are two different
+  // facts about one row, and a reader seeing both at once has to be able to tell which is
+  // which.
   .combobox-elemental-option[aria-selected="true"] {
     font-weight: 600;
     background: var(--combobox-elemental-selected);
@@ -208,6 +210,59 @@ combobox-elemental {
 
     @media (forced-colors: active) {
       background: CanvasText;
+    }
+  }
+
+  // Multi-select says it with a box instead, and the tick moves inside that box. A trailing
+  // tick is a record of what was chosen; a leading box is an invitation, and a reader who
+  // cannot see one has no way of knowing the popup will still be there after the first pick -
+  // which is the thing a multiple has to get across before it is used at all. Leading is also
+  // where a list that marks its rows puts the mark
+  // ([Primer](https://primer.style/product/components/action-list/guidelines/)).
+  // Two pseudo-elements because one cannot be both a bordered box and a masked tick: the box
+  // is `::before`, the tick is the `::after` above pulled back over it by its own width plus
+  // the row's gap. So the pair costs the row one box, and the label starts where an unticked
+  // row's does rather than shifting as rows are picked.
+  // `.combobox-elemental-option` only: the empty row and the add row carry `role="option"`
+  // too, and neither is a row a reader ticks - a checkbox against "No matches" is a box that
+  // does nothing.
+  // The tokens are `<checkbox-group-elemental>`'s, read with this file's own fallbacks. A
+  // page that has sized or coloured the book's checkboxes gets the same box in here for
+  // free; one that has never imported `checkbox.css` still gets a box.
+  .combobox-elemental-list[aria-multiselectable="true"] {
+    // One name for the box's edge, because the tick laid over it and the margin taking that
+    // tick back are the same number read three times.
+    $box: var(--checkbox-elemental-size, 1.15em);
+
+    .combobox-elemental-option::before {
+      // The border is part of the edge, or the margin below has to know about it too.
+      box-sizing: border-box;
+      flex: none;
+      order: -2;
+      inline-size: $box;
+      block-size: $box;
+      content: "";
+      border:
+        var(--checkbox-elemental-border-width, 1.5px) solid
+        var(--checkbox-elemental-border-color, color-mix(in srgb, currentcolor 45%, transparent));
+      border-radius: var(--checkbox-elemental-radius, 0.25em);
+    }
+
+    .combobox-elemental-option[aria-selected="true"] {
+      &::before {
+        background: var(--checkbox-elemental-fill, currentcolor);
+        border-color: var(--checkbox-elemental-fill, currentcolor);
+      }
+
+      &::after {
+        // Or a row whose label has no room left shrinks the tick out from under itself.
+        flex: none;
+        order: -1;
+        inline-size: $box;
+        block-size: $box;
+        margin-inline-start: calc((#{$box} + var(--combobox-elemental-inset)) * -1);
+        background: var(--checkbox-elemental-mark, Canvas);
+      }
     }
   }
 
@@ -277,9 +332,8 @@ combobox-elemental {
     --combobox-elemental-invalid: CanvasText;
 
     // Author backgrounds are dropped in this mode, so the cursor would be told apart by
-    // nothing at all - and the selected row keeps its tick, which is why only one of the
-    // two needs repainting. `Highlight`/`HighlightText` is the one pair the mode
-    // guarantees contrasts.
+    // nothing at all - where a single select's chosen row keeps its tick and needs none of
+    // this. `Highlight`/`HighlightText` is the one pair the mode guarantees contrasts.
     .combobox-elemental-option[data-active] {
       color: HighlightText;
       background: Highlight;
@@ -287,6 +341,15 @@ combobox-elemental {
       &::after {
         background: HighlightText;
       }
+    }
+
+    // The filled box and the tick in it are both author backgrounds, which this mode drops -
+    // leaving a ticked row marked by nothing. The same pair `checkbox.scss` reaches for,
+    // declared here because that stylesheet is opt-in and this one cannot assume it.
+    .combobox-elemental-list[aria-multiselectable="true"] {
+      --checkbox-elemental-border-color: CanvasText;
+      --checkbox-elemental-fill: Highlight;
+      --checkbox-elemental-mark: HighlightText;
     }
   }
 

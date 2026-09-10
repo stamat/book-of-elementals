@@ -1,7 +1,7 @@
-// The four decisions this element makes that are not the browser's: which way the popup
-// opens, where focus lands after a chip is removed, whether what has been typed is a value
-// the list does not already hold, and - through `nextIndex`, which `core.test.js` already
-// covers - where an arrow key goes. Whether a typed query matches an option is
+// The five decisions this element makes that are not the browser's: which way the popup
+// opens, whether what has been typed is enough to open it at all, where focus lands after a
+// chip is removed, whether what has been typed is a value the list does not already hold,
+// and - through `nextIndex`, which `core.test.js` already covers - where an arrow key goes. Whether a typed query matches an option is
 // `matchesSearch`, covered in book-of-spells where it now lives. Everything else this
 // element does is wiring: reading the `<select>`, writing the roles, moving
 // `aria-activedescendant`.
@@ -12,7 +12,7 @@
 // goes needs a layout, which is why `flipsUp` takes the rects rather than going and finding
 // them, and which jsdom would answer with zeroes.
 
-import { flipsUp, focusAfterRemoval, offersCustom, removeName } from './index.js';
+import { flipsUp, focusAfterRemoval, offersCustom, opensOnQuery, removeName } from './index.js';
 
 test('the popup opens downwards while there is room for it', () => {
   const field = { top: 100, bottom: 130 };
@@ -29,6 +29,29 @@ test('with room on neither side the popup takes the larger one and scrolls', () 
   // corners - and the bigger corner shows more of it.
   expect(flipsUp({ top: 500, bottom: 530 }, 400, 800)).toBe(true);
   expect(flipsUp({ top: 100, bottom: 130 }, 400, 800)).toBe(false);
+});
+
+test('a popup told to wait for two characters stays shut on the first', () => {
+  expect(opensOnQuery('n', 2)).toBe(false);
+});
+
+test('the character it was waiting for is the one that opens it, and it stays open past that', () => {
+  expect(opensOnQuery('ni', 2)).toBe(true);
+  expect(opensOnQuery('nis', 2)).toBe(true);
+});
+
+test('a field holding nothing but spaces has had nothing typed into it', () => {
+  // A threshold is a question about what was typed, and a space narrows no list - so it is
+  // not one of the characters being counted, wherever in the field it sits.
+  expect(opensOnQuery('   ', 2)).toBe(false);
+  expect(opensOnQuery(' n ', 2)).toBe(false);
+});
+
+test('waiting for nothing is the default, and that opens on an empty field too', () => {
+  // Which is what keeps a combobox that has never heard of `min-chars` behaving as it did:
+  // the popup opens on a click in the field, and on deleting a query back to nothing.
+  expect(opensOnQuery('', 0)).toBe(true);
+  expect(opensOnQuery('n', 0)).toBe(true);
 });
 
 test('removing a chip leaves focus on the one that took its place', () => {

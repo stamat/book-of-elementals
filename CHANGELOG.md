@@ -21,6 +21,11 @@ to the docs page and the commit, not here.
 
 ### Added
 
+- **`<combobox-elemental>` can be told to wait for a query: `min-chars="2"`.** The popup stays
+  shut until two characters have been typed, so a list nobody browses stops answering a click
+  with a thousand rows over the page; the caret and <kbd>Alt</kbd>+<kbd>Down</kbd> open it
+  whatever the query.
+
 - **`<carousel-elemental>` takes slides that are not `<li>`s.** With no `<ul>`, `<ol>` or
   `<menu>` among its children, the element's first child is the scroller and that child's
   children are the slides. `<div>` slides clear axe's `aria-allowed-role`: the `role="group"`
@@ -29,9 +34,30 @@ to the docs page and the commit, not here.
 
 ### Changed
 
+- **A `multiple` combobox is given the caret as well.** Chips say the control holds several
+  values, where a caret says there is a list behind the field — and with `min-chars` set it is
+  the only thing a pointer can open that list with. **DOM:** every combobox now writes
+  `<button class="combobox-elemental-indicator">`, not only a single select.
+
+- **A `multiple`'s options are marked with a leading checkbox instead of a trailing tick.** A
+  tick is a record of what was chosen; a box says the row can be ticked, which is what a
+  reader needs to know before the first pick. **CSS:** inside
+  `.combobox-elemental-list[aria-multiselectable="true"]` the options grow a `::before` box and
+  the selected row's `::after` tick moves to the leading edge with `order`; the box reads
+  `--checkbox-elemental-*` with its own fallbacks, so it matches the drawn checkbox where a
+  page sets those and is drawn anyway where it does not.
+
 - **The scroller is now a child of the element**, not the first list anywhere inside it. A
   `<ul>` inside a slide was found first and driven as the row; a scroller nested deeper never
   got the row's layout, which comes from `carousel-elemental > [data-carousel-slides]`.
+
+### Fixed
+
+- **`<combobox-elemental>`'s popup no longer scrolls away from the pointer.** Pointing at a
+  row half cut off by the scroller's edge scrolled it fully into view, which moved the list
+  under a still pointer and put the next row there to be scrolled to in turn — worst with the
+  popup opened upwards, where the page scrolled along with it. Only a cursor moved by a key
+  is scrolled to now; the row under the pointer is on screen by definition.
 
 ## [3.4.3] - 2026-09-06
 

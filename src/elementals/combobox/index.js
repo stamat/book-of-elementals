@@ -94,6 +94,32 @@ export function offersCustom(query, texts) {
   return !texts.some((text) => String(text == null ? '' : text).trim().toLowerCase() === value);
 }
 
+/**
+ * Whether what has been typed is enough to show the popup.
+ *
+ * The APG's own variant of this pattern - the popup "displayed only if a certain number of
+ * characters are typed" - and the answer for a list nobody browses: a thousand model names
+ * is a popup that covers the page on a click nobody meant as a question.
+ *
+ * Spaces are not characters being counted. A threshold asks how much of a query there is,
+ * and a space narrows no list, so a field holding two of them has had nothing typed into
+ * it.
+ *
+ * Zero is the default and answers `true` to everything, the empty field included, which is
+ * what leaves a combobox that does not carry the attribute behaving exactly as it did.
+ *
+ * @param {string} query - What is in the field.
+ * @param {number} minChars - How many characters the popup waits for.
+ * @returns {boolean}
+ * @example
+ * opensOnQuery('n', 2) // => false
+ * opensOnQuery('ni', 2) // => true
+ * opensOnQuery('', 0) // => true, the default waits for nothing
+ */
+export function opensOnQuery(query, minChars) {
+  return String(query == null ? '' : query).trim().length >= minChars;
+}
+
 /** Monotonic counter, so the listbox and its options have `id`s to be pointed at. */
 let comboboxCount = 0;
 
@@ -126,9 +152,7 @@ function el(tag, className) {
  * `<select>` fire the `change` that was going to be listened for anyway.
  *
  * `multiple` on the `<select>` is what makes it multi-select. The chips, the
- * remove buttons and `Backspace` on an empty field come with it - and the caret goes,
- * since a caret is the mark of a control holding one value out of a list and a field full
- * of tags has already said what this one holds. It is the one part of
+ * remove buttons and `Backspace` on an empty field come with it. It is the one part of
  * this element with no APG example behind it - the pattern's six are all single-select.
  * What is written here follows the pattern where it speaks (`aria-multiselectable`,
  * `aria-selected` on every option rather than only the chosen one, a listbox that stays
@@ -155,6 +179,7 @@ function el(tag, className) {
  * @attr {string} [remove-text=Remove] - The verb in a chip's remove button, in front of the option's label. Holding `{label}` it says where the label goes instead: `{label} entfernen`.
  * @attr {boolean} [custom-values=false] - Let a value the `<select>` does not hold be typed in. The popup offers an add row for anything not already there; taking it appends a real `<option>` and chooses it. With `multiple` and an empty `<select>`, this is a tag input.
  * @attr {string} [add-text=Add {label}] - What the add row says, with `{label}` standing in for what was typed. Same convention as `remove-text`.
+ * @attr {number} [min-chars=0] - How many characters the field waits for before the popup appears. Zero, the default, is a popup that also opens on a click in the field. Past zero the caret and Alt+Down are the doors left for a reader who would rather browse than type.
  *
  * @cssprop {<length>} [--combobox-elemental-radius=0.375rem] - Corners of the field and the popup.
  * @cssprop {<length>} [--combobox-elemental-inset=0.5rem] - The one padding unit: inside the field, before the caret, and down the side of every option - and nowhere else, so the field's text and the popup's line up.
@@ -262,6 +287,18 @@ export class ComboboxElemental extends ElementBase {
     return this.getAttribute('add-text') || 'Add {label}';
   }
 
+  /**
+   * How many characters the field waits for before the popup appears at all.
+   *
+   * Zero is both the default and what anything unreadable comes out as - a list that has
+   * been told to wait for "soon" is a list nothing would ever open, and a popup a reader
+   * cannot get to is worse than one that opens too eagerly.
+   */
+  get minChars() {
+    const chars = Number.parseInt(this.getAttribute('min-chars'), 10);
+    return Number.isNaN(chars) || chars < 0 ? 0 : chars;
+  }
+
   connectedCallback() {
     // Wait until the light-DOM children have been parsed. The bundle is loaded deferred
     // or at the end of the body, so by upgrade time the `<select>` and its options are
@@ -357,10 +394,7 @@ export class ComboboxElemental extends ElementBase {
     this.input = el('input', 'combobox-elemental-input');
     this.list = el('ul', 'combobox-elemental-list');
     this.error = el('p', 'combobox-elemental-error');
-    // No caret on a multiple: a caret is the mark of a control holding one value out of a
-    // list, and the chips already say this one holds several. There is nothing it would
-    // add that the field full of tags does not say more plainly.
-    this.indicator = select.multiple ? null : el('button', 'combobox-elemental-indicator');
+    this.indicator = el('button', 'combobox-elemental-indicator');
 
     this.input.id = id;
     this.input.type = 'text';
@@ -373,15 +407,20 @@ export class ComboboxElemental extends ElementBase {
     // the field never holds text the reader did not type.
     this.input.setAttribute('aria-autocomplete', 'list');
 
-    // The indicator duplicates clicking the field, so there is nothing here a reader
-    // using the combobox does not already have - `aria-expanded` on the field says
-    // whether the popup is open, and Alt+Down opens it. A second announced control
-    // saying the same thing is furniture in the way.
-    if (this.indicator) {
-      this.indicator.type = 'button';
-      this.indicator.tabIndex = -1;
-      this.indicator.setAttribute('aria-hidden', 'true');
-    }
+    // Announced by nothing and reachable by no key, because it duplicates what the reader
+    // already has: `aria-expanded` on the field says whether the popup is open, and
+    // Alt+Down opens it. A second announced control saying the same thing is furniture in
+    // the way.
+    //
+    // Drawn on a multiple as well, which it did not used to be - the argument was that a
+    // field full of chips has already said the control holds several values, and that is
+    // still true and was never the caret's job. What a caret says is that there is a list
+    // behind the field, and with `min-chars` set it is the only thing a pointer can say it
+    // to: a reader who would rather read ninety-eight brands than guess at one has no
+    // other door.
+    this.indicator.type = 'button';
+    this.indicator.tabIndex = -1;
+    this.indicator.setAttribute('aria-hidden', 'true');
 
     this.list.id = id + '-list';
     this.list.setAttribute('role', 'listbox');
@@ -401,8 +440,7 @@ export class ComboboxElemental extends ElementBase {
     this.error.id = id + '-error';
     this.error.hidden = true;
 
-    this.field.append(this.chips, this.input);
-    if (this.indicator) this.field.append(this.indicator);
+    this.field.append(this.chips, this.input, this.indicator);
     this.insertBefore(this.field, select);
     this.insertBefore(this.list, select);
     this.insertBefore(this.error, select);
@@ -559,7 +597,7 @@ export class ComboboxElemental extends ElementBase {
 
     this.input.placeholder = this.placeholder;
     this.input.disabled = disabled;
-    if (this.indicator) this.indicator.disabled = disabled;
+    this.indicator.disabled = disabled;
     if (select.required) this.input.setAttribute('aria-required', 'true');
     else this.input.removeAttribute('aria-required');
     if (disabled && this.open) this.open = false;
@@ -638,8 +676,16 @@ export class ComboboxElemental extends ElementBase {
    * Move the popup's cursor. Focus itself never moves - it stays in the field, which is
    * what `aria-activedescendant` is for and what lets typing carry on narrowing the list
    * while an option is "focused".
+   *
+   * @param {number} index
+   * @param {boolean} [scroll=true] - Whether to bring the row into view. False for a cursor
+   *   the pointer moved, and it has to be: the row at either end of the scroller is usually
+   *   half cut off, `nearest` scrolls it fully in, and the list moving under a still pointer
+   *   puts a different row under it - which scrolls again. A popup that runs away from the
+   *   cursor, and worst where it opened upwards and the page can scroll with it. The pointer
+   *   needs none of it, since the row it is on is on screen by definition.
    */
-  setActive(index) {
+  setActive(index, scroll = true) {
     for (const pair of this.pairs) pair.item.removeAttribute('data-active');
     if (this.add) this.add.removeAttribute('data-active');
     const pair = this.navigable()[index];
@@ -650,7 +696,7 @@ export class ComboboxElemental extends ElementBase {
     pair.item.setAttribute('data-active', '');
     this.input.setAttribute('aria-activedescendant', pair.item.id);
     // `nearest`, so a list that is already showing the option does not scroll at all.
-    pair.item.scrollIntoView({ block: 'nearest' });
+    if (scroll) pair.item.scrollIntoView({ block: 'nearest' });
   }
 
   /**
@@ -813,8 +859,14 @@ export class ComboboxElemental extends ElementBase {
   onInput() {
     this.query = this.input.value;
     this.filter();
-    if (!this.open) this.open = true;
-    else this.place();
+    if (!this.open) {
+      // Still under the threshold: there is no popup to place and no cursor to put in it.
+      // An already-open one is left open, because `min-chars` is about opening - a reader
+      // deleting a query back to nothing has not asked for the list to go away, and
+      // Escape, Tab and a click outside are what say that.
+      if (!opensOnQuery(this.query, this.minChars)) return;
+      this.open = true;
+    } else this.place();
     // The narrowed list is a new list, so the cursor goes to the top of it rather than
     // staying on an option that may no longer be showing.
     this.setActive(0);
@@ -845,7 +897,7 @@ export class ComboboxElemental extends ElementBase {
     const item = e.target.closest && e.target.closest('[role="option"]');
     if (!item || !this.list.contains(item)) return;
     const index = this.navigable().findIndex((pair) => pair.item === item);
-    if (index >= 0) this.setActive(index);
+    if (index >= 0) this.setActive(index, false);
   }
 
   onClick(e) {
@@ -865,10 +917,13 @@ export class ComboboxElemental extends ElementBase {
     }
 
     if (!this.field.contains(e.target)) return;
-    // The indicator is the one place a second click closes the popup again. Clicking the
-    // field itself only ever opens it: a reader reaching for the text they are editing
-    // is not asking for the list to go away.
-    this.open = this.indicator && this.indicator.contains(e.target) ? !this.open : true;
+    // The indicator is the one place a second click closes the popup again, and the one
+    // place a click opens it whatever `min-chars` says - it is the pointer's answer to
+    // Alt+Down. Clicking the field itself only ever opens it, and only while the popup is
+    // not waiting to be typed at: a reader reaching for the text they are editing is not
+    // asking for the list to go away, nor for ninety-eight rows of it over the page.
+    if (this.indicator.contains(e.target)) this.open = !this.open;
+    else if (opensOnQuery(this.query, this.minChars)) this.open = true;
     this.input.focus();
   }
 

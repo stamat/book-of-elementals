@@ -126,7 +126,7 @@ The `<select>` is still the form control, so most of the list is not this elemen
 
 | Key                                                | What it does                                                      |
 | --------------------------------------------------- | ------------------------------------------------------------------ |
-| Any printable character                             | Filters the list, and opens it                                     |
+| Any printable character                             | Filters the list, and opens it — or holds it shut, with [`min-chars`](#waiting-for-a-query) |
 | <kbd>Down</kbd> / <kbd>Up</kbd>                     | Opens the popup onto what is already chosen; from there, moves the cursor and wraps at both ends |
 | <kbd>Home</kbd> / <kbd>End</kbd>                    | First and last option showing                                      |
 | <kbd>Alt</kbd> + <kbd>Down</kbd> / <kbd>Up</kbd>    | Opens the popup / closes it, leaving the value alone               |
@@ -166,9 +166,18 @@ What the pattern does say is followed (`aria-multiselectable`, `aria-selected` o
 option, a popup that survives a pick); the chips are plain `<button>`s, in the tab order,
 each named `Remove` plus the option's own label.
 
-There is no caret on a `multiple`. A caret is the mark of a control holding one value out
-of a list, and a field full of tags has already said what this one holds — so the element
-does not write the indicator at all rather than style it away.
+Every option in a `multiple` popup draws a **checkbox at its leading edge** instead of a
+tick at its trailing one, because the two say different things. A tick is a record of what
+was already chosen; a box is an invitation, and what a reader has to know before the first
+pick is that the popup will still be there after it. Leading is also where a list that marks
+its rows puts the mark — [Primer](https://primer.style/product/components/action-list/guidelines/)
+leads both its single- and its multi-select items. A single select keeps the trailing tick: a
+box against one answer would be claiming the list takes several.
+
+The caret is drawn on a `multiple` too. Chips say the control holds more than one value; a
+caret says there is a list behind the field, which is a different sentence and the one that
+gets the list opened — and with [`min-chars`](#waiting-for-a-query) it is the only thing
+saying it to a pointer at all.
 
 ### When the tags outgrow one row
 
@@ -233,6 +242,58 @@ Not `slugify`, which sits next to it in the same file and looks like the same jo
 for URLs, so it drops everything outside `[\w0-9-]`. `Београд` comes out empty and `北京`
 comes out empty, where the search fold finds both. A search box that cannot find a Cyrillic
 city on a Serbian site is not a smaller bug than one that cannot fold an accent.
+
+### Waiting for a query
+
+`min-chars` holds the popup shut until that many characters have been typed — the APG's own
+variant of this pattern, the popup "displayed only if a certain number of characters are
+typed". It is for the list nobody browses: a thousand model names is a popup that covers the
+page on a click the reader never meant as a question.
+
+<!-- demo combobox class="demo-tall" -->
+
+```html
+<label for="model">Model</label>
+<combobox-elemental min-chars="2" placeholder="Type two letters…">
+  <select id="model" name="model" multiple>
+    <option value="af1">Air Force 1</option>
+    <option value="am90">Air Max 90</option>
+    <option value="am95">Air Max 95</option>
+    <option value="sb">Samba</option>
+    <option value="sl">Stan Smith</option>
+    <option value="gz">Gazelle</option>
+  </select>
+</combobox-elemental>
+```
+
+What it gates is **opening**, and only from the pointer's side of the field:
+
+| Door                                             | With `min-chars="2"`                                |
+| ------------------------------------------------- | ---------------------------------------------------- |
+| A click in the field                             | Opens nothing until the query is two characters long |
+| Typing                                           | Opens on the second character                        |
+| The caret                                        | Opens it, whatever the query                          |
+| <kbd>Down</kbd> / <kbd>Alt</kbd> + <kbd>Down</kbd> | Opens it, whatever the query                          |
+
+Deleting back under the threshold leaves an open popup open. The attribute is about opening,
+and a reader clearing a query has not asked for the list to go away — <kbd>Escape</kbd>,
+<kbd>Tab</kbd> and a click outside are what say that.
+
+**Say so in the field's description.** Nothing announces a threshold — a reader who cannot
+see the popup not appearing is told only that the combobox is collapsed, which is what it
+says while it waits. `aria-describedby` on the `<select>` is copied onto the field, so the
+sentence goes where the reader meets it:
+
+```html
+<combobox-elemental min-chars="2">
+  <select id="model" name="model" multiple aria-describedby="model-hint">…</select>
+</combobox-elemental>
+<p id="model-hint">Type two letters to search the models.</p>
+```
+
+Spaces are not characters being counted, so a field holding two of them has had nothing
+typed into it. A value that is not a number is no threshold at all rather than a popup
+nothing opens: `min-chars="soon"` behaves as `0`.
 
 ## Values that are not in the list
 
@@ -305,6 +366,7 @@ Other libraries call this
 | `remove-text` | string  | `Remove`     | The verb in a chip's remove button, in front of the option's label. Holding `{label}` it says where the label goes instead, for a language that puts the verb last — `{label} entfernen`. |
 | `custom-values` | boolean | `false`    | Let a value the `<select>` does not hold be typed in — [values that are not in the list](#values-that-are-not-in-the-list). |
 | `add-text`    | string  | `Add {label}` | What the add row says, `{label}` standing in for what was typed. Same convention as `remove-text`. |
+| `min-chars`   | number  | `0`          | How many characters to wait for before the popup opens at all — [waiting for a query](#waiting-for-a-query). Zero also opens it on a click in the field. |
 
 Everything else is the `<select>`'s: `multiple`, `required`, `disabled`, `name`, and the
 options themselves.
@@ -361,7 +423,6 @@ field and not the hidden control:
       </span>
     </span>
     <input class="combobox-elemental-input" role="combobox" aria-expanded="true" … />
-    <!-- single select only: a multiple has chips instead of a caret -->
     <button class="combobox-elemental-indicator" tabindex="-1" aria-hidden="true"></button>
   </div>
   <ul class="combobox-elemental-list" role="listbox" data-side="block-end">
@@ -397,6 +458,8 @@ combobox-elemental .combobox-elemental-input[aria-invalid="true"] {
 } /* the browser refused to submit */
 combobox-elemental .combobox-elemental-list[data-side="block-start"] {
 } /* it opened upwards */
+combobox-elemental .combobox-elemental-list[aria-multiselectable="true"] {
+} /* the popup of a multiple, which is where the checkboxes are */
 combobox-elemental:has(> select:disabled) {
 } /* own, or a fieldset's */
 combobox-elemental:not(:defined) {
@@ -532,14 +595,33 @@ way; only the side of the border it sits on changes.
 
 **The cursor and the selection are two different facts**, so they are drawn differently: the
 option the cursor is on takes the stronger tint, the ones already chosen take the fainter
-one plus a tick and a heavier weight. Pointing at an option *moves* the cursor onto it
-rather than lighting up a second row, so the mouse and the arrow keys drive the same one
-thing.
+one, a heavier weight, and a mark — a trailing tick on a single select, a leading checkbox on
+a `multiple`. Pointing at an option *moves* the cursor onto it rather than lighting up a
+second row, so the mouse and the arrow keys drive the same one thing.
+
+The checkbox is drawn from `<checkbox-group-elemental>`'s own custom properties —
+`--checkbox-elemental-size`, `-border-width`, `-border-color`, `-radius`, `-fill`, `-mark` —
+read with this file's fallbacks rather than declared here. Set them anywhere above the
+combobox and the box in the popup matches the checkboxes on the rest of the page; import
+[`checkbox.css`](../checkbox.html) or do not, the box is drawn either way.
+
+The box is filled with `currentcolor` and its tick is cut out in `Canvas`, so **a rule of
+yours that flips `color` on a row has to re-point the tick with it** — otherwise the fill
+follows the text to white and the tick, already white, disappears into it:
+
+```css
+/* an active row drawn as light-on-dark */
+combobox-elemental .combobox-elemental-option[data-active] {
+  color: Canvas;
+  background: CanvasText;
+  --checkbox-elemental-mark: CanvasText;
+}
+```
 
 That is the table above, live. Turn the knobs in the **Options** tab until it looks the
 way you want, then copy the rule out of the bottom of the panel:
 
-<!-- demo combobox tab="options" class="demo-tall" style="--code-preview-options-height:554px" -->
+<!-- demo combobox tab="options" class="demo-tall" style="--code-preview-options-height:586px" -->
 
 ```html
 <combobox-elemental>
@@ -552,10 +634,11 @@ way you want, then copy the rule out of the bottom of the panel:
 </combobox-elemental>
 ```
 
-The chosen option is marked with a tick as well as a background, because a background
-alone is gone under `forced-colors` and invisible to anyone who cannot tell the two greys
-apart. In that mode the active option is repainted `Highlight`/`HighlightText`, the one
-pair it guarantees contrasts.
+The chosen option is marked with a tick or a filled box as well as a background, because a
+background alone is gone under `forced-colors` and invisible to anyone who cannot tell the
+two greys apart. In that mode the active option is repainted `Highlight`/`HighlightText`, the
+one pair it guarantees contrasts, and the checkbox takes the same pair — a fill the mode drops
+is a ticked row marked by nothing.
 
 > [!NOTE]
 > The properties go **on the `<combobox-elemental>`** — a class on it,
