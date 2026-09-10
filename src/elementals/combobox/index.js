@@ -156,7 +156,7 @@ function el(tag, className) {
  * this element with no APG example behind it - the pattern's six are all single-select.
  * What is written here follows the pattern where it speaks (`aria-multiselectable`,
  * `aria-selected` on every option rather than only the chosen one, a listbox that stays
- * open across picks) and is plain buttons where it does not.
+ * open across picks - `min-chars` apart) and is plain buttons where it does not.
  *
  * Light DOM, no shadow root. This one *does* build markup - a field, a listbox and a
  * chip per selection - which the elements wrapping native widgets do not have to. That
@@ -179,7 +179,7 @@ function el(tag, className) {
  * @attr {string} [remove-text=Remove] - The verb in a chip's remove button, in front of the option's label. Holding `{label}` it says where the label goes instead: `{label} entfernen`.
  * @attr {boolean} [custom-values=false] - Let a value the `<select>` does not hold be typed in. The popup offers an add row for anything not already there; taking it appends a real `<option>` and chooses it. With `multiple` and an empty `<select>`, this is a tag input.
  * @attr {string} [add-text=Add {label}] - What the add row says, with `{label}` standing in for what was typed. Same convention as `remove-text`.
- * @attr {number} [min-chars=0] - How many characters the field waits for before the popup appears. Zero, the default, is a popup that also opens on a click in the field. Past zero the caret and Alt+Down are the doors left for a reader who would rather browse than type.
+ * @attr {number} [min-chars=0] - How many characters the field waits for before the popup appears. Zero, the default, is a popup that also opens on a click in the field. Past zero the caret and Alt+Down are the doors left for a reader who would rather browse than type, and a pick closes the popup a `multiple` would otherwise keep open.
  *
  * @cssprop {<length>} [--combobox-elemental-radius=0.375rem] - Corners of the field and the popup.
  * @cssprop {<length>} [--combobox-elemental-inset=0.5rem] - The one padding unit: inside the field, before the caret, and down the side of every option - and nowhere else, so the field's text and the popup's line up.
@@ -768,10 +768,14 @@ export class ComboboxElemental extends ElementBase {
       this.filter();
       this.sync();
       this.emit();
-      // Deliberately still open: the second of three tags is not a reason to make the
-      // reader open the list again.
-      this.place();
-      this.setActive(this.navigable().indexOf(pair));
+      // Deliberately still open where the field waits for nothing: the second of three tags
+      // is not a reason to make the reader open the list again. Past a threshold it is the
+      // pick that emptied the query, not the reader, so an open popup here is the whole list
+      // under a field that asked for a letter - which is what `min-chars` exists to refuse.
+      if (opensOnQuery(this.query, this.minChars)) {
+        this.place();
+        this.setActive(this.navigable().indexOf(pair));
+      } else this.open = false;
     } else {
       pair.option.selected = true;
       this.query = '';

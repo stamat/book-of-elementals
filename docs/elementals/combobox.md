@@ -143,7 +143,8 @@ cannot be chosen, rather than an empty popup that says nothing at all.
 ## Several values
 
 `multiple` on the `<select>` is the whole of it. Each selection gets a chip with a remove
-button, the popup stays open across picks, and every option carries `aria-selected` rather
+button, the popup stays open across picks — unless the field is
+[waiting for a query](#waiting-for-a-query) — and every option carries `aria-selected` rather
 than only the chosen one:
 
 <!-- demo combobox class="demo-tall" -->
@@ -278,6 +279,10 @@ What it gates is **opening**, and only from the pointer's side of the field:
 Deleting back under the threshold leaves an open popup open. The attribute is about opening,
 and a reader clearing a query has not asked for the list to go away — <kbd>Escape</kbd>,
 <kbd>Tab</kbd> and a click outside are what say that.
+
+Picking does close it, in a `multiple` that would otherwise stay open across picks: there the
+query was emptied by the pick rather than by the reader, and the popup left behind is the
+whole list under a field that asked for two characters.
 
 **Say so in the field's description.** Nothing announces a threshold — a reader who cannot
 see the popup not appearing is told only that the combobox is collapsed, which is what it

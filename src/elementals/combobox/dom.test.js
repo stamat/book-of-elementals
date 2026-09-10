@@ -118,6 +118,25 @@ test('an open popup stays open when the query falls back under the threshold', (
   expect(showing(box)).toEqual(['Serbian', 'English', 'German']);
 });
 
+test('picking closes a waiting popup, because the pick is what emptied the query', () => {
+  // The reader deleting a query keeps the list; a pick clearing it does not. Otherwise the
+  // field goes straight from two typed characters to the whole list under a field that
+  // asked for two characters.
+  const box = mount('min-chars="2"');
+  type(box, 'en');
+  press(box, 'Enter');
+  expect(box.select.selectedOptions.length).toBe(1);
+  expect(box.open).toBe(false);
+});
+
+test('with nothing to wait for, picking leaves the popup open for the next tag', () => {
+  const box = mount();
+  field(box).click();
+  press(box, 'Enter');
+  expect(box.select.selectedOptions.length).toBe(1);
+  expect(box.open).toBe(true);
+});
+
 test('a threshold that is not a number is no threshold at all', () => {
   const box = mount('min-chars="soon"');
   field(box).click();

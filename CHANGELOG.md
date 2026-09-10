@@ -19,6 +19,12 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`<combobox-elemental>` with both `multiple` and `min-chars` closes its popup on a pick.**
+  The pick empties the query itself, so the list that stayed open was the whole list under a
+  field that had asked for a query.
+
 ## [3.5.0] - 2026-09-10
 
 ### Added
