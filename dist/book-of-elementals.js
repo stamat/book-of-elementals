@@ -1,4 +1,4 @@
-/* book-of-elementals v3.5.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v3.5.1 | https://stamat.github.io/book-of-elementals/ | MIT License */
 (() => {
   var __defProp = Object.defineProperty;
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
@@ -2208,8 +2208,10 @@
         this.filter();
         this.sync();
         this.emit();
-        this.place();
-        this.setActive(this.navigable().indexOf(pair));
+        if (opensOnQuery(this.query, this.minChars)) {
+          this.place();
+          this.setActive(this.navigable().indexOf(pair));
+        } else this.open = false;
       } else {
         pair.option.selected = true;
         this.query = "";

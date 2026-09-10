@@ -1,4 +1,4 @@
-/* book-of-elementals v3.5.0 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v3.5.1 | https://stamat.github.io/book-of-elementals/ | MIT License */
 (() => {
   // node_modules/book-of-spells/src/helpers.mjs
   var objProto = Object.prototype;
@@ -541,8 +541,10 @@
         this.filter();
         this.sync();
         this.emit();
-        this.place();
-        this.setActive(this.navigable().indexOf(pair));
+        if (opensOnQuery(this.query, this.minChars)) {
+          this.place();
+          this.setActive(this.navigable().indexOf(pair));
+        } else this.open = false;
       } else {
         pair.option.selected = true;
         this.query = "";
