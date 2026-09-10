@@ -19,6 +19,8 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+## [3.5.1] - 2026-09-10
+
 ### Fixed
 
 - **`<combobox-elemental>` with both `multiple` and `min-chars` closes its popup on a pick.**
