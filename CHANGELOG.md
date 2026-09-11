@@ -19,6 +19,8 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+## [3.5.2] - 2026-09-11
+
 ### Changed
 
 - **`<combobox-elemental>` with `multiple` and `min-chars` keeps a popup the caret or a key
