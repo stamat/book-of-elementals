@@ -19,6 +19,19 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+### Changed
+
+- **`<combobox-elemental>` with `multiple` and `min-chars` keeps a popup the caret or a key
+  opened across picks.** Only one that typing opened closes on a pick, since only there did
+  the pick empty the query the reader was waiting on.
+
+### Fixed
+
+- **`<marquee-elemental>` copies can be hovered and clicked.** They were `inert`, which is not
+  hit-tested, so after the first lap most logos on the strip were links that did nothing.
+  **DOM:** `[data-marquee-clone]` is no longer `inert`; everything focusable in it gets
+  `tabindex="-1"`, which keeps it out of <kbd>Tab</kbd> as before.
+
 ## [3.5.1] - 2026-09-10
 
 ### Fixed

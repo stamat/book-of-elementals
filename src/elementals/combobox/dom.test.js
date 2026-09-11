@@ -129,6 +129,32 @@ test('picking closes a waiting popup, because the pick is what emptied the query
   expect(box.open).toBe(false);
 });
 
+test('a waiting popup the caret opened stays open across picks, because the reader asked for the whole list', () => {
+  const box = mount('min-chars="2"');
+  caret(box).click();
+  press(box, 'Enter');
+  press(box, 'ArrowDown');
+  press(box, 'Enter');
+  expect(box.select.selectedOptions.length).toBe(2);
+  expect(box.open).toBe(true);
+});
+
+test('a waiting popup Alt+Down opened stays open across picks, like the caret it stands in for', () => {
+  const box = mount('min-chars="2"');
+  press(box, 'ArrowDown', { altKey: true });
+  press(box, 'Enter');
+  expect(box.open).toBe(true);
+});
+
+test('the caret keeps a popup open only until it closes, so the next one typing opens closes on a pick', () => {
+  const box = mount('min-chars="2"');
+  caret(box).click();
+  press(box, 'Escape');
+  type(box, 'en');
+  press(box, 'Enter');
+  expect(box.open).toBe(false);
+});
+
 test('with nothing to wait for, picking leaves the popup open for the next tag', () => {
   const box = mount();
   field(box).click();

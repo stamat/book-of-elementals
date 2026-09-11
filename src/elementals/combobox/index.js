@@ -179,7 +179,7 @@ function el(tag, className) {
  * @attr {string} [remove-text=Remove] - The verb in a chip's remove button, in front of the option's label. Holding `{label}` it says where the label goes instead: `{label} entfernen`.
  * @attr {boolean} [custom-values=false] - Let a value the `<select>` does not hold be typed in. The popup offers an add row for anything not already there; taking it appends a real `<option>` and chooses it. With `multiple` and an empty `<select>`, this is a tag input.
  * @attr {string} [add-text=Add {label}] - What the add row says, with `{label}` standing in for what was typed. Same convention as `remove-text`.
- * @attr {number} [min-chars=0] - How many characters the field waits for before the popup appears. Zero, the default, is a popup that also opens on a click in the field. Past zero the caret and Alt+Down are the doors left for a reader who would rather browse than type, and a pick closes the popup a `multiple` would otherwise keep open.
+ * @attr {number} [min-chars=0] - How many characters the field waits for before the popup appears. Zero, the default, is a popup that also opens on a click in the field. Past zero the caret and Alt+Down are the doors left for a reader who would rather browse than type, and a pick closes a popup typing opened, which a `multiple` would otherwise keep open. One the caret or a key opened stays open across picks.
  *
  * @cssprop {<length>} [--combobox-elemental-radius=0.375rem] - Corners of the field and the popup.
  * @cssprop {<length>} [--combobox-elemental-inset=0.5rem] - The one padding unit: inside the field, before the caret, and down the side of every option - and nowhere else, so the field's text and the popup's line up.
@@ -736,6 +736,7 @@ export class ComboboxElemental extends ElementBase {
     this.input.setAttribute('aria-expanded', open ? 'true' : 'false');
     this.list.hidden = !open;
     if (!open) {
+      this.openedByQuery = false;
       this.setActive(-1);
       this.list.removeAttribute('data-side');
       return;
@@ -769,10 +770,12 @@ export class ComboboxElemental extends ElementBase {
       this.sync();
       this.emit();
       // Deliberately still open where the field waits for nothing: the second of three tags
-      // is not a reason to make the reader open the list again. Past a threshold it is the
-      // pick that emptied the query, not the reader, so an open popup here is the whole list
-      // under a field that asked for a letter - which is what `min-chars` exists to refuse.
-      if (opensOnQuery(this.query, this.minChars)) {
+      // is not a reason to make the reader open the list again. Past a threshold, a popup
+      // that typing opened closes: it is the pick that emptied the query, not the reader, so
+      // an open popup here is the whole list under a field that asked for a letter - which is
+      // what `min-chars` exists to refuse. One the caret or a key opened stays, because
+      // there the reader asked for the whole list and is browsing it.
+      if (!this.openedByQuery || opensOnQuery(this.query, this.minChars)) {
         this.place();
         this.setActive(this.navigable().indexOf(pair));
       } else this.open = false;
@@ -870,6 +873,7 @@ export class ComboboxElemental extends ElementBase {
       // Escape, Tab and a click outside are what say that.
       if (!opensOnQuery(this.query, this.minChars)) return;
       this.open = true;
+      this.openedByQuery = true;
     } else this.place();
     // The narrowed list is a new list, so the cursor goes to the top of it rather than
     // staying on an option that may no longer be showing.

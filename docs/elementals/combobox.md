@@ -280,9 +280,11 @@ Deleting back under the threshold leaves an open popup open. The attribute is ab
 and a reader clearing a query has not asked for the list to go away — <kbd>Escape</kbd>,
 <kbd>Tab</kbd> and a click outside are what say that.
 
-Picking does close it, in a `multiple` that would otherwise stay open across picks: there the
-query was emptied by the pick rather than by the reader, and the popup left behind is the
-whole list under a field that asked for two characters.
+Picking closes a popup that typing opened, in a `multiple` that would otherwise stay open
+across picks: there the query was emptied by the pick rather than by the reader, and the popup
+left behind is the whole list under a field that asked for two characters. A popup the caret
+or a key opened stays open across picks — that reader asked for the whole list, and is
+browsing it.
 
 **Say so in the field's description.** Nothing announces a threshold — a reader who cannot
 see the popup not appearing is told only that the combobox is collapsed, which is what it
