@@ -199,7 +199,8 @@ combobox-elemental .combobox-elemental-field {
 
 There is no custom property for it, because it is one declaration and the number depends
 entirely on the form. Note what you are buying: with a cap, the chip a reader just added can
-land below the fold of a box they now have to scroll.
+land below the fold of a box they now have to scroll, and the caret, pinned to the top row
+inside that box, scrolls up out of it with that row.
 
 A chip is not truncated either. Its label wraps where it can, but a single long word has
 nothing to break on and no maximum width to stop at, so it runs past the field's edge. Trim
@@ -586,11 +587,19 @@ out of `currentcolor` and `Canvas`, so it sits in the palette the page already h
 | `--combobox-elemental-invalid`       | `#e5484d` mixed with the text colour | The rim and the message once the browser has refused |
 | `--combobox-elemental-max-height`    | `15rem`                     | How tall the popup gets before it scrolls      |
 
-`--combobox-elemental-inset` is spent three times — inside the field, between the text and
-the caret, and down the side of every option — and nowhere else, which is why the popup
-itself has no padding of its own: its rows run edge to edge, so the first one sits against
-the seam it is joined at and every letter in it lands under the field's. Two numbers that
-have to agree cannot be two numbers.
+`--combobox-elemental-inset` is spent three times — inside the field, around the caret, and
+down the side of every option — and nowhere else, which is why the popup itself has no
+padding of its own: its rows run edge to edge, so the first one sits against the seam it is
+joined at and every letter in it lands under the field's. Two numbers that have to agree
+cannot be two numbers.
+
+**The caret is a square one row tall**, pinned to the field's top end and reaching out over
+its border. A glyph-sized button after the input is a target smaller than a fingertip, and
+once chips wrap it rides the last row down to the bottom edge; pinned, the field's end
+padding keeps chips and text out from under it on every row. A press on the border itself
+lands on the caret rather than starting to type. A chip's own padding is taken back out of
+the row with a negative margin, so a row of chips is exactly as tall as the typed line and
+the square spans it.
 
 **The popup is the field carried on downwards.** While it is open, the corners the two meet
 at square off and their borders are pulled onto each other, so the pair reads as one panel
@@ -653,16 +662,18 @@ is a ticked row marked by nothing.
 > element, and a property set on an element always beats one inherited from an ancestor,
 > so `.form { --combobox-elemental-surface: … }` silently does nothing.
 
-**The typed text is never under 16px.** The input takes the page's font, and iOS Safari
-zooms the page in on any text field that computes smaller than that — then leaves it zoomed
-once the field is done with. So the input's `font-size` is `max(16px, 1em)`: your size
-wherever it already clears the bar, 16px where it does not. There is no pointer query in
-front of it, so a page set smaller than 16px renders the typed text a little bigger than
-the chips and options beside it on a desktop too — one rule that reads the same everywhere,
-against a pinch on every open. Take it back if you would rather have the page's size:
+**The field is never under 16px.** The input takes the page's font, and iOS Safari zooms the
+page in on any text field that computes smaller than that — then leaves it zoomed once the
+field is done with. So the field's `font-size` is `max(16px, 1em)`: your size wherever it
+already clears the bar, 16px where it does not. On the field rather than only the input, so
+the chips, the typed text and the caret are one size — the caret's square is measured in
+`1lh`, and that is the typed line only while the three agree. There is no pointer query in
+front of it, so a page set smaller than 16px renders the field a little bigger than the
+options in its popup on a desktop too — one rule that reads the same everywhere, against a
+pinch on every open. Take it back if you would rather have the page's size:
 
 ```css
-combobox-elemental .combobox-elemental-input {
+combobox-elemental .combobox-elemental-field {
   font-size: 1em;
 }
 ```

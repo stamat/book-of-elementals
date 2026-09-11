@@ -182,7 +182,7 @@ function el(tag, className) {
  * @attr {number} [min-chars=0] - How many characters the field waits for before the popup appears. Zero, the default, is a popup that also opens on a click in the field. Past zero the caret and Alt+Down are the doors left for a reader who would rather browse than type, and a pick closes a popup typing opened, which a `multiple` would otherwise keep open. One the caret or a key opened stays open across picks.
  *
  * @cssprop {<length>} [--combobox-elemental-radius=0.375rem] - Corners of the field and the popup.
- * @cssprop {<length>} [--combobox-elemental-inset=0.5rem] - The one padding unit: inside the field, before the caret, and down the side of every option - and nowhere else, so the field's text and the popup's line up.
+ * @cssprop {<length>} [--combobox-elemental-inset=0.5rem] - The one padding unit: inside the field, around the caret, and down the side of every option - and nowhere else, so the field's text and the popup's line up.
  * @cssprop {<color>} [--combobox-elemental-surface=Canvas] - What the field and the popup are painted on. The page's own background, so re-point it on a card.
  * @cssprop {<color>} [--combobox-elemental-border=color-mix(in srgb, currentcolor 30%, transparent)] - The rim around the field and the popup.
  * @cssprop {<color>} [--combobox-elemental-active=color-mix(in srgb, currentcolor 12%, transparent)] - The option the cursor is on - where Enter would land, and what the pointer moves.

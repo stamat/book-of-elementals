@@ -24,6 +24,15 @@ to the docs page and the commit, not here.
 - **`<combobox-elemental>` with `multiple` and `min-chars` keeps a popup the caret or a key
   opened across picks.** Only one that typing opened closes on a pick, since only there did
   the pick empty the query the reader was waiting on.
+- **`<combobox-elemental>`'s caret is a square one row tall, pinned to the field's top end and
+  over its border**, rather than a glyph-sized target that rode the last row of chips down.
+  **CSS:** the glyph is `.combobox-elemental-indicator::before` rather than a `mask` on the
+  button, the field reserves the square with `padding-inline-end`, and a chip carries
+  `margin-block: -0.1em`.
+- **The no-zoom `font-size: max(16px, 1em)` moved from `.combobox-elemental-input` to
+  `.combobox-elemental-field`**, so the chips, the typed text and the caret are one size.
+  **CSS:** an override taking the floor back targets the field now — one on the input alone
+  resolves against the floored field and does nothing.
 
 ### Fixed
 
