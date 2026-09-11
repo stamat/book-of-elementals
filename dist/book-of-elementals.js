@@ -1,4 +1,4 @@
-/* book-of-elementals v3.5.1 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v3.5.2 | https://stamat.github.io/book-of-elementals/ | MIT License */
 (() => {
   var __defProp = Object.defineProperty;
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
@@ -2184,6 +2184,7 @@
       this.input.setAttribute("aria-expanded", open ? "true" : "false");
       this.list.hidden = !open;
       if (!open) {
+        this.openedByQuery = false;
         this.setActive(-1);
         this.list.removeAttribute("data-side");
         return;
@@ -2208,7 +2209,7 @@
         this.filter();
         this.sync();
         this.emit();
-        if (opensOnQuery(this.query, this.minChars)) {
+        if (!this.openedByQuery || opensOnQuery(this.query, this.minChars)) {
           this.place();
           this.setActive(this.navigable().indexOf(pair));
         } else this.open = false;
@@ -2292,6 +2293,7 @@
       if (!this.open) {
         if (!opensOnQuery(this.query, this.minChars)) return;
         this.open = true;
+        this.openedByQuery = true;
       } else this.place();
       this.setActive(0);
     }
@@ -3193,6 +3195,7 @@
   function stripHolds(copies, distance, lastCopies, lastDistance) {
     return copies === lastCopies && Math.abs(distance - lastDistance) < DISTANCE_SLACK;
   }
+  var FOCUSABLE3 = "a[href], button, input, select, textarea, summary, iframe, [tabindex], [contenteditable]";
   function reducedMotion2() {
     return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
@@ -3221,10 +3224,36 @@
   }
   var MarqueeElemental = class extends ElementBase {
     constructor() {
-      super(...arguments);
+      super();
       /** What the author wrote, captured at upgrade. Held rather than re-read, because after the
        * first lap the element's own children are mostly copies of it. */
       __publicField(this, "track", []);
+      /** Where the reader is, kept from the pointer and focus events rather than read off `:hover`,
+       * which a tap on iOS leaves stuck on until something else is touched. */
+      __publicField(this, "pointerOver", false);
+      __publicField(this, "pointerOnControl", false);
+      __publicField(this, "focusInside", false);
+      __publicField(this, "focusOnControl", false);
+      this.addEventListener("pointerenter", () => {
+        this.pointerOver = true;
+        this.sync();
+      });
+      this.addEventListener("pointerleave", () => {
+        this.pointerOver = false;
+        this.pointerOnControl = false;
+        this.sync();
+      });
+      this.addEventListener("focusin", (event) => {
+        this.focusInside = true;
+        this.focusOnControl = event.target === this.control;
+        this.sync();
+      });
+      this.addEventListener("focusout", (event) => {
+        const next = event.relatedTarget;
+        this.focusInside = !!next && this.contains(next);
+        this.focusOnControl = !!next && next === this.control;
+        this.sync();
+      });
     }
     /** The copies. */
     get clones() {
@@ -3249,6 +3278,12 @@
       if (value) this.play();
       else this.pause();
     }
+    /** Whether the lap should be standing still: stopped by the reader, off the screen, or being
+     * looked at - a pointer or a focus on the strip, but not on the button, which would stop the
+     * strip as the reader reached to stop it and leave the press nothing to show for itself. */
+    get held() {
+      return !this.playing || this.hasAttribute("data-marquee-offscreen") || this.pointerOver && !this.pointerOnControl || this.focusInside && !this.focusOnControl;
+    }
     connectedCallback() {
       if (this.initialized) return;
       this.track = Array.from(this.children);
@@ -3270,7 +3305,9 @@
       if (typeof IntersectionObserver === "function") {
         this.visibility = new IntersectionObserver((entries) => {
           const entry = entries[entries.length - 1];
-          if (entry) this.toggleAttribute("data-marquee-offscreen", !entry.isIntersecting);
+          if (!entry) return;
+          this.toggleAttribute("data-marquee-offscreen", !entry.isIntersecting);
+          this.sync();
         }, { rootMargin: "200px" });
         this.visibility.observe(this);
       }
@@ -3282,6 +3319,10 @@
       if (this.visibility) this.visibility.disconnect();
       this.visibility = null;
       this.removeAttribute("data-marquee-offscreen");
+      this.pointerOver = false;
+      this.pointerOnControl = false;
+      this.focusInside = false;
+      this.focusOnControl = false;
       this.initialized = false;
     }
     static get observedAttributes() {
@@ -3309,6 +3350,14 @@
       button.className = "marquee-elemental-control";
       button.addEventListener("click", () => {
         this.playing = !this.playing;
+      });
+      button.addEventListener("pointerenter", () => {
+        this.pointerOnControl = true;
+        this.sync();
+      });
+      button.addEventListener("pointerleave", () => {
+        this.pointerOnControl = false;
+        this.sync();
       });
       this.append(button);
       this.labelControl();
@@ -3365,6 +3414,7 @@
       for (let i = 0; i < copies; i++) this.append(...this.copyTrack());
       this.applyTiming();
       this.setAttribute("data-marquee-running", "");
+      this.sync();
     }
     /** How far a lap goes and how long it takes, onto the element for the keyframes to read.
      * Split out of the measuring because `speed` changes the second number and not the first,
@@ -3377,19 +3427,22 @@
     /**
      * One copy of the track.
      *
-     * `inert` and `aria-hidden` are two different readers and both are owed an answer: the
-     * second keeps the copies out of the accessibility tree, and the first is the one every
-     * other marquee is missing - without it <kbd>Tab</kbd> walks into copies of the same links,
-     * scrolling past under the focus ring. `id`s come off on the way out, because a document
-     * with twenty of the same `id` is one where every `aria-labelledby` and every `#anchor`
-     * resolves to whichever came first.
+     * `aria-hidden` keeps the copy out of the accessibility tree and `tabindex="-1"` keeps what
+     * is focusable in it out of <kbd>Tab</kbd> - the half every other marquee is missing, without
+     * which the keyboard walks into copies of the same links scrolling past under the focus ring.
+     * **Not `inert`**, which answers both in one attribute and takes the pointer with them: an
+     * inert box is not hit-tested, and after the first lap most of what is on screen is copies,
+     * so the strip is logos that cannot be hovered or clicked. `id`s come off on the way out,
+     * because a document with twenty of the same `id` is one where every `aria-labelledby` and
+     * every `#anchor` resolves to whichever came first.
      */
     copyTrack() {
       return this.track.map((node) => {
         const clone = node.cloneNode(true);
         clone.setAttribute("data-marquee-clone", "");
         clone.setAttribute("aria-hidden", "true");
-        clone.inert = true;
+        if (clone.matches(FOCUSABLE3)) clone.setAttribute("tabindex", "-1");
+        clone.querySelectorAll(FOCUSABLE3).forEach((child) => child.setAttribute("tabindex", "-1"));
         if (clone.id) clone.removeAttribute("id");
         clone.querySelectorAll("[id]").forEach((child) => child.removeAttribute("id"));
         return clone;
@@ -3398,10 +3451,42 @@
     removeClones() {
       this.clones.forEach((clone) => clone.remove());
     }
+    /**
+     * Hold the lap or let it go, and pin the time either way.
+     *
+     * **Never through `animation-play-state`, and never through a bare `pause()` either.** After
+     * enough holds, Safari (26.6 at least) freezes a paused animation on a time as old as its last
+     * resume: the strip snaps back under the pointer, and letting go lands it where it would have
+     * been had it never stopped. The running animation's own `currentTime` stays right, so it is
+     * read, the lap paused, and the same number written back; a release sets `startTime` off the
+     * page's clock instead of leaving `play()` to work one out. Every copy is given the first
+     * one's time, so a hold is also the strip put back in step with itself.
+     *
+     * Once this has paused a CSS animation, `animation-play-state` no longer reaches it - which is
+     * why the stylesheet has no hold of its own to fight this one.
+     */
+    sync() {
+      const laps = [...this.children].flatMap((node) => typeof node.getAnimations === "function" ? node.getAnimations() : []).filter((lap) => lap.animationName === "marquee-elemental-lap");
+      const time = laps.length ? laps[0].currentTime : null;
+      if (time === null) return;
+      if (this.held) {
+        laps.forEach((lap) => {
+          if (lap.playState !== "paused") lap.pause();
+          lap.currentTime = time;
+        });
+        return;
+      }
+      laps.forEach((lap) => {
+        if (lap.playState !== "paused") return;
+        lap.play();
+        lap.startTime = lap.timeline.currentTime - time;
+      });
+    }
     /** Start moving, making the copies it takes to do it seamlessly if they are not there yet. */
     play() {
       this.removeAttribute("data-marquee-paused");
       this.measure();
+      this.sync();
       this.labelControl();
       this.dispatchEvent(new CustomEvent("marquee-toggle", { bubbles: true, detail: { playing: true } }));
     }
@@ -3414,6 +3499,7 @@
      */
     pause() {
       this.setAttribute("data-marquee-paused", "");
+      this.sync();
       this.labelControl();
       this.dispatchEvent(new CustomEvent("marquee-toggle", { bubbles: true, detail: { playing: false } }));
     }
@@ -7485,7 +7571,7 @@
     if (vertical) return { start: tab.top - strip.top, size: tab.height };
     return { start: rtl ? strip.right - tab.right : tab.left - strip.left, size: tab.width };
   }
-  var FOCUSABLE3 = "a[href], button, input, select, textarea, summary, iframe, [tabindex], [contenteditable]";
+  var FOCUSABLE4 = "a[href], button, input, select, textarea, summary, iframe, [tabindex], [contenteditable]";
   function fragment(hash) {
     const raw = hash.slice(1);
     try {
@@ -7727,7 +7813,7 @@
           return;
         }
         panel.removeAttribute("hidden");
-        if (panel.querySelector(FOCUSABLE3)) panel.removeAttribute("tabindex");
+        if (panel.querySelector(FOCUSABLE4)) panel.removeAttribute("tabindex");
         else panel.tabIndex = 0;
       });
       this.measure();
@@ -8203,7 +8289,7 @@
     const kept = (list || "").split(/\s+/).filter((one) => one && one !== token);
     return kept.length ? kept.join(" ") : null;
   }
-  var FOCUSABLE4 = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+  var FOCUSABLE5 = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
   var CLOSE_DELAY = 120;
   var FALLBACK_GAP = 6;
   var FALLBACK_VIEWPORT_MARGIN = 6;
@@ -8215,7 +8301,7 @@
   var TooltipElemental = class extends ElementBase {
     /** The control being described: what the element wraps, or what `for` names. */
     get trigger() {
-      const own = this.querySelector(`:scope > ${FOCUSABLE4}`);
+      const own = this.querySelector(`:scope > ${FOCUSABLE5}`);
       if (own) return own;
       const id = this.getAttribute("for");
       return id ? document.getElementById(id) : null;
@@ -8223,7 +8309,7 @@
     /** The words. A direct child that is not the trigger, or - when `for` named the trigger
      * from somewhere else on the page - this element itself. */
     get bubble() {
-      const own = this.querySelector(`:scope > ${FOCUSABLE4}`);
+      const own = this.querySelector(`:scope > ${FOCUSABLE5}`);
       if (!own) return this;
       return [...this.children].find((child) => child !== own) || null;
     }

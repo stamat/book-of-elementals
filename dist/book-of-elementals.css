@@ -1,4 +1,4 @@
-/* book-of-elementals v3.5.1 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v3.5.2 | https://stamat.github.io/book-of-elementals/ | MIT License */
 :root {
   --accordion-elemental-duration: 250ms;
   --accordion-elemental-easing: ease;
@@ -119,6 +119,7 @@ combobox-elemental .combobox-elemental-field {
   flex-wrap: wrap;
   align-items: center;
   cursor: text;
+  font-size: max(16px, 1em);
 }
 combobox-elemental .combobox-elemental-chips {
   display: contents;
@@ -132,7 +133,6 @@ combobox-elemental .combobox-elemental-input {
   background: none;
   border: 0;
   outline: none;
-  font-size: max(16px, 1em);
 }
 combobox-elemental .combobox-elemental-field:has(> .combobox-elemental-input:focus-visible) {
   outline: 2px solid currentcolor;
@@ -144,6 +144,7 @@ combobox-elemental[open] .combobox-elemental-field:has(> .combobox-elemental-inp
 combobox-elemental .combobox-elemental-indicator {
   flex: none;
   padding: 0;
+  font: inherit;
   color: inherit;
   cursor: pointer;
   background: none;
@@ -310,12 +311,6 @@ marquee-elemental:defined:dir(rtl) {
 }
 marquee-elemental:defined[reverse]:dir(rtl) {
   --marquee-elemental-direction: normal;
-}
-marquee-elemental:defined:hover > *, marquee-elemental:defined:focus-within > *, marquee-elemental:defined[data-marquee-paused] > *, marquee-elemental:defined[data-marquee-offscreen] > * {
-  animation-play-state: paused;
-}
-marquee-elemental:defined:has(> .marquee-elemental-control:hover):not([data-marquee-paused], [data-marquee-offscreen]) > *, marquee-elemental:defined:has(> .marquee-elemental-control:focus):not([data-marquee-paused], [data-marquee-offscreen]) > * {
-  animation-play-state: running;
 }
 marquee-elemental:defined > .marquee-elemental-control {
   position: absolute;

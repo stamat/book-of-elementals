@@ -1,4 +1,4 @@
-/* book-of-elementals v3.5.1 | https://stamat.github.io/book-of-elementals/ | MIT License */
+/* book-of-elementals v3.5.2 | https://stamat.github.io/book-of-elementals/ | MIT License */
 combobox-elemental {
   --combobox-elemental-radius: 0.375rem;
   --combobox-elemental-inset: 0.5rem;
@@ -11,9 +11,11 @@ combobox-elemental {
   --combobox-elemental-invalid: color-mix(in srgb, currentcolor 35%, #e5484d);
 }
 combobox-elemental .combobox-elemental-field {
+  position: relative;
   box-sizing: border-box;
   gap: var(--combobox-elemental-inset);
   padding: var(--combobox-elemental-inset);
+  padding-inline-end: calc(1lh + var(--combobox-elemental-inset) * 2 + 1px);
   background: var(--combobox-elemental-surface);
   border: 1px solid var(--combobox-elemental-border);
   border-radius: var(--combobox-elemental-radius);
@@ -35,14 +37,24 @@ combobox-elemental .combobox-elemental-input::placeholder {
   opacity: 0.6;
 }
 combobox-elemental .combobox-elemental-indicator {
-  inline-size: 1.15em;
-  block-size: 1.15em;
-  background: currentcolor;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/%3E%3C/svg%3E") center/contain no-repeat;
+  position: absolute;
+  inset-block-start: -1px;
+  inset-inline-end: -1px;
+  display: grid;
+  place-items: center;
+  inline-size: calc(1lh + var(--combobox-elemental-inset) * 2 + 2px);
+  block-size: calc(1lh + var(--combobox-elemental-inset) * 2 + 2px);
   transition: rotate 200ms ease;
 }
+combobox-elemental .combobox-elemental-indicator::before {
+  inline-size: 1.15em;
+  block-size: 1.15em;
+  content: "";
+  background: currentcolor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L8 8.94l3.72-3.72a.749.749 0 0 1 1.06 0Z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
 @media (forced-colors: active) {
-  combobox-elemental .combobox-elemental-indicator {
+  combobox-elemental .combobox-elemental-indicator::before {
     background: CanvasText;
   }
 }
@@ -54,6 +66,7 @@ combobox-elemental .combobox-elemental-chip {
   gap: 0.25em;
   align-items: center;
   padding: 0.1em 0.2em 0.1em 0.5em;
+  margin-block: -0.1em;
   background: var(--combobox-elemental-chip);
   border-radius: var(--combobox-elemental-radius);
 }
