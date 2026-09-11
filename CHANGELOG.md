@@ -40,6 +40,11 @@ to the docs page and the commit, not here.
   hit-tested, so after the first lap most logos on the strip were links that did nothing.
   **DOM:** `[data-marquee-clone]` is no longer `inert`; everything focusable in it gets
   `tabindex="-1"`, which keeps it out of <kbd>Tab</kbd> as before.
+- **`<marquee-elemental>` holds still where it was hovered, in Safari too.** After enough holds
+  Safari froze a paused lap on the time of its last resume, so the strip snapped back under the
+  pointer and jumped ahead on leaving. **CSS:** the hold is the script's, which pins the time —
+  the `animation-play-state` rules are gone from `style.scss`, and one a page sets on the strip
+  stops reaching it once the element has held it.
 
 ## [3.5.1] - 2026-09-10
 

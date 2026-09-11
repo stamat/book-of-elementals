@@ -26,14 +26,18 @@ that:
 | --- | --- | --- |
 | No way to stop it | `:hover` pauses, which no keyboard has | writes a real `<button>`, named for what pressing it will do |
 | Two copies, hard-coded | right on a laptop, a hole in the loop on a wide screen | counts the track against the container and clones until the strip covers it |
-| Copies in the tab order | <kbd>Tab</kbd> lands on a link scrolling past, then on its double | every copy is `inert` as well as `aria-hidden` |
+| Copies in the tab order | <kbd>Tab</kbd> lands on a link scrolling past, then on its double | every copy is `aria-hidden`, and everything focusable in it `tabindex="-1"` |
+| Copies you cannot click | `inert` takes the pointer along with the tab order, and after one lap most logos on screen are copies | no `inert` — the copy is a link like the original, only not a tab stop |
 | Copies of your `id`s | `#anchor` and `aria-labelledby` resolve to whichever came first | `id` is stripped from every copy and everything inside it |
 | Motion nobody asked for | the strip moves before the reader has said anything | `prefers-reduced-motion` starts it stopped, with the button still there to start it |
 | A lap below the fold | the compositor moves pixels nobody is looking at, for as long as the tab is open | the strip holds while it is off the screen, on its own attribute so the button and the reader's own pause are untouched |
 
 `aria-hidden` on a copy is the one worth saying twice, because it is the fix everyone reaches
 for and it is half a fix: it takes the copy out of the screen reader and does nothing
-whatever about <kbd>Tab</kbd>. `inert` is what does both.
+whatever about <kbd>Tab</kbd>. `inert` is the other fix people reach for, and it overshoots:
+an inert box is not hit-tested either, so the strip is logos that cannot be hovered or
+clicked. `tabindex="-1"` on what is focusable inside a copy is the missing half, and nothing
+more.
 
 <!-- demo marquee style="--code-preview-height:83px" -->
 
@@ -160,6 +164,15 @@ until something else was touched. Excluded, the button's label always describes 
 actually see happen, and hovering the logos to read one still works after any number of
 presses.
 
+**The hold is the script's, and it pins the time.** After enough holds, Safari freezes a paused
+animation on a time as old as its last resume — `animation-play-state` and `pause()` alike — so
+the strip snaps back under the pointer and jumps ahead when the pointer leaves. The running
+animation's own time stays right, so the element reads it, pauses, and writes the same time
+back; letting go sets the start time off the page's clock rather than leaving the browser to
+work one out. Every copy is given the first one's time, so each hold also puts the strip back
+in step. The price is that `animation-play-state` on the strip is not yours to set: once the
+element has held it, a rule for it no longer reaches the lap.
+
 The button's name says what pressing it will do and it carries no `aria-pressed` — the same
 answer the APG gives the carousel's rotation control, rather than both, which would have a
 screen reader read the two against each other. `.play()`, `.pause()` and the `playing`
@@ -180,8 +193,12 @@ respecting it.
 
 ## Focusable content on a moving strip
 
-Links inside the track are reachable and only once: the copies are `inert`, so <kbd>Tab</kbd>
-walks the original and stops. Focus pauses the strip, so what you land on holds still.
+Links inside the track are reachable by keyboard only once: everything focusable in a copy is
+`tabindex="-1"`, so <kbd>Tab</kbd> walks the original and stops. Focus pauses the strip, so
+what you land on holds still. The pointer gets every copy — a logo is a link wherever it is on
+the lap — and a click on one focuses a node the screen reader is not shown. For a link that is
+the moment the page leaves anyway; for a button it is not, which is one more reason controls
+do not belong on a moving strip.
 
 What this cannot fix is *where* it holds still. Focus can land on a link that is mid-lap and
 partly out of frame, and the element cannot scroll it back without moving the strip under

@@ -6,8 +6,8 @@ export const DEFAULT_SPEED = 50;
 /**
  * The most copies of the track this will ever make.
  *
- * Every copy is a full subtree in the document - `inert` and out of the accessibility tree,
- * but still nodes to lay out and paint. A track one narrow item wide against a wide screen
+ * Every copy is a full subtree in the document - out of the accessibility tree and the tab
+ * order, but still nodes to lay out and paint. A track one narrow item wide against a wide screen
  * asks for hundreds, and the honest answer there is a visible gap the author can see and fix
  * with more content, rather than a page that quietly grew a thousand elements.
  */
@@ -72,6 +72,11 @@ const DISTANCE_SLACK = 1;
 export function stripHolds(copies, distance, lastCopies, lastDistance) {
   return copies === lastCopies && Math.abs(distance - lastDistance) < DISTANCE_SLACK;
 }
+
+/** What <kbd>Tab</kbd> stops on, and so what a copy has to take back out of the order. The
+ * list `<tabs-elemental>` checks a panel against, copied rather than imported: importing one
+ * elemental has to pull in one elemental. */
+const FOCUSABLE = 'a[href], button, input, select, textarea, summary, iframe, [tabindex], [contenteditable]';
 
 /** Whether the reader has asked the system for less movement. */
 function reducedMotion() {
@@ -138,9 +143,9 @@ function icon({ d, box }) {
  * The second half is the one nobody has at all. A seamless loop is copies of the track, and a
  * copy of a logo strip is a copy of its links: `aria-hidden` keeps them out of the screen
  * reader, and does nothing whatever about <kbd>Tab</kbd>, so the keyboard walks into copies of
- * the same links scrolling past under the focus ring. The copies here are `inert` as well as
- * `aria-hidden`, and their `id`s are stripped on the way out, because a duplicated `id` is
- * the same bug one layer down.
+ * the same links scrolling past under the focus ring. The copies here are `aria-hidden` with
+ * everything focusable in them at `tabindex="-1"`, and their `id`s are stripped on the way
+ * out, because a duplicated `id` is the same bug one layer down.
  *
  * **The copies are counted, not guessed.** Two of everything is the usual recipe and it is
  * right for one screen width: cover a wide monitor with a short track and the loop shows a
@@ -188,6 +193,35 @@ export class MarqueeElemental extends ElementBase {
    * first lap the element's own children are mostly copies of it. */
   track = [];
 
+  /** Where the reader is, kept from the pointer and focus events rather than read off `:hover`,
+   * which a tap on iOS leaves stuck on until something else is touched. */
+  pointerOver = false;
+  pointerOnControl = false;
+  focusInside = false;
+  focusOnControl = false;
+
+  constructor() {
+    super();
+    this.addEventListener('pointerenter', () => { this.pointerOver = true; this.sync(); });
+    this.addEventListener('pointerleave', () => {
+      this.pointerOver = false;
+      this.pointerOnControl = false;
+      this.sync();
+    });
+    this.addEventListener('focusin', (event) => {
+      this.focusInside = true;
+      this.focusOnControl = event.target === this.control;
+      this.sync();
+    });
+    // `relatedTarget` is where focus is going, and nothing else in the event says so.
+    this.addEventListener('focusout', (event) => {
+      const next = event.relatedTarget;
+      this.focusInside = !!next && this.contains(next);
+      this.focusOnControl = !!next && next === this.control;
+      this.sync();
+    });
+  }
+
   /** The copies. */
   get clones() {
     return Array.from(this.querySelectorAll(':scope > [data-marquee-clone]'));
@@ -215,6 +249,16 @@ export class MarqueeElemental extends ElementBase {
   set playing(value) {
     if (value) this.play();
     else this.pause();
+  }
+
+  /** Whether the lap should be standing still: stopped by the reader, off the screen, or being
+   * looked at - a pointer or a focus on the strip, but not on the button, which would stop the
+   * strip as the reader reached to stop it and leave the press nothing to show for itself. */
+  get held() {
+    return !this.playing
+      || this.hasAttribute('data-marquee-offscreen')
+      || (this.pointerOver && !this.pointerOnControl)
+      || (this.focusInside && !this.focusOnControl);
   }
 
   connectedCallback() {
@@ -265,8 +309,8 @@ export class MarqueeElemental extends ElementBase {
     // as the page stays open - the one animation here that never ends on its own, and so the
     // one worth holding. It holds by a second attribute rather than by `pause()`, and that
     // separation is the point: this is not the reader's answer, so the button's name must not
-    // change with it and the reader's own pause must survive a scroll past. The stylesheet
-    // stops the strip on either.
+    // change with it and the reader's own pause must survive a scroll past. `sync()` stops the
+    // strip on either.
     //
     // The margin is what keeps the strip from arriving already still: it is moving a couple of
     // hundred pixels of scrolling before it is in frame. Where there is no
@@ -276,7 +320,9 @@ export class MarqueeElemental extends ElementBase {
         // The last entry, not the first: a burst coalesced into one callback ends on the
         // state the element is actually in now.
         const entry = entries[entries.length - 1];
-        if (entry) this.toggleAttribute('data-marquee-offscreen', !entry.isIntersecting);
+        if (!entry) return;
+        this.toggleAttribute('data-marquee-offscreen', !entry.isIntersecting);
+        this.sync();
       }, { rootMargin: '200px' });
       this.visibility.observe(this);
     }
@@ -291,6 +337,12 @@ export class MarqueeElemental extends ElementBase {
     // Out of the document is not off the screen, and a strip put back in has to start from
     // what the next observer says rather than from what the last one saw.
     this.removeAttribute('data-marquee-offscreen');
+    // No `pointerleave` or `focusout` reaches an element taken out of the document, so what it
+    // last heard would hold a strip that is put back for good.
+    this.pointerOver = false;
+    this.pointerOnControl = false;
+    this.focusInside = false;
+    this.focusOnControl = false;
     this.initialized = false;
   }
 
@@ -320,6 +372,8 @@ export class MarqueeElemental extends ElementBase {
     button.type = 'button';
     button.className = 'marquee-elemental-control';
     button.addEventListener('click', () => { this.playing = !this.playing; });
+    button.addEventListener('pointerenter', () => { this.pointerOnControl = true; this.sync(); });
+    button.addEventListener('pointerleave', () => { this.pointerOnControl = false; this.sync(); });
     this.append(button);
     this.labelControl();
   }
@@ -402,6 +456,8 @@ export class MarqueeElemental extends ElementBase {
     for (let i = 0; i < copies; i++) this.append(...this.copyTrack());
     this.applyTiming();
     this.setAttribute('data-marquee-running', '');
+    // The new laps start running whatever is holding the strip; this is where they hear of it.
+    this.sync();
   }
 
   /** How far a lap goes and how long it takes, onto the element for the keyframes to read.
@@ -416,19 +472,22 @@ export class MarqueeElemental extends ElementBase {
   /**
    * One copy of the track.
    *
-   * `inert` and `aria-hidden` are two different readers and both are owed an answer: the
-   * second keeps the copies out of the accessibility tree, and the first is the one every
-   * other marquee is missing - without it <kbd>Tab</kbd> walks into copies of the same links,
-   * scrolling past under the focus ring. `id`s come off on the way out, because a document
-   * with twenty of the same `id` is one where every `aria-labelledby` and every `#anchor`
-   * resolves to whichever came first.
+   * `aria-hidden` keeps the copy out of the accessibility tree and `tabindex="-1"` keeps what
+   * is focusable in it out of <kbd>Tab</kbd> - the half every other marquee is missing, without
+   * which the keyboard walks into copies of the same links scrolling past under the focus ring.
+   * **Not `inert`**, which answers both in one attribute and takes the pointer with them: an
+   * inert box is not hit-tested, and after the first lap most of what is on screen is copies,
+   * so the strip is logos that cannot be hovered or clicked. `id`s come off on the way out,
+   * because a document with twenty of the same `id` is one where every `aria-labelledby` and
+   * every `#anchor` resolves to whichever came first.
    */
   copyTrack() {
     return this.track.map((node) => {
       const clone = node.cloneNode(true);
       clone.setAttribute('data-marquee-clone', '');
       clone.setAttribute('aria-hidden', 'true');
-      clone.inert = true;
+      if (clone.matches(FOCUSABLE)) clone.setAttribute('tabindex', '-1');
+      clone.querySelectorAll(FOCUSABLE).forEach((child) => child.setAttribute('tabindex', '-1'));
       if (clone.id) clone.removeAttribute('id');
       clone.querySelectorAll('[id]').forEach((child) => child.removeAttribute('id'));
       return clone;
@@ -439,10 +498,46 @@ export class MarqueeElemental extends ElementBase {
     this.clones.forEach((clone) => clone.remove());
   }
 
+  /**
+   * Hold the lap or let it go, and pin the time either way.
+   *
+   * **Never through `animation-play-state`, and never through a bare `pause()` either.** After
+   * enough holds, Safari (26.6 at least) freezes a paused animation on a time as old as its last
+   * resume: the strip snaps back under the pointer, and letting go lands it where it would have
+   * been had it never stopped. The running animation's own `currentTime` stays right, so it is
+   * read, the lap paused, and the same number written back; a release sets `startTime` off the
+   * page's clock instead of leaving `play()` to work one out. Every copy is given the first
+   * one's time, so a hold is also the strip put back in step with itself.
+   *
+   * Once this has paused a CSS animation, `animation-play-state` no longer reaches it - which is
+   * why the stylesheet has no hold of its own to fight this one.
+   */
+  sync() {
+    const laps = [...this.children]
+      // Missing only where there are no Web Animations at all, which is a test's DOM.
+      .flatMap((node) => (typeof node.getAnimations === 'function' ? node.getAnimations() : []))
+      .filter((lap) => lap.animationName === 'marquee-elemental-lap');
+    const time = laps.length ? laps[0].currentTime : null;
+    if (time === null) return;
+    if (this.held) {
+      laps.forEach((lap) => {
+        if (lap.playState !== 'paused') lap.pause();
+        lap.currentTime = time;
+      });
+      return;
+    }
+    laps.forEach((lap) => {
+      if (lap.playState !== 'paused') return;
+      lap.play();
+      lap.startTime = lap.timeline.currentTime - time;
+    });
+  }
+
   /** Start moving, making the copies it takes to do it seamlessly if they are not there yet. */
   play() {
     this.removeAttribute('data-marquee-paused');
     this.measure();
+    this.sync();
     this.labelControl();
     this.dispatchEvent(new CustomEvent('marquee-toggle', { bubbles: true, detail: { playing: true } }));
   }
@@ -456,6 +551,7 @@ export class MarqueeElemental extends ElementBase {
    */
   pause() {
     this.setAttribute('data-marquee-paused', '');
+    this.sync();
     this.labelControl();
     this.dispatchEvent(new CustomEvent('marquee-toggle', { bubbles: true, detail: { playing: false } }));
   }

@@ -1,5 +1,5 @@
-// Structure for `<marquee-elemental>`: the strip, the lap it travels, and the three ways it
-// holds still. No look - that is `theme.scss`, which this does not import.
+// Structure for `<marquee-elemental>`: the strip and the lap it travels - holding it still is
+// the script's. No look - that is `theme.scss`, which this does not import.
 
 // Everything is gated on `:defined`, and that is the whole of the no-script promise. The
 // copies that make the loop seamless only exist after the element has upgraded, so before
@@ -65,11 +65,6 @@ marquee-elemental:defined {
   // travels zero for as long as it lives. The attribute is what holds it back until there is
   // something to travel, and what takes it away and gives it back when a resize changes the
   // answer.
-  // Longhands, and never the `animation` shorthand: the shorthand also sets
-  // `animation-play-state`, back to `running`, because that is what a shorthand does to every
-  // longhand it covers and does not mention. This rule outweighs the three below it, so a
-  // shorthand here would restart the strip the moment anything asked it to hold - the pointer,
-  // the focus, or the button - and the pause would be gone with no rule to blame for it.
   &[data-marquee-running] > *:not(.marquee-elemental-control) {
     animation-name: marquee-elemental-lap;
     animation-duration: var(--marquee-elemental-duration, 0s);
@@ -90,45 +85,14 @@ marquee-elemental:defined {
     --marquee-elemental-direction: normal;
   }
 
-  // The four ways it holds still. The pointer and the keyboard are the reader looking at
-  // something on the strip; `[data-marquee-paused]` is the reader having said so with the
-  // button; `[data-marquee-offscreen]` is the strip out of the frame, where the element has
-  // seen it leave and there is nobody left for the lap to be for.
+  // No hold is written here, on purpose. The pointer, focus, the button and the viewport hold
+  // the lap from the script, which pins the time as it pauses: after enough holds Safari
+  // freezes `animation-play-state: paused` on a stale time and the strip snaps back under the
+  // pointer. A rule here would stop reaching the lap the first time the script paused it anyway.
 
-  // The hover is the element's own and not a copy's, because the copies are `inert` and an
-  // inert box is not hit-tested - what the pointer lands on over one of them is this.
-
-  // There is deliberately no `prefers-reduced-motion` rule here: the element reads that
-  // setting at upgrade and starts stopped, and a rule in the stylesheet would also override
-  // the reader who then pressed Start - taking the choice away in the name of respecting it.
-  &:hover > *,
-  &:focus-within > *,
-  &[data-marquee-paused] > *,
-  &[data-marquee-offscreen] > * {
-    animation-play-state: paused;
-  }
-
-  // **The button is not the strip, and giving it back the movement is what makes it work.**
-  // It sits over the content, so a reader reaching for it is hovering the element and, once
-  // pressed, focusing inside it - and holding the strip for either means it stops as the
-  // pointer arrives while the button still reads Stop, so the press changes nothing anybody
-  // can see. That is a control that looks broken, and it is the same sticky hover an iOS tap
-  // leaves behind, which would otherwise hold the strip until something else was touched.
-
-  // A rule of its own rather than a `:not(:has(...))` on the one above: `:has()` inside
-  // `:not()` fails to parse in both WebKit and Chromium, and one bad selector takes its whole
-  // comma-separated list with it - which silently dropped the pause with it. Standing alone,
-  // the worst it can do where `:has()` is missing is leave the button pausing the strip the
-  // way it did before, which is the behaviour to degrade to.
-
-  // Off the screen is the one hold this exception does not get to lift, and it is the focus
-  // half that needs saying so: a pointer cannot be over a button that is not on the screen,
-  // but focus stays on the button while the page scrolls out from under it, and this rule
-  // outweighs the one above on its own.
-  &:has(> .marquee-elemental-control:hover):not([data-marquee-paused], [data-marquee-offscreen]) > *,
-  &:has(> .marquee-elemental-control:focus):not([data-marquee-paused], [data-marquee-offscreen]) > * {
-    animation-play-state: running;
-  }
+  // Nor is there a `prefers-reduced-motion` rule: the element reads that setting at upgrade and
+  // starts stopped, and a rule in the stylesheet would also override the reader who then
+  // pressed Start - taking the choice away in the name of respecting it.
 
   // Out of the flow, so the strip's width is the strip's and the button is not a copy short.
   > .marquee-elemental-control {
