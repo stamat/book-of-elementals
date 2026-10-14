@@ -158,13 +158,48 @@ function pageScroller(from) {
  * Physical rather than logical, because the number is about to be added to `scrollLeft`: the
  * start side is the left one, or the right one where the row runs the other way.
  *
+ * A percentage is not resolved in the computed style - it comes back as the expression, e.g.
+ * `calc(40px + max(0px, 50% - 800px))` - so anything that is not already pixels goes to
+ * `resolve`, which has the layout this function does not.
+ *
  * @param {CSSStyleDeclaration|object} styles - The scroller's computed style.
  * @param {boolean} rtl - Whether the scroller's direction is right to left.
- * @returns {number} Pixels, and zero for `auto` or anything else that is not a length.
+ * @param {function(string): number} [resolve] - Pixels for a value that is not pixels yet.
+ * @returns {number} Pixels, zero for `auto`, and NaN for a value `resolve` could not resolve.
  */
-export function startInset(styles, rtl) {
-  const inset = parseFloat(rtl ? styles.scrollPaddingRight : styles.scrollPaddingLeft);
-  return Number.isFinite(inset) ? inset : 0;
+export function startInset(styles, rtl, resolve) {
+  const value = rtl ? styles.scrollPaddingRight : styles.scrollPaddingLeft;
+  if (!value || value === 'auto') return 0;
+  return /^[\d.]+px$/.test(value) ? parseFloat(value) : resolve(value);
+}
+
+/**
+ * A `<length-percentage>` in pixels, with its percentage taken against `width`.
+ *
+ * Laid out rather than parsed: the expression can nest `calc()`, `min()` and `max()`, and the
+ * browser already evaluates those. Read through `getComputedStyle` rather than a rect, because
+ * a transformed ancestor scales the rect and not the width.
+ *
+ * @param {Document} doc - The document to lay the probe out in.
+ * @param {string} value - A computed `<length-percentage>`.
+ * @param {number} width - What 100% is.
+ * @returns {number} Pixels, or NaN where `width` will not take the value.
+ */
+function resolveLength(doc, value, width) {
+  const box = doc.createElement('div');
+  const probe = doc.createElement('div');
+  // `all: initial` so a page's own `div { max-width }` cannot clamp the answer.
+  box.style.cssText = `all: initial; display: block; position: absolute; visibility: hidden; width: ${width}px; height: 0`;
+  probe.style.cssText = 'all: initial; display: block';
+  probe.style.width = value;
+  // A value `width` rejects leaves the probe at `auto`, which is the full box - a wrong
+  // number that looks right.
+  if (!probe.style.width) return NaN;
+  box.append(probe);
+  doc.body.append(box);
+  const px = parseFloat(getComputedStyle(probe).width);
+  box.remove();
+  return px;
 }
 
 /**
@@ -655,6 +690,7 @@ export class CarouselElemental extends ElementBase {
     // The row's `scroll-padding` on the start side, and which way the row reads - both
     // re-read whenever the layout changes, and once more on a press.
     this.inset = 0;
+    this.reportedInset = false;
     this.rtl = false;
     this.painted = false;
     // Null rather than absent: `applyEdges` runs before the first move.
@@ -1029,7 +1065,20 @@ export class CarouselElemental extends ElementBase {
   measure(scroller) {
     const styles = getComputedStyle(scroller);
     this.rtl = styles.direction === 'rtl';
-    this.inset = startInset(styles, this.rtl);
+    // A percentage in `scroll-padding` is of the scrollport, which is `clientWidth`.
+    const inset = startInset(styles, this.rtl, (value) => resolveLength(scroller.ownerDocument, value, scroller.clientWidth));
+    if (Number.isFinite(inset)) {
+      this.inset = inset;
+      return;
+    }
+    // Kept rather than zeroed: zero is an inset too, and the wrong one. Thrown a task later
+    // and once, because this runs on every press and every resize.
+    if (this.reportedInset) return;
+    this.reportedInset = true;
+    const value = this.rtl ? styles.scrollPaddingRight : styles.scrollPaddingLeft;
+    setTimeout(() => {
+      throw new Error(`<carousel-elemental>: scroll-padding "${value}" did not resolve to pixels, so previous and next keep the last inset that did.`);
+    });
   }
 
   /**
