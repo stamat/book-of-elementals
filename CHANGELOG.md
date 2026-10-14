@@ -19,6 +19,10 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+### Changed
+
+- **`dist/` is no longer committed to git.** The npm package still ships it, built by `prepack`, so npm, unpkg and jsDelivr `/npm/` links are unchanged; jsDelivr `/gh/` links lose it from the next tag on and should move to `/npm/`.
+
 ### Fixed
 
 - **`<carousel-elemental>`: previous and next land on the snap line when `scroll-padding` has a percentage in it.** The computed style hands a percentage back unresolved, which was read as no inset at all, so past half a slide next skipped two and previous never reached the start; it is now laid out to pixels, and one that still will not resolve keeps the last good inset and throws instead of becoming zero.
