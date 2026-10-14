@@ -123,11 +123,24 @@ test('right to left, the start edge is the other one', () => {
   expect(startInset({ scrollPaddingLeft: '0px', scrollPaddingRight: '206px' }, true)).toBe(206);
 });
 
-test('a scroll-padding in something other than pixels is no padding at all', () => {
-  // `getComputedStyle` resolves lengths to pixels, so anything else here is `auto` or a
-  // keyword - and guessing at one would move the row by a number nobody wrote.
+test('a scroll-padding of auto, or none at all, is no padding', () => {
   expect(startInset({ scrollPaddingLeft: 'auto', scrollPaddingRight: 'auto' }, true)).toBe(0);
   expect(startInset({}, false)).toBe(0);
+});
+
+test('a percentage scroll-padding is resolved to pixels, not read as zero', () => {
+  // `getComputedStyle` hands a percentage back as the expression, because it is relative to
+  // the scrollport and nothing has resolved it yet. Read as zero, it put every press off by
+  // the whole inset: past half a slide, next skipped two and previous never reached the start.
+  const value = 'calc(40px + max(0px, 50% - 800px))';
+  const resolve = (asked) => (asked === value ? 432.5 : NaN);
+  expect(startInset({ scrollPaddingLeft: value, scrollPaddingRight: '0px' }, false, resolve)).toBe(432.5);
+  expect(startInset({ scrollPaddingLeft: '0px', scrollPaddingRight: value }, true, resolve)).toBe(432.5);
+});
+
+test('a scroll-padding that cannot be resolved is unknown, never zero', () => {
+  // Zero is a real inset, so returning it here is a wrong answer that looks right.
+  expect(startInset({ scrollPaddingLeft: 'calc(10% + 1rem)' }, false, () => NaN)).toBeNaN();
 });
 
 test('the carousel is on the first slide that has not gone past the start edge', () => {

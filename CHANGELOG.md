@@ -19,6 +19,10 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`<carousel-elemental>`: previous and next land on the snap line when `scroll-padding` has a percentage in it.** The computed style hands a percentage back unresolved, which was read as no inset at all, so past half a slide next skipped two and previous never reached the start; it is now laid out to pixels, and one that still will not resolve keeps the last good inset and throws instead of becoming zero.
+
 ## [3.5.2] - 2026-09-11
 
 ### Changed
