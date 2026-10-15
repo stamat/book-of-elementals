@@ -66,6 +66,9 @@ const EXPAND_ROUNDS = 5;
 // sample which cannot be driven does not hold the sweep for a minute.
 const CLICK_TIMEOUT = 2000;
 
+// How long a preview's tags get to register before the audit calls them dead.
+const DEFINE_TIMEOUT = 5000;
+
 // Set on the host page, mirrored into every preview. Light first because that is the
 // state a page loads in; each theme gets its own load, so both start from the sample as
 // authored rather than from whatever the previous pass left open.
@@ -170,11 +173,23 @@ async function describe(locator) {
  * Element tags present in the frame that never registered. The audit is worth nothing
  * without this: a preview whose script failed to load is plain markup with no roles on
  * it, and plain markup passes - a green run over an element that is not there.
+ *
+ * Waited on rather than read: the preview loads its scripts with `defer`, which run after
+ * the frame turns `interactive` - the state the page loop waits for - so a slow machine
+ * reaches this before the element is defined, and reports a tag that was a moment away.
+ * Everything after this audits the frame too, so it waits here once for all of it.
  */
 function notUpgraded(frame) {
-  return frame.evaluate(() => [...new Set(
-    [...document.querySelectorAll('*')].map((el) => el.localName).filter((tag) => tag.includes('-'))
-  )].filter((tag) => !customElements.get(tag)));
+  return frame.evaluate(async (timeout) => {
+    const tags = [...new Set(
+      [...document.querySelectorAll('*')].map((el) => el.localName).filter((tag) => tag.includes('-'))
+    )];
+    await Promise.race([
+      Promise.all(tags.map((tag) => customElements.whenDefined(tag))),
+      new Promise((resolve) => setTimeout(resolve, timeout)),
+    ]);
+    return tags.filter((tag) => !customElements.get(tag));
+  }, DEFINE_TIMEOUT);
 }
 
 /** One frame, audited as authored and again in each state a click can reach. */
