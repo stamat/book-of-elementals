@@ -19,6 +19,8 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+## [3.5.4] - 2026-10-21
+
 ### Changed
 
 - **`dist/` is no longer committed to git.** The npm package still ships it, built by `prepack`, so npm, unpkg and jsDelivr `/npm/` links are unchanged; jsDelivr `/gh/` links and installs straight from GitHub (`github:stamat/book-of-elementals`) get no `dist/` from the next tag on, so the bundles and every `*.css` export are missing there — use the npm package.
