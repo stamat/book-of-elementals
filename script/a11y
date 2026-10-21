@@ -170,32 +170,39 @@ async function describe(locator) {
 }
 
 /**
- * Element tags present in the frame that never registered. The audit is worth nothing
- * without this: a preview whose script failed to load is plain markup with no roles on
- * it, and plain markup passes - a green run over an element that is not there.
+ * Element tags in the frame that never upgraded. The audit is worth nothing without this:
+ * a preview whose script failed to load is plain markup with no roles on it, and plain
+ * markup passes - a green run over an element that is not there.
  *
  * Waited on rather than read: the preview loads its scripts with `defer`, which run after
  * the frame turns `interactive` - the state the page loop waits for - so a slow machine
  * reaches this before the element is defined, and reports a tag that was a moment away.
  * Everything after this audits the frame too, so it waits here once for all of it.
+ *
+ * `:defined` rather than a hyphen and `customElements.get`: an SVG or MathML tag such as
+ * `annotation-xml` has the hyphen, and `whenDefined` rejects its name and ends the run;
+ * an element whose constructor threw is registered and still plain markup.
  */
 function notUpgraded(frame) {
   return frame.evaluate(async (timeout) => {
-    const tags = [...new Set(
-      [...document.querySelectorAll('*')].map((el) => el.localName).filter((tag) => tag.includes('-'))
-    )];
+    const pending = () => [...new Set([...document.querySelectorAll(':not(:defined)')].map((el) => el.localName))];
     await Promise.race([
-      Promise.all(tags.map((tag) => customElements.whenDefined(tag))),
+      Promise.all(pending().map((tag) => customElements.whenDefined(tag))),
       new Promise((resolve) => setTimeout(resolve, timeout)),
     ]);
-    return tags.filter((tag) => !customElements.get(tag));
+    return pending();
   }, DEFINE_TIMEOUT);
 }
 
 /** One frame, audited as authored and again in each state a click can reach. */
 async function auditFrame(frame, report) {
   const skipped = [];
-  report.dead.push(...await notUpgraded(frame));
+  const dead = await notUpgraded(frame);
+  report.dead.push(...dead);
+  // Not audited at all, and not only because plain markup passes: the modal step below
+  // calls the element's own `show()`, so a modal that never registered ends the run on a
+  // TypeError before the report can say why.
+  if (dead.length) return [];
   const states = [['as authored', await runAxe(frame)]];
 
   if (await expandAll(frame, skipped)) states.push(['expanded', await runAxe(frame)]);
@@ -291,7 +298,11 @@ for (const path of pages) {
     );
     await setTheme(page, theme);
 
-    const frames = page.frames().filter((f) => f !== page.mainFrame());
+    // The previews themselves and not the frames inside them. A sample can embed a player,
+    // which is somebody else's document - and a lazy one in a closed dialog has no document
+    // until the modal step opens it, so behind a preview skipped as dead, `evaluate` on it
+    // waits forever.
+    const frames = page.frames().filter((f) => f.parentFrame() === page.mainFrame());
     for (const [i, frame] of frames.entries()) {
       // On the first theme only: the second pass is the same previews again, not more of them.
       if (theme === THEMES[0]) report.frames++;
@@ -338,6 +349,6 @@ if (report.skipped.length) {
   for (const markup of report.skipped) console.log(`  ${markup}`);
 }
 if (report.dead.length) {
-  console.log(`\n✗ never registered, so the preview audited was plain markup: ${[...new Set(report.dead)].join(', ')}`);
+  console.log(`\n✗ never registered, so the previews holding them were not audited: ${[...new Set(report.dead)].join(', ')}`);
 }
 process.exit(report.violations || report.dead.length || report.dangling.size ? 1 : 0);
