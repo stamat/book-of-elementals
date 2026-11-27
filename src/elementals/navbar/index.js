@@ -291,6 +291,12 @@ export class NavbarElemental extends ElementBase {
     // already there.
     this.rail.setAttribute('data-navbar-rail', '');
 
+    // Markup copied off a live page - htmx's history snapshot, Turbo's cache - arrives holding
+    // the probe and the copies an earlier upgrade wrote. Read again as the page's own, the row
+    // would be measured twice and every item copied into the panel twice.
+    for (const saved of this.rail.querySelectorAll(':scope > [data-navbar-probe]')) saved.remove();
+    if (this.morePanel) this.morePanel.textContent = '';
+
     // Copied before anything is wired, so what gets copied is the markup the page wrote
     // rather than an element mid-upgrade: a copy of a wired list brings its `aria-controls`
     // and the `id` that attribute points at, and two lists claiming one `id` is a button
@@ -388,7 +394,14 @@ export class NavbarElemental extends ElementBase {
   fillMore() {
     const panel = this.morePanel;
     if (!panel) return [];
-    return this.items.map((item) => panel.appendChild(item.cloneNode(true)));
+    return this.items.map((item) => {
+      const copy = item.cloneNode(true);
+      // A page put back from a copy of itself arrives already wired, and an `id` that `wire()`
+      // handed a list would come along with it: two lists answering to one `id`. Without it,
+      // `wire()` gives the copy one of its own.
+      for (const wired of copy.querySelectorAll('[id^="navbar-elemental-"]')) wired.removeAttribute('id');
+      return panel.appendChild(copy);
+    });
   }
 
   /**

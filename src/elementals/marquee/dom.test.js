@@ -1,7 +1,9 @@
 /**
  * What a copy of the track carries - out of the screen reader and out of <kbd>Tab</kbd>, and
  * still under the pointer - and how the lap is held: on the time it was read at rather than
- * one the browser works out, with the pointer and focus on the button left out of it.
+ * one the browser works out, with the pointer and focus on the button left out of it. And a
+ * page put back from a copy of itself, as htmx's Back does: the copies and the button are in
+ * it, and only a mounted element can take them for the author's track.
  *
  * `index.test.js` pins the sums - how many copies, how long a lap, when to rebuild.
  *
@@ -158,4 +160,20 @@ test('a strip taken out of the document forgets the pointer and focus it had, so
   el.querySelector('a').dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
   el.remove();
   expect([el.pointerOver, el.focusInside]).toEqual([false, false]);
+});
+
+test('a page put back from a copy of itself keeps the track the page wrote, and one button that works', () => {
+  document.body.innerHTML = '<marquee-elemental><ul><li><a href="/a">A</a></li></ul></marquee-elemental>';
+  const drawn = document.querySelector('marquee-elemental');
+  // jsdom measures no width, so no lap is drawn here; one copy goes on by hand, as a lap's would.
+  drawn.append(...drawn.copyTrack());
+  // What htmx's history keeps for Back: the live page as markup, the copy and the button in it.
+  const snapshot = document.body.innerHTML;
+  document.body.innerHTML = snapshot;
+
+  const el = document.querySelector('marquee-elemental');
+  expect(el.track).toHaveLength(1);
+  expect(el.querySelectorAll('.marquee-elemental-control')).toHaveLength(1);
+  el.control.click();
+  expect(el.playing).toBe(false);
 });

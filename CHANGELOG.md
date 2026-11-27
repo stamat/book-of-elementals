@@ -19,6 +19,16 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`<combobox-elemental>` draws one field over markup copied from a live page.** htmx's Back restores such a copy, and each restore added another field, list and error box beside the old ones; the element now removes the copied view before it draws, and a `<label for>` that named the copied field names the new one.
+- **`<slider-elemental>` writes one value bubble over markup copied from a live page.** Each restore added another `<output data-tooltip>` that nothing moved or hid again; the element now removes the copied one before it writes its own.
+- **`<carousel-elemental>` writes one set of controls over markup copied from a live page.** Each restore added another `[data-carousel-controls]` and `[data-carousel-rotate]`; the element now removes the copied ones before it writes its own.
+- **`<marquee-elemental>` reads only the author's track over markup copied from a live page.** The copied `[data-marquee-clone]` copies and button were read as track and copied again, and the pause button that remained had no listener; the element now removes both before it reads the track.
+- **`<navbar-elemental>` measures and copies once over markup copied from a live page.** Each restore added another `[data-navbar-probe]` and another copy of every item in the overflow list, and a copied submenu kept the `id` of its original; the element now removes the probe, empties the list, and gives each copy an `id` of its own.
+- **`<sortable-table-elemental>` writes one button per header and one note over markup copied from a live page.** The copied header button was wrapped in a new one, and the note was added after itself; the element now takes both out before it writes them.
+- **`<splitter-elemental>` writes one handle over markup copied from a live page.** The copied `[data-splitter-handle]` was counted as a third pane; the element now removes it before it counts the panes.
+
 ## [3.5.4] - 2026-10-21
 
 ### Changed

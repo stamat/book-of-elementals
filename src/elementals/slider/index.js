@@ -624,6 +624,10 @@ export class SliderElemental extends ElementBase {
     const modes = tooltipModes(this.getAttribute('tooltip'));
     const wanted = modes.thumb || modes.track;
     if (wanted && !this.tooltipElement) {
+      // Markup copied off a live page - htmx's history snapshot, Turbo's cache - arrives with
+      // a bubble already in it, which nothing would ever move or hide again.
+      const saved = this.querySelector(':scope > output[data-tooltip]');
+      if (saved) saved.remove();
       const bubble = document.createElement('output');
       bubble.setAttribute('aria-hidden', 'true');
       bubble.dataset.tooltip = 'thumb';

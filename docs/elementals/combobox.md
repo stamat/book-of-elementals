@@ -453,6 +453,10 @@ field and not the hidden control:
 Everything the element touches goes back the way it arrived when it is removed from the
 page — the classes, the `tabindex`, and a `<label for>` it re-pointed at the field.
 
+A copy of a live page holds this view already, for example the snapshot that htmx's history
+restores on Back. When the element connects to such markup, it removes the copied view and
+draws one new view. A `<label for>` that named the copied field names the new field.
+
 ### Styling hooks
 
 ```css

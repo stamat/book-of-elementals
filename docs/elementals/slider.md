@@ -121,7 +121,10 @@ writes: an `<output aria-hidden="true" data-tooltip="thumb|track">` appended as 
 child, carrying `--slider-elemental-at` — where the bubble is, on that same `0` to `1`
 scale. It also carries `data-vertical` and `data-reversed` while the track runs down the
 page or backwards, because centring it is a `translate` and `translate` has no logical form.
-It goes again when the attribute does, or when the element leaves the page.
+It goes again when the attribute does, or when the element leaves the page. A copy of a live
+page holds this bubble already, for example the snapshot that htmx's history restores on Back.
+When the element connects to such markup, it removes the copied bubble and writes one new
+bubble.
 
 ### Properties
 

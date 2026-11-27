@@ -263,6 +263,12 @@ export class MarqueeElemental extends ElementBase {
 
   connectedCallback() {
     if (this.initialized) return;
+    // Markup copied off a live page - htmx's history snapshot, Turbo's cache - arrives holding
+    // the copies and the button an earlier upgrade wrote. Read as the author's track they would
+    // be copied again, and `control` would find the old button, which has no listener on it.
+    for (const saved of this.querySelectorAll(':scope > [data-marquee-clone], :scope > .marquee-elemental-control')) {
+      saved.remove();
+    }
     // Everything the author wrote, elements only: a newline between two tags is a text node
     // and not something to clone twenty times.
     this.track = Array.from(this.children);

@@ -193,8 +193,22 @@ export class SortableTableElemental extends ElementBase {
    * or an abbreviation in there survives and keeps whatever the page styled it with.
    */
   build() {
+    // Markup copied off a live page - htmx's history snapshot, Turbo's cache - arrives holding
+    // what the last upgrade wrote. Taken as the page's own, each header's button would be
+    // wrapped in another and the note appended after itself, so it comes out first, the way
+    // `disconnectedCallback` takes it out.
+    for (const note of this.querySelectorAll('caption > .sortable-table-elemental-note')) {
+      // The space written before the note comes back merged into the caption's own text, so it
+      // is one character off the end of that text rather than a node of its own.
+      const text = note.previousSibling;
+      if (text && text.nodeName === '#text' && text.data.endsWith(' ')) text.data = text.data.slice(0, -1);
+      note.remove();
+    }
+
     for (const header of this.headers) {
       if (header.getAttribute('data-sort') === 'none') continue;
+      const saved = header.querySelector(':scope > button');
+      if (saved) saved.replaceWith(...saved.childNodes);
       const button = document.createElement('button');
       button.type = 'button';
       button.append(...header.childNodes);

@@ -76,6 +76,9 @@ Two boxes. The element writes one node between them and changes nothing else:
 - **Two children, not three.** The layout is three grid tracks and a third child wraps onto a
   second row, under the primary pane and the width of it. That is a refusal rather than an
   omission — see [What it will not do](#what-it-will-not-do).
+- **A handle in the markup is the element's.** A copy of a live page holds the handle already,
+  for example the snapshot that htmx's history restores on Back. When the element connects to
+  such markup, it removes that handle before it counts the panes.
 
 ## The keyboard
 

@@ -211,6 +211,11 @@ No `role`, anywhere. That is the pattern, not an omission — see
 [below](#why-not-a-menubar). A closed panel carries `hidden`, and lists without an `id`
 are given one.
 
+A copy of a live page holds the probe and the copies in the overflow list already, for
+example the snapshot that htmx's history restores on Back. When the element connects to such
+markup, it removes the probe, empties the overflow list and copies the items again. A copy
+does not keep an `id` that the element gave a list. It gets an `id` of its own.
+
 The `<span>` is the one piece of markup the element adds to what you wrote, and it is there
 because a hamburger that crosses into an X is three lines while a button has two
 pseudo-elements. It is first in the button, so a toggle with a label reads icon-then-label;

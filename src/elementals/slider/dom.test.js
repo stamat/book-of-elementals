@@ -7,7 +7,8 @@
  * other half: which of those a press, a move and an `input` are allowed to reach for. It is
  * worth its own file because the cost is invisible to the arithmetic - a drag that measures
  * two rects it never reads is correct and slow, and only a test that counts the measuring can
- * say so.
+ * say so. A page put back from a copy of itself, as htmx's Back does, is here too: the copy
+ * holds the bubble, and only a mounted element can draw a second one.
  *
  * Deliberately not covered: everything that needs a real layout. jsdom has no boxes, so the
  * two rects a press measures are handed in by hand below and nothing here asserts a position
@@ -152,4 +153,15 @@ test('a bubble the attribute is keeping hidden is not redrawn by a drag', () => 
   slider.inputs[1].dispatchEvent(new Event('input', { bubbles: true }));
   expect(bubbleOf(slider).hidden).toBe(true);
   expect(bubbleOf(slider).textContent).toBe('');
+});
+
+test('a page put back from a copy of itself draws one bubble', () => {
+  mount();
+  // What htmx's history keeps for Back: the live page as markup, the drawn bubble in it.
+  const snapshot = document.body.innerHTML;
+  document.body.innerHTML = snapshot;
+
+  const slider = document.querySelector('slider-elemental');
+  expect(slider.querySelectorAll('output[data-tooltip]')).toHaveLength(1);
+  expect(bubbleOf(slider)).toBe(slider.tooltipElement);
 });

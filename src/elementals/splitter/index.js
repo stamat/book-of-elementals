@@ -275,6 +275,10 @@ export class SplitterElemental extends ElementBase {
   connectedCallback() {
     if (this.initialized) return;
 
+    // Markup copied off a live page - htmx's history snapshot, Turbo's cache - arrives with a
+    // handle already between the panes. Left in, it is counted as a third pane.
+    for (const saved of this.querySelectorAll(':scope > [data-splitter-handle]')) saved.remove();
+
     // One pane is not half a splitter - there is nothing to take the space the other gives
     // up - so an element that has not got two of them is left exactly as it was written.
     // Before the flag, so an element that gets its second pane later is built when it is next

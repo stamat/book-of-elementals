@@ -1,6 +1,7 @@
 /**
  * `vertical-when` over real markup: what the query flips, what it leaves alone, and that a
- * `container:` condition is measured against the container rather than the viewport.
+ * `container:` condition is measured against the container rather than the viewport. And a
+ * page put back from a copy of itself, as htmx's Back does, with the handle already in it.
  *
  * `index.test.js` pins the pure decisions - clamping, the arrow steps, the grid template.
  *
@@ -100,4 +101,15 @@ describe('a container: query, measured against the container rather than the vie
     expect(document.head.querySelector('style')).toBe(null);
     expect(el.dataset.elementalProbe).toBe(undefined);
   });
+});
+
+test('a page put back from a copy of itself writes one handle between two panes', () => {
+  mount('');
+  // What htmx's history keeps for Back: the live page as markup, the handle in it.
+  const snapshot = document.body.innerHTML;
+  document.body.innerHTML = snapshot;
+
+  const el = document.querySelector('splitter-elemental');
+  expect(el.querySelectorAll('[data-splitter-handle]')).toHaveLength(1);
+  expect(el.panes.map((pane) => pane.localName)).toEqual(['nav', 'main']);
 });

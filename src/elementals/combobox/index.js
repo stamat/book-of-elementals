@@ -389,6 +389,17 @@ export class ComboboxElemental extends ElementBase {
     const select = this.select;
     const id = 'combobox-elemental-' + (++comboboxCount);
 
+    // Markup copied off a live page - htmx's history snapshot, Turbo's cache - arrives with
+    // the view already drawn, and a second one would be drawn beside it on every Back. The
+    // copy goes, and a label it took is handed back to the `<select>` to be taken again.
+    for (const stale of this.querySelectorAll(':scope > .combobox-elemental-field, :scope > .combobox-elemental-list, :scope > .combobox-elemental-error')) {
+      const input = stale.querySelector('.combobox-elemental-input');
+      for (const label of input ? Array.from(input.labels || []) : []) {
+        if (label.htmlFor === input.id) label.htmlFor = select.id;
+      }
+      stale.remove();
+    }
+
     this.field = el('div', 'combobox-elemental-field');
     this.chips = el('span', 'combobox-elemental-chips');
     this.input = el('input', 'combobox-elemental-input');

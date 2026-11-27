@@ -1016,8 +1016,12 @@ export class CarouselElemental extends ElementBase {
   /** Take the controls back out, so `wire()` and `disconnectedCallback` leave the markup as
    * they found it. */
   removeControls() {
-    if (this.rotateButton) this.rotateButton.remove();
-    if (this.controls) this.controls.remove();
+    // By attribute rather than by the references below: markup copied off a live page - htmx's
+    // history snapshot, Turbo's cache - arrives holding controls an earlier upgrade wrote, and
+    // no reference here points at those.
+    for (const node of this.querySelectorAll(':scope > [data-carousel-rotate], :scope > [data-carousel-controls]')) {
+      node.remove();
+    }
     this.rotateButton = null;
     this.controls = null;
     this.picker = null;

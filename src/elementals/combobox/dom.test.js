@@ -8,7 +8,8 @@
  * guards against, and no pure function can see it.
  *
  * The scrolling half is here for the same reason - jsdom scrolls nothing, but it can count
- * who asked to.
+ * who asked to. So is a page put back from a copy of itself, as htmx's Back does: the view
+ * is in the copy, and only a mounted element can draw a second one.
  *
  * Deliberately not covered: the leading checkbox, which is `theme.scss` and belongs to the
  * docs page and `script/a11y`; where the popup goes, which needs a layout jsdom has none of
@@ -187,4 +188,17 @@ test('the keyboard still scrolls its row into view, which is the only way it can
   scrolled.length = 0;
   press(box, 'ArrowDown');
   expect(scrolled).toContain(box.querySelectorAll('.combobox-elemental-option')[1]);
+});
+
+test('a page put back from a copy of itself draws one field, and its label still names it', () => {
+  mount();
+  // What htmx's history keeps for Back: the live page as markup, the drawn view in it.
+  const snapshot = document.body.innerHTML;
+  document.body.innerHTML = snapshot;
+
+  const box = document.querySelector('combobox-elemental');
+  expect(box.querySelectorAll('.combobox-elemental-field')).toHaveLength(1);
+  expect(box.querySelectorAll('.combobox-elemental-list')).toHaveLength(1);
+  expect(box.querySelectorAll('.combobox-elemental-error')).toHaveLength(1);
+  expect(document.querySelector('label').htmlFor).toBe(input(box).id);
 });

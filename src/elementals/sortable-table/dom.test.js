@@ -1,6 +1,7 @@
 /**
  * The half of this element that is DOM: the buttons it writes into the header row, the note it
- * appends to the caption, the `aria-sort` bookkeeping, and the rows actually moving.
+ * appends to the caption, the `aria-sort` bookkeeping, and the rows actually moving - also
+ * over a page put back from a copy of itself, as htmx's Back does, with all of that in it.
  *
  * `index.test.js` pins `sortKey` and `sortOrder`, which are the sums. This file is what those
  * sums are wired to — a correct ordering applied to the wrong rows, or applied without saying so
@@ -304,4 +305,16 @@ test('aria-sort survives teardown, because the rows are still in the order it de
   const name = headers(table)[0];
   table.remove();
   expect(name.getAttribute('aria-sort')).toBe('ascending');
+});
+
+test('a page put back from a copy of itself writes one button per header and one note', () => {
+  mount();
+  // What htmx's history keeps for Back: the live page as markup, the buttons and the note in it.
+  const snapshot = document.body.innerHTML;
+  const table = mount(snapshot);
+
+  expect(headers(table).map((th) => th.querySelectorAll('button').length)).toEqual([1, 1, 0]);
+  expect(table.querySelector('caption').textContent).toBe(`Peaks ${DEFAULT_NOTE}`);
+  headers(table)[1].querySelector('button').click();
+  expect(column(table, 1)).toEqual(['1560', '2169', '2656']);
 });

@@ -1,7 +1,8 @@
 /**
  * The pattern's lifecycle over markup: what `wire()` does when the list arrives after the
- * upgrade, when the slides go away and come back, and when `autoplay` is switched after the
- * fact - the paths nothing on a page looks wrong on until it has tried them.
+ * upgrade, when the slides go away and come back, when `autoplay` is switched after the fact,
+ * and when the page is put back from a copy of itself, as htmx's Back does, with the controls
+ * already in it - the paths nothing on a page looks wrong on until it has tried them.
  *
  * Both markups are here: a list of `<li>`s, and a scroller whose children are the slides -
  * they part company at the roles and at what counts as a slide, and nowhere else.
@@ -281,4 +282,16 @@ describe('slides that are not a list', () => {
     expect(scroller.firstElementChild.hasAttribute('role')).toBe(false);
     expect(scroller.firstElementChild.hasAttribute('aria-roledescription')).toBe(false);
   });
+});
+
+test('a page put back from a copy of itself writes one set of controls, and they drive the slides', () => {
+  mount(`<carousel-elemental fade autoplay aria-label="Gallery"><ul>${slides(3)}</ul></carousel-elemental>`);
+  // What htmx's history keeps for Back: the live page as markup, the controls in it.
+  const snapshot = document.body.innerHTML;
+  const carousel = mount(snapshot);
+
+  expect(carousel.querySelectorAll(':scope > [data-carousel-controls]')).toHaveLength(1);
+  expect(carousel.querySelectorAll(':scope > [data-carousel-rotate]')).toHaveLength(1);
+  carousel.querySelector('[data-carousel-next]').click();
+  expect(carousel.index).toBe(1);
 });

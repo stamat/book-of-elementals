@@ -100,6 +100,10 @@ If the table has no `<caption>`, one is created holding only that note. It is cl
 caption box measures zero — no visible change, and the table gains an accessible name it did not
 have.
 
+A copy of a live page holds the buttons and the note already, for example the snapshot that
+htmx's history restores on Back. When the element connects to such markup, it takes them out
+first and then writes them again. A header gets one button, and the caption gets one note.
+
 **There is no live region, and that is a decision rather than an omission.** The example this
 follows has none, and the reason it needs none is that the rows reordering *is* the result of
 pressing the button, not a message about it —

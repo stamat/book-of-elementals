@@ -8,16 +8,16 @@
     "updated": "2026-08-23T21:34:23.493Z"
   },
   "docs/elementals/carousel.md": {
-    "hash": "64efb23c04469b967523252715ad876df55af642",
-    "updated": "2026-09-09T22:18:03.104Z"
+    "hash": "67c835023414ad569a8ac0d1959a8715eb0ffa1e",
+    "updated": "2026-11-27T00:02:00.338Z"
   },
   "docs/elementals/checkbox-group.md": {
     "hash": "4883e177d9ca136f791f54e74e71e275dc49da56",
     "updated": "2026-08-23T21:34:41.021Z"
   },
   "docs/elementals/combobox.md": {
-    "hash": "36bb9b2187ad9a5f26df1689884a45cb6c58d00f",
-    "updated": "2026-09-11T19:13:23.518Z"
+    "hash": "16e65571cda49497d6c613f70465a241154ac53c",
+    "updated": "2026-11-26T20:49:24.030Z"
   },
   "docs/elementals/copy.md": {
     "hash": "4b4176602b7dab12a08cfe8544f0795df118e457",
@@ -40,8 +40,8 @@
     "updated": "2026-09-11T18:30:05.224Z"
   },
   "docs/elementals/marquee.md": {
-    "hash": "e29994fc733636a9d07e1ac8b681aa1d6575f799",
-    "updated": "2026-09-11T20:37:46.731Z"
+    "hash": "14e350e52029247a6082a77b7a6f8e44777deb9c",
+    "updated": "2026-11-27T00:02:01.188Z"
   },
   "docs/elementals/menu.md": {
     "hash": "9aca24d429694b1b91788962a0a984c57caee17f",
@@ -52,8 +52,8 @@
     "updated": "2026-08-23T21:34:23.494Z"
   },
   "docs/elementals/navbar.md": {
-    "hash": "666607c583fb1f03287e80aa152b736b0f1ad50e",
-    "updated": "2026-08-24T11:36:03.156Z"
+    "hash": "82ac088309bb89cd570f1af9a2e1cd8ab08b6959",
+    "updated": "2026-11-27T00:02:02.019Z"
   },
   "docs/elementals/password.md": {
     "hash": "aeea462b02fda673d7aa0b67bb5ef4a0e4b4989e",
@@ -76,16 +76,16 @@
     "updated": "2026-08-23T21:34:48.890Z"
   },
   "docs/elementals/slider.md": {
-    "hash": "b1c953e394a29636ad7119b930c0a199a128b647",
-    "updated": "2026-08-23T21:34:23.496Z"
+    "hash": "47df814de9b9c8a283a28fc68b1a7a1394727df1",
+    "updated": "2026-11-26T20:57:53.356Z"
   },
   "docs/elementals/sortable-table.md": {
-    "hash": "5dd570fee6c24e17bb1cdff0efeb7367558dcae8",
-    "updated": "2026-08-23T21:34:23.507Z"
+    "hash": "f9c8c967be9740a7c2b3c60428b169f87bfb66cc",
+    "updated": "2026-11-27T00:01:59.554Z"
   },
   "docs/elementals/splitter.md": {
-    "hash": "1475d61ad96a98e41483001b7de0f07e5ec4f9db",
-    "updated": "2026-08-31T12:39:34.984Z"
+    "hash": "08a5f2cd8801f05fc51c140d9600f2a3a8c87de5",
+    "updated": "2026-11-27T00:02:02.869Z"
   },
   "docs/elementals/suggest.md": {
     "hash": "009dc2b00d25af8c5ede487164177863c6851f4a",

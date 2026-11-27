@@ -278,6 +278,10 @@ The controls are the element's to write rather than yours, and that is the progr
 enhancement working rather than a preference: a previous button authored in the markup is a
 button that does nothing until the script lands.
 
+A copy of a live page holds these controls already, for example the snapshot that htmx's
+history restores on Back. When the element connects to such markup, it removes the copied
+controls and writes new ones.
+
 `aria-disabled` everywhere rather than `disabled` — on the current picker button and on an
 arrow at the end of the row — because a `disabled` button taken out from under the focus that
 just pressed it drops the reader back to the top of the page.

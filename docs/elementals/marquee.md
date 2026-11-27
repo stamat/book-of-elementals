@@ -87,6 +87,10 @@ One list, and you have written it before:
 
 - **Whatever is inside is the track**, and the track is what gets copied. Usually one `<ul>`;
   anything else works the same way, and several children are copied as a set.
+- **What the element wrote is not the track.** A copy of a live page holds the copies
+  (`data-marquee-clone`) and the button already, for example the snapshot that htmx's history
+  restores on Back. When the element connects to such markup, it removes them before it reads
+  the track.
 - **`aria-label` is worth writing.** The element adds no name of its own — a strip of logos
   with no label is a list a screen reader reads out with no idea what it is a list of.
 - **Alt text stays yours.** A logo's `alt` is the company's name, not "logo" and not empty:
