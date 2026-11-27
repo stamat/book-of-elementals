@@ -19,6 +19,8 @@ to the docs page and the commit, not here.
 
 ## [Unreleased]
 
+## [3.5.5] - 2026-11-27
+
 ### Fixed
 
 - **`<combobox-elemental>` draws one field over markup copied from a live page.** htmx's Back restores such a copy, and each restore added another field, list and error box beside the old ones; the element now removes the copied view before it draws, and a `<label for>` that named the copied field names the new one.
